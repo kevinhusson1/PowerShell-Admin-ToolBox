@@ -47,37 +47,40 @@ Voici les étapes détaillées, du plus simple au plus complexe, pour construire
 
 ## Jalon 2 : La Boîte à Outils - Le Module Core (Durée : ~2-3 jours)
 *On forge les outils qui serviront à construire tout le reste.*
-- **Tâche 2.1 :** Créer la structure du module : `src/Modules/Core/PSToolBox.Core.psm1` et le manifeste PSToolBox.Core.psd1.
-- **Tâche 2.2 :** Développer la fonction Get-ToolboxConfig : Une fonction qui recherche, valide et charge le fichier config.json en un objet PowerShell accessible.
-- **Tâche 2.3 :** Développer la fonction Show-WpfWindow : C'est le successeur de Load-File. Elle prendra en paramètre un chemin XAML, un ViewModel, et appliquera automatiquement le thème central.
-- **Tâche 2.4 :** Développer la fonction Invoke-Log : Le successeur de Add-RichText. Elle écrira dans une RichTextBox de l'UI ET, si activé dans la config, dans un fichier log.
-- **Tâche 2.5 :** Créer/Migrer les fenêtres de dialogue (Show-MessageBox, Show-InputBox, Show-AdminLogin) en fonctions propres dans le module Core. Elles doivent retourner un résultat ($true, $false, un objet, etc.) au lieu d'utiliser des variables globales.
-- **Tâche 2.6 :** Créer un modèle de ViewModel de base (ViewModel.Base.ps1) que les autres ViewModels pourront utiliser (dot-source). Il implémentera INotifyPropertyChanged pour que l'UI se mette à jour automatiquement quand une propriété change. C'est la pierre angulaire du MVVM.
+- **Tâche 2.1 :** Créer la structure du module : `src/Modules/Core/PSToolBox.Core.psm1` et le manifeste `PSToolBox.Core.psd1`.
+- **Tâche 2.2 :** Développer la fonction `Get-ToolboxConfig` : Une fonction qui recherche, valide et charge le fichier `config.json` en un objet PowerShell accessible.
+- **Tâche 2.3 :** Développer la fonction `Show-WpfWindow` : C'est le successeur de Load-File. Elle prendra en paramètre un chemin XAML, un ViewModel, et appliquera automatiquement le thème central.
+- **Tâche 2.4 :** Développer la fonction `Invoke-Log` : Le successeur de `Add-RichText`. Elle écrira dans une RichTextBox de l'UI ET, si activé dans la config, dans un fichier log.
+- **Tâche 2.5 :** Créer/Migrer les fenêtres de dialogue (`Show-MessageBox`, `Show-InputBox`, `Show-AdminLogin`) en fonctions propres dans le module Core. Elles doivent retourner un résultat ($true, $false, un objet, etc.) au lieu d'utiliser des variables globales.
+- **Tâche 2.6 :** Créer un modèle de ViewModel de base (`ViewModel.Base.ps1`) que les autres ViewModels pourront utiliser (dot-source). Il implémentera `INotifyPropertyChanged` pour que l'UI se mette à jour automatiquement quand une propriété change. C'est la pierre angulaire du MVVM.
+
 ## Jalon 3 : Le Portail - L'Application Principale (Durée : ~2 jours)
 *On assemble les pièces pour créer le lanceur.*
 - **Tâche 3.1 :** Créer le ViewModel src/Launcher.ViewModel.ps1 :
-Il utilisera le modèle ViewModel.Base.ps1.
-Il aura une propriété [ObservableCollection[object]]$Tools et $SelectedTool.
-Il aura une fonction Load-Tools qui scanne src/Modules/Tools à la recherche de fichiers manifestes (.tool.json).
-Il aura une commande Launch-SelectedTool pour lancer l'outil sélectionné.
+  - Il utilisera le modèle `ViewModel.Base.ps1`.
+  - Il aura une propriété `[ObservableCollection[object]]$Tools` et `$SelectedTool`.
+  - Il aura une fonction `Load-Tools` qui scanne `src/Modules/Tools` à la recherche de fichiers manifestes (.tool.json).
+  - Il aura une commande `Launch-SelectedTool` pour lancer l'outil sélectionné.
 - **Tâche 3.2 :** Créer la vue `src/UI/Views/ToolBox.View.xaml` :
 Elle sera entièrement construite avec les styles de notre thème.
 Elle utilisera des Binding pour se lier aux propriétés du ViewModel.
 - **Tâche 3.3 :** Mettre à jour src/Launcher.ps1 :
-Import-Module ./Modules/Core/PSToolBox.Core.psm1
-Charge la configuration.
-Crée une instance du ToolBox.ViewModel.ps1.
-Appelle la méthode Load-Tools() du ViewModel.
-Appelle Show-WpfWindow en lui passant le chemin du XAML et le ViewModel.
+  1. `Import-Module ./Modules/Core/PSToolBox.Core.psm1`
+  2. Charge la configuration.
+  3. Crée une instance du `ToolBox.ViewModel.ps1`.
+  4. Appelle la méthode `Load-Tools()` du ViewModel.
+  5. Appelle Show-WpfWindow en lui passant le chemin du XAML et le ViewModel.
+
 ## Jalon 4 et Suivants : Développement des Outils
-À partir d'ici, chaque outil est un mini-projet qui suit le même patron.
-Pour chaque outil (ex: CheckModule, CreateUser, etc.) :
-Créer son dossier : src/Modules/Tools/CreateUser/.
-Créer son manifeste : CreateUser.tool.json.
-Créer sa Vue : CreateUser.View.xaml (en utilisant les styles du thème).
-Créer son ViewModel : CreateUser.ViewModel.ps1 (contenant toute la logique).
-Créer son point d'entrée : CreateUser.ps1 (le script qui lie la Vue et le ViewModel).
-Jalon Final : Publication
-Préparation pour la communauté.
-Tâche F.1 : Rédiger une documentation complète (README.md, CONTRIBUTING.md).
-Tâche F.2 : Créer une Release v1.0 sur GitHub avec un package .zip prêt à l'emploi.
+*À partir d'ici, chaque outil est un mini-projet qui suit le même patron.*
+- Pour chaque outil (ex: `CheckModule`, `CreateUser`, etc.) :
+  1. Créer son dossier : `src/Modules/Tools/CreateUser/`.
+  2. Créer son manifeste : `CreateUser.tool.json`.
+  3. Créer sa Vue : `CreateUser.View.xaml` (en utilisant les styles du thème).
+  4. Créer son ViewModel : `CreateUser.ViewModel.ps1` (contenant toute la logique).
+  5. Créer son point d'entrée : `CreateUser.ps1` (le script qui lie la Vue et le ViewModel).
+
+## Jalon Final : Publication
+*Préparation pour la communauté.*
+- **Tâche F.1 :** Rédiger une documentation complète (`README.md`, `CONTRIBUTING.md`).
+- **Tâche F.2 :** Créer une Release v1.0 sur GitHub avec un package .zip prêt à l'emploi.
