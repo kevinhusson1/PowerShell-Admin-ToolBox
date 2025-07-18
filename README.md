@@ -1,7 +1,7 @@
 # PowerShell Admin ToolBox
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![PowerShell: 5.1/7+](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg)
+![PowerShell: 7.5+](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg)
 
 Une suite d'outils d'administration modernes et graphiques, construite avec PowerShell et WPF, conçue pour simplifier et automatiser les tâches courantes des administrateurs système et des ingénieurs DevOps.
 
