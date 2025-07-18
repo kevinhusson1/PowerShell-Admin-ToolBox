@@ -1,7 +1,7 @@
 # PowerShell Admin ToolBox
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![PowerShell: 7.5+](https://img.shields.io/badge/PowerShell-%207%2B-blue.svg)
+![PowerShell: 7.5+](https://img.shields.io/badge/PowerShell-%207.5%2B-blue.svg)
 
 Une suite d'outils d'administration modernes et graphiques, construite avec PowerShell et WPF, conçue pour simplifier et automatiser les tâches courantes des administrateurs système et des ingénieurs DevOps.
 
@@ -36,7 +36,7 @@ Pour faire fonctionner ce projet sur votre machine, suivez ces étapes.
 
 ### Prérequis
 
-1.  **PowerShell :** Version 5.1 ou, de préférence, PowerShell 7+.
+1.  **PowerShell :** PowerShell 7.5+.
 2.  **Modules PowerShell :** Assurez-vous que les modules suivants sont installés. Vous pouvez utiliser l'outil `Check-Module` inclus pour vous aider.
     *   `Microsoft.Graph` (Authentication, Users, Mail, PersonalContacts, Groups)
     *   `ActiveDirectory` (disponible via les outils RSAT)
