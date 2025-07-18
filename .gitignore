@@ -1,6 +1,7 @@
 # Fichier de configuration personnel
 # NE JAMAIS PUBLIER VOS SECRETS !
 config.json
+*.secrets.json
 
 # Fichiers de log et de cache
 logs/
@@ -28,3 +29,4 @@ Thumbs.db
 
 # Dossiers de packages PowerShell (si vous utilisez un gestionnaire local)
 /packages
+node_modules/
