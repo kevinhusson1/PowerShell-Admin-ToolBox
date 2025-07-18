@@ -51,10 +51,10 @@ Voici les étapes détaillées, du plus simple au plus complexe, pour construire
    - Analyse des thèmes Material Design et Fluent Design
    - Benchmark des outils d'administration concurrents
 2. **Définition de la palette de couleurs**
-   - Couleur primaire : Bleu professionnel (#0078d4)
-   - Couleur secondaire : Gris moderne (#323130)
-   - Couleur d'accent : Orange énergique (#ff8c00)
-   - Couleurs sémantiques : Succès (#107c10), Erreur (#d13438), Attention (#ffd700)
+   - Couleur primaire : Bleu professionnel (`#0078d4`)
+   - Couleur secondaire : Gris moderne (`#323130`)
+   - Couleur d'accent : Orange énergique (`#ff8c00`)
+   - Couleurs sémantiques : Succès (`#107c10`), Erreur (`#d13438`), Attention (`#ffd700`s)
 3. **Choix typographique**
   - Police primaire : Segoe UI (natif Windows)
   - Police monospace : Consolas (pour les codes/logs)
