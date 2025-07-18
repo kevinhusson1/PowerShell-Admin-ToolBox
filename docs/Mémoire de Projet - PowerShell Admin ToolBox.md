@@ -14,8 +14,8 @@ Configuration Centralisée : Toutes les informations spécifiques à un environn
 ## 3. Principes Directeurs (Comment y arriver)
 1. **"Style-Driven Development" :** La première phase de développement se concentrera sur la création d'un thème graphique complet et d'une "vitrine" de styles. Cette fondation visuelle garantira la cohérence de toutes les fenêtres développées par la suite.
 2. **Architecture MVVM (Model-View-ViewModel) :** C'est notre dogme.
-   _ **La Vue (View) :** Le fichier XAML. Il est "stupide". Il ne contient que la description de l'interface et des liaisons de données (Binding). **Aucun code logique. Aucun style en ligne.**
-   _ **Le Modèle (Model) :** Les objets de données brutes (ex: un objet représentant un utilisateur AD).
-   _ **Le ViewModel :** Un script PowerShell (*.ViewModel.ps1). Il est le cerveau. Il contient toute la logique, les propriétés (ex: la liste des utilisateurs à afficher) et les commandes (ex: la fonction à exécuter quand on clique sur un bouton). Il ne sait rien de l'existence des boutons ou des TextBox.
+   - **La Vue (View) :** Le fichier XAML. Il est "stupide". Il ne contient que la description de l'interface et des liaisons de données (Binding). **Aucun code logique. Aucun style en ligne.**
+   - **Le Modèle (Model) :** Les objets de données brutes (ex: un objet représentant un utilisateur AD).
+   - **Le ViewModel :** Un script PowerShell (*.ViewModel.ps1). Il est le cerveau. Il contient toute la logique, les propriétés (ex: la liste des utilisateurs à afficher) et les commandes (ex: la fonction à exécuter quand on clique sur un bouton). Il ne sait rien de l'existence des boutons ou des TextBox.
 3. **"Everything is a Module" :** Les fonctions partagées seront dans un module Core. À terme, chaque outil pourrait même être son propre module, favorisant une isolation parfaite.
 4. **"No Globals" Policy :** Nous éviterons au maximum les variables $global:. Les informations seront passées via les paramètres des fonctions, et les résultats seront retournés par les fonctions. Cela rend le flux de données prévisible et évite les effets de bord.
