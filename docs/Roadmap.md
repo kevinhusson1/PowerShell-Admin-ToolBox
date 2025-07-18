@@ -13,25 +13,52 @@ Voici les étapes détaillées, du plus simple au plus complexe, pour construire
 
 ```
 /PowerShell-Admin-ToolBox
-├── .vscode/               # Paramètres VSCode pour le projet
-├── assets/                # Icônes (.ico) et images (.png)
-├── config/
-│   └── config.template.json # Modèle de configuration
-├── docs/                  # Documentation future
-├── src/                   # Cœur du code source
+├── .vscode/                    # Configuration VSCode
+│   ├── tasks.json             # Tâches de build/test
+│   ├── extensions.json        # Extensions recommandées
+│   └── settings.json.template # Template de paramètres
+├── assets/                    # Ressources visuelles
+│   ├── icons/                 # Icônes .ico pour l'application
+│   ├── images/                # Screenshots et documentation
+├── config/                    # Configuration
+│   ├── config.template.json   # Template de configuration
+│   └── schemas/               # Schémas JSON pour validation
+├── docs/                      # Documentation
+│   ├── user-guide/           # Guide utilisateur
+│   ├── dev-guide/            # Guide développeur
+│   └── architecture/         # Diagrammes et spécifications
+├── src/                       # Code source
 │   ├── Modules/
-│   │   ├── Core/          # Notre module utilitaire
-│   │   └── Tools/         # Dossier pour les futurs outils
+│   │   ├── Core/             # Module utilitaire central
+│   │   └── Tools/            # Outils individuels
 │   ├── UI/
-│   │   ├── Styles/        # Fichiers de style .xaml
-│   │   └── Views/         # Fichiers .xaml des fenêtres
-│   └── Launcher.ps1       # Point d'entrée de l'application
-└── ... (fichiers de la racine)
+│   │   ├── Styles/           # Thèmes et styles XAML
+│   │   ├── Views/            # Fenêtres XAML
+│   │   └── ViewModels/       # ViewModels PowerShell
+│   ├── Tests/                # Tests unitaires Pester
+│   └── Launcher.ps1          # Point d'entrée principal
+├── build/                     # Scripts de build et packaging
+└── examples/                  # Exemples de configuration
 ```
 
 ## Jalon 1 : Le Cœur Visuel - Le Thème de l'Application (Durée : ~1-2 jours)
 *C'est notre priorité absolue, comme demandé. Nous créons notre identité visuelle.*
-- **Tâche 1.1 :** Créer le fichier de thème central : `src/UI/Styles/Default.Theme.xaml.`
+- **Tâche 1.1 :** Recherche et Conception du Thème (4 heures)
+**Objectif :** Définir l'identité visuelle moderne et professionnelle
+Étapes de recherche :
+1. **Analyse des tendances UI/UX 2025**
+   - Étude des applications Microsoft (Teams, Visual Studio, Azure Portal)
+   - Analyse des thèmes Material Design et Fluent Design
+   - Benchmark des outils d'administration concurrents
+2. **Définition de la palette de couleurs**
+   - Couleur primaire : Bleu professionnel (#0078d4)
+   - Couleur secondaire : Gris moderne (#323130)
+   - Couleur d'accent : Orange énergique (#ff8c00)
+   - Couleurs sémantiques : Succès (#107c10), Erreur (#d13438), Attention (#ffd700)
+3. **Choix typographique**
+  - Police primaire : Segoe UI (natif Windows)
+  - Police monospace : Consolas (pour les codes/logs)
+  - Hiérarchie typographique : H1 (16pt), H2 (14pt), Body (12pt), Caption (10pt)
 - **Tâche 1.2 :** Définir la palette de couleurs `(SolidColorBrush)` dans le thème : `PrimaryColor`, `SecondaryColor`, `AccentColor`, `TextColor`, `BorderColor`, `SuccessColor`, `ErrorColor`, etc.
 - **Tâche 1.3 :** Créer les styles **implicites** (sans x:Key) pour les contrôles de base (`Window`, `Button`, `TextBox`, `TextBlock`, `DataGrid`, etc.). Ces styles définiront la police, la taille, les couleurs de base, mais JAMAIS de `Margin` ou `Padding`.
 - **Tâche 1.4 :** Créer les styles explicites (x:Key="...") pour les variations :
