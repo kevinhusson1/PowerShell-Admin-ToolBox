@@ -13,7 +13,7 @@ Voici les étapes détaillées, du plus simple au plus complexe, pour construire
 
 ```
 /PowerShell-Admin-ToolBox
-├── .vscode/                    # Configuration VSCode
+├── .vscode/                   # Configuration VSCode
 │   ├── tasks.json             # Tâches de build/test
 │   ├── extensions.json        # Extensions recommandées
 │   └── settings.json.template # Template de paramètres
@@ -24,19 +24,19 @@ Voici les étapes détaillées, du plus simple au plus complexe, pour construire
 │   ├── config.template.json   # Template de configuration
 │   └── schemas/               # Schémas JSON pour validation
 ├── docs/                      # Documentation
-│   ├── user-guide/           # Guide utilisateur
-│   ├── dev-guide/            # Guide développeur
-│   └── architecture/         # Diagrammes et spécifications
+│   ├── user-guide/            # Guide utilisateur
+│   ├── dev-guide/             # Guide développeur
+│   └── architecture/          # Diagrammes et spécifications
 ├── src/                       # Code source
 │   ├── Modules/
-│   │   ├── Core/             # Module utilitaire central
-│   │   └── Tools/            # Outils individuels
+│   │   ├── Core/              # Module utilitaire central
+│   │   └── Tools/             # Outils individuels
 │   ├── UI/
-│   │   ├── Styles/           # Thèmes et styles XAML
-│   │   ├── Views/            # Fenêtres XAML
-│   │   └── ViewModels/       # ViewModels PowerShell
-│   ├── Tests/                # Tests unitaires Pester
-│   └── Launcher.ps1          # Point d'entrée principal
+│   │   ├── Styles/            # Thèmes et styles XAML
+│   │   ├── Views/             # Fenêtres XAML
+│   │   └── ViewModels/        # ViewModels PowerShell
+│   ├── Tests/                 # Tests unitaires Pester
+│   └── Launcher.ps1           # Point d'entrée principal
 ├── build/                     # Scripts de build et packaging
 └── examples/                  # Exemples de configuration
 ```
@@ -54,7 +54,7 @@ Voici les étapes détaillées, du plus simple au plus complexe, pour construire
    - Couleur primaire : Bleu professionnel (`#0078d4`)
    - Couleur secondaire : Gris moderne (`#323130`)
    - Couleur d'accent : Orange énergique (`#ff8c00`)
-   - Couleurs sémantiques : Succès (`#107c10`), Erreur (`#d13438`), Attention (`#ffd700`s)
+   - Couleurs sémantiques : Succès (`#107c10`), Erreur (`#d13438`), Attention (`#ffd700`)
 3. **Choix typographique**
   - Police primaire : Segoe UI (natif Windows)
   - Police monospace : Consolas (pour les codes/logs)
