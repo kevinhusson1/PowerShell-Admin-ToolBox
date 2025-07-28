@@ -1,0 +1,22 @@
+{
+    "AzureAd": {
+        "ClientID": "7sdf4547-c5da-4850-99b5-9c306e802bd9",
+        "TenantID": "6c6se81e5-3c91-47f2-a300-570b29qqs91d1a",
+        "CertificateThumbprint": "E18437CA09AEFGA229472D722148CAABC",
+        "EmailSenderObjectId": "db173e40-a484-46ec-afce-a33c662fc0e4"
+    },
+    "ActiveDirectory": {
+        "DomainController": "SRVDC.TOOLBOX.dep",
+        "DomainNetbiosName": "TOOLBOX",
+        "DefaultUsersOU": "OU=Utilisateurs,DC=TOOLBOX,DC=dep"
+    },
+    "General": {
+        "CompanyName": "TOOLBOX",
+        "EmailDomain": "@toolbox.fr"
+    },
+    "ContactSync": {
+        "ContactFolderName": "TOOLBOX Global",
+        "ContactCategory": "TOOLBOX Global",
+        "ApiSourceUserFilter": "accountEnabled eq true and userType eq 'Member'"
+    }
+}

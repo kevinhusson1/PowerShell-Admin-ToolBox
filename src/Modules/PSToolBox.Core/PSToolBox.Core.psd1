@@ -25,7 +25,8 @@ Description = 'Module principal contenant les fonctions utilitaires partagées p
 FunctionsToExport = @(
     'Show-ToolBoxWindow',
     'Get-ToolBoxConfig',
-    'Write-ToolBoxLog'
+    'Write-ToolBoxLog',
+    'Show-ToolBoxWindow'
 )
 
 # Cmdlets et Alias à exporter (aucun pour l'instant)
