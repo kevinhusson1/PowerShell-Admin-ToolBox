@@ -243,4 +243,296 @@ Describe "Get-UserInformation" {
 # Test chargement module
 Describe "Module Loading Integration" {
     It "Charge le module Core correctement" {
-        Import-Module ".\src\Core\PowerShellAdminToolBox
+        Import-Module ".\src\Core\PowerShellAdminToolBox.Core.psd1"
+        Get-Module "PowerShellAdminToolBox.Core" | Should -Not -Be $null
+    }
+    
+    It "Charge les modules dynamiquement" {
+        $moduleLoader = [ModuleLoader]::new()
+        $modules = $moduleLoader.LoadAvailableModules()
+        $modules.Count | Should -BeGreaterThan 0
+    }
+}
+```
+
+## 🎨 Standards Interface Utilisateur
+
+### Structure XAML
+```xml
+<!-- Fenêtre standard avec styles globaux -->
+<Window x:Class="ModuleName.WindowName"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{DynamicResource ToolBoxWindowStyle}"
+        Title="{Binding WindowTitle}"
+        Width="800" Height="600">
+    
+    <Grid Style="{DynamicResource MainGridStyle}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />      <!-- Header -->
+            <RowDefinition Height="*" />         <!-- Content -->
+            <RowDefinition Height="Auto" />      <!-- Footer -->
+        </Grid.RowDefinitions>
+        
+        <!-- Header avec titre et actions -->
+        <Border Grid.Row="0" Style="{DynamicResource HeaderBorderStyle}">
+            <TextBlock Text="{Binding PageTitle}" 
+                      Style="{DynamicResource PageTitleStyle}" />
+        </Border>
+        
+        <!-- Contenu principal -->
+        <ContentPresenter Grid.Row="1" 
+                         Content="{Binding CurrentView}" />
+        
+        <!-- Footer avec logs et progression -->
+        <Border Grid.Row="2" Style="{DynamicResource FooterBorderStyle}">
+            <StackPanel Orientation="Vertical">
+                <!-- Barre de progression -->
+                <ProgressBar Value="{Binding ProgressValue}" 
+                           Maximum="100"
+                           Visibility="{Binding IsProcessing, 
+                                      Converter={StaticResource BooleanToVisibilityConverter}}"
+                           Style="{DynamicResource ToolBoxProgressBarStyle}" />
+                
+                <!-- Zone de logs -->
+                <ScrollViewer Height="100" 
+                            Style="{DynamicResource LogScrollViewerStyle}">
+                    <RichTextBox x:Name="LogTextBox"
+                               IsReadOnly="True"
+                               Style="{DynamicResource LogTextBoxStyle}" />
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
+```
+
+### ViewModel Standard
+```powershell
+# ViewModel de module conforme aux standards
+class ModuleViewModel : ViewModelBase {
+    # Propriétés bindées
+    [string] $PageTitle = "Nom du Module"
+    [string] $WindowTitle = "PowerShell Admin ToolBox - Module"
+    [bool] $IsProcessing = $false
+    [int] $ProgressValue = 0
+    [object] $CurrentView
+    
+    # Commands
+    [System.Windows.Input.ICommand] $ExecuteCommand
+    [System.Windows.Input.ICommand] $CancelCommand
+    
+    # Constructor
+    ModuleViewModel() {
+        $this.InitializeCommands()
+        $this.InitializeView()
+    }
+    
+    # Initialisation des commandes
+    [void] InitializeCommands() {
+        $this.ExecuteCommand = [RelayCommand]::new(
+            { $this.ExecuteAction() },
+            { $this.CanExecute() }
+        )
+        
+        $this.CancelCommand = [RelayCommand]::new(
+            { $this.CancelAction() },
+            { $this.IsProcessing }
+        )
+    }
+    
+    # Actions principales
+    [void] ExecuteAction() {
+        try {
+            $this.IsProcessing = $true
+            $this.OnPropertyChanged("IsProcessing")
+            
+            # Exécution en processus séparé
+            $scriptBlock = {
+                # Logique métier du module
+            }
+            
+            Start-PowerShellProcess -ScriptBlock $scriptBlock -ModuleName "ModuleName"
+        }
+        catch {
+            Write-ToolBoxLog -Message "Erreur execution : $($_.Exception.Message)" -Level "Error"
+        }
+        finally {
+            $this.IsProcessing = $false
+            $this.OnPropertyChanged("IsProcessing")
+        }
+    }
+}
+```
+
+## 📦 Structure d'un Nouveau Module
+
+### 1. Créer la Structure
+```powershell
+# Script de création module
+.\scripts\New-ToolBoxModule.ps1 -ModuleName "MonNouveauModule"
+
+# Cela crée :
+src/Modules/MonNouveauModule/
+├── MonNouveauModule.psd1           # Manifest
+├── MonNouveauModule.psm1           # Module principal
+├── MonNouveauModuleWindow.xaml     # Interface
+├── MonNouveauModuleViewModel.ps1   # ViewModel
+└── Functions/
+    └── Get-ModuleData.ps1          # Fonctions métier
+```
+
+### 2. Manifest Module (.psd1)
+```powershell
+@{
+    RootModule = 'MonNouveauModule.psm1'
+    ModuleVersion = '1.0.0'
+    GUID = 'GUID-UNIQUE'
+    Author = 'Votre Nom'
+    CompanyName = 'PowerShell Admin ToolBox'
+    Copyright = '(c) 2025. All rights reserved.'
+    Description = 'Description de votre module'
+    
+    # Version PowerShell minimum
+    PowerShellVersion = '7.5'
+    
+    # Modules requis
+    RequiredModules = @('PowerShellAdminToolBox.Core')
+    
+    # Fonctions exportées
+    FunctionsToExport = @('Get-ModuleData', 'Set-ModuleConfig')
+    
+    # Métadonnées module ToolBox
+    PrivateData = @{
+        ToolBoxModule = @{
+            DisplayName = 'Mon Nouveau Module'
+            Category = 'Administration'
+            RequiredPermissions = @('AdminSystem')
+            WindowType = 'Floating'
+            Icon = 'ModuleIcon.png'
+        }
+    }
+}
+```
+
+## 🔧 Processus de Review
+
+### Checklist Pull Request
+- [ ] **Tests** : Tous les tests passent (`Invoke-Pester`)
+- [ ] **Code Quality** : PSScriptAnalyzer sans erreur
+- [ ] **Documentation** : Fonctions documentées avec Help
+- [ ] **MVVM** : Respect strict du pattern
+- [ ] **Modularité** : Aucune dépendance circulaire
+- [ ] **Sécurité** : Pas de credentials hardcodés
+- [ ] **Performance** : Tests de charge OK
+- [ ] **Compatibilité** : PowerShell 7.5+ et .NET 9.0+
+
+### Process de Validation
+1. **Review automatique** : GitHub Actions
+2. **Review par les pairs** : Minimum 1 approbation
+3. **Tests manuels** : Validation fonctionnelle
+4. **Merge** : Squash merge vers develop
+
+## 🏷️ Gestion des Issues
+
+### Labels Standard
+- `bug` : Dysfonctionnement à corriger
+- `enhancement` : Amélioration existante
+- `feature` : Nouvelle fonctionnalité
+- `documentation` : Amélioration docs
+- `good-first-issue` : Idéal pour débuter
+- `help-wanted` : Aide communauté souhaitée
+- `question` : Question d'utilisation
+- `wontfix` : Ne sera pas implémenté
+
+### Templates Issues
+Utilisez les templates GitHub pour :
+- **Bug Report** : Reproduction, environnement, impact
+- **Feature Request** : Besoin, solution proposée, alternatives
+- **Question** : Contexte, question précise
+
+## 📞 Communication
+
+### Canaux Disponibles
+- **GitHub Issues** : Bugs et demandes de fonctionnalités
+- **GitHub Discussions** : Questions générales et idées
+- **Pull Requests** : Review de code et discussions techniques
+- **Email** : admin-toolbox@example.com pour questions privées
+
+### Bonnes Pratiques Communication
+- **Soyez respectueux** : Code de conduite obligatoire
+- **Soyez précis** : Contexte, étapes de reproduction, environnement
+- **Soyez patient** : Projet communautaire, temps de réponse variable
+- **Aidez les autres** : Partagez vos connaissances
+
+## 🎯 Priorités Contributions
+
+### 🔥 Haute Priorité
+- Corrections bugs critiques
+- Tests manquants sur modules Core
+- Documentation API manquante
+- Performance et optimisation
+
+### 📈 Moyenne Priorité  
+- Nouveaux modules administration
+- Améliorations interface utilisateur
+- Traductions et internationalisation
+- Intégrations services externes
+
+### 💡 Idées Futures
+- Système de plugins externes
+- API REST pour intégrations
+- Mode CLI pour automatisation
+- Support containers/cloud
+
+## 🏆 Reconnaissance Contributeurs
+
+### Hall of Fame
+Les contributeurs significatifs sont mis en avant :
+- **README principal** : Section remerciements
+- **CONTRIBUTORS.md** : Liste détaillée contributions
+- **Releases** : Mention dans changelogs
+- **GitHub** : Statut de collaborateur
+
+### Types de Contributions Reconnues
+- Code (fonctionnalités, corrections)
+- Documentation (guides, exemples)
+- Tests (couverture, qualité)
+- Design (interface, expérience)
+- Community (support, modération)
+
+## 📚 Resources Utiles
+
+### Documentation Technique
+- [PowerShell Core](https://docs.microsoft.com/powershell/)
+- [WPF MVVM Pattern](https://docs.microsoft.com/dotnet/desktop/wpf/data/data-binding-overview)
+- [Pester Testing](https://pester.dev/)
+- [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer)
+
+### Outils Recommandés
+- **IDE** : Visual Studio Code avec extension PowerShell
+- **Git GUI** : GitKraken, SourceTree, ou GitHub Desktop
+- **Diff Tools** : Beyond Compare, WinMerge
+- **Documentation** : PlatyPS pour génération help
+
+---
+
+## 🤝 Engagement Communautaire
+
+En contribuant à PowerShell Admin ToolBox, vous rejoignez une communauté engagée à :
+
+✅ **Partager les bonnes pratiques** PowerShell et administration système  
+✅ **Simplifier la vie** des administrateurs IT au quotidien  
+✅ **Maintenir la qualité** et la sécurité du code  
+✅ **Accueillir chaleureusement** les nouveaux contributeurs  
+✅ **Documenter clairement** pour faciliter l'adoption  
+
+**Votre expertise compte !** Que vous soyez débutant ou expert, votre perspective unique enrichit le projet.
+
+---
+
+<div align="center">
+
+**🚀 Prêt à contribuer ? Commencez par consulter les [Issues "good first issue"](https://github.com/username/PowerShellAdminToolBox/labels/good-first-issue) ! 🚀**
+
+</div>
