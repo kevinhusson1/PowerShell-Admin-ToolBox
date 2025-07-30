@@ -12,9 +12,10 @@
     Création: 30 Juillet 2025
 #>
 
-# Variables globales pour le logging
-$Global:ToolBoxLogBuffer = @()
-$Global:LoggerInitialized = $false
+# Variables script pour le logging
+$Script:ToolBoxLogBuffer = @()
+$Script:LoggerInitialized = $false
+$Script:ToolBoxLogPaths = $null
 
 function Initialize-ToolBoxLogger {
     <#
@@ -30,7 +31,7 @@ function Initialize-ToolBoxLogger {
     param()
     
     try {
-        if ($Global:LoggerInitialized) {
+        if ($Script:LoggerInitialized) {
             return
         }
         
@@ -63,14 +64,14 @@ function Initialize-ToolBoxLogger {
             }
         }
         
-        # Stockage des chemins pour usage global
-        $Global:ToolBoxLogPaths = @{
+        # Stockage des chemins pour usage dans le script
+        $Script:ToolBoxLogPaths = @{
             Root = $logsPath
             Public = $publicLogsPath
             Private = $privateLogsPath
         }
         
-        $Global:LoggerInitialized = $true
+        $Script:LoggerInitialized = $true
         Write-Verbose "Logger ToolBox initialisé avec succès"
     }
     catch {
@@ -147,7 +148,7 @@ function Write-ToolBoxLog {
     
     try {
         # Initialisation automatique si nécessaire
-        if (-not $Global:LoggerInitialized) {
+        if (-not $Script:LoggerInitialized) {
             Initialize-ToolBoxLogger
         }
         
@@ -216,15 +217,15 @@ function Write-LogToFile {
     )
     
     try {
-        if (-not $Global:ToolBoxLogPaths) {
+        if (-not $Script:ToolBoxLogPaths) {
             return
         }
         
         # Détermination du répertoire selon le niveau
         $logDirectory = if ($Level -eq "Private") { 
-            $Global:ToolBoxLogPaths.Private 
+            $Script:ToolBoxLogPaths.Private 
         } else { 
-            $Global:ToolBoxLogPaths.Public 
+            $Script:ToolBoxLogPaths.Public 
         }
         
         # Construction du nom de fichier
@@ -273,10 +274,10 @@ function Add-LogToUIBuffer {
         }
     }
     
-    # Ajout au buffer global (limité à 1000 entrées pour éviter la surcharge mémoire)
-    $Global:ToolBoxLogBuffer += $logEntry
-    if ($Global:ToolBoxLogBuffer.Count -gt 1000) {
-        $Global:ToolBoxLogBuffer = $Global:ToolBoxLogBuffer[-900..-1]  # Garde les 900 dernières
+    # Ajout au buffer script (limité à 1000 entrées pour éviter la surcharge mémoire)
+    $Script:ToolBoxLogBuffer += $logEntry
+    if ($Script:ToolBoxLogBuffer.Count -gt 1000) {
+        $Script:ToolBoxLogBuffer = $Script:ToolBoxLogBuffer[-900..-1]  # Garde les 900 dernières
     }
 }
 
@@ -313,7 +314,7 @@ function Get-ToolBoxLogBuffer {
         [int]$Last
     )
     
-    $logs = $Global:ToolBoxLogBuffer
+    $logs = $Script:ToolBoxLogBuffer
     
     # Filtrage par niveau
     if ($Level) {
@@ -339,7 +340,7 @@ function Clear-ToolBoxLogBuffer {
         Vide le buffer de logs UI
     #>
     
-    $Global:ToolBoxLogBuffer = @()
+    $Script:ToolBoxLogBuffer = @()
     Write-Verbose "Buffer de logs UI vidé"
 }
 
