@@ -355,4 +355,26 @@
         <Setter Property="Margin" Value="0,16,0,8"/>
     </Style>
 
+    <!-- ===================================== -->
+    <!-- CONTENEURS VALIDÉS AVEC COULEURS SYSTÈME -->
+    <!-- ===================================== -->
+    
+    <!-- Carte simple avec couleurs système -->
+    <Style x:Key="SimpleCard" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource MediumCornerRadius}"/>
+        <Setter Property="Padding" Value="{StaticResource LargePadding}"/>
+        <Setter Property="Margin" Value="{StaticResource MediumMargin}"/>
+    </Style>
+    
+    <!-- Section avec en-tête -->
+    <Style x:Key="SectionContainer" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="0,0,0,8"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
 </ResourceDictionary>

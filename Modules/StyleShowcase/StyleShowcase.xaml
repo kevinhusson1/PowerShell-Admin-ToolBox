@@ -8,10 +8,69 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- SEUL import autorisé : les styles globaux -->
-                <ResourceDictionary Source="pack://application:,,,/PowerShell-Admin-ToolBox;component/Styles/GlobalStyles.xaml" />
+                <!-- Import des styles globaux -->
+                <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <!-- AUCUNE définition locale autorisée ici ! -->
+            
+            
+            <!-- Couleurs sémantiques locales pour test -->
+            <Color x:Key="SuccessColor">#059669</Color>
+            <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+            
+            <Color x:Key="WarningColor">#D97706</Color>
+            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+            
+            <Color x:Key="ErrorColor">#DC2626</Color>
+            <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+            
+            <Color x:Key="InfoColor">#0EA5E9</Color>
+            <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+            
+            <!-- Gris neutres locaux -->
+            <Color x:Key="NeutralGray100">#F1F5F9</Color>
+            <Color x:Key="NeutralGray300">#CBD5E1</Color>
+            <Color x:Key="NeutralGray500">#64748B</Color>
+            <Color x:Key="NeutralGray700">#334155</Color>
+            
+            <SolidColorBrush x:Key="NeutralGray100Brush" Color="{StaticResource NeutralGray100}" />
+            <SolidColorBrush x:Key="NeutralGray300Brush" Color="{StaticResource NeutralGray300}" />
+            <SolidColorBrush x:Key="NeutralGray500Brush" Color="{StaticResource NeutralGray500}" />
+            <SolidColorBrush x:Key="NeutralGray700Brush" Color="{StaticResource NeutralGray700}" />
+            
+            <!-- Espacements -->
+            <Thickness x:Key="MediumMargin">8</Thickness>
+            <Thickness x:Key="LargeMargin">16</Thickness>
+            <Thickness x:Key="MediumPadding">8</Thickness>
+            <Thickness x:Key="LargePadding">16</Thickness>
+            <CornerRadius x:Key="SmallCornerRadius">2</CornerRadius>
+            <CornerRadius x:Key="MediumCornerRadius">4</CornerRadius>
+            
+            <!-- Styles de texte locaux -->
+            <Style x:Key="HeaderText" TargetType="{x:Type TextBlock}">
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Margin" Value="0,0,0,12" />
+            </Style>
+            
+            <Style x:Key="BodyText" TargetType="{x:Type TextBlock}">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+            
+            <!-- Style carte simple -->
+            <Style x:Key="SimpleCard" TargetType="{x:Type Border}">
+                <Setter Property="Background" Value="{DynamicResource SystemColors.WindowBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource NeutralGray300Brush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{StaticResource MediumCornerRadius}" />
+                <Setter Property="Padding" Value="{StaticResource LargePadding}" />
+                <Setter Property="Margin" Value="{StaticResource MediumMargin}" />
+            </Style>
+            <Style TargetType="{x:Type Window}">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Background" Value="{DynamicResource SystemColors.WindowBrush}" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     
@@ -44,11 +103,9 @@
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="📋 Copier XAML" 
-                            Style="{StaticResource StandardButton}"
                             Margin="0,0,8,0"
                             x:Name="CopyXamlButton"/>
                     <Button Content="🔗 Documentation" 
-                            Style="{StaticResource StandardButton}"
                             x:Name="DocumentationButton"/>
                 </StackPanel>
             </Grid>
@@ -101,10 +158,17 @@
                                 <TextBlock Text="Exemple d'utilisation :" Style="{StaticResource BodyText}" FontWeight="Medium" Margin="0,16,0,8"/>
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="Bouton Accent" 
-                                            Style="{StaticResource PrimaryButton}"
+                                            Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            Padding="12,6"
                                             Margin="0,0,8,0"/>
                                     <Button Content="Bouton Clair" 
-                                            Style="{StaticResource StandardButton}"/>
+                                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                            Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+                                            BorderThickness="1"
+                                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                                            Padding="12,6"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -195,11 +259,11 @@
                                 <!-- Exemple avec différentes tailles -->
                                 <TextBlock Text="Tailles disponibles :" Style="{StaticResource BodyText}" FontWeight="Medium" Margin="0,16,0,8"/>
                                 <StackPanel>
-                                    <TextBlock Text="Très grand titre (24px)" Style="{StaticResource DisplayText}"/>
-                                    <TextBlock Text="Grand titre (18px)" Style="{StaticResource HeaderText}"/>
-                                    <TextBlock Text="Titre moyen (16px)" Style="{StaticResource SubHeaderText}"/>
-                                    <TextBlock Text="Texte normal (12px)" Style="{StaticResource BodyText}"/>
-                                    <TextBlock Text="Petit texte (10px)" Style="{StaticResource SmallText}"/>
+                                    <TextBlock Text="Très grand titre (24px)" FontSize="24" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Grand titre (18px)" FontSize="18" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Titre moyen (16px)" FontSize="16" FontWeight="Medium"/>
+                                    <TextBlock Text="Texte normal (12px)" FontSize="12"/>
+                                    <TextBlock Text="Petit texte (10px)" FontSize="10" Foreground="{StaticResource NeutralGray500Brush}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -223,48 +287,39 @@
                                            
                                 <TextBlock Text="Boutons Standard :" Style="{StaticResource BodyText}" FontWeight="Medium"/>
                                 <WrapPanel Margin="0,8,0,16">
-                                    <Button Content="Bouton Normal" 
-                                            Style="{StaticResource StandardButton}"
-                                            Margin="0,0,8,8"/>
+                                    <Button Content="Bouton Normal" Margin="0,0,8,8"/>
                                     <Button Content="Avec Accent" 
-                                            Style="{StaticResource PrimaryButton}"
+                                            Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"
+                                            Foreground="White"
+                                            BorderThickness="0"
                                             Margin="0,0,8,8"/>
-                                    <Button Content="Désactivé" 
-                                            Style="{StaticResource StandardButton}"
-                                            IsEnabled="False" 
-                                            Margin="0,0,8,8"/>
+                                    <Button Content="Désactivé" IsEnabled="False" Margin="0,0,8,8"/>
                                 </WrapPanel>
                                 
                                 <TextBlock Text="Boutons Sémantiques :" Style="{StaticResource BodyText}" FontWeight="Medium"/>
                                 <WrapPanel Margin="0,8,0,16">
                                     <Button Content="Succès" 
-                                            Style="{StaticResource SuccessButton}"
+                                            Background="{StaticResource SuccessBrush}"
+                                            Foreground="White"
+                                            BorderThickness="0"
                                             Margin="0,0,8,8"/>
                                     <Button Content="Avertissement" 
-                                            Style="{StaticResource WarningButton}"
+                                            Background="{StaticResource WarningBrush}"
+                                            Foreground="White"
+                                            BorderThickness="0"
                                             Margin="0,0,8,8"/>
                                     <Button Content="Erreur" 
-                                            Style="{StaticResource ErrorButton}"
+                                            Background="{StaticResource ErrorBrush}"
+                                            Foreground="White"
+                                            BorderThickness="0"
                                             Margin="0,0,8,8"/>
                                 </WrapPanel>
                                 
                                 <TextBlock Text="Différentes Tailles :" Style="{StaticResource BodyText}" FontWeight="Medium"/>
                                 <WrapPanel Margin="0,8,0,0">
-                                    <Button Content="Petit" 
-                                            Style="{StaticResource StandardButton}"
-                                            Height="24" 
-                                            Padding="8,2" 
-                                            FontSize="10" 
-                                            Margin="0,0,8,8"/>
-                                    <Button Content="Normal" 
-                                            Style="{StaticResource PrimaryButton}"
-                                            Margin="0,0,8,8"/>
-                                    <Button Content="Grand" 
-                                            Style="{StaticResource StandardButton}"
-                                            Height="40" 
-                                            Padding="16,8" 
-                                            FontSize="14" 
-                                            Margin="0,0,8,8"/>
+                                    <Button Content="Petit" Height="24" Padding="8,2" FontSize="10" Margin="0,0,8,8"/>
+                                    <Button Content="Normal" Height="32" Padding="12,6" Margin="0,0,8,8"/>
+                                    <Button Content="Grand" Height="40" Padding="16,8" FontSize="14" Margin="0,0,8,8"/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
@@ -292,28 +347,24 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 
-                                <Label Grid.Row="0" Grid.Column="0" Content="TextBox :" Style="{StaticResource FormLabel}"/>
+                                <Label Grid.Row="0" Grid.Column="0" Content="TextBox :" VerticalAlignment="Center"/>
                                 <TextBox Grid.Row="0" Grid.Column="1" 
-                                         Style="{StaticResource StandardTextBox}"
                                          Text="Exemple de texte" Margin="0,0,0,8"/>
                                 
-                                <Label Grid.Row="1" Grid.Column="0" Content="ComboBox :" Style="{StaticResource FormLabel}"/>
+                                <Label Grid.Row="1" Grid.Column="0" Content="ComboBox :" VerticalAlignment="Center"/>
                                 <ComboBox Grid.Row="1" Grid.Column="1" 
-                                          Style="{StaticResource StandardComboBox}"
                                           SelectedIndex="0" Margin="0,0,0,8">
                                     <ComboBoxItem Content="Option 1"/>
                                     <ComboBoxItem Content="Option 2"/>
                                     <ComboBoxItem Content="Option 3"/>
                                 </ComboBox>
                                 
-                                <Label Grid.Row="2" Grid.Column="0" Content="Désactivé :" Style="{StaticResource FormLabel}"/>
+                                <Label Grid.Row="2" Grid.Column="0" Content="Désactivé :" VerticalAlignment="Center"/>
                                 <TextBox Grid.Row="2" Grid.Column="1" 
-                                         Style="{StaticResource StandardTextBox}"
                                          Text="Champ désactivé" IsEnabled="False" Margin="0,0,0,8"/>
                                 
-                                <Label Grid.Row="3" Grid.Column="0" Content="PasswordBox :" Style="{StaticResource FormLabel}"/>
+                                <Label Grid.Row="3" Grid.Column="0" Content="PasswordBox :" VerticalAlignment="Center"/>
                                 <PasswordBox Grid.Row="3" Grid.Column="1" 
-                                             Style="{StaticResource StandardPasswordBox}"
                                              Password="example123"/>
                             </Grid>
                         </Border>
@@ -324,34 +375,18 @@
                             <StackPanel>
                                 <TextBlock Text="Cases à cocher :" Style="{StaticResource BodyText}" FontWeight="Medium" Margin="0,0,0,8"/>
                                 <StackPanel Margin="0,0,0,16">
-                                    <CheckBox Content="Option activée" 
-                                              Style="{StaticResource StandardCheckBox}"
-                                              IsChecked="True"/>
-                                    <CheckBox Content="Option désactivée" 
-                                              Style="{StaticResource StandardCheckBox}"
-                                              IsChecked="False"/>
-                                    <CheckBox Content="Option indéterminée" 
-                                              Style="{StaticResource StandardCheckBox}"
-                                              IsChecked="{x:Null}"/>
-                                    <CheckBox Content="Option désactivée" 
-                                              Style="{StaticResource StandardCheckBox}"
-                                              IsEnabled="False"/>
+                                    <CheckBox Content="Option activée" IsChecked="True" Margin="0,0,0,4"/>
+                                    <CheckBox Content="Option désactivée" IsChecked="False" Margin="0,0,0,4"/>
+                                    <CheckBox Content="Option indéterminée" IsChecked="{x:Null}" Margin="0,0,0,4"/>
+                                    <CheckBox Content="Option désactivée" IsEnabled="False" Margin="0,0,0,4"/>
                                 </StackPanel>
                                 
                                 <TextBlock Text="Boutons radio :" Style="{StaticResource BodyText}" FontWeight="Medium" Margin="0,0,0,8"/>
                                 <StackPanel>
-                                    <RadioButton Content="Choix 1" 
-                                                 Style="{StaticResource StandardRadioButton}"
-                                                 GroupName="ExampleGroup" IsChecked="True"/>
-                                    <RadioButton Content="Choix 2" 
-                                                 Style="{StaticResource StandardRadioButton}"
-                                                 GroupName="ExampleGroup"/>
-                                    <RadioButton Content="Choix 3" 
-                                                 Style="{StaticResource StandardRadioButton}"
-                                                 GroupName="ExampleGroup"/>
-                                    <RadioButton Content="Choix désactivé" 
-                                                 Style="{StaticResource StandardRadioButton}"
-                                                 GroupName="ExampleGroup" IsEnabled="False"/>
+                                    <RadioButton Content="Choix 1" GroupName="ExampleGroup" IsChecked="True" Margin="0,0,0,4"/>
+                                    <RadioButton Content="Choix 2" GroupName="ExampleGroup" Margin="0,0,0,4"/>
+                                    <RadioButton Content="Choix 3" GroupName="ExampleGroup" Margin="0,0,0,4"/>
+                                    <RadioButton Content="Choix désactivé" GroupName="ExampleGroup" IsEnabled="False" Margin="0,0,0,4"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -382,7 +417,6 @@
                 
                 <Button Grid.Column="1" 
                         Content="Fermer" 
-                        Style="{StaticResource StandardButton}"
                         x:Name="CloseButton"/>
             </Grid>
         </Border>
