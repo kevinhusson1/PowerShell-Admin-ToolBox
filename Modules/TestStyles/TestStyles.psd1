@@ -1,27 +1,27 @@
 @{
     # Module metadata
     ModuleVersion = '1.0.0'
-    GUID = '12345678-1234-1234-1234-123456789012'
+    GUID = 'TEST1234-5678-9ABC-DEF0-123456789ABC'
     Author = 'PowerShell Admin ToolBox Team'
     CompanyName = 'ToolBox'
     Copyright = '(c) 2025 ToolBox Team. All rights reserved.'
-    Description = 'Module de test pour affichage des informations système'
+    Description = 'Module de test pour validation du système de styles globaux'
     
     # Minimum version required
     PowerShellVersion = '7.5'
     
     # Functions to export
-    FunctionsToExport = @('Show-SystemInfo')
+    FunctionsToExport = @('Show-TestStyles')
     
     # ToolBox specific configuration
     PrivateData = @{
         ToolBox = @{
             Enabled = $true
             RequiredRoles = @('User', 'Admin')
-            DisplayName = 'Informations Système'
-            Description = 'Affiche les informations détaillées du système'
-            Category = 'Système'
-            SortOrder = 10
+            DisplayName = 'Test Styles'
+            Description = 'Module de validation du chargement des styles globaux'
+            Category = 'Test'
+            SortOrder = 1000  # En dernier dans la liste pour tests
         }
     }
 }

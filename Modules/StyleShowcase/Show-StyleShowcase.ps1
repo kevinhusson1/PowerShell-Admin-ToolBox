@@ -193,3 +193,4 @@ function Show-StyleShowcase {
         Write-Host "   • Edition : $($PSVersionTable.PSEdition)" -ForegroundColor White
     }
 }
+Show-StyleShowcase

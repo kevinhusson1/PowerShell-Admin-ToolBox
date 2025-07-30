@@ -1,0 +1,10 @@
+[2025-07-31 00:00:02] [INFO] [TestStyles] Démarrage du module TestStyles
+[2025-07-31 00:00:02] [ERROR] [TestStyles] Erreur dans le module TestStyles : The term 'Clear-ToolBoxStylesCache' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[2025-07-31 00:00:49] [INFO] [TestStyles] Démarrage du module TestStyles
+[2025-07-31 00:00:49] [WARNING] [TestStyles] Échec du chargement des styles globaux
+[2025-07-31 00:00:49] [INFO] [TestStyles] Ouverture de l'interface TestStyles
+[2025-07-31 00:00:55] [INFO] [TestStyles] Module TestStyles fermé
+[2025-07-31 00:02:11] [INFO] [TestStyles] Démarrage du module TestStyles
+[2025-07-31 00:02:11] [INFO] [TestStyles] Ouverture de l'interface TestStyles
+[2025-07-31 00:02:23] [INFO] [TestStyles] Module TestStyles fermé

@@ -1,7 +1,8 @@
 {
     "Application": {
         "Version": "1.0.0",
-        "LogLevel": "Info",
+        "_comment": "Debug, Info, Warning, Error",
+        "LogLevel": "Warning",
         "MaxRunspaces": 3,
         "Language": "fr-FR"
     },

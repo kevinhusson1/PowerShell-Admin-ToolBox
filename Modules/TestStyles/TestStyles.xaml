@@ -1,0 +1,100 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ToolBox - Test Styles" 
+        Height="400" 
+        Width="500"
+        WindowStartupLocation="CenterScreen">
+
+        <!-- 
+        REMARQUE IMPORTANTE : 
+        Ce XAML ne contient AUCUN style personnalisé !
+        Tous les styles sont chargés via DynamicResource depuis GlobalStyles.xaml
+        -->
+        
+        <Grid Margin="20">
+                <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- En-tête -->
+                <TextBlock Grid.Row="0" 
+                        Text="🧪 Test du Système de Styles"
+                        Style="{DynamicResource HeaderText}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,20"/>
+                
+                <!-- Zone de contenu -->
+                <StackPanel Grid.Row="1" 
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Center">
+                
+                <!-- Texte d'information -->
+                <TextBlock Text="Ce module teste le chargement des styles globaux"
+                        Style="{DynamicResource BodyText}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,20"/>
+                
+                <!-- Boutons de test -->
+                <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,20">
+                        
+                        <Button Content="Test Standard"
+                                Style="{DynamicResource StandardButton}"
+                                Margin="0,0,10,0"
+                                x:Name="TestButton"/>
+
+                        <Button Content="Test Primary"
+                                Background="{DynamicResource ToolBoxInfoBrush}"
+                                Foreground="White"
+                                Padding="12,6"
+                                Margin="0,0,10,0"/>
+                        
+                        <Button Content="Test Success"
+                                Style="{DynamicResource SuccessButton}"/>
+                </StackPanel>
+                
+                <!-- Champs de test -->
+                <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,20">
+                        
+                        <TextBox Text="Test TextBox"
+                                Style="{DynamicResource StandardTextBox}"
+                                Width="120"
+                                Margin="0,0,10,0"/>
+                        
+                        <ComboBox Style="{DynamicResource StandardComboBox}"
+                                Width="120"
+                                SelectedIndex="0">
+                        <ComboBoxItem Content="Option 1"/>
+                        <ComboBoxItem Content="Option 2"/>
+                        </ComboBox>
+                </StackPanel>
+                
+                <!-- Label d'information dynamique -->
+                <Label x:Name="InfoLabel"
+                        Content="Cliquez sur 'Test Standard' pour valider"
+                        Style="{DynamicResource FormLabel}"
+                        HorizontalAlignment="Center"/>
+                        
+                </StackPanel>
+                
+                <!-- Footer -->
+                <StackPanel Grid.Row="2" 
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center">
+                
+                <TextBlock Text="✅ Styles appliqués via DynamicResource"
+                        Style="{DynamicResource SuccessText}"
+                        VerticalAlignment="Center"
+                        Margin="0,0,20,0"/>
+                
+                <Button Content="Fermer"
+                        Style="{DynamicResource StandardButton}"
+                        x:Name="CloseButton"/>
+                </StackPanel>
+        </Grid>
+</Window>

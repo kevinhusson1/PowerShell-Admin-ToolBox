@@ -58,11 +58,16 @@ function Import-ToolBoxConfig {
         
         # Détermination du chemin de configuration
         if (-not $ConfigPath) {
-            $scriptRoot = $PSScriptRoot
-            if (-not $scriptRoot) {
-                $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+            if ($Global:ToolBoxConfigPath) {
+                $ConfigPath = Join-Path $Global:ToolBoxConfigPath "ToolBoxConfig.json"
+            } else {
+                # Fallback si variables globales pas initialisées
+                $scriptRoot = $PSScriptRoot
+                if (-not $scriptRoot) {
+                    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+                }
+                $ConfigPath = Join-Path (Split-Path -Parent (Split-Path -Parent $scriptRoot)) "Config\ToolBoxConfig.json"
             }
-            $ConfigPath = Join-Path (Split-Path -Parent $scriptRoot) "Config\ToolBoxConfig.json"
         }
         
         # Vérification de l'existence du fichier
