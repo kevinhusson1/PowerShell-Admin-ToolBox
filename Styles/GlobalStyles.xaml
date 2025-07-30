@@ -1,0 +1,358 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- 
+    ========================================
+    POWERSHELL ADMIN TOOLBOX - GLOBAL STYLES
+    ========================================
+    
+    Point d'entrée central pour tous les styles de l'application.
+    Basé sur le Fluent Theme .NET 9 pour cohérence Windows 11.
+    
+    Usage dans vos fenêtres XAML :
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/PowerShell-Admin-ToolBox;component/Styles/GlobalStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    Version: 1.1 - Styles validés et testés
+    -->
+
+    <ResourceDictionary.MergedDictionaries>
+        
+        <!-- ===================================== -->
+        <!-- 1. FLUENT THEME .NET 9 (BASE)        -->
+        <!-- ===================================== -->
+        <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" />
+        
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- ===================================== -->
+    <!-- 2. COULEURS TOOLBOX                  -->
+    <!-- ===================================== -->
+    
+    <!-- Couleurs sémantiques validées -->
+    <Color x:Key="SuccessColor">#059669</Color>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    
+    <Color x:Key="WarningColor">#D97706</Color>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    
+    <Color x:Key="ErrorColor">#DC2626</Color>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+    
+    <Color x:Key="InfoColor">#0EA5E9</Color>
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+    
+    <!-- Gris neutres modernes validés -->
+    <Color x:Key="NeutralGray50">#F8FAFC</Color>
+    <Color x:Key="NeutralGray100">#F1F5F9</Color>
+    <Color x:Key="NeutralGray300">#CBD5E1</Color>
+    <Color x:Key="NeutralGray500">#64748B</Color>
+    <Color x:Key="NeutralGray700">#334155</Color>
+    
+    <SolidColorBrush x:Key="NeutralGray50Brush" Color="{StaticResource NeutralGray50}" />
+    <SolidColorBrush x:Key="NeutralGray100Brush" Color="{StaticResource NeutralGray100}" />
+    <SolidColorBrush x:Key="NeutralGray300Brush" Color="{StaticResource NeutralGray300}" />
+    <SolidColorBrush x:Key="NeutralGray500Brush" Color="{StaticResource NeutralGray500}" />
+    <SolidColorBrush x:Key="NeutralGray700Brush" Color="{StaticResource NeutralGray700}" />
+    
+    <!-- ===================================== -->
+    <!-- 3. ESPACEMENTS STANDARDISÉS          -->
+    <!-- ===================================== -->
+    
+    <Thickness x:Key="SmallMargin">4</Thickness>
+    <Thickness x:Key="MediumMargin">8</Thickness>
+    <Thickness x:Key="LargeMargin">16</Thickness>
+    <Thickness x:Key="XLargeMargin">24</Thickness>
+    
+    <Thickness x:Key="SmallPadding">4</Thickness>
+    <Thickness x:Key="MediumPadding">8</Thickness>
+    <Thickness x:Key="LargePadding">16</Thickness>
+    
+    <CornerRadius x:Key="SmallCornerRadius">2</CornerRadius>
+    <CornerRadius x:Key="MediumCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="LargeCornerRadius">8</CornerRadius>
+    
+    <!-- Tailles standardisées -->
+    <sys:Double x:Key="SmallIconSize">16</sys:Double>
+    <sys:Double x:Key="MediumIconSize">24</sys:Double>
+    <sys:Double x:Key="LargeIconSize">32</sys:Double>
+    
+    <sys:Double x:Key="ButtonHeight">32</sys:Double>
+    <sys:Double x:Key="TextBoxHeight">32</sys:Double>
+    <sys:Double x:Key="ComboBoxHeight">32</sys:Double>
+    
+    <!-- ===================================== -->
+    <!-- 4. STYLES DE FENÊTRES                -->
+    <!-- ===================================== -->
+    
+    <!-- Style Window par défaut ToolBox -->
+    <Style x:Key="ToolBoxWindow" TargetType="{x:Type Window}">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="{DynamicResource SystemColors.WindowBrush}" />
+        <Setter Property="WindowStyle" Value="SingleBorderWindow" />
+        <Setter Property="ResizeMode" Value="CanResize" />
+        <Setter Property="ShowInTaskbar" Value="True" />
+    </Style>
+    
+    <!-- Style Window par défaut (appliqué automatiquement) -->
+    <Style TargetType="{x:Type Window}" BasedOn="{StaticResource ToolBoxWindow}" />
+    
+    <!-- ===================================== -->
+    <!-- 5. STYLES DE TEXTE                   -->
+    <!-- ===================================== -->
+    
+    <!-- Hiérarchie typographique validée -->
+    <Style x:Key="DisplayText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="Light" />
+        <Setter Property="Margin" Value="0,0,0,16" />
+    </Style>
+    
+    <Style x:Key="HeaderText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+    
+    <Style x:Key="SubHeaderText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+    
+    <Style x:Key="BodyText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    
+    <Style x:Key="CaptionText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource NeutralGray500Brush}" />
+    </Style>
+    
+    <Style x:Key="SmallText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="{StaticResource NeutralGray500Brush}" />
+    </Style>
+    
+    <!-- Textes sémantiques -->
+    <Style x:Key="SuccessText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource BodyText}">
+        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    
+    <Style x:Key="WarningText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource BodyText}">
+        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    
+    <Style x:Key="ErrorText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource BodyText}">
+        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    
+    <Style x:Key="InfoText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource BodyText}">
+        <Setter Property="Foreground" Value="{StaticResource InfoBrush}" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    
+    <!-- ===================================== -->
+    <!-- 6. STYLES DE BOUTONS VALIDÉS         -->
+    <!-- ===================================== -->
+    
+    <!-- Bouton standard avec hover -->
+    <Style x:Key="StandardButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="{StaticResource ButtonHeight}"/>
+        <Setter Property="Padding" Value="{StaticResource MediumPadding}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SystemColors.ControlDarkBrushKey}"/>
+        <Setter Property="Background" Value="{DynamicResource SystemColors.ControlBrushKey}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SystemColors.ControlTextBrushKey}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SystemColors.ControlLightBrushKey}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SystemColors.HighlightBrushKey}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SystemColors.ControlDarkBrushKey}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Bouton principal (accent) -->
+    <Style x:Key="PrimaryButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="{StaticResource ButtonHeight}"/>
+        <Setter Property="Padding" Value="{StaticResource MediumPadding}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="{DynamicResource SystemColors.HighlightBrushKey}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SystemColors.HotTrackBrushKey}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SystemColors.ActiveCaptionBrushKey}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Bouton secondaire (alias pour StandardButton) -->
+    <Style x:Key="SecondaryButton" TargetType="{x:Type Button}" BasedOn="{StaticResource StandardButton}" />
+    
+    <!-- Boutons sémantiques -->
+    <Style x:Key="SuccessButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="{StaticResource ButtonHeight}"/>
+        <Setter Property="Padding" Value="{StaticResource MediumPadding}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="0.9"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Opacity" Value="0.8"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <Style x:Key="WarningButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="{StaticResource ButtonHeight}"/>
+        <Setter Property="Padding" Value="{StaticResource MediumPadding}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="0.9"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Opacity" Value="0.8"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <Style x:Key="ErrorButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="{StaticResource ButtonHeight}"/>
+        <Setter Property="Padding" Value="{StaticResource MediumPadding}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="0.9"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Opacity" Value="0.8"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- ===================================== -->
+    <!-- 7. STYLES DE CHAMPS VALIDÉS          -->
+    <!-- ===================================== -->
+    
+    <!-- TextBox standard -->
+    <Style x:Key="StandardTextBox" TargetType="{x:Type TextBox}">
+        <Setter Property="Height" Value="{StaticResource TextBoxHeight}"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SystemColors.ControlDarkBrushKey}"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource SystemColors.HighlightBrushKey}"/>
+                <Setter Property="BorderThickness" Value="2"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- ComboBox standard -->
+    <Style x:Key="StandardComboBox" TargetType="{x:Type ComboBox}">
+        <Setter Property="Height" Value="{StaticResource ComboBoxHeight}"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    
+    <!-- PasswordBox standard -->
+    <Style x:Key="StandardPasswordBox" TargetType="{x:Type PasswordBox}">
+        <Setter Property="Height" Value="{StaticResource TextBoxHeight}"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource SystemColors.HighlightBrushKey}"/>
+                <Setter Property="BorderThickness" Value="2"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- CheckBox standard -->
+    <Style x:Key="StandardCheckBox" TargetType="{x:Type CheckBox}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    
+    <!-- RadioButton standard -->
+    <Style x:Key="StandardRadioButton" TargetType="{x:Type RadioButton}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    
+    <!-- ===================================== -->
+    <!-- 8. CONTENEURS VALIDÉS                -->
+    <!-- ===================================== -->
+    
+    <!-- Carte simple -->
+    <Style x:Key="SimpleCard" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource SystemColors.WindowBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource NeutralGray300Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource MediumCornerRadius}"/>
+        <Setter Property="Padding" Value="{StaticResource LargePadding}"/>
+        <Setter Property="Margin" Value="{StaticResource MediumMargin}"/>
+    </Style>
+    
+    <!-- Section avec en-tête -->
+    <Style x:Key="SectionContainer" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{StaticResource NeutralGray50Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource NeutralGray300Brush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="0,0,0,8"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
+    
+    <!-- ===================================== -->
+    <!-- 9. LABELS ET FORMULAIRES             -->
+    <!-- ===================================== -->
+    
+    <!-- Label standard pour formulaires -->
+    <Style x:Key="FormLabel" TargetType="{x:Type Label}">
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="0,0,8,0"/>
+    </Style>
+    
+    <!-- Label de section -->
+    <Style x:Key="SectionLabel" TargetType="{x:Type Label}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource NeutralGray700Brush}"/>
+        <Setter Property="Margin" Value="0,16,0,8"/>
+    </Style>
+
+</ResourceDictionary>
