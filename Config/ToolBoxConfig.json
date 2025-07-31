@@ -2,7 +2,7 @@
     "Application": {
         "Version": "1.0.0",
         "_comment": "Debug, Info, Warning, Error",
-        "LogLevel": "Error",
+        "LogLevel": "Debug",
         "MaxRunspaces": 3,
         "Language": "fr-FR"
     },

@@ -2,27 +2,63 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Couleurs ToolBox -->
-    <SolidColorBrush x:Key="ToolBoxInfoBrush" Color="#0EA5E9" />
+    <SolidColorBrush x:Key="ToolBoxPrimaryBrush" Color="#0EA5E9" />
     <SolidColorBrush x:Key="ToolBoxSuccessBrush" Color="#059669" />
+    <SolidColorBrush x:Key="ToolBoxBorderBrush" Color="#D1D5DB" />
+    <SolidColorBrush x:Key="ToolBoxForegroundBrush" Color="#374151" />
 
-    <!-- Style bouton simple -->
+    <!-- Styles de Texte -->
+    <Style x:Key="HeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxForegroundBrush}" />
+    </Style>
+
+    <Style x:Key="BodyText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxForegroundBrush}" />
+    </Style>
+
+    <Style x:Key="FormLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxForegroundBrush}" />
+    </Style>
+    
+    <!-- Styles de Contrôles Autonomes -->
     <Style x:Key="StandardButton" TargetType="Button">
         <Setter Property="Background" Value="White" />
-        <Setter Property="Foreground" Value="#374151" />
-        <Setter Property="BorderBrush" Value="#D1D5DB" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxForegroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="12,6" />
-    </Style>
-    <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ToolBoxInfoBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinWidth" Value="80" />
     </Style>
 
-    <Style x:Key="SuccessButton" TargetType="Button">
+    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource StandardButton}">
+        <Setter Property="Background" Value="{StaticResource ToolBoxPrimaryBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource StandardButton}">
         <Setter Property="Background" Value="{StaticResource ToolBoxSuccessBrush}" />
         <Setter Property="Foreground" Value="White" />
-        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxSuccessBrush}" />
+    </Style>
+    
+    <Style x:Key="StandardTextBox" TargetType="TextBox">
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+
+    <Style x:Key="StandardComboBox" TargetType="ComboBox">
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="MinHeight" Value="32" />
     </Style>
 
 </ResourceDictionary>

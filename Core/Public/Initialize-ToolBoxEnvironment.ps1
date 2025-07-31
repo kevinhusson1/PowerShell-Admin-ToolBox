@@ -101,23 +101,6 @@ function Initialize-ToolBoxEnvironment {
             Add-Type -AssemblyName PresentationCore -ErrorAction Stop
             Add-Type -AssemblyName WindowsBase -ErrorAction Stop
             
-            # Test de disponibilité du Fluent Theme
-            try {
-                $fluentUri = "pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml"
-                $streamInfo = [System.Windows.Application]::GetResourceStream([System.Uri]::new($fluentUri, [System.UriKind]::Absolute))
-                if ($streamInfo -and $streamInfo.Stream) {
-                    $streamInfo.Stream.Close()
-                    $Global:ToolBoxFluentThemeAvailable = $true
-                    Write-ToolBoxLog -Level "Debug" -Message "Fluent Theme disponible" -Component "Environment" -Console $ShowDetails
-                } else {
-                    $Global:ToolBoxFluentThemeAvailable = $false
-                }
-            }
-            catch {
-                $Global:ToolBoxFluentThemeAvailable = $false
-                Write-ToolBoxLog -Level "Warning" -Message "Fluent Theme non disponible" -Component "Environment" -Console $ShowDetails
-            }
-            
             Write-ToolBoxLog -Level "Debug" -Message "Assemblies WPF chargées avec succès" -Component "Environment" -Console $ShowDetails
         }
         catch {
@@ -157,7 +140,6 @@ function Initialize-ToolBoxEnvironment {
         if ($ShowDetails) {
             Write-ToolBoxLog -Level "Info" -Message "Variables globales configurées :" -Component "Environment" -Console $true
             Write-ToolBoxLog -Level "Info" -Message "  ToolBoxRootPath: $Global:ToolBoxRootPath" -Component "Environment" -Console $true
-            Write-ToolBoxLog -Level "Info" -Message "  FluentTheme: $Global:ToolBoxFluentThemeAvailable" -Component "Environment" -Console $true
             Write-ToolBoxLog -Level "Info" -Message "  LaunchedFromLauncher: $Global:ToolBoxLaunchedFromLauncher" -Component "Environment" -Console $true
         }
         
