@@ -107,7 +107,7 @@ function Show-StyleShowcase {
 <Window x:Class="MonModule.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Style="{StaticResource ToolBoxWindow}"
+        Style="{DynamicResource ToolBoxWindow}"
         Title="Mon Module ToolBox" Height="600" Width="800">
     
     <Grid>
@@ -118,19 +118,19 @@ function Show-StyleShowcase {
         </Grid.RowDefinitions>
         
         <!-- En-tête -->
-        <Border Grid.Row="0" Style="{StaticResource ToolBoxCard}">
+        <Border Grid.Row="0" Style="{DynamicResource ToolBoxCard}">
             <StackPanel>
-                <TextBlock Text="Mon Interface Moderne" Style="{StaticResource ToolBoxHeaderText}"/>
-                <TextBlock Text="Utilise le design system ToolBox V1" Style="{StaticResource ToolBoxSecondaryText}"/>
+                <TextBlock Text="Mon Interface Moderne" Style="{DynamicResource ToolBoxHeaderText}"/>
+                <TextBlock Text="Utilise le design system ToolBox V1" Style="{DynamicResource ToolBoxSecondaryText}"/>
             </StackPanel>
         </Border>
         
         <!-- Contenu principal -->
         <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="{StaticResource LargeMargin}">
+            <StackPanel Margin="{DynamicResource LargeMargin}">
                 
                 <!-- Section Formulaire -->
-                <GroupBox Header="Formulaire d'exemple" Style="{StaticResource ToolBoxSection}">
+                <GroupBox Header="Formulaire d'exemple" Style="{DynamicResource ToolBoxSection}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120"/>
@@ -142,14 +142,14 @@ function Show-StyleShowcase {
                             <RowDefinition/>
                         </Grid.RowDefinitions>
                         
-                        <Label Grid.Row="0" Grid.Column="0" Content="Nom :" Style="{StaticResource ToolBoxFormLabel}"/>
-                        <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource ToolBoxTextBox}" Margin="0,0,0,8"/>
+                        <Label Grid.Row="0" Grid.Column="0" Content="Nom :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Style="{DynamicResource ToolBoxTextBox}" Margin="0,0,0,8"/>
                         
-                        <Label Grid.Row="1" Grid.Column="0" Content="Email :" Style="{StaticResource ToolBoxFormLabel}"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource ToolBoxTextBox}" Margin="0,0,0,8"/>
+                        <Label Grid.Row="1" Grid.Column="0" Content="Email :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Style="{DynamicResource ToolBoxTextBox}" Margin="0,0,0,8"/>
                         
-                        <Label Grid.Row="2" Grid.Column="0" Content="Type :" Style="{StaticResource ToolBoxFormLabel}"/>
-                        <ComboBox Grid.Row="2" Grid.Column="1" Style="{StaticResource ToolBoxComboBox}">
+                        <Label Grid.Row="2" Grid.Column="0" Content="Type :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Style="{DynamicResource ToolBoxComboBox}">
                             <ComboBoxItem Content="Option 1"/>
                             <ComboBoxItem Content="Option 2"/>
                         </ComboBox>
@@ -157,11 +157,11 @@ function Show-StyleShowcase {
                 </GroupBox>
                 
                 <!-- Section Options -->
-                <Border Style="{StaticResource ToolBoxCard}">
+                <Border Style="{DynamicResource ToolBoxCard}">
                     <StackPanel>
-                        <TextBlock Text="Options" Style="{StaticResource ToolBoxSubHeaderText}"/>
-                        <CheckBox Content="Notification par email" Style="{StaticResource ToolBoxCheckBox}"/>
-                        <CheckBox Content="Synchronisation automatique" Style="{StaticResource ToolBoxCheckBox}"/>
+                        <TextBlock Text="Options" Style="{DynamicResource ToolBoxSubHeaderText}"/>
+                        <CheckBox Content="Notification par email" Style="{DynamicResource ToolBoxCheckBox}"/>
+                        <CheckBox Content="Synchronisation automatique" Style="{DynamicResource ToolBoxCheckBox}"/>
                     </StackPanel>
                 </Border>
                 
@@ -169,10 +169,10 @@ function Show-StyleShowcase {
         </ScrollViewer>
         
         <!-- Actions -->
-        <Border Grid.Row="2" Style="{StaticResource ToolBoxCard}">
+        <Border Grid.Row="2" Style="{DynamicResource ToolBoxCard}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Annuler" Style="{StaticResource ToolBoxSecondaryButton}" Margin="0,0,8,0"/>
-                <Button Content="Valider" Style="{StaticResource ToolBoxPrimaryButton}"/>
+                <Button Content="Annuler" Style="{DynamicResource ToolBoxSecondaryButton}" Margin="0,0,8,0"/>
+                <Button Content="Valider" Style="{DynamicResource ToolBoxPrimaryButton}"/>
             </StackPanel>
         </Border>
         
