@@ -1,0 +1,2 @@
+[2025-07-31 16:13:08] [ERROR] [StyleShowcase] Erreur lors de l'affichage de la vitrine de styles : A constructor was not found. Cannot find an appropriate constructor for type System.Xml.XmlNodeReader.
+[2025-07-31 16:14:03] [INFO] [StyleShowcase] Vitrine de styles fermée

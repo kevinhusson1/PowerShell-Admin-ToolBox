@@ -1,0 +1,642 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ToolBox - Vitrine de Styles Fluent" 
+        Height="700" 
+        Width="1000"
+        WindowStartupLocation="CenterScreen">
+    
+    <!-- 
+    INTEGRATION FLUENT THEME .NET 9
+    - ThemeMode="System" : Suit automatiquement le thème Windows (Clair/Sombre)
+    - Suppression des couleurs personnalisées locales
+    - Utilisation des ressources système Fluent uniquement
+    -->
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- En-tête avec thème système -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                BorderThickness="0,0,0,1"
+                Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="🎨 Vitrine de Styles Fluent Theme" 
+                               FontSize="18" 
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Référence complète des styles Fluent Theme .NET 9 - Suit automatiquement le thème Windows"
+                               FontSize="12"
+                               Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="📋 Copier XAML" 
+                            Margin="0,0,8,0"
+                            x:Name="CopyXamlButton"/>
+                    <Button Content="🔗 Documentation" 
+                            x:Name="DocumentationButton"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Contenu principal avec onglets Fluent -->
+        <TabControl Grid.Row="1" Margin="8">
+            
+            <!-- Onglet Couleurs Système Fluent -->
+            <TabItem Header="🎨 Couleurs Fluent System">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                    <StackPanel>
+                        
+                        <!-- Section Couleurs d'accent système -->
+                        <TextBlock Text="Couleurs d'Accent Système (.NET 9)" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="💡 Ces couleurs s'adaptent automatiquement aux préférences utilisateur Windows 11" 
+                                           FontSize="12" 
+                                           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                                           Margin="0,0,0,12"/>
+                                
+                                <!-- Palette des couleurs système -->
+                                <WrapPanel>
+                                    <Border Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" 
+                                            Width="100" Height="60" Margin="4"
+                                            CornerRadius="4">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="Highlight" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" 
+                                                       FontWeight="Medium" FontSize="10"/>
+                                            <TextBlock Text="Primary" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" 
+                                                       FontSize="8"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <Border Background="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" 
+                                            Width="100" Height="60" Margin="4"
+                                            CornerRadius="4">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="MenuHighlight" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}" 
+                                                       FontWeight="Medium" FontSize="10"/>
+                                            <TextBlock Text="Secondary" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}" 
+                                                       FontSize="8"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <Border Background="{DynamicResource {x:Static SystemColors.HotTrackBrushKey}}" 
+                                            Width="100" Height="60" Margin="4"
+                                            CornerRadius="4">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="HotTrack" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="White" 
+                                                       FontWeight="Medium" FontSize="10"/>
+                                            <TextBlock Text="Hover" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="White" 
+                                                       FontSize="8"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <Border Background="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" 
+                                            Width="100" Height="60" Margin="4"
+                                            CornerRadius="4">
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="ActiveCaption" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="{DynamicResource {x:Static SystemColors.ActiveCaptionTextBrushKey}}" 
+                                                       FontWeight="Medium" FontSize="10"/>
+                                            <TextBlock Text="Active" 
+                                                       HorizontalAlignment="Center" 
+                                                       Foreground="{DynamicResource {x:Static SystemColors.ActiveCaptionTextBrushKey}}" 
+                                                       FontSize="8"/>
+                                        </StackPanel>
+                                    </Border>
+                                </WrapPanel>
+                                
+                                <!-- Exemple d'utilisation -->
+                                <TextBlock Text="Exemples d'utilisation :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium" 
+                                           Margin="0,16,0,8"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Bouton Accent" 
+                                            Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"
+                                            Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
+                                            BorderThickness="0"
+                                            Padding="12,6"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="Bouton Standard" 
+                                            Padding="12,6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Section Couleurs de contrôles -->
+                        <TextBlock Text="Couleurs de Contrôles Système" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,24,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <WrapPanel>
+                                <Border Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" 
+                                        Width="100" Height="60" Margin="4"
+                                        CornerRadius="4"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                                        BorderThickness="1">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="Control" 
+                                                   HorizontalAlignment="Center" 
+                                                   Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" 
+                                                   FontWeight="Medium" FontSize="10"/>
+                                        <TextBlock Text="Background" 
+                                                   HorizontalAlignment="Center" 
+                                                   Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" 
+                                                   FontSize="8"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                        Width="100" Height="60" Margin="4"
+                                        CornerRadius="4"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                                        BorderThickness="1">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="Window" 
+                                                   HorizontalAlignment="Center" 
+                                                   Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" 
+                                                   FontWeight="Medium" FontSize="10"/>
+                                        <TextBlock Text="Surface" 
+                                                   HorizontalAlignment="Center" 
+                                                   Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" 
+                                                   FontSize="8"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <Border Background="{DynamicResource {x:Static SystemColors.MenuBrushKey}}" 
+                                        Width="100" Height="60" Margin="4"
+                                        CornerRadius="4"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                                        BorderThickness="1">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="Menu" 
+                                                   HorizontalAlignment="Center" 
+                                                   Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}" 
+                                                   FontWeight="Medium" FontSize="10"/>
+                                        <TextBlock Text="Context" 
+                                                   HorizontalAlignment="Center" 
+                                                   Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}" 
+                                                   FontSize="8"/>
+                                    </StackPanel>
+                                </Border>
+                            </WrapPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Onglet Typographie Fluent -->
+            <TabItem Header="📝 Typographie Fluent">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                    <StackPanel>
+                        
+                        <TextBlock Text="Hiérarchie Typographique Fluent" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="📝 Police système adaptative - suit les préférences Windows" 
+                                           FontSize="12" 
+                                           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                                           Margin="0,0,0,12"/>
+                                
+                                <!-- Exemples de typographie -->
+                                <TextBlock Text="Titre Principal (Display)" 
+                                           FontSize="24" 
+                                           FontWeight="Light" 
+                                           Margin="0,8,0,4"/>
+                                           
+                                <TextBlock Text="Titre Section (Header)" 
+                                           FontSize="18" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,8,0,4"/>
+                                           
+                                <TextBlock Text="Sous-titre (Subheader)" 
+                                           FontSize="16" 
+                                           FontWeight="Medium" 
+                                           Margin="0,8,0,4"/>
+                                           
+                                <TextBlock Text="Texte de corps standard qui s'adapte automatiquement au thème système et aux préférences de l'utilisateur Windows." 
+                                           FontSize="12" 
+                                           TextWrapping="Wrap"
+                                           Margin="0,8,0,4"/>
+                                           
+                                <TextBlock Text="Texte secondaire ou légende" 
+                                           FontSize="11" 
+                                           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                                           Margin="0,8,0,4"/>
+                                
+                                <!-- États de texte -->
+                                <TextBlock Text="États de texte :" 
+                                           FontSize="14" 
+                                           FontWeight="Medium" 
+                                           Margin="0,16,0,8"/>
+                                <StackPanel>
+                                    <TextBlock Text="• Texte normal" FontSize="12" Margin="0,2"/>
+                                    <TextBlock Text="• Texte désactivé" FontSize="12" 
+                                               Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" 
+                                               Margin="0,2"/>
+                                    <TextBlock Text="• Texte sélectionné" FontSize="12" 
+                                               Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"
+                                               Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
+                                               Padding="4,2" Margin="0,2"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Onglet Boutons Fluent -->
+            <TabItem Header="🔘 Boutons Fluent">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                    <StackPanel>
+                        
+                        <TextBlock Text="Boutons avec Thème Fluent" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="🔘 Styles automatiques basés sur le Fluent Theme .NET 9" 
+                                           FontSize="12" 
+                                           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                                           Margin="0,0,0,12"/>
+                                           
+                                <TextBlock Text="Boutons Standard :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"/>
+                                <WrapPanel Margin="0,8,0,16">
+                                    <Button Content="Bouton Normal" Margin="0,0,8,8"/>
+                                    <Button Content="Avec Focus" IsDefault="True" Margin="0,0,8,8"/>
+                                    <Button Content="Désactivé" IsEnabled="False" Margin="0,0,8,8"/>
+                                </WrapPanel>
+                                
+                                <TextBlock Text="Boutons d'Accent :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"/>
+                                <WrapPanel Margin="0,8,0,16">
+                                    <Button Content="Accent Principal" 
+                                            Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"
+                                            Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
+                                            BorderThickness="0"
+                                            Margin="0,0,8,8"/>
+                                    <Button Content="Accent Secondaire" 
+                                            Background="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}"
+                                            Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}"
+                                            BorderThickness="0"
+                                            Margin="0,0,8,8"/>
+                                </WrapPanel>
+                                
+                                <TextBlock Text="Différentes Tailles :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"/>
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Button Content="Petit" Height="24" Padding="8,2" FontSize="10" Margin="0,0,8,8"/>
+                                    <Button Content="Normal" Height="32" Padding="12,6" Margin="0,0,8,8"/>
+                                    <Button Content="Grand" Height="40" Padding="16,8" FontSize="14" Margin="0,0,8,8"/>
+                                </WrapPanel>
+                                
+                                <!-- Test des états interactifs -->
+                                <TextBlock Text="Test des États Interactifs :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"
+                                           Margin="0,16,0,8"/>
+                                <StackPanel>
+                                    <Button Content="Survolez-moi pour voir l'effet Hover" 
+                                            Padding="16,8" 
+                                            Margin="0,4"
+                                            HorizontalAlignment="Left"/>
+                                    <Button Content="Cliquez-moi pour voir l'effet Pressed" 
+                                            Padding="16,8" 
+                                            Margin="0,4"
+                                            HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Onglet Champs Fluent -->
+            <TabItem Header="📝 Champs Fluent">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                    <StackPanel>
+                        
+                        <TextBlock Text="Champs de Saisie Fluent" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <Label Grid.Row="0" Grid.Column="0" 
+                                       Content="TextBox :" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" 
+                                         Text="Texte avec thème Fluent automatique" 
+                                         Margin="0,0,0,8"/>
+                                
+                                <Label Grid.Row="1" Grid.Column="0" 
+                                       Content="ComboBox :" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" 
+                                          SelectedIndex="0" 
+                                          Margin="0,0,0,8">
+                                    <ComboBoxItem Content="Option Fluent 1"/>
+                                    <ComboBoxItem Content="Option Fluent 2"/>
+                                    <ComboBoxItem Content="Option Fluent 3"/>
+                                </ComboBox>
+                                
+                                <Label Grid.Row="2" Grid.Column="0" 
+                                       Content="Désactivé :" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" 
+                                         Text="Champ désactivé avec style Fluent" 
+                                         IsEnabled="False" 
+                                         Margin="0,0,0,8"/>
+                                
+                                <Label Grid.Row="3" Grid.Column="0" 
+                                       Content="PasswordBox :" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                                <PasswordBox Grid.Row="3" Grid.Column="1" 
+                                             Password="motdepasse123"
+                                             Margin="0,0,0,8"/>
+                                             
+                                <Label Grid.Row="4" Grid.Column="0" 
+                                       Content="Focus :" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                                <TextBox Grid.Row="4" Grid.Column="1" 
+                                         Text="Champ avec focus automatique" 
+                                         x:Name="FocusedTextBox"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Section CheckBoxes et RadioButtons -->
+                        <TextBlock Text="Cases et Boutons Radio Fluent" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,24,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="Cases à cocher avec thème système :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium" 
+                                           Margin="0,0,0,8"/>
+                                <StackPanel Margin="0,0,0,16">
+                                    <CheckBox Content="Option activée (Fluent Style)" IsChecked="True" Margin="0,0,0,4"/>
+                                    <CheckBox Content="Option désactivée (Fluent Style)" IsChecked="False" Margin="0,0,0,4"/>
+                                    <CheckBox Content="Option indéterminée (Fluent Style)" IsChecked="{x:Null}" Margin="0,0,0,4"/>
+                                    <CheckBox Content="Option désactivée (État disabled)" IsEnabled="False" Margin="0,0,0,4"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Boutons radio avec thème système :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium" 
+                                           Margin="0,0,0,8"/>
+                                <StackPanel>
+                                    <RadioButton Content="Choix 1 (Fluent Theme)" GroupName="FluentGroup" IsChecked="True" Margin="0,0,0,4"/>
+                                    <RadioButton Content="Choix 2 (Fluent Theme)" GroupName="FluentGroup" Margin="0,0,0,4"/>
+                                    <RadioButton Content="Choix 3 (Fluent Theme)" GroupName="FluentGroup" Margin="0,0,0,4"/>
+                                    <RadioButton Content="Choix désactivé" GroupName="FluentGroup" IsEnabled="False" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Nouvel onglet : Test ThemeMode -->
+            <TabItem Header="🌓 Test ThemeMode">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                    <StackPanel>
+                        
+                        <TextBlock Text="Test des Modes de Thème" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="🌓 Cette fenêtre utilise ThemeMode='System'" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"
+                                           Margin="0,0,0,8"/>
+                                           
+                                <TextBlock Text="Cela signifie que l'apparence suit automatiquement :" 
+                                           FontSize="12" 
+                                           Margin="0,0,0,8"/>
+                                           
+                                <StackPanel Margin="16,0,0,16">
+                                    <TextBlock Text="• Le thème Windows (Clair/Sombre)" FontSize="11" Margin="0,2"/>
+                                    <TextBlock Text="• Les couleurs d'accent personnalisées" FontSize="11" Margin="0,2"/>
+                                    <TextBlock Text="• Les préférences d'accessibilité" FontSize="11" Margin="0,2"/>
+                                    <TextBlock Text="• Les changements en temps réel" FontSize="11" Margin="0,2"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Modes ThemeMode disponibles :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"
+                                           Margin="0,8,0,8"/>
+                                           
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="System" FontFamily="Consolas" FontWeight="Bold" Margin="0,2,16,2"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Suit le thème Windows (ACTUEL)" FontSize="11" Margin="0,2"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Light" FontFamily="Consolas" Margin="0,2,16,2"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Force le thème clair" FontSize="11" Margin="0,2"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Dark" FontFamily="Consolas" Margin="0,2,16,2"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Force le thème sombre" FontSize="11" Margin="0,2"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="None" FontFamily="Consolas" Margin="0,2,16,2"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="Thème par défaut (Aero2)" FontSize="11" Margin="0,2"/>
+                                </Grid>
+                                
+                                <TextBlock Text="💡 Test : Changez le thème Windows dans Paramètres > Personnalisation > Couleurs pour voir le changement en temps réel !" 
+                                           FontSize="11" 
+                                           FontStyle="Italic"
+                                           Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                                           Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Section diagnostic -->
+                        <TextBlock Text="Informations de Diagnostic" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,24,0,12"/>
+                        
+                        <Border Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="16" 
+                                Margin="8">
+                            <StackPanel>
+                                <TextBlock Text="🔍 Informations système pour validation Fluent Theme :" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"
+                                           Margin="0,0,0,8"/>
+                                           
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Prérequis :" FontWeight="Bold" Margin="0,4"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="PowerShell 7.5+ et .NET 9.0+" FontSize="11" Margin="0,4"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="ThemeMode :" FontWeight="Bold" Margin="0,4"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="System (automatique)" FontSize="11" Margin="0,4"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Assemblies :" FontWeight="Bold" Margin="0,4"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="PresentationFramework (auto-load)" FontSize="11" Margin="0,4"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Méthode :" FontWeight="Bold" Margin="0,4"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="ThemeMode property (recommandée)" FontSize="11" Margin="0,4"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+        </TabControl>
+        
+        <!-- Footer avec thème système -->
+        <Border Grid.Row="2" 
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                BorderThickness="0,1,0,0"
+                Padding="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" 
+                           Text="💡 Cette vitrine utilise le Fluent Theme .NET 9 avec ThemeMode='System' - Les couleurs s'adaptent automatiquement au thème Windows"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                
+                <Button Grid.Column="1" 
+                        Content="Fermer" 
+                        x:Name="CloseButton"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
