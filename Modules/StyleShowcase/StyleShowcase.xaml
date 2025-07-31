@@ -6,10 +6,6 @@
         WindowStartupLocation="CenterScreen"
         Style="{DynamicResource ToolBoxWindow}">
     
-    <!-- =================================================================== -->
-    <!-- VITRINE COMPLETE DES STYLES TOOLBOX V1.1 - CORRIGÉE               -->
-    <!-- =================================================================== -->
-    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -17,9 +13,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <!-- =============================================== -->
-        <!-- EN-TÊTE DE LA VITRINE                           -->
-        <!-- =============================================== -->
+        <!-- EN-TÊTE -->
         <Border Grid.Row="0" Style="{DynamicResource ToolBoxCardFlat}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -31,7 +25,7 @@
                     <TextBlock Text="🎨 Vitrine de Styles ToolBox V1.1" 
                                Style="{DynamicResource ToolBoxHeaderText}"
                                Margin="0,0,0,8"/>
-                    <TextBlock Text="Référence complète des styles modernes - Version corrigée et améliorée"
+                    <TextBlock Text="Référence complète avec ComboBox corrigées"
                                Style="{DynamicResource ToolBoxSecondaryText}"/>
                 </StackPanel>
                 
@@ -47,101 +41,214 @@
             </Grid>
         </Border>
         
-        <!-- =============================================== -->
-        <!-- CONTENU PRINCIPAL AVEC ONGLETS                 -->
-        <!-- =============================================== -->
+        <!-- CONTENU AVEC ONGLETS -->
         <TabControl Grid.Row="1" Style="{DynamicResource ToolBoxTabControl}">
             
-            <!-- =============================================== -->
-            <!-- ONGLET : COULEURS ET PALETTE                   -->
-            <!-- =============================================== -->
+            <!-- ONGLET CHAMPS - FOCUS SUR LES COMBOBOX -->
+            <TabItem Header="📝 Champs de Saisie" Style="{DynamicResource ToolBoxTabItem}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                    <StackPanel>
+                        
+                        <TextBlock Text="Test des Champs avec ComboBox Corrigées" 
+                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
+                        
+                        <Border Style="{DynamicResource ToolBoxCard}">
+                            <StackPanel>
+                                <TextBlock Text="📝 Comparaison des hauteurs et test des fonctionnalités" 
+                                           Style="{DynamicResource ToolBoxSecondaryText}"
+                                           Margin="0,0,0,20"/>
+                                
+                                <!-- SECTION 1: COMPARAISON HAUTEURS -->
+                                <TextBlock Text="1. Comparaison des Hauteurs (doivent être identiques) :" 
+                                           Style="{DynamicResource ToolBoxBodyText}" 
+                                           FontWeight="Medium"
+                                           Margin="0,0,0,8"/>
+                                
+                                <Grid Margin="0,0,0,24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <Label Grid.Row="0" Grid.Column="0" Content="TextBox Référence :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Text="Hauteur de référence - 36px" Style="{DynamicResource ToolBoxTextBox}" Margin="0,0,0,8"/>
+                                    
+                                    <Label Grid.Row="1" Grid.Column="0" Content="ComboBox Standard :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" Style="{DynamicResource ToolBoxComboBox}" SelectedIndex="0" Margin="0,0,0,8">
+                                        <ComboBoxItem Content="Option 1 - Même hauteur ?"/>
+                                        <ComboBoxItem Content="Option 2 - Test hauteur"/>
+                                        <ComboBoxItem Content="Option 3 - Validation"/>
+                                    </ComboBox>
+                                    
+                                    <Label Grid.Row="2" Grid.Column="0" Content="ComboBox Éditable :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1" 
+                                              Style="{DynamicResource ToolBoxEditableComboBox}" 
+                                              Text="Tapez 'a' pour filtrer..."
+                                              Margin="0,0,0,8">
+                                        <ComboBoxItem Content="Apple"/>
+                                        <ComboBoxItem Content="Apricot"/>
+                                        <ComboBoxItem Content="Avocado"/>
+                                        <ComboBoxItem Content="Banana"/>
+                                        <ComboBoxItem Content="Cherry"/>
+                                        <ComboBoxItem Content="Date"/>
+                                    </ComboBox>
+                                    
+                                    <Label Grid.Row="3" Grid.Column="0" Content="ComboBox PowerShell :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <ComboBox Grid.Row="3" Grid.Column="1" 
+                                              Style="{DynamicResource ToolBoxComboBox}" 
+                                              x:Name="PowerShellComboBox"/>
+                                </Grid>
+                                
+                                <!-- SECTION 2: AUTRES CHAMPS -->
+                                <TextBlock Text="2. Autres Champs de Saisie :" 
+                                           Style="{DynamicResource ToolBoxBodyText}" 
+                                           FontWeight="Medium"
+                                           Margin="0,0,0,8"/>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <Label Grid.Row="0" Grid.Column="0" Content="TextBox Focus Test :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" 
+                                             Text="Cliquez ici - pas de décalage !" 
+                                             Style="{DynamicResource ToolBoxTextBox}" 
+                                             x:Name="FocusTextBox"
+                                             Margin="0,0,0,8"/>
+                                    
+                                    <Label Grid.Row="1" Grid.Column="0" Content="PasswordBox :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <PasswordBox Grid.Row="1" Grid.Column="1" 
+                                                 Password="test123" 
+                                                 Style="{DynamicResource ToolBoxPasswordBox}" 
+                                                 Margin="0,0,0,8"/>
+                                    
+                                    <Label Grid.Row="2" Grid.Column="0" Content="Champ Désactivé :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" 
+                                             Text="Champ désactivé" 
+                                             Style="{DynamicResource ToolBoxTextBox}" 
+                                             IsEnabled="False"
+                                             Margin="0,0,0,8"/>
+                                    
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Zone Multiligne :" Style="{DynamicResource ToolBoxFormLabel}"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" 
+                                             Text="Zone de texte multiligne&#x0a;Appuyez sur Entrée&#x0a;pour ajouter des lignes"
+                                             Style="{DynamicResource ToolBoxTextBox}" 
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             Height="80"
+                                             VerticalContentAlignment="Top"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- SECTION TESTS -->
+                        <TextBlock Text="🧪 Tests de Fonctionnalités" 
+                                   Style="{DynamicResource ToolBoxSubHeaderText}"
+                                   Margin="0,24,0,0"/>
+                        
+                        <Border Style="{DynamicResource ToolBoxCard}">
+                            <StackPanel>
+                                <TextBlock Text="Instructions de test :" 
+                                           Style="{DynamicResource ToolBoxBodyText}" 
+                                           FontWeight="Medium"
+                                           Margin="0,0,0,8"/>
+                                <StackPanel Margin="16,0,0,0">
+                                    <TextBlock Text="✅ Vérifiez que toutes les ComboBox ont la même hauteur que la TextBox de référence" 
+                                               Style="{DynamicResource ToolBoxBodyText}" Margin="0,4"/>
+                                    <TextBlock Text="✅ Testez le clic sur chaque ComboBox → dropdown doit s'ouvrir" 
+                                               Style="{DynamicResource ToolBoxBodyText}" Margin="0,4"/>
+                                    <TextBlock Text="✅ ComboBox Éditable : tapez 'a' pour voir le filtrage" 
+                                               Style="{DynamicResource ToolBoxBodyText}" Margin="0,4"/>
+                                    <TextBlock Text="✅ ComboBox PowerShell : doit être pré-remplie avec des services Windows" 
+                                               Style="{DynamicResource ToolBoxBodyText}" Margin="0,4"/>
+                                    <TextBlock Text="✅ TextBox Focus : clic ne doit pas créer de décalage d'interface" 
+                                               Style="{DynamicResource ToolBoxBodyText}" Margin="0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- ONGLET BOUTONS -->
+            <TabItem Header="🔘 Boutons" Style="{DynamicResource ToolBoxTabItem}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                    <StackPanel>
+                        
+                        <TextBlock Text="Test des Boutons avec Hover Distinct" 
+                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
+                        
+                        <Border Style="{DynamicResource ToolBoxCard}">
+                            <StackPanel>
+                                <TextBlock Text="🔘 Chaque bouton a sa couleur hover spécifique" 
+                                           Style="{DynamicResource ToolBoxSecondaryText}"
+                                           Margin="0,0,0,16"/>
+                                
+                                <WrapPanel>
+                                    <Button Content="Primary (bleu foncé)" Style="{DynamicResource ToolBoxPrimaryButton}" Margin="0,0,12,8"/>
+                                    <Button Content="Secondary (gris)" Style="{DynamicResource ToolBoxSecondaryButton}" Margin="0,0,12,8"/>
+                                    <Button Content="Success (vert foncé)" Style="{DynamicResource ToolBoxSuccessButton}" Margin="0,0,12,8"/>
+                                    <Button Content="Warning (orange foncé)" Style="{DynamicResource ToolBoxWarningButton}" Margin="0,0,12,8"/>
+                                    <Button Content="Danger (rouge foncé)" Style="{DynamicResource ToolBoxDangerButton}" Margin="0,0,12,8"/>
+                                    <Button Content="Outline (fond gris)" Style="{DynamicResource ToolBoxOutlineButton}" Margin="0,0,12,8"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- ONGLET COULEURS -->
             <TabItem Header="🎨 Couleurs" Style="{DynamicResource ToolBoxTabItem}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
                     <StackPanel>
                         
-                        <!-- Section Couleurs Principales -->
-                        <TextBlock Text="Couleurs Principales" 
+                        <TextBlock Text="Palette de Couleurs ToolBox" 
                                    Style="{DynamicResource ToolBoxSubHeaderText}"/>
                         
                         <Border Style="{DynamicResource ToolBoxCard}">
                             <WrapPanel>
-                                <!-- Primary -->
-                                <Border Background="{DynamicResource ToolBoxPrimaryBrush}" 
-                                        Width="120" Height="80" Margin="8"
-                                        CornerRadius="8">
+                                <Border Background="{DynamicResource ToolBoxPrimaryBrush}" Width="120" Height="80" Margin="8" CornerRadius="8">
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="Primary" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontWeight="Medium"/>
-                                        <TextBlock Text="#0EA5E9" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontSize="10"/>
+                                        <TextBlock Text="Primary" HorizontalAlignment="Center" Foreground="White" FontWeight="Medium"/>
+                                        <TextBlock Text="#0EA5E9" HorizontalAlignment="Center" Foreground="White" FontSize="10"/>
                                     </StackPanel>
                                 </Border>
                                 
-                                <!-- Success -->
-                                <Border Background="{DynamicResource ToolBoxSuccessBrush}" 
-                                        Width="120" Height="80" Margin="8"
-                                        CornerRadius="8">
+                                <Border Background="{DynamicResource ToolBoxSuccessBrush}" Width="120" Height="80" Margin="8" CornerRadius="8">
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="Success" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontWeight="Medium"/>
-                                        <TextBlock Text="#059669" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontSize="10"/>
+                                        <TextBlock Text="Success" HorizontalAlignment="Center" Foreground="White" FontWeight="Medium"/>
+                                        <TextBlock Text="#059669" HorizontalAlignment="Center" Foreground="White" FontSize="10"/>
                                     </StackPanel>
                                 </Border>
                                 
-                                <!-- Warning -->
-                                <Border Background="{DynamicResource ToolBoxWarningBrush}" 
-                                        Width="120" Height="80" Margin="8"
-                                        CornerRadius="8">
+                                <Border Background="{DynamicResource ToolBoxWarningBrush}" Width="120" Height="80" Margin="8" CornerRadius="8">
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="Warning" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontWeight="Medium"/>
-                                        <TextBlock Text="#D97706" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontSize="10"/>
+                                        <TextBlock Text="Warning" HorizontalAlignment="Center" Foreground="White" FontWeight="Medium"/>
+                                        <TextBlock Text="#D97706" HorizontalAlignment="Center" Foreground="White" FontSize="10"/>
                                     </StackPanel>
                                 </Border>
                                 
-                                <!-- Danger -->
-                                <Border Background="{DynamicResource ToolBoxDangerBrush}" 
-                                        Width="120" Height="80" Margin="8"
-                                        CornerRadius="8">
+                                <Border Background="{DynamicResource ToolBoxDangerBrush}" Width="120" Height="80" Margin="8" CornerRadius="8">
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="Danger" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontWeight="Medium"/>
-                                        <TextBlock Text="#DC2626" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontSize="10"/>
-                                    </StackPanel>
-                                </Border>
-                                
-                                <!-- Secondary -->
-                                <Border Background="{DynamicResource ToolBoxSecondaryBrush}" 
-                                        Width="120" Height="80" Margin="8"
-                                        CornerRadius="8">
-                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="Secondary" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontWeight="Medium"/>
-                                        <TextBlock Text="#6B7280" 
-                                                   HorizontalAlignment="Center" 
-                                                   Foreground="White" 
-                                                   FontSize="10"/>
+                                        <TextBlock Text="Danger" HorizontalAlignment="Center" Foreground="White" FontWeight="Medium"/>
+                                        <TextBlock Text="#DC2626" HorizontalAlignment="Center" Foreground="White" FontSize="10"/>
                                     </StackPanel>
                                 </Border>
                             </WrapPanel>
@@ -151,399 +258,9 @@
                 </ScrollViewer>
             </TabItem>
             
-            <!-- =============================================== -->
-            <!-- ONGLET : TYPOGRAPHIE                           -->
-            <!-- =============================================== -->
-            <TabItem Header="📝 Typographie" Style="{DynamicResource ToolBoxTabItem}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                    <StackPanel>
-                        
-                        <TextBlock Text="Hiérarchie Typographique" 
-                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCard}">
-                            <StackPanel>
-                                <TextBlock Text="📝 Basée sur Segoe UI - Police système Windows" 
-                                           Style="{DynamicResource ToolBoxSecondaryText}"
-                                           Margin="0,0,0,24"/>
-                                
-                                <!-- Exemples de styles de texte -->
-                                <TextBlock Text="Titre Principal (HeaderText)" 
-                                           Style="{DynamicResource ToolBoxHeaderText}"/>
-                                           
-                                <TextBlock Text="Sous-titre (SubHeaderText)" 
-                                           Style="{DynamicResource ToolBoxSubHeaderText}"/>
-                                           
-                                <TextBlock Text="Texte de corps standard qui s'adapte parfaitement aux interfaces modernes. Lorem ipsum dolor sit amet, consectetur adipiscing elit." 
-                                           Style="{DynamicResource ToolBoxBodyText}"
-                                           Margin="0,0,0,16"/>
-                                           
-                                <TextBlock Text="Texte secondaire utilisé pour les légendes et descriptions" 
-                                           Style="{DynamicResource ToolBoxSecondaryText}"
-                                           Margin="0,0,0,16"/>
-                                
-                                <!-- Section Labels -->
-                                <TextBlock Text="Labels de Formulaires :" 
-                                           Style="{DynamicResource ToolBoxSubHeaderText}"
-                                           Margin="0,16,0,8"/>
-                                           
-                                <StackPanel>
-                                    <Label Content="Nom d'utilisateur :" Style="{DynamicResource ToolBoxFormLabel}"/>
-                                    <Label Content="Adresse email :" Style="{DynamicResource ToolBoxFormLabel}"/>
-                                    <Label Content="Département :" Style="{DynamicResource ToolBoxFormLabel}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                        
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            
-            <!-- =============================================== -->
-            <!-- ONGLET : BOUTONS                               -->
-            <!-- =============================================== -->
-            <TabItem Header="🔘 Boutons" Style="{DynamicResource ToolBoxTabItem}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                    <StackPanel>
-                        
-                        <TextBlock Text="Styles de Boutons Disponibles" 
-                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCard}">
-                            <StackPanel>
-                                <TextBlock Text="🔘 Tous les boutons incluent des effets hover et pressed" 
-                                           Style="{DynamicResource ToolBoxSecondaryText}"
-                                           Margin="0,0,0,24"/>
-                                           
-                                <!-- Boutons Principaux -->
-                                <TextBlock Text="Boutons Standard :" 
-                                           Style="{DynamicResource ToolBoxBodyText}" 
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,8"/>
-                                <WrapPanel Margin="0,0,0,24">
-                                    <Button Content="Primary" Style="{DynamicResource ToolBoxPrimaryButton}" Margin="0,0,12,8"/>
-                                    <Button Content="Secondary" Style="{DynamicResource ToolBoxSecondaryButton}" Margin="0,0,12,8"/>
-                                    <Button Content="Outline" Style="{DynamicResource ToolBoxOutlineButton}" Margin="0,0,12,8"/>
-                                </WrapPanel>
-                                
-                                <!-- Boutons d'État -->
-                                <TextBlock Text="Boutons d'État :" 
-                                           Style="{DynamicResource ToolBoxBodyText}" 
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,8"/>
-                                <WrapPanel Margin="0,0,0,24">
-                                    <Button Content="✅ Valider" Style="{DynamicResource ToolBoxSuccessButton}" Margin="0,0,12,8"/>
-                                    <Button Content="⚠️ Attention" Style="{DynamicResource ToolBoxWarningButton}" Margin="0,0,12,8"/>
-                                    <Button Content="❌ Supprimer" Style="{DynamicResource ToolBoxDangerButton}" Margin="0,0,12,8"/>
-                                </WrapPanel>
-                                
-                                <!-- États des Boutons -->
-                                <TextBlock Text="États Interactifs :" 
-                                           Style="{DynamicResource ToolBoxBodyText}" 
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,8"/>
-                                <WrapPanel>
-                                    <Button Content="Normal" Style="{DynamicResource ToolBoxPrimaryButton}" Margin="0,0,12,8"/>
-                                    <Button Content="Disabled" Style="{DynamicResource ToolBoxPrimaryButton}" IsEnabled="False" Margin="0,0,12,8"/>
-                                </WrapPanel>
-                            </StackPanel>
-                        </Border>
-                        
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            
-            <!-- =============================================== -->
-            <!-- ONGLET : CHAMPS DE SAISIE                      -->
-            <!-- =============================================== -->
-            <TabItem Header="📝 Champs" Style="{DynamicResource ToolBoxTabItem}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                    <StackPanel>
-                        
-                        <TextBlock Text="Champs de Saisie et Contrôles" 
-                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCard}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                
-                                <Label Grid.Row="0" Grid.Column="0" 
-                                       Content="TextBox :" 
-                                       Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" 
-                                         Text="Exemple de saisie moderne" 
-                                         Style="{DynamicResource ToolBoxTextBox}"
-                                         Margin="0,0,0,12"/>
-                                
-                                <Label Grid.Row="1" Grid.Column="0" 
-                                       Content="TextBox Focus :" 
-                                       Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" 
-                                         Text="Cliquez ici pour tester" 
-                                         Style="{DynamicResource ToolBoxTextBox}"
-                                         x:Name="FocusTextBox"
-                                         Margin="0,0,0,12"/>
-                                
-                                <Label Grid.Row="2" Grid.Column="0" 
-                                       Content="ComboBox :" 
-                                       Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <ComboBox Grid.Row="2" Grid.Column="1" 
-                                          Style="{DynamicResource ToolBoxComboBox}"
-                                          SelectedIndex="0" 
-                                          Margin="0,0,0,12">
-                                    <ComboBoxItem Content="Option 1"/>
-                                    <ComboBoxItem Content="Option 2"/>
-                                    <ComboBoxItem Content="Option 3"/>
-                                </ComboBox>
-                                
-                                <Label Grid.Row="3" Grid.Column="0" 
-                                       Content="PasswordBox :" 
-                                       Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <PasswordBox Grid.Row="3" Grid.Column="1" 
-                                             Password="motdepasse123"
-                                             Style="{DynamicResource ToolBoxPasswordBox}"
-                                             Margin="0,0,0,12"/>
-                                             
-                                <Label Grid.Row="4" Grid.Column="0" 
-                                       Content="Disabled :" 
-                                       Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <TextBox Grid.Row="4" Grid.Column="1" 
-                                         Text="Champ désactivé" 
-                                         Style="{DynamicResource ToolBoxTextBox}"
-                                         IsEnabled="False" 
-                                         Margin="0,0,0,12"/>
-                                         
-                                <Label Grid.Row="5" Grid.Column="0" 
-                                       Content="Multiline :" 
-                                       Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <TextBox Grid.Row="5" Grid.Column="1" 
-                                         Text="Zone de texte multiligne avec retours à la ligne"
-                                         Style="{DynamicResource ToolBoxTextBox}"
-                                         TextWrapping="Wrap"
-                                         AcceptsReturn="True"
-                                         Height="60"
-                                         VerticalContentAlignment="Top"/>
-                            </Grid>
-                        </Border>
-                        
-                        <!-- Section CheckBoxes et RadioButtons -->
-                        <TextBlock Text="Cases et Boutons Radio" 
-                                   Style="{DynamicResource ToolBoxSubHeaderText}"
-                                   Margin="0,24,0,0"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCard}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <!-- CheckBoxes -->
-                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                    <TextBlock Text="Cases à Cocher :" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               FontWeight="Medium" 
-                                               Margin="0,0,0,12"/>
-                                    <CheckBox Content="Option activée" 
-                                              Style="{DynamicResource ToolBoxCheckBox}" 
-                                              IsChecked="True"/>
-                                    <CheckBox Content="Option désactivée" 
-                                              Style="{DynamicResource ToolBoxCheckBox}" 
-                                              IsChecked="False"/>
-                                    <CheckBox Content="Option indéterminée" 
-                                              Style="{DynamicResource ToolBoxCheckBox}" 
-                                              IsChecked="{x:Null}"/>
-                                    <CheckBox Content="Option inactive" 
-                                              Style="{DynamicResource ToolBoxCheckBox}" 
-                                              IsEnabled="False"/>
-                                </StackPanel>
-                                
-                                <!-- RadioButtons -->
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Boutons Radio :" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               FontWeight="Medium" 
-                                               Margin="0,0,0,12"/>
-                                    <RadioButton Content="Choix 1 sélectionné" 
-                                                 Style="{DynamicResource ToolBoxRadioButton}" 
-                                                 GroupName="DemoGroup" 
-                                                 IsChecked="True"/>
-                                    <RadioButton Content="Choix 2 disponible" 
-                                                 Style="{DynamicResource ToolBoxRadioButton}" 
-                                                 GroupName="DemoGroup"/>
-                                    <RadioButton Content="Choix 3 disponible" 
-                                                 Style="{DynamicResource ToolBoxRadioButton}" 
-                                                 GroupName="DemoGroup"/>
-                                    <RadioButton Content="Choix désactivé" 
-                                                 Style="{DynamicResource ToolBoxRadioButton}" 
-                                                 GroupName="DemoGroup" 
-                                                 IsEnabled="False"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                        
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            
-            <!-- =============================================== -->
-            <!-- ONGLET : CONTENEURS                            -->
-            <!-- =============================================== -->
-            <TabItem Header="📦 Conteneurs" Style="{DynamicResource ToolBoxTabItem}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                    <StackPanel>
-                        
-                        <TextBlock Text="Conteneurs et Layouts" 
-                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
-                        
-                        <!-- Cartes Standard -->
-                        <TextBlock Text="Cartes Standard (arrondies) :" 
-                                   Style="{DynamicResource ToolBoxBodyText}" 
-                                   FontWeight="Medium" 
-                                   Margin="0,16,0,8"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCard}">
-                            <StackPanel>
-                                <TextBlock Text="📦 Exemple de Carte Standard" 
-                                           Style="{DynamicResource ToolBoxSubHeaderText}"
-                                           Margin="0,0,0,8"/>
-                                <TextBlock Text="Les cartes standard utilisent des coins arrondis pour le contenu." 
-                                           Style="{DynamicResource ToolBoxBodyText}"/>
-                                <Button Content="Action dans la carte" 
-                                        Style="{DynamicResource ToolBoxPrimaryButton}"
-                                        HorizontalAlignment="Left"
-                                        Margin="0,12,0,0"/>
-                            </StackPanel>
-                        </Border>
-                        
-                        <!-- Cartes Plates -->
-                        <TextBlock Text="Cartes Plates (pour headers/footers) :" 
-                                   Style="{DynamicResource ToolBoxBodyText}" 
-                                   FontWeight="Medium" 
-                                   Margin="0,24,0,8"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCardFlat}">
-                            <StackPanel>
-                                <TextBlock Text="📋 Carte Plate Sans Arrondi" 
-                                           Style="{DynamicResource ToolBoxSubHeaderText}"
-                                           Margin="0,0,0,8"/>
-                                <TextBlock Text="Idéale pour les en-têtes et pieds de page." 
-                                           Style="{DynamicResource ToolBoxBodyText}"/>
-                            </StackPanel>
-                        </Border>
-                        
-                        <!-- Sections -->
-                        <TextBlock Text="Sections avec GroupBox :" 
-                                   Style="{DynamicResource ToolBoxBodyText}" 
-                                   FontWeight="Medium" 
-                                   Margin="0,24,0,8"/>
-                        
-                        <GroupBox Header="Configuration" Style="{DynamicResource ToolBoxSection}">
-                            <StackPanel>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition/>
-                                        <RowDefinition/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <Label Grid.Row="0" Grid.Column="0" Content="Nom :" Style="{DynamicResource ToolBoxFormLabel}"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="Jean Dupont" Style="{DynamicResource ToolBoxTextBox}" Margin="0,0,0,8"/>
-                                    
-                                    <Label Grid.Row="1" Grid.Column="0" Content="Email :" Style="{DynamicResource ToolBoxFormLabel}"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="jean.dupont@example.com" Style="{DynamicResource ToolBoxTextBox}"/>
-                                </Grid>
-                            </StackPanel>
-                        </GroupBox>
-                        
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            
-            <!-- =============================================== -->
-            <!-- ONGLET : GUIDE D'UTILISATION                   -->
-            <!-- =============================================== -->
-            <TabItem Header="📖 Guide" Style="{DynamicResource ToolBoxTabItem}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
-                    <StackPanel>
-                        
-                        <TextBlock Text="Guide d'Utilisation des Styles" 
-                                   Style="{DynamicResource ToolBoxSubHeaderText}"/>
-                        
-                        <Border Style="{DynamicResource ToolBoxCard}">
-                            <StackPanel>
-                                <TextBlock Text="🚀 Comment utiliser ces styles :" 
-                                           Style="{DynamicResource ToolBoxBodyText}"
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,16"/>
-                                           
-                                <TextBlock Text="1. Import des Styles" 
-                                           Style="{DynamicResource ToolBoxBodyText}"
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,8"/>
-                                <TextBlock Text="Import-ToolBoxGlobalStyles -Window $window" 
-                                           FontFamily="Consolas" 
-                                           Background="{DynamicResource ToolBoxLightBrush}"
-                                           Padding="8"
-                                           Margin="0,0,0,16"/>
-                                
-                                <TextBlock Text="2. Utilisation DynamicResource" 
-                                           Style="{DynamicResource ToolBoxBodyText}"
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,8"/>
-                                <TextBlock Text='Style="{DynamicResource ToolBoxPrimaryButton}"' 
-                                           FontFamily="Consolas"
-                                           Background="{DynamicResource ToolBoxLightBrush}"
-                                           Padding="8"
-                                           Margin="0,0,0,16"/>
-                                
-                                <TextBlock Text="3. Styles Disponibles" 
-                                           Style="{DynamicResource ToolBoxBodyText}"
-                                           FontWeight="Medium"
-                                           Margin="0,0,0,8"/>
-                                <StackPanel Margin="16,0,0,0">
-                                    <TextBlock Text="• Boutons : ToolBoxPrimaryButton, ToolBoxSecondaryButton, ToolBoxSuccessButton, ToolBoxWarningButton, ToolBoxDangerButton" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               Margin="0,4"/>
-                                    <TextBlock Text="• Champs : ToolBoxTextBox, ToolBoxPasswordBox, ToolBoxComboBox" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               Margin="0,4"/>
-                                    <TextBlock Text="• Textes : ToolBoxHeaderText, ToolBoxSubHeaderText, ToolBoxBodyText" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               Margin="0,4"/>
-                                    <TextBlock Text="• Conteneurs : ToolBoxCard, ToolBoxCardFlat, ToolBoxSection" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               Margin="0,4"/>
-                                    <TextBlock Text="• Contrôles : ToolBoxCheckBox, ToolBoxRadioButton" 
-                                               Style="{DynamicResource ToolBoxBodyText}" 
-                                               Margin="0,4"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                        
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            
         </TabControl>
         
-        <!-- =============================================== -->
-        <!-- FOOTER DE LA VITRINE                           -->
-        <!-- =============================================== -->
+        <!-- FOOTER -->
         <Border Grid.Row="2" Style="{DynamicResource ToolBoxCardFlat}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -551,14 +268,10 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Style="{DynamicResource ToolBoxBadge}" Background="{DynamicResource ToolBoxSuccessBrush}" Margin="0,0,12,0">
-                        <TextBlock Text="V1.1" Foreground="White" FontSize="10" FontWeight="Medium"/>
-                    </Border>
-                    <TextBlock Text="Styles ToolBox - Version Corrigée et Simplifiée"
-                               Style="{DynamicResource ToolBoxBodyText}"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
+                <TextBlock Grid.Column="0" 
+                           Text="🧪 Version Test ComboBox - Validation des hauteurs et fonctionnalités"
+                           Style="{DynamicResource ToolBoxBodyText}"
+                           VerticalAlignment="Center"/>
                 
                 <Button Grid.Column="1" 
                         Content="Fermer" 
