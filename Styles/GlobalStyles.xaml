@@ -334,7 +334,7 @@
     </Style>
 
     <!-- =============================================== -->
-    <!-- STYLES DE CHAMPS SIMPLES                       -->
+    <!-- STYLES DE CHAMPS AVEC TEMPLATES CORRIGÉS       -->
     <!-- =============================================== -->
     
     <Style x:Key="ToolBoxTextBox" TargetType="TextBox">
@@ -346,6 +346,38 @@
         <Setter Property="Padding" Value="{StaticResource StandardPadding}" />
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="TextBoxBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6">
+                        <ScrollViewer x:Name="PART_ContentHost" 
+                                    Margin="{TemplateBinding Padding}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Focusable="False"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="2" />
+                            <!-- Compensation du padding pour éviter le décalage -->
+                            <Setter TargetName="PART_ContentHost" Property="Margin" Value="7,5,7,5" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="TextBoxBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     
     <Style x:Key="ToolBoxPasswordBox" TargetType="PasswordBox">
@@ -357,6 +389,38 @@
         <Setter Property="Padding" Value="{StaticResource StandardPadding}" />
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="PasswordBoxBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6">
+                        <ScrollViewer x:Name="PART_ContentHost" 
+                                    Margin="{TemplateBinding Padding}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Focusable="False"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="PasswordBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="PasswordBoxBorder" Property="BorderThickness" Value="2" />
+                            <!-- Compensation du padding pour éviter le décalage -->
+                            <Setter TargetName="PART_ContentHost" Property="Margin" Value="7,5,7,5" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="PasswordBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PasswordBoxBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="PasswordBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     
     <Style x:Key="ToolBoxComboBox" TargetType="ComboBox">
@@ -368,6 +432,104 @@
         <Setter Property="Padding" Value="{StaticResource StandardPadding}" />
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton x:Name="ToggleButton" 
+                                    Focusable="false"
+                                    IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                    ClickMode="Press"
+                                    Grid.Column="2">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="Border"
+                                            Background="White"
+                                            BorderBrush="{StaticResource ToolBoxBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="20"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Path x:Name="Arrow" 
+                                                  Grid.Column="1"
+                                                  Fill="{StaticResource ToolBoxTextSecondaryBrush}" 
+                                                  HorizontalAlignment="Center" 
+                                                  VerticalAlignment="Center" 
+                                                  Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                                            <Setter TargetName="Border" Property="BorderThickness" Value="2" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        
+                        <ContentPresenter x:Name="ContentSite" 
+                                        IsHitTestVisible="False" 
+                                        Content="{TemplateBinding SelectionBoxItem}" 
+                                        ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                        ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" 
+                                        Margin="8,0,25,0" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Left"/>
+                        
+                        <TextBox x:Name="PART_EditableTextBox"
+                               HorizontalAlignment="Left" 
+                               VerticalAlignment="Center" 
+                               Margin="4,3,23,3"
+                               Focusable="True" 
+                               Background="Transparent"
+                               BorderThickness="0"
+                               Visibility="Hidden"
+                               IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                        
+                        <Popup x:Name="PART_Popup" 
+                               Placement="Bottom" 
+                               IsOpen="{TemplateBinding IsDropDownOpen}" 
+                               AllowsTransparency="True" 
+                               Focusable="False" 
+                               PopupAnimation="Slide">
+                            <Grid MinWidth="{TemplateBinding ActualWidth}"
+                                  MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <Border Background="White" 
+                                        BorderBrush="{StaticResource ToolBoxBorderBrush}" 
+                                        BorderThickness="1" 
+                                        CornerRadius="6"/>
+                                <ScrollViewer Margin="4,6,4,6">
+                                    <StackPanel IsItemsHost="True"/>
+                                </ScrollViewer>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ToggleButton" Property="IsEnabled" Value="False"/>
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Style pour ComboBox éditable et filtrable -->
+    <Style x:Key="ToolBoxEditableComboBox" TargetType="ComboBox" BasedOn="{StaticResource ToolBoxComboBox}">
+        <Setter Property="IsEditable" Value="True" />
+        <Setter Property="IsTextSearchEnabled" Value="True" />
     </Style>
 
     <!-- =============================================== -->

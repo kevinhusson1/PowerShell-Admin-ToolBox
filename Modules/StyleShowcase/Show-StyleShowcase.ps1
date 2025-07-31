@@ -68,6 +68,24 @@ function Show-StyleShowcase {
         $copyXamlButton = $window.FindName("CopyXamlButton")
         $documentationButton = $window.FindName("DocumentationButton")
         $focusTextBox = $window.FindName("FocusTextBox")
+        $powerShellComboBox = $window.FindName("PowerShellComboBox")
+        
+        # ÉTAPE 4.1 : Peuplement de la ComboBox via PowerShell
+        if ($powerShellComboBox) {
+            # Exemple de données PowerShell
+            $services = @("Spooler", "Themes", "AudioSrv", "BITS", "Browser", "CryptSvc", "Dhcp", "Dnscache", "EventLog", "LanmanServer")
+            
+            foreach ($service in $services) {
+                $item = New-Object System.Windows.Controls.ComboBoxItem
+                $item.Content = "Service: $service"
+                $powerShellComboBox.Items.Add($item) | Out-Null
+            }
+            
+            # Sélection par défaut
+            $powerShellComboBox.SelectedIndex = 0
+            
+            Write-ToolBoxLog -Level "Debug" -Message "ComboBox PowerShell peuplée avec $($services.Count) services" -Component "StyleShowcase"
+        }
         
         # ÉTAPE 5 : Configuration des événements
         
