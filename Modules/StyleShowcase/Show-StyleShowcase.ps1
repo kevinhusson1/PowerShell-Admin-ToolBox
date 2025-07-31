@@ -246,7 +246,7 @@ function Show-StyleShowcase {
         
         # ÉTAPE 7 : Gestion de la fermeture propre
         $window.Add_Closed({
-            Write-ToolBoxLog -Level "Info" -Message "Vitrine de styles V1 fermée" -Component "StyleShowcase" -File $true -UI $true
+            Write-ToolBoxLog -Level "Info" -Message "Vitrine de styles V1 fermée" -Component "StyleShowcase" Console $true -UI $true
             Write-Host "🎨 Vitrine de styles fermée - Merci d'avoir testé !" -ForegroundColor Magenta
         })
         
@@ -259,7 +259,7 @@ function Show-StyleShowcase {
         $errorMsg = "Erreur lors de l'affichage de la vitrine de styles V1 : $($_.Exception.Message)"
         Write-Error $errorMsg
         
-        Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "StyleShowcase" -File $true
+        Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "StyleShowcase" Console $true
         
         # Affichage d'informations de dépannage
         Write-Host "`n🔧 INFORMATIONS DE DÉPANNAGE :" -ForegroundColor Red

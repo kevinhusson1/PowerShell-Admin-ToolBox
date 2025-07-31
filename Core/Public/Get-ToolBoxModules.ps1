@@ -153,7 +153,7 @@ function Test-ToolBoxModule {
         if (-not (Test-Path $manifestPath)) {
             $warningMsg = "Manifest manquant pour le module $moduleName : $manifestPath"
             if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-                Write-ToolBoxLog -Level "Warning" -Message $warningMsg -Component "ModuleDiscovery" -Console $true -File $true -UI $false
+                Write-ToolBoxLog -Level "Warning" -Message $warningMsg -Component "ModuleDiscovery" -Console $true -UI $false
             } else {
                 Write-Warning $warningMsg
             }

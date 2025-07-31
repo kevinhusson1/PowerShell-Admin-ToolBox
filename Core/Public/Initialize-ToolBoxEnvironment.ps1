@@ -135,7 +135,7 @@ function Initialize-ToolBoxEnvironment {
         
         # ÉTAPE 7 : Logging de fin d'initialisation
         $initMode = if ($FromLauncher) { "depuis le Launcher" } else { "en mode autonome" }
-        Write-ToolBoxLog -Level "Info" -Message "Environnement ToolBox initialisé avec succès $initMode" -Component "Environment" -File $true -UI $true
+        Write-ToolBoxLog -Level "Info" -Message "Environnement ToolBox initialisé avec succès $initMode" -Component "Environment" -UI $true
         
         if ($ShowDetails) {
             Write-ToolBoxLog -Level "Info" -Message "Variables globales configurées :" -Component "Environment" -Console $true
@@ -151,7 +151,7 @@ function Initialize-ToolBoxEnvironment {
         
         # Essayer de logger si possible
         if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-            Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "Environment" -File $true
+            Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "Environment" -Console $true
         }
         
         return $false
