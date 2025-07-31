@@ -1,17 +1,20 @@
 function Show-StyleShowcase {
     <#
     .SYNOPSIS
-        Affiche la vitrine des styles et contrôles ToolBox
+        Affiche la vitrine des styles ToolBox V1
     
     .DESCRIPTION
         Module de référence qui présente tous les styles, couleurs, contrôles
-        et layouts disponibles dans le système de design ToolBox.
+        et layouts disponibles dans le système de design ToolBox V1.
         
         Cette vitrine sert de :
         - Référence visuelle pour les développeurs
         - Guide de style pour l'équipe
         - Test des styles en temps réel
         - Documentation interactive
+        
+        VERSION 1 : Design moderne, minimaliste et fonctionnel
+        Compatible .NET 9.0 / PowerShell 7.5+
     
     .EXAMPLE
         Show-StyleShowcase
@@ -38,73 +41,137 @@ function Show-StyleShowcase {
             }
         }
         
-        Write-ToolBoxLog -Level "Info" -Message "Démarrage du module StyleShowcase (Pattern Final Simple)" -Component "TestStyles"
+        Write-ToolBoxLog -Level "Info" -Message "Démarrage du module StyleShowcase V1 (Design Moderne)" -Component "StyleShowcase"
         
-        # ÉTAPE 1 : Charger le XAML
+        # ÉTAPE 2 : Charger le XAML
         $xamlPath = Join-Path $PSScriptRoot "StyleShowcase.xaml"
+        if (-not (Test-Path $xamlPath)) {
+            throw "Fichier XAML introuvable : $xamlPath"
+        }
+        
         [xml]$xaml = Get-Content $xamlPath -Raw -Encoding UTF8
         $reader = New-Object System.Xml.XmlNodeReader $xaml
         $window = [Windows.Markup.XamlReader]::Load($reader)
         
-        if (-not $window) { throw "Impossible de charger la fenêtre XAML" }
+        if (-not $window) { 
+            throw "Impossible de charger la fenêtre XAML" 
+        }
         
-        # ÉTAPE 2 : INJECTER nos styles personnalisés
-        Import-ToolBoxGlobalStyles -Window $window
+        # ÉTAPE 3 : Injection des styles personnalisés ToolBox
+        $stylesResult = Import-ToolBoxGlobalStyles -Window $window
+        if (-not $stylesResult) {
+            Write-Warning "Impossible de charger les styles personnalisés, utilisation des styles par défaut"
+        }
         
-        # Récupération des contrôles nommés
+        # ÉTAPE 4 : Récupération des contrôles nommés
         $closeButton = $window.FindName("CloseButton")
         $copyXamlButton = $window.FindName("CopyXamlButton")
         $documentationButton = $window.FindName("DocumentationButton")
+        $focusTextBox = $window.FindName("FocusTextBox")
         
-        # Gestion des événements
+        # ÉTAPE 5 : Configuration des événements
+        
+        # Bouton Fermer
         if ($closeButton) {
             $closeButton.Add_Click({
-                if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-                    Write-ToolBoxLog -Level "Info" -Message "Fermeture de la vitrine de styles" -Component "StyleShowcase" -UI $true
-                }
+                Write-ToolBoxLog -Level "Info" -Message "Fermeture de la vitrine de styles V1" -Component "StyleShowcase" -UI $true
                 $window.Close()
             })
         }
         
+        # Bouton Copier XAML
         if ($copyXamlButton) {
             $copyXamlButton.Add_Click({
                 try {
-                    # Copie d'un exemple de XAML dans le presse-papiers
+                    # Exemple XAML moderne avec les nouveaux styles
                     $exampleXaml = @"
-<!-- Exemple d'utilisation des styles ToolBox -->
+<!-- Exemple d'interface ToolBox V1 avec styles modernes -->
 <Window x:Class="MonModule.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Style="{StaticResource ToolBoxWindow}">
+        Style="{StaticResource ToolBoxWindow}"
+        Title="Mon Module ToolBox" Height="600" Width="800">
     
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/PowerShell-Admin-ToolBox;component/Styles/GlobalStyles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
-    
-    <StackPanel Margin="{StaticResource LargeMargin}">
-        <TextBlock Text="Mon Interface" Style="{StaticResource HeaderText}"/>
-        <TextBox Style="{StaticResource StandardTextBox}" Text="Exemple"/>
-        <Button Content="Action" Style="{StaticResource PrimaryButton}"/>
-    </StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- En-tête -->
+        <Border Grid.Row="0" Style="{StaticResource ToolBoxCard}">
+            <StackPanel>
+                <TextBlock Text="Mon Interface Moderne" Style="{StaticResource ToolBoxHeaderText}"/>
+                <TextBlock Text="Utilise le design system ToolBox V1" Style="{StaticResource ToolBoxSecondaryText}"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Contenu principal -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="{StaticResource LargeMargin}">
+                
+                <!-- Section Formulaire -->
+                <GroupBox Header="Formulaire d'exemple" Style="{StaticResource ToolBoxSection}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        
+                        <Label Grid.Row="0" Grid.Column="0" Content="Nom :" Style="{StaticResource ToolBoxFormLabel}"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource ToolBoxTextBox}" Margin="0,0,0,8"/>
+                        
+                        <Label Grid.Row="1" Grid.Column="0" Content="Email :" Style="{StaticResource ToolBoxFormLabel}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource ToolBoxTextBox}" Margin="0,0,0,8"/>
+                        
+                        <Label Grid.Row="2" Grid.Column="0" Content="Type :" Style="{StaticResource ToolBoxFormLabel}"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" Style="{StaticResource ToolBoxComboBox}">
+                            <ComboBoxItem Content="Option 1"/>
+                            <ComboBoxItem Content="Option 2"/>
+                        </ComboBox>
+                    </Grid>
+                </GroupBox>
+                
+                <!-- Section Options -->
+                <Border Style="{StaticResource ToolBoxCard}">
+                    <StackPanel>
+                        <TextBlock Text="Options" Style="{StaticResource ToolBoxSubHeaderText}"/>
+                        <CheckBox Content="Notification par email" Style="{StaticResource ToolBoxCheckBox}"/>
+                        <CheckBox Content="Synchronisation automatique" Style="{StaticResource ToolBoxCheckBox}"/>
+                    </StackPanel>
+                </Border>
+                
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Actions -->
+        <Border Grid.Row="2" Style="{StaticResource ToolBoxCard}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annuler" Style="{StaticResource ToolBoxSecondaryButton}" Margin="0,0,8,0"/>
+                <Button Content="Valider" Style="{StaticResource ToolBoxPrimaryButton}"/>
+            </StackPanel>
+        </Border>
+        
+    </Grid>
 </Window>
 "@
                     [System.Windows.Clipboard]::SetText($exampleXaml)
                     
                     # Notification
                     [System.Windows.MessageBox]::Show(
-                        "Exemple de XAML copié dans le presse-papiers !",
-                        "ToolBox - Vitrine de Styles",
+                        "Exemple de XAML moderne copié dans le presse-papiers !`n`nUtilise les nouveaux styles ToolBox V1 :`n- ToolBoxWindow, ToolBoxCard, ToolBoxSection`n- ToolBoxPrimaryButton, ToolBoxTextBox`n- Et tous les styles de la palette moderne",
+                        "ToolBox - Vitrine de Styles V1",
                         [System.Windows.MessageBoxButton]::OK,
                         [System.Windows.MessageBoxImage]::Information
                     )
                     
-                    if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-                        Write-ToolBoxLog -Level "Info" -Message "Exemple XAML copié dans le presse-papiers" -Component "StyleShowcase" -UI $true
-                    }
+                    Write-ToolBoxLog -Level "Info" -Message "Exemple XAML V1 copié dans le presse-papiers" -Component "StyleShowcase" -UI $true
                 }
                 catch {
                     [System.Windows.MessageBox]::Show(
@@ -117,70 +184,88 @@ function Show-StyleShowcase {
             })
         }
         
+        # Bouton Documentation
         if ($documentationButton) {
             $documentationButton.Add_Click({
                 try {
-                    # Ouverture de la documentation GitHub
-                    $githubUrl = "https://github.com/votre-repo/PowerShell-Admin-ToolBox/wiki/Style-Guide"
+                    # Ouverture de la documentation (adapter l'URL selon vos besoins)
+                    $githubUrl = "https://github.com/votre-repo/PowerShell-Admin-ToolBox/wiki/Style-Guide-V1"
                     Start-Process $githubUrl
                     
-                    if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-                        Write-ToolBoxLog -Level "Info" -Message "Ouverture de la documentation de styles" -Component "StyleShowcase" -UI $true
-                    }
+                    Write-ToolBoxLog -Level "Info" -Message "Ouverture de la documentation des styles V1" -Component "StyleShowcase" -UI $true
                 }
                 catch {
                     [System.Windows.MessageBox]::Show(
-                        "Impossible d'ouvrir la documentation : $($_.Exception.Message)",
-                        "Erreur",
+                        "Impossible d'ouvrir la documentation : $($_.Exception.Message)`n`nVeuillez consulter le fichier README.md ou la documentation dans le dépôt GitHub.",
+                        "Information",
                         [System.Windows.MessageBoxButton]::OK,
-                        [System.Windows.MessageBoxImage]::Warning
+                        [System.Windows.MessageBoxImage]::Information
                     )
                 }
             })
         }
         
-        # Affichage d'informations sur la console
-        Write-Host "✅ Interface chargée avec succès" -ForegroundColor Green
-        Write-Host "📊 Fonctionnalités disponibles :" -ForegroundColor Yellow
-        Write-Host "   • Couleurs système et personnalisées" -ForegroundColor White
-        Write-Host "   • Styles de typographie" -ForegroundColor White
-        Write-Host "   • Boutons et contrôles de formulaire" -ForegroundColor White
-        Write-Host "   • Copie d'exemples XAML" -ForegroundColor White
-        Write-Host "   • Lien vers documentation" -ForegroundColor White
+        # Focus automatique sur le TextBox d'exemple
+        if ($focusTextBox) {
+            $window.Add_Loaded({
+                $focusTextBox.Focus()
+            })
+        }
         
-        # Gestion de la fermeture propre
+        # ÉTAPE 6 : Affichage d'informations sur la console
+        Write-Host "`n🎨 === VITRINE DE STYLES TOOLBOX V1 ===" -ForegroundColor Cyan
+        Write-Host "🚀 Interface chargée avec succès" -ForegroundColor Green
+        Write-Host "📊 Fonctionnalités disponibles :" -ForegroundColor Yellow
+        Write-Host "   • Palette de couleurs moderne et cohérente" -ForegroundColor White
+        Write-Host "   • Styles de typographie hiérarchisés" -ForegroundColor White
+        Write-Host "   • Boutons avec états interactifs (hover, pressed, disabled)" -ForegroundColor White
+        Write-Host "   • Champs de saisie uniformisés avec focus" -ForegroundColor White
+        Write-Host "   • Conteneurs et layouts structurés" -ForegroundColor White
+        Write-Host "   • Guide d'utilisation complet" -ForegroundColor White
+        Write-Host "   • Exemples XAML prêts à copier" -ForegroundColor White
+        Write-Host "📝 Design : Moderne, minimaliste et fonctionnel" -ForegroundColor Magenta
+        Write-Host "⚡ Compatible : .NET 9.0 / PowerShell 7.5+" -ForegroundColor Magenta
+        
+        # ÉTAPE 7 : Gestion de la fermeture propre
         $window.Add_Closed({
-            if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-                Write-ToolBoxLog -Level "Info" -Message "Vitrine de styles fermée" -Component "StyleShowcase" -File $true -UI $true
-            }
-            Write-Host "🎨 Vitrine de styles fermée" -ForegroundColor Magenta
+            Write-ToolBoxLog -Level "Info" -Message "Vitrine de styles V1 fermée" -Component "StyleShowcase" -File $true -UI $true
+            Write-Host "🎨 Vitrine de styles fermée - Merci d'avoir testé !" -ForegroundColor Magenta
         })
         
-        # Affichage de la fenêtre
-        Write-Host "🚀 Ouverture de la vitrine..." -ForegroundColor Green
+        # ÉTAPE 8 : Affichage de la fenêtre
+        Write-Host "🌟 Ouverture de la vitrine des styles V1..." -ForegroundColor Green
         $window.ShowDialog() | Out-Null
         
     }
     catch {
-        $errorMsg = "Erreur lors de l'affichage de la vitrine de styles : $($_.Exception.Message)"
+        $errorMsg = "Erreur lors de l'affichage de la vitrine de styles V1 : $($_.Exception.Message)"
         Write-Error $errorMsg
         
-        if (Get-Command Write-ToolBoxLog -ErrorAction SilentlyContinue) {
-            Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "StyleShowcase" -File $true
-        }
+        Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "StyleShowcase" -File $true
         
         # Affichage d'informations de dépannage
         Write-Host "`n🔧 INFORMATIONS DE DÉPANNAGE :" -ForegroundColor Red
-        Write-Host "   • Vérifiez que .NET 9 est installé" -ForegroundColor Yellow
+        Write-Host "   • Vérifiez que .NET 9.0 est installé" -ForegroundColor Yellow
         Write-Host "   • Vérifiez que PowerShell 7.5+ est utilisé" -ForegroundColor Yellow
         Write-Host "   • Le fichier XAML doit être présent : $xamlPath" -ForegroundColor Yellow
-        Write-Host "   • Les styles globaux doivent être accessibles" -ForegroundColor Yellow
+        Write-Host "   • Les styles GlobalStyles.xaml doivent être accessibles" -ForegroundColor Yellow
+        Write-Host "   • Le module ToolBox.Core doit être chargé" -ForegroundColor Yellow
         
         # Informations de versions
         Write-Host "`n📋 INFORMATIONS SYSTÈME :" -ForegroundColor Cyan
         Write-Host "   • PowerShell : $($PSVersionTable.PSVersion)" -ForegroundColor White
         Write-Host "   • OS : $($PSVersionTable.OS)" -ForegroundColor White
         Write-Host "   • Edition : $($PSVersionTable.PSEdition)" -ForegroundColor White
+        Write-Host "   • .NET Version : $([System.Environment]::Version)" -ForegroundColor White
+        
+        # Instructions de résolution
+        Write-Host "`n💡 SOLUTIONS SUGGÉRÉES :" -ForegroundColor Green
+        Write-Host "   1. Redémarrez PowerShell en tant qu'administrateur" -ForegroundColor White
+        Write-Host "   2. Vérifiez l'ExecutionPolicy : Set-ExecutionPolicy RemoteSigned" -ForegroundColor White
+        Write-Host "   3. Rechargez le module Core : Import-Module .\Core\ToolBox.Core.psd1 -Force" -ForegroundColor White
+        Write-Host "   4. Testez l'initialisation : Initialize-ToolBoxEnvironment -ShowDetails" -ForegroundColor White
     }
 }
+
+# Auto-exécution pour test autonome
 Show-StyleShowcase
