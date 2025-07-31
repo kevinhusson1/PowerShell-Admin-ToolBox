@@ -41,7 +41,7 @@ function Show-StyleShowcase {
             }
         }
         
-        Write-ToolBoxLog -Level "Info" -Message "Démarrage du module StyleShowcase V1 (Design Moderne)" -Component "StyleShowcase"
+        Write-ToolBoxLog -Level "Info" -Message "Démarrage du module StyleShowcase V1.1 (Vitrine Complète)" -Component "StyleShowcase" -UI $true
         
         # ÉTAPE 2 : Charger le XAML
         $xamlPath = Join-Path $PSScriptRoot "StyleShowcase.xaml"
@@ -69,24 +69,59 @@ function Show-StyleShowcase {
         $documentationButton = $window.FindName("DocumentationButton")
         $focusTextBox = $window.FindName("FocusTextBox")
         $powerShellComboBox = $window.FindName("PowerShellComboBox")
+        $demoDataGrid = $window.FindName("DemoDataGrid") # NOUVEAU
+        $demoListView = $window.FindName("DemoListView") # NOUVEAU
+        $blackoutDatePicker = $window.FindName("BlackoutDatePicker") # NOUVEAU
         
         # ÉTAPE 4.1 : Peuplement de la ComboBox via PowerShell
         if ($powerShellComboBox) {
-            # Exemple de données PowerShell
-            $services = @("Spooler", "Themes", "AudioSrv", "BITS", "Browser", "CryptSvc", "Dhcp", "Dnscache", "EventLog", "LanmanServer")
-            
+            $services = @("Service: BITS", "Service: Spooler", "Service: Themes", "Service: AudioSrv", "Service: Browser", "Service: CryptSvc", "Service: Dhcp", "Service: Dnscache", "Service: EventLog", "Service: LanmanServer")
             foreach ($service in $services) {
                 $item = New-Object System.Windows.Controls.ComboBoxItem
-                $item.Content = "Service: $service"
+                $item.Content = $service
                 $powerShellComboBox.Items.Add($item) | Out-Null
             }
-            
-            # Sélection par défaut
             $powerShellComboBox.SelectedIndex = 0
-            
             Write-ToolBoxLog -Level "Debug" -Message "ComboBox PowerShell peuplée avec $($services.Count) services" -Component "StyleShowcase"
         }
         
+        if ($demoDataGrid) {
+            $data = @(
+                [PSCustomObject]@{Name="Alice"; Email="alice@example.com"; Status="Actif"; LastLogin="2025-07-30"; IsSelected=$false},
+                [PSCustomObject]@{Name="Bob"; Email="bob@example.com"; Status="Inactif"; LastLogin="2025-07-29"; IsSelected=$true},
+                [PSCustomObject]@{Name="Charlie"; Email="charlie@example.com"; Status="En attente"; LastLogin="2025-07-28"; IsSelected=$false}
+            )
+            $demoDataGrid.ItemsSource = $data
+            Write-ToolBoxLog -Level "Debug" -Message "DataGrid peuplée avec $($data.Count) éléments" -Component "StyleShowcase"
+        }
+
+        # ÉTAPE 4.3 : Peuplement du ListView (NOUVEAU)
+        if ($demoListView) {
+            $files = @(
+                [PSCustomObject]@{FileName="rapport.pdf"; Size="1.2 MB"; Type="PDF Document"; Modified="2025-07-25"},
+                [PSCustomObject]@{FileName="image.jpg"; Size="350 KB"; Type="JPG File"; Modified="2025-07-26"},
+                [PSCustomObject]@{FileName="script.ps1"; Size="20 KB"; Type="PowerShell Script"; Modified="2025-07-27"}
+            )
+            $demoListView.ItemsSource = $files
+            Write-ToolBoxLog -Level "Debug" -Message "ListView peuplée avec $($files.Count) éléments" -Component "StyleShowcase"
+        }
+
+        # ÉTAPE 4.4 : Configuration de DatePicker (NOUVEAU)
+        if ($blackoutDatePicker) {
+            # Exemple: Désactiver les week-ends
+            $today = Get-Date
+            $startOfWeek = $today.AddDays(-$today.DayOfWeek.value__)
+            $endOfWeek = $startOfWeek.AddDays(6) # Samedi
+
+            for ($i = 0; $i -lt 365; $i++) {
+                $date = $today.AddDays($i)
+                if ($date.DayOfWeek -eq [System.DayOfWeek]::Saturday -or $date.DayOfWeek -eq [System.DayOfWeek]::Sunday) {
+                    $blackoutDatePicker.BlackoutDates.Add($date)
+                }
+            }
+            Write-ToolBoxLog -Level "Debug" -Message "DatePicker configuré avec des dates non sélectionnables" -Component "StyleShowcase"
+        }
+
         # ÉTAPE 5 : Configuration des événements
         
         # Bouton Fermer
@@ -101,15 +136,17 @@ function Show-StyleShowcase {
         if ($copyXamlButton) {
             $copyXamlButton.Add_Click({
                 try {
-                    # Exemple XAML moderne avec les nouveaux styles
+                    # Mettez à jour cet exemple XAML avec la structure complète quand elle sera finalisée
                     $exampleXaml = @"
 <!-- Exemple d'interface ToolBox V1 avec styles modernes -->
 <Window x:Class="MonModule.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Style="{DynamicResource ToolBoxWindow}"
         Title="Mon Module ToolBox" Height="600" Width="800">
     
+    <!-- ... (Simplifiez ici un extrait représentatif de votre interface complète) ... -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -118,7 +155,7 @@ function Show-StyleShowcase {
         </Grid.RowDefinitions>
         
         <!-- En-tête -->
-        <Border Grid.Row="0" Style="{DynamicResource ToolBoxCard}">
+        <Border Grid.Row="0" Style="{DynamicResource ToolBoxCardFlat}">
             <StackPanel>
                 <TextBlock Text="Mon Interface Moderne" Style="{DynamicResource ToolBoxHeaderText}"/>
                 <TextBlock Text="Utilise le design system ToolBox V1" Style="{DynamicResource ToolBoxSecondaryText}"/>
@@ -129,7 +166,6 @@ function Show-StyleShowcase {
         <ScrollViewer Grid.Row="1">
             <StackPanel Margin="{DynamicResource LargeMargin}">
                 
-                <!-- Section Formulaire -->
                 <GroupBox Header="Formulaire d'exemple" Style="{DynamicResource ToolBoxSection}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -156,7 +192,6 @@ function Show-StyleShowcase {
                     </Grid>
                 </GroupBox>
                 
-                <!-- Section Options -->
                 <Border Style="{DynamicResource ToolBoxCard}">
                     <StackPanel>
                         <TextBlock Text="Options" Style="{DynamicResource ToolBoxSubHeaderText}"/>
@@ -164,12 +199,19 @@ function Show-StyleShowcase {
                         <CheckBox Content="Synchronisation automatique" Style="{DynamicResource ToolBoxCheckBox}"/>
                     </StackPanel>
                 </Border>
+
+                <DataGrid Height="150" AutoGenerateColumns="False" CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nom" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="Statut" Binding="{Binding Status}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
                 
             </StackPanel>
         </ScrollViewer>
         
         <!-- Actions -->
-        <Border Grid.Row="2" Style="{DynamicResource ToolBoxCard}">
+        <Border Grid.Row="2" Style="{DynamicResource ToolBoxCardFlat}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Annuler" Style="{DynamicResource ToolBoxSecondaryButton}" Margin="0,0,8,0"/>
                 <Button Content="Valider" Style="{DynamicResource ToolBoxPrimaryButton}"/>
@@ -231,22 +273,15 @@ function Show-StyleShowcase {
         }
         
         # ÉTAPE 6 : Affichage d'informations sur la console
-        Write-Host "`n🎨 === VITRINE DE STYLES TOOLBOX V1 ===" -ForegroundColor Cyan
+        Write-Host "`n🎨 === VITRINE DE STYLES TOOLBOX V1.1 (Complète) ===" -ForegroundColor Cyan
         Write-Host "🚀 Interface chargée avec succès" -ForegroundColor Green
-        Write-Host "📊 Fonctionnalités disponibles :" -ForegroundColor Yellow
-        Write-Host "   • Palette de couleurs moderne et cohérente" -ForegroundColor White
-        Write-Host "   • Styles de typographie hiérarchisés" -ForegroundColor White
-        Write-Host "   • Boutons avec états interactifs (hover, pressed, disabled)" -ForegroundColor White
-        Write-Host "   • Champs de saisie uniformisés avec focus" -ForegroundColor White
-        Write-Host "   • Conteneurs et layouts structurés" -ForegroundColor White
-        Write-Host "   • Guide d'utilisation complet" -ForegroundColor White
-        Write-Host "   • Exemples XAML prêts à copier" -ForegroundColor White
+        Write-Host "📊 Nouveaux contrôles inclus : DataGrid, ListView, TreeView, Menu, etc." -ForegroundColor Yellow
         Write-Host "📝 Design : Moderne, minimaliste et fonctionnel" -ForegroundColor Magenta
         Write-Host "⚡ Compatible : .NET 9.0 / PowerShell 7.5+" -ForegroundColor Magenta
         
         # ÉTAPE 7 : Gestion de la fermeture propre
         $window.Add_Closed({
-            Write-ToolBoxLog -Level "Info" -Message "Vitrine de styles V1 fermée" -Component "StyleShowcase" Console $true -UI $true
+            Write-ToolBoxLog -Level "Info" -Message "Vitrine de styles V1 fermée" -Component "StyleShowcase" -Console $true -UI $true
             Write-Host "🎨 Vitrine de styles fermée - Merci d'avoir testé !" -ForegroundColor Magenta
         })
         
@@ -256,32 +291,26 @@ function Show-StyleShowcase {
         
     }
     catch {
-        $errorMsg = "Erreur lors de l'affichage de la vitrine de styles V1 : $($_.Exception.Message)"
+        $errorMsg = "Erreur lors de l'affichage de la vitrine de styles V1.1 : $($_.Exception.Message)"
         Write-Error $errorMsg
         
-        Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "StyleShowcase" Console $true
+        Write-ToolBoxLog -Level "Error" -Message $errorMsg -Component "StyleShowcase" -File $true -Console $true
         
-        # Affichage d'informations de dépannage
         Write-Host "`n🔧 INFORMATIONS DE DÉPANNAGE :" -ForegroundColor Red
-        Write-Host "   • Vérifiez que .NET 9.0 est installé" -ForegroundColor Yellow
-        Write-Host "   • Vérifiez que PowerShell 7.5+ est utilisé" -ForegroundColor Yellow
-        Write-Host "   • Le fichier XAML doit être présent : $xamlPath" -ForegroundColor Yellow
-        Write-Host "   • Les styles GlobalStyles.xaml doivent être accessibles" -ForegroundColor Yellow
-        Write-Host "   • Le module ToolBox.Core doit être chargé" -ForegroundColor Yellow
+        Write-Host "   • Vérifiez le fichier XAML pour des erreurs de syntaxe." -ForegroundColor Yellow
+        Write-Host "   • Assurez-vous que tous les namespaces (comme 'sys') sont déclarés en haut du XAML." -ForegroundColor Yellow
+        Write-Host "   • Le XAML est long, l'erreur peut être n'importe où. Regardez le numéro de ligne/colonne exact." -ForegroundColor Yellow
         
-        # Informations de versions
         Write-Host "`n📋 INFORMATIONS SYSTÈME :" -ForegroundColor Cyan
         Write-Host "   • PowerShell : $($PSVersionTable.PSVersion)" -ForegroundColor White
         Write-Host "   • OS : $($PSVersionTable.OS)" -ForegroundColor White
         Write-Host "   • Edition : $($PSVersionTable.PSEdition)" -ForegroundColor White
         Write-Host "   • .NET Version : $([System.Environment]::Version)" -ForegroundColor White
         
-        # Instructions de résolution
         Write-Host "`n💡 SOLUTIONS SUGGÉRÉES :" -ForegroundColor Green
-        Write-Host "   1. Redémarrez PowerShell en tant qu'administrateur" -ForegroundColor White
-        Write-Host "   2. Vérifiez l'ExecutionPolicy : Set-ExecutionPolicy RemoteSigned" -ForegroundColor White
-        Write-Host "   3. Rechargez le module Core : Import-Module .\Core\ToolBox.Core.psd1 -Force" -ForegroundColor White
-        Write-Host "   4. Testez l'initialisation : Initialize-ToolBoxEnvironment -ShowDetails" -ForegroundColor White
+        Write-Host "   1. Comparez attentivement les lignes XAML mentionnées dans l'erreur." -ForegroundColor White
+        Write-Host "   2. Commentez des sections entières du XAML pour isoler la partie défectueuse." -ForegroundColor White
+        Write-Host "   3. Activez les logs `Debug` dans `ToolBoxConfig.json` si ce n'est pas déjà fait." -ForegroundColor White
     }
 }
 
