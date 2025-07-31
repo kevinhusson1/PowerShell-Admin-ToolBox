@@ -87,7 +87,7 @@
         <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -129,7 +129,7 @@
         <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -171,7 +171,7 @@
         <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -213,7 +213,7 @@
         <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -255,7 +255,7 @@
         <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -297,7 +297,7 @@
         <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -343,28 +343,66 @@
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource StandardPadding}" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="VerticalContentAlignment" Value="Center" /> <!-- On le garde ici pour le principe -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="TextBoxBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ScrollViewer x:Name="PART_ContentHost" 
-                                    Margin="{TemplateBinding Padding}"
-                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                    <Border x:Name="TextBoxBorder" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <!-- CORRECTION: On met le padding ici, et on centre le ScrollViewer -->
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                    Padding="{TemplateBinding Padding}"
+                                    VerticalAlignment="Center"
                                     Focusable="False"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Triggers inchangés... -->
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="2" />
+                            <!-- On ajuste le padding pour compenser la bordure -->
+                            <Setter TargetName="PART_ContentHost" Property="Padding" Value="7,5,7,5" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="TextBoxBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ToolBoxPasswordBox" TargetType="PasswordBox">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="TextBoxBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                        <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Focusable="False"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
                             <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="2" />
-                            <!-- Compensation du padding pour éviter le décalage -->
-                            <Setter TargetName="PART_ContentHost" Property="Margin" Value="7,5,7,5" />
+                            <Setter TargetName="PART_ContentHost" Property="Padding" Value="7,5,7,5" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
@@ -380,41 +418,36 @@
         </Setter>
     </Style>
     
-    <Style x:Key="ToolBoxPasswordBox" TargetType="PasswordBox">
+    <Style x:Key="ToolBoxMultilineTextBox" TargetType="TextBox">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource StandardPadding}" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="8,6" />
+        <!-- PAS DE HAUTEUR FIXE ICI -->
+        <Setter Property="VerticalContentAlignment" Value="Top" /> <!-- Texte aligné en haut -->
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="PasswordBox">
-                    <Border x:Name="PasswordBoxBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ScrollViewer x:Name="PART_ContentHost" 
-                                    Margin="{TemplateBinding Padding}"
-                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                    Focusable="False"/>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="TextBoxBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                        <!-- Le VerticalAlignment du ScrollViewer est maintenant Top -->
+                        <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Focusable="False"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="PasswordBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
-                            <Setter TargetName="PasswordBoxBorder" Property="BorderThickness" Value="2" />
-                            <!-- Compensation du padding pour éviter le décalage -->
-                            <Setter TargetName="PART_ContentHost" Property="Margin" Value="7,5,7,5" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderThickness" Value="2" />
+                            <Setter TargetName="PART_ContentHost" Property="Padding" Value="7,5,7,5" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="PasswordBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="PasswordBoxBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter TargetName="PasswordBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="TextBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -422,65 +455,65 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <Style x:Key="ToolBoxComboBox" TargetType="ComboBox">
-        <!-- Les propriétés de base restent les mêmes -->
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="8,6" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource StandardPadding}" />
-        <Setter Property="MinHeight" Value="45" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
-                        <!-- ================= CORRECTION PRINCIPALE ================= -->
-                        <!-- Le ToggleButton hérite maintenant de TOUT via TemplateBinding -->
-                        <!-- Il n'est PAS focusable pour laisser le ComboBox gérer les clics -->
+                        <!-- Couche 1: La Bordure principale. Elle définit l'apparence. -->
+                        <Border x:Name="MainBorder" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True"/>
+
+                        <!-- Couche 2: Le bouton invisible pour l'interaction. Il ne DOIT PAS avoir de fond de survol. -->
                         <ToggleButton x:Name="ToggleButton"
-                                    IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Focusable="False">
+                                    IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Focusable="False"
+                                    ClickMode="Press">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="ComboBoxBorder"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="6">
-                                        <Path x:Name="Arrow" Fill="{StaticResource ToolBoxTextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z" Margin="0,0,8,0"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="False">
-                                            <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource ToolBoxTextDisabledBrush}" />
-                                        </DataTrigger>
-                                    </ControlTemplate.Triggers>
+                                    <Border Background="Transparent" />
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
+                        
+                        <!-- Couche 3: La flèche visuelle -->
+                        <Path x:Name="Arrow" IsHitTestVisible="False" Fill="{StaticResource ToolBoxTextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z" Margin="0,0,8,0"/>
+                            
+                        <!-- Couche 4: Le texte (non-éditable), PAR-DESSUS le reste. -->
+                        <ContentPresenter x:Name="ContentSite" 
+                                        IsHitTestVisible="False"
+                                        Content="{TemplateBinding SelectionBoxItem}" 
+                                        ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+                                        HorizontalAlignment="Left" 
+                                        Margin="{TemplateBinding Padding}" />
 
-                        <!-- Affiche l'élément sélectionné (non-éditable) -->
-                        <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="Left" Margin="{TemplateBinding Padding}" />
-
-                        <!-- Le TextBox pour la version éditable -->
-                        <TextBox x:Name="PART_EditableTextBox"
+                        <!-- Couche 5: Le texte (éditable), PAR-DESSUS le reste. -->
+                        <TextBox x:Name="PART_EditableTextBox" 
                                 Visibility="Hidden"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Focusable="True"
-                                FontSize="{TemplateBinding FontSize}"
-                                Foreground="{TemplateBinding Foreground}"
-                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                HorizontalAlignment="Left"
-                                Margin="{TemplateBinding Padding}"
+                                Background="Transparent" 
+                                BorderThickness="0" 
+                                Focusable="True" 
+                                FontSize="{TemplateBinding FontSize}" 
+                                Foreground="{TemplateBinding Foreground}" 
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+                                HorizontalAlignment="Left" 
+                                Margin="{TemplateBinding Padding}" 
                                 IsReadOnly="{TemplateBinding IsReadOnly}"/>
 
-                        <!-- Le Popup reste identique -->
                         <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
                             <Grid MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                 <Border Background="White" BorderBrush="{StaticResource ToolBoxBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,4,0,0"/>
@@ -491,30 +524,24 @@
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- Trigger de Focus: épaissit la bordure du ToggleButton -->
+                        <!-- Les triggers ne modifient que la BORDURE EXTERNE -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                        </Trigger>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                            <Setter TargetName="ToggleButton" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
-                            <Setter TargetName="ToggleButton" Property="BorderThickness" Value="2" />
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="MainBorder" Property="BorderThickness" Value="2" />
                             <Setter TargetName="ContentSite" Property="Margin" Value="7,5,7,5"/>
                             <Setter TargetName="PART_EditableTextBox" Property="Margin" Value="7,5,7,5"/>
                         </Trigger>
-                        
-                        <!-- Trigger de Survol: change la couleur de la bordure -->
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ToggleButton" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
-                        </Trigger>
-                        
-                        <!-- Trigger d'édition: intervertit la visibilité -->
                         <Trigger Property="IsEditable" Value="true">
                             <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
                             <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
                         </Trigger>
-                        
-                        <!-- Trigger désactivé -->
                         <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="MainBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}"/>
-                            <Setter TargetName="ToggleButton" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}"/>
-                            <Setter TargetName="ToggleButton" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}"/>
+                            <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource ToolBoxTextDisabledBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

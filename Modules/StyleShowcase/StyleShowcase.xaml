@@ -132,25 +132,26 @@
                                     
                                     <Label Grid.Row="1" Grid.Column="0" Content="PasswordBox :" Style="{DynamicResource ToolBoxFormLabel}"/>
                                     <PasswordBox Grid.Row="1" Grid.Column="1" 
-                                                 Password="test123" 
-                                                 Style="{DynamicResource ToolBoxPasswordBox}" 
-                                                 Margin="0,0,0,8"/>
-                                    
+                                                Password="test123" 
+                                                Style="{DynamicResource ToolBoxPasswordBox}" 
+                                                Margin="0,0,0,8"/>
+
+                                    <!-- Le champ désactivé utilisera le style TextBox normal, le trigger fonctionnera -->
                                     <Label Grid.Row="2" Grid.Column="0" Content="Champ Désactivé :" Style="{DynamicResource ToolBoxFormLabel}"/>
                                     <TextBox Grid.Row="2" Grid.Column="1" 
-                                             Text="Champ désactivé" 
-                                             Style="{DynamicResource ToolBoxTextBox}" 
-                                             IsEnabled="False"
-                                             Margin="0,0,0,8"/>
-                                    
+                                            Text="Champ désactivé" 
+                                            Style="{DynamicResource ToolBoxTextBox}" 
+                                            IsEnabled="False"
+                                            Margin="0,0,0,8"/>
+
+                                    <!-- Mettez à jour le style de la Zone Multiligne -->
                                     <Label Grid.Row="3" Grid.Column="0" Content="Zone Multiligne :" Style="{DynamicResource ToolBoxFormLabel}"/>
                                     <TextBox Grid.Row="3" Grid.Column="1" 
-                                             Text="Zone de texte multiligne&#x0a;Appuyez sur Entrée&#x0a;pour ajouter des lignes"
-                                             Style="{DynamicResource ToolBoxTextBox}" 
-                                             TextWrapping="Wrap"
-                                             AcceptsReturn="True"
-                                             Height="80"
-                                             VerticalContentAlignment="Top"/>
+                                            Text="Zone de texte multiligne
+                                            Appuyez sur Entrée
+                                            pour ajouter des lignes"
+                                            Style="{DynamicResource ToolBoxMultilineTextBox}" 
+                                            Height="80"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
