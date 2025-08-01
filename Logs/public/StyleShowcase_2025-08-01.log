@@ -5572,3 +5572,6 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
         </Border>
     </Grid>
 </Window>" to type "System.Xml.XmlDocument". Error: "The 'DataGridComboBoxColumn' start tag on line 241 position 38 does not match the end tag of 'DataGrid.Columns'. Line 254, position 35."
+[2025-08-01 10:15:50] [ERROR] [StyleShowcase] Erreur lors de l'affichage de la vitrine de styles V1.1 : Exception calling "ShowDialog" with "0" argument(s): "La valeur fournie sur 'System.Windows.Markup.StaticResourceHolder' a levé une exception."
+[2025-08-01 10:23:47] [ERROR] [StyleShowcase] Erreur lors de l'affichage de la vitrine de styles V1.1 : Exception calling "ShowDialog" with "0" argument(s): "La valeur fournie sur 'System.Windows.Markup.StaticResourceHolder' a levé une exception."
+[2025-08-01 10:34:57] [ERROR] [StyleShowcase] Erreur lors de l'affichage de la vitrine de styles V1.1 : Exception calling "ShowDialog" with "0" argument(s): "La valeur fournie sur 'System.Windows.Markup.StaticResourceHolder' a levé une exception."

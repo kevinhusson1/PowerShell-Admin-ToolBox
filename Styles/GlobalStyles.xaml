@@ -2,13 +2,94 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- =================================================================== -->
-    <!-- TOOLBOX GLOBAL STYLES - VERSION SIMPLE POUR TEST                  -->
+    <!-- TOOLBOX GLOBAL STYLES V2 - PALETTE DE COULEURS ENRICHIE           -->
     <!-- =================================================================== -->
 
     <!-- =============================================== -->
-    <!-- COULEURS DE BASE + COULEURS HOVER              -->
+    <!-- PALETTE PRIMAIRE - BLEU SKY (votre couleur actuelle)             -->
     <!-- =============================================== -->
     
+    <SolidColorBrush x:Key="ToolBoxPrimary50" Color="#F0F9FF" />
+    <SolidColorBrush x:Key="ToolBoxPrimary100" Color="#E0F2FE" />
+    <SolidColorBrush x:Key="ToolBoxPrimary200" Color="#BAE6FD" />
+    <SolidColorBrush x:Key="ToolBoxPrimary300" Color="#7DD3FC" />
+    <SolidColorBrush x:Key="ToolBoxPrimary400" Color="#38BDF8" />
+    <SolidColorBrush x:Key="ToolBoxPrimary500" Color="#0EA5E9" />
+    <SolidColorBrush x:Key="ToolBoxPrimary600" Color="#0284C7" />
+    <SolidColorBrush x:Key="ToolBoxPrimary700" Color="#0369A1" />
+    <SolidColorBrush x:Key="ToolBoxPrimary800" Color="#075985" />
+    <SolidColorBrush x:Key="ToolBoxPrimary900" Color="#0C4A6E" />
+    <SolidColorBrush x:Key="ToolBoxPrimary950" Color="#082F49" />
+
+    <!-- =============================================== -->
+    <!-- PALETTE SUCCESS - VERT EMERALD                 -->
+    <!-- =============================================== -->
+    
+    <SolidColorBrush x:Key="ToolBoxSuccess50" Color="#ECFDF5" />
+    <SolidColorBrush x:Key="ToolBoxSuccess100" Color="#D1FAE5" />
+    <SolidColorBrush x:Key="ToolBoxSuccess200" Color="#A7F3D0" />
+    <SolidColorBrush x:Key="ToolBoxSuccess300" Color="#6EE7B7" />
+    <SolidColorBrush x:Key="ToolBoxSuccess400" Color="#34D399" />
+    <SolidColorBrush x:Key="ToolBoxSuccess500" Color="#10B981" />
+    <SolidColorBrush x:Key="ToolBoxSuccess600" Color="#059669" />
+    <SolidColorBrush x:Key="ToolBoxSuccess700" Color="#047857" />
+    <SolidColorBrush x:Key="ToolBoxSuccess800" Color="#065F46" />
+    <SolidColorBrush x:Key="ToolBoxSuccess900" Color="#064E3B" />
+    <SolidColorBrush x:Key="ToolBoxSuccess950" Color="#022C22" />
+
+    <!-- =============================================== -->
+    <!-- PALETTE WARNING - ORANGE AMBER                 -->
+    <!-- =============================================== -->
+    
+    <SolidColorBrush x:Key="ToolBoxWarning50" Color="#FFFBEB" />
+    <SolidColorBrush x:Key="ToolBoxWarning100" Color="#FEF3C7" />
+    <SolidColorBrush x:Key="ToolBoxWarning200" Color="#FDE68A" />
+    <SolidColorBrush x:Key="ToolBoxWarning300" Color="#FCD34D" />
+    <SolidColorBrush x:Key="ToolBoxWarning400" Color="#FBBF24" />
+    <SolidColorBrush x:Key="ToolBoxWarning500" Color="#F59E0B" />
+    <SolidColorBrush x:Key="ToolBoxWarning600" Color="#D97706" />
+    <SolidColorBrush x:Key="ToolBoxWarning700" Color="#B45309" />
+    <SolidColorBrush x:Key="ToolBoxWarning800" Color="#92400E" />
+    <SolidColorBrush x:Key="ToolBoxWarning900" Color="#78350F" />
+    <SolidColorBrush x:Key="ToolBoxWarning950" Color="#451A03" />
+
+    <!-- =============================================== -->
+    <!-- PALETTE DANGER - ROUGE RED                     -->
+    <!-- =============================================== -->
+    
+    <SolidColorBrush x:Key="ToolBoxDanger50" Color="#FEF2F2" />
+    <SolidColorBrush x:Key="ToolBoxDanger100" Color="#FEE2E2" />
+    <SolidColorBrush x:Key="ToolBoxDanger200" Color="#FECACA" />
+    <SolidColorBrush x:Key="ToolBoxDanger300" Color="#FCA5A5" />
+    <SolidColorBrush x:Key="ToolBoxDanger400" Color="#F87171" />
+    <SolidColorBrush x:Key="ToolBoxDanger500" Color="#EF4444" />
+    <SolidColorBrush x:Key="ToolBoxDanger600" Color="#DC2626" />
+    <SolidColorBrush x:Key="ToolBoxDanger700" Color="#B91C1C" />
+    <SolidColorBrush x:Key="ToolBoxDanger800" Color="#991B1B" />
+    <SolidColorBrush x:Key="ToolBoxDanger900" Color="#7F1D1D" />
+    <SolidColorBrush x:Key="ToolBoxDanger950" Color="#450A0A" />
+
+    <!-- =============================================== -->
+    <!-- PALETTE NEUTRALS - GRAYS MODERNES              -->
+    <!-- =============================================== -->
+    
+    <SolidColorBrush x:Key="ToolBoxGray50" Color="#F9FAFB" />
+    <SolidColorBrush x:Key="ToolBoxGray100" Color="#F3F4F6" />
+    <SolidColorBrush x:Key="ToolBoxGray200" Color="#E5E7EB" />
+    <SolidColorBrush x:Key="ToolBoxGray300" Color="#D1D5DB" />
+    <SolidColorBrush x:Key="ToolBoxGray400" Color="#9CA3AF" />
+    <SolidColorBrush x:Key="ToolBoxGray500" Color="#6B7280" />
+    <SolidColorBrush x:Key="ToolBoxGray600" Color="#4B5563" />
+    <SolidColorBrush x:Key="ToolBoxGray700" Color="#374151" />
+    <SolidColorBrush x:Key="ToolBoxGray800" Color="#1F2937" />
+    <SolidColorBrush x:Key="ToolBoxGray900" Color="#111827" />
+    <SolidColorBrush x:Key="ToolBoxGray950" Color="#030712" />
+
+    <!-- =============================================== -->
+    <!-- ALIASES POUR COMPATIBILITÉ (vos noms actuels) -->
+    <!-- =============================================== -->
+    
+    <!-- Couleurs principales (valeurs en dur pour garantir le chargement) -->
     <SolidColorBrush x:Key="ToolBoxPrimaryBrush" Color="#0EA5E9" />
     <SolidColorBrush x:Key="ToolBoxPrimaryHoverBrush" Color="#0284C7" />
     <SolidColorBrush x:Key="ToolBoxSuccessBrush" Color="#059669" />
@@ -17,26 +98,76 @@
     <SolidColorBrush x:Key="ToolBoxWarningHoverBrush" Color="#B45309" />
     <SolidColorBrush x:Key="ToolBoxDangerBrush" Color="#DC2626" />
     <SolidColorBrush x:Key="ToolBoxDangerHoverBrush" Color="#B91C1C" />
+
+    <!-- Couleurs utilitaires (valeurs en dur pour garantir le chargement) -->
     <SolidColorBrush x:Key="ToolBoxSecondaryBrush" Color="#6B7280" />
     <SolidColorBrush x:Key="ToolBoxSecondaryHoverBrush" Color="#E5E7EB" />
     <SolidColorBrush x:Key="ToolBoxLightBrush" Color="#F9FAFB" />
     <SolidColorBrush x:Key="ToolBoxLightHoverBrush" Color="#F3F4F6" />
     <SolidColorBrush x:Key="ToolBoxBorderBrush" Color="#D1D5DB" />
-    <SolidColorBrush x:Key="ToolBoxBorderFocusBrush" Color="#93C5FD" />
+    <SolidColorBrush x:Key="ToolBoxBorderFocusBrush" Color="#7DD3FC" /> <!-- Alias pour Primary300 -->
     <SolidColorBrush x:Key="ToolBoxDisabledBrush" Color="#E5E7EB" />
     <SolidColorBrush x:Key="ToolBoxTextBrush" Color="#111827" />
     <SolidColorBrush x:Key="ToolBoxTextSecondaryBrush" Color="#6B7280" />
     <SolidColorBrush x:Key="ToolBoxTextDisabledBrush" Color="#9CA3AF" />
     <SolidColorBrush x:Key="ToolBoxTextWhiteBrush" Color="#FFFFFF" />
-
+    
     <!-- =============================================== -->
-    <!-- MARGES STANDARD                                 -->
+    <!-- NOUVELLES COULEURS UTILITAIRES                 -->
     <!-- =============================================== -->
     
+    <SolidColorBrush x:Key="ToolBoxFocusRing" Color="#7DD3FC" />
+    <SolidColorBrush x:Key="ToolBoxFocusRingDark" Color="#3B82F6" />
+    <SolidColorBrush x:Key="ToolBoxBackgroundPrimary" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ToolBoxBackgroundSecondary" Color="#F9FAFB" />
+    <SolidColorBrush x:Key="ToolBoxBackgroundTertiary" Color="#F3F4F6" />
+    <SolidColorBrush x:Key="ToolBoxSurface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ToolBoxSurfaceHover" Color="#F9FAFB" />
+    <SolidColorBrush x:Key="ToolBoxSurfaceActive" Color="#F3F4F6" />
+    <SolidColorBrush x:Key="ToolBoxInfo" Color="#3B82F6" />
+    <SolidColorBrush x:Key="ToolBoxInfoLight" Color="#DBEAFE" />
+
+    <!-- =============================================== -->
+    <!-- MARGES ET ESPACEMENTS ENRICHIS                 -->
+    <!-- =============================================== -->
+    
+    <Thickness x:Key="SpacingXS">4</Thickness>
+    <Thickness x:Key="SpacingSM">8</Thickness>
+    <Thickness x:Key="SpacingMD">16</Thickness>
+    <Thickness x:Key="SpacingLG">24</Thickness>
+    <Thickness x:Key="SpacingXL">32</Thickness>
+    <Thickness x:Key="SpacingXXL">48</Thickness>
     <Thickness x:Key="StandardMargin">8</Thickness>
     <Thickness x:Key="LargeMargin">16</Thickness>
     <Thickness x:Key="StandardPadding">8,6</Thickness>
     <Thickness x:Key="LargePadding">12,8</Thickness>
+    <Thickness x:Key="ButtonPadding">12,8</Thickness>
+    <Thickness x:Key="InputPadding">12,10</Thickness>
+    <Thickness x:Key="CardPadding">16</Thickness>
+    <Thickness x:Key="SectionPadding">24</Thickness>
+
+    <!-- =============================================== -->
+    <!-- RAYONS DE BORDURE STANDARDISÉS                 -->
+    <!-- =============================================== -->
+    
+    <CornerRadius x:Key="RadiusXS">2</CornerRadius>
+    <CornerRadius x:Key="RadiusSM">4</CornerRadius>
+    <CornerRadius x:Key="RadiusMD">6</CornerRadius>
+    <CornerRadius x:Key="RadiusLG">8</CornerRadius>
+    <CornerRadius x:Key="RadiusXL">12</CornerRadius>
+    <CornerRadius x:Key="RadiusXXL">16</CornerRadius>
+    <CornerRadius x:Key="RadiusFull">9999</CornerRadius>
+    <CornerRadius x:Key="StandardRadius">6</CornerRadius>
+    <CornerRadius x:Key="LargeRadius">8</CornerRadius>
+
+    <!-- =============================================== -->
+    <!-- OMBRES MODERNES (pour futures améliorations)  -->
+    <!-- =============================================== -->
+    
+    <DropShadowEffect x:Key="ShadowSM" Color="#00000010" BlurRadius="3" ShadowDepth="1" Direction="270" />
+    <DropShadowEffect x:Key="ShadowMD" Color="#00000015" BlurRadius="6" ShadowDepth="2" Direction="270" />
+    <DropShadowEffect x:Key="ShadowLG" Color="#00000020" BlurRadius="15" ShadowDepth="4" Direction="270" />
+    <DropShadowEffect x:Key="ShadowXL" Color="#00000025" BlurRadius="25" ShadowDepth="8" Direction="270" />
 
     <!-- =============================================== -->
     <!-- STYLES DE TEXTE SIMPLES                        -->
@@ -76,262 +207,306 @@
     </Style>
 
     <!-- =============================================== -->
-    <!-- STYLES DE BOUTONS AVEC TEMPLATES SIMPLES       -->
+    <!-- STYLES DE BOUTONS AMÉLIORÉS - VERSION 2.0      -->
     <!-- =============================================== -->
-    
+
+    <!-- =============================================== -->
+    <!-- BOUTON PRIMARY (Modèle de référence validé)     -->
+    <!-- =============================================== -->
+
     <Style x:Key="ToolBoxPrimaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ToolBoxPrimaryBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Background" Value="{StaticResource ToolBoxPrimary500}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary500}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="ButtonBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"
-                                        Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="FocusRing" Background="Transparent" BorderBrush="{StaticResource ToolBoxFocusRing}" BorderThickness="2" CornerRadius="8" Margin="-2" Opacity="0" />
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxPrimaryHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryHoverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#0369A1" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#0369A1" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxPrimary700}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary700}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxGray400}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <!-- =============================================== -->
+    <!-- BOUTON SECONDARY                                -->
+    <!-- =============================================== -->
+
     <Style x:Key="ToolBoxSecondaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ToolBoxLightBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Background" Value="{StaticResource ToolBoxGray50}" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxGray900}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="ButtonBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"
-                                        Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="FocusRing" Background="Transparent" BorderBrush="{StaticResource ToolBoxFocusRing}" BorderThickness="2" CornerRadius="8" Margin="-2" Opacity="0" />
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxSecondaryHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray100}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray400}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#D1D5DB" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryHoverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray500}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxGray400}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <!-- =============================================== -->
+    <!-- BOUTON SUCCESS                                  -->
+    <!-- =============================================== -->
+
     <Style x:Key="ToolBoxSuccessButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ToolBoxSuccessBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxSuccessBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Background" Value="{StaticResource ToolBoxSuccess600}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxSuccess600}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="ButtonBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"
-                                        Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="FocusRing" Background="Transparent" BorderBrush="{StaticResource ToolBoxFocusRing}" BorderThickness="2" CornerRadius="8" Margin="-2" Opacity="0" />
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxSuccessHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxSuccessHoverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxSuccess700}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxSuccess700}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#065F46" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#065F46" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxSuccess800}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxSuccess800}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxGray400}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <!-- =============================================== -->
+    <!-- BOUTON WARNING                                  -->
+    <!-- =============================================== -->
+
     <Style x:Key="ToolBoxWarningButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ToolBoxWarningBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxWarningBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Background" Value="{StaticResource ToolBoxWarning600}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxWarning600}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="ButtonBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"
-                                        Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="FocusRing" Background="Transparent" BorderBrush="{StaticResource ToolBoxFocusRing}" BorderThickness="2" CornerRadius="8" Margin="-2" Opacity="0" />
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxWarningHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxWarningHoverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxWarning700}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxWarning700}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#92400E" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#92400E" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxWarning800}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxWarning800}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxGray400}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <!-- =============================================== -->
+    <!-- BOUTON DANGER                                   -->
+    <!-- =============================================== -->
+
     <Style x:Key="ToolBoxDangerButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ToolBoxDangerBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxDangerBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Background" Value="{StaticResource ToolBoxDanger600}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxDanger600}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="ButtonBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"
-                                        Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="FocusRing" Background="Transparent" BorderBrush="{StaticResource ToolBoxFocusRing}" BorderThickness="2" CornerRadius="8" Margin="-2" Opacity="0" />
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDangerHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDangerHoverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDanger700}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDanger700}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="#991B1B" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#991B1B" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDanger800}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDanger800}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxGray400}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <!-- =============================================== -->
+    <!-- BOUTON OUTLINE                                  -->
+    <!-- =============================================== -->
+
     <Style x:Key="ToolBoxOutlineButton" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimaryBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource LargePadding}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Padding" Value="12,8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimary600}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="ButtonBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center"
-                                        Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="FocusRing" Background="Transparent" BorderBrush="{StaticResource ToolBoxFocusRing}" BorderThickness="2" CornerRadius="8" Margin="-2" Opacity="0" />
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxLightHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimaryHoverBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimaryHoverBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxPrimary50}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimary700}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary700}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxSecondaryHoverBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#0369A1" />
-                            <Setter Property="Foreground" Value="#0369A1" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ToolBoxPrimary100}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimary800}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary800}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="ButtonBorder" Property="Background" Value="Transparent" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxGray400}" />
+                            <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
+
 
     <!-- =============================================== -->
     <!-- STYLES DE CHAMPS AVEC TEMPLATES CORRIGÉS       -->
