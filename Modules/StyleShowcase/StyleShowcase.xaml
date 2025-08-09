@@ -130,7 +130,7 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                                 <ComboBox Grid.Row="2" Grid.Column="1" Style="{DynamicResource ToolBoxComboBox}" x:Name="PowerShellComboBox" Margin="0,0,0,8"/>
                                 
                                 <Label Grid.Row="3" Grid.Column="0" Content="ListBox :" Style="{DynamicResource ToolBoxFormLabel}"/>
-                                <ListBox Grid.Row="3" Grid.Column="1" Height="100" Margin="0,0,0,8">
+                                <ListBox Grid.Row="3" Grid.Column="1" Height="100" Margin="0,0,0,8" Style="{DynamicResource ToolBoxListBox}">
                                     <ListBoxItem Content="Élément de liste 1"/>
                                     <ListBoxItem Content="Élément de liste 2" IsSelected="True"/>
                                     <ListBoxItem Content="Élément de liste 3"/>
@@ -233,14 +233,12 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                         <!-- Section DataGrid -->
                         <TextBlock Text="DataGrid" Style="{DynamicResource ToolBoxSubHeaderText}"/>
                         <Border Style="{DynamicResource ToolBoxCard}">
-                            <DataGrid x:Name="DemoDataGrid" Height="200" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid x:Name="DemoDataGrid" Height="200" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Style="{DynamicResource ToolBoxDataGrid}">
                                 <DataGrid.Columns>
                                     <DataGridCheckBoxColumn Header="Sélection" Binding="{Binding IsSelected}" Width="80"/>
                                     <DataGridTextColumn Header="Nom" Binding="{Binding Name}" Width="150"/>
                                     <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
-                                        <DataGridComboBoxColumn Header="Statut" SelectedItemBinding="{Binding Status}" Width="120">
-                                        <!-- Le style personnalisé est retiré pour le moment. -->
-                                        <!-- On laisse WPF gérer le style par défaut de cet élément complexe. -->
+                                    <DataGridComboBoxColumn Header="Statut" SelectedItemBinding="{Binding Status}" Width="120">
                                         <DataGridComboBoxColumn.ItemsSource>
                                             <x:Array Type="{x:Type sys:String}">
                                                 <sys:String>Actif</sys:String>
@@ -269,7 +267,7 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                                     <RadioButton Content="Icônes" x:Name="IconViewMode"/>
                                 </StackPanel>
                                 
-                                <ListView Grid.Row="1" x:Name="DemoListView">
+                                <ListView Grid.Row="1" x:Name="DemoListView" Style="{DynamicResource ToolBoxListView}">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="Fichier" DisplayMemberBinding="{Binding FileName}" Width="200"/>
