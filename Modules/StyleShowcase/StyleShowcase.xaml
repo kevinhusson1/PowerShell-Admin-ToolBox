@@ -233,20 +233,24 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                         <!-- Section DataGrid -->
                         <TextBlock Text="DataGrid" Style="{DynamicResource ToolBoxSubHeaderText}"/>
                         <Border Style="{DynamicResource ToolBoxCard}">
-                            <DataGrid x:Name="DemoDataGrid" Height="200" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Style="{DynamicResource ToolBoxDataGrid}">
+                            <DataGrid x:Name="DemoDataGrid" Height="200" Style="{DynamicResource ToolBoxDataGrid}">
                                 <DataGrid.Columns>
-                                    <DataGridCheckBoxColumn Header="Sélection" Binding="{Binding IsSelected}" Width="80"/>
+                                    <!-- Colonne CheckBox avec style correct et binding fonctionnel -->
+                                    <DataGridTemplateColumn Header="Sélection" Width="80">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" 
+                                                        Style="{DynamicResource ToolBoxCheckBox}"
+                                                        HorizontalAlignment="Center"
+                                                        Margin="0"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    
+                                    <!-- Autres colonnes -->
                                     <DataGridTextColumn Header="Nom" Binding="{Binding Name}" Width="150"/>
                                     <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
-                                    <DataGridComboBoxColumn Header="Statut" SelectedItemBinding="{Binding Status}" Width="120">
-                                        <DataGridComboBoxColumn.ItemsSource>
-                                            <x:Array Type="{x:Type sys:String}">
-                                                <sys:String>Actif</sys:String>
-                                                <sys:String>Inactif</sys:String>
-                                                <sys:String>En attente</sys:String>
-                                            </x:Array>
-                                        </DataGridComboBoxColumn.ItemsSource>
-                                    </DataGridComboBoxColumn>
+                                    <DataGridTextColumn Header="Statut" Binding="{Binding Status}" Width="120"/>
                                     <DataGridTextColumn Header="Dernière connexion" Binding="{Binding LastLogin}" Width="150"/>
                                 </DataGrid.Columns>
                             </DataGrid>

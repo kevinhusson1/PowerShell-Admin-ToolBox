@@ -802,8 +802,12 @@
     </Style>
 
     <!-- =============================================== -->
-    <!-- STYLE DATAGRID                                 -->
+    <!-- STYLE DATAGRID COMPLET POUR POWERSHELL         -->
     <!-- =============================================== -->
+
+<!-- =============================================== -->
+<!-- STYLE DATAGRID CORRIGÉ                         -->
+<!-- =============================================== -->
 
     <Style x:Key="ToolBoxDataGrid" TargetType="DataGrid">
         <Setter Property="Background" Value="White" />
@@ -813,75 +817,91 @@
         <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource ToolBoxGray200}" />
-        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource ToolBoxGray200}" />
+        <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
         <Setter Property="HeadersVisibility" Value="Column" />
         <Setter Property="AlternatingRowBackground" Value="{StaticResource ToolBoxGray50}" />
         <Setter Property="RowBackground" Value="White" />
         <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
         <Setter Property="CanUserAddRows" Value="False" />
         <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="CanUserReorderColumns" Value="True" />
+        <Setter Property="CanUserResizeColumns" Value="True" />
+        <Setter Property="CanUserResizeRows" Value="False" />
+        <Setter Property="CanUserSortColumns" Value="True" />
         <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="IsReadOnly" Value="False" />
+        <!-- Performance -->
+        <Setter Property="EnableRowVirtualization" Value="True" />
+        <Setter Property="EnableColumnVirtualization" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="DataGrid">
-                    <Border x:Name="DataGridBorder" 
-                            Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
-                            BorderThickness="{TemplateBinding BorderThickness}" 
-                            CornerRadius="6"
-                            SnapsToDevicePixels="True">
-                        <ScrollViewer x:Name="DG_ScrollViewer" Focusable="False">
-                            <ScrollViewer.Template>
-                                <ControlTemplate TargetType="ScrollViewer">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter" 
-                                                                    Grid.Column="1" Grid.Row="0"
-                                                                    Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Column}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
-                                        
-                                        <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
-                                                            Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
-                                                            CanContentScroll="{TemplateBinding CanContentScroll}"/>
-                                        
-                                        <ScrollBar x:Name="PART_VerticalScrollBar" 
-                                                Grid.Column="2" Grid.Row="1"
-                                                Orientation="Vertical" 
-                                                ViewportSize="{TemplateBinding ScrollableHeight}" 
-                                                Maximum="{TemplateBinding ExtentHeight}" 
-                                                Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
-                                                Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                        
-                                        <ScrollBar x:Name="PART_HorizontalScrollBar" 
-                                                Grid.Column="1" Grid.Row="2"
-                                                Orientation="Horizontal" 
-                                                ViewportSize="{TemplateBinding ScrollableWidth}" 
-                                                Maximum="{TemplateBinding ExtentWidth}" 
-                                                Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
-                                                Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                    </Grid>
-                                </ControlTemplate>
-                            </ScrollViewer.Template>
-                            <ItemsPresenter SnapsToDevicePixels="True"/>
-                        </ScrollViewer>
+                    <!-- Border externe FIXE pour éviter le "push" -->
+                    <Border Background="Transparent" 
+                            BorderBrush="Transparent" 
+                            BorderThickness="2" 
+                            CornerRadius="8"
+                            Padding="0">
+                        <!-- Border interne pour apparence -->
+                        <Border x:Name="DataGridBorder" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="1" 
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="DG_ScrollViewer" Focusable="False">
+                                <ScrollViewer.Template>
+                                    <ControlTemplate TargetType="ScrollViewer">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter" 
+                                                                        Grid.Column="1" Grid.Row="0"
+                                                                        Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Column}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                            
+                                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
+                                                                Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
+                                                                CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                                            
+                                            <ScrollBar x:Name="PART_VerticalScrollBar" 
+                                                    Grid.Column="2" Grid.Row="1"
+                                                    Orientation="Vertical" 
+                                                    ViewportSize="{TemplateBinding ScrollableHeight}" 
+                                                    Maximum="{TemplateBinding ExtentHeight}" 
+                                                    Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
+                                                    Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                            
+                                            <ScrollBar x:Name="PART_HorizontalScrollBar" 
+                                                    Grid.Column="1" Grid.Row="2"
+                                                    Orientation="Horizontal" 
+                                                    ViewportSize="{TemplateBinding ScrollableWidth}" 
+                                                    Maximum="{TemplateBinding ExtentWidth}" 
+                                                    Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
+                                                    Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </ScrollViewer.Template>
+                                <ItemsPresenter SnapsToDevicePixels="True"/>
+                            </ScrollViewer>
+                        </Border>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
                             <Setter TargetName="DataGridBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
-                            <Setter TargetName="DataGridBorder" Property="BorderThickness" Value="2" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="DataGridBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <!-- Pas de changement de BorderThickness ! -->
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -890,44 +910,61 @@
     </Style>
 
     <!-- Style pour les en-têtes de colonnes DataGrid - Application automatique -->
-    <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="{StaticResource ToolBoxGray100}" />
-        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
-        <Setter Property="BorderThickness" Value="0,0,1,1" />
-        <Setter Property="Padding" Value="12,8" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="DataGridColumnHeader">
-                    <Border Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            SnapsToDevicePixels="True">
+<Style TargetType="DataGridColumnHeader">
+    <Setter Property="Background" Value="White" />
+    <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary200}" />
+    <Setter Property="BorderThickness" Value="0,0,0,3" />
+    <Setter Property="Padding" Value="16,14,16,12" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{StaticResource ToolBoxGray700}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="DataGridColumnHeader">
+                <Border Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        SnapsToDevicePixels="True">
+                    <Grid>
                         <ContentPresenter Margin="{TemplateBinding Padding}" 
                                         HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource ToolBoxGray200}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{StaticResource ToolBoxGray300}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
+                        <Path x:Name="SortArrow" 
+                              HorizontalAlignment="Right" 
+                              VerticalAlignment="Center" 
+                              Margin="0,0,12,0"
+                              Fill="{StaticResource ToolBoxPrimary600}"
+                              Visibility="Collapsed"
+                              Width="8" Height="6"/>
+                    </Grid>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource ToolBoxPrimary50}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary400}" />
+                        <Setter Property="Foreground" Value="{StaticResource ToolBoxGray900}" />
+                    </Trigger>
+                    <Trigger Property="SortDirection" Value="Ascending">
+                        <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                        <Setter TargetName="SortArrow" Property="Data" Value="M 2,5 L 4,2 L 6,5 Z" />
+                        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
+                    </Trigger>
+                    <Trigger Property="SortDirection" Value="Descending">
+                        <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                        <Setter TargetName="SortArrow" Property="Data" Value="M 2,2 L 4,5 L 6,2 Z" />
+                        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
 
-    <!-- Style pour les lignes DataGrid - Application automatique -->
+    <!-- Lignes optimisées pour sélection -->
     <Style TargetType="DataGridRow">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Margin" Value="0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="DataGridRow">
@@ -957,11 +994,12 @@
         </Setter>
     </Style>
 
-    <!-- Style pour les cellules DataGrid - Application automatique -->
+    <!-- Cellules optimisées -->
     <Style TargetType="DataGridCell">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Padding" Value="11,7" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
         <Setter Property="Template">
@@ -979,8 +1017,9 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <!-- Border visible SANS changer l'épaisseur -->
                 <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
-                <Setter Property="BorderThickness" Value="1" />
+                <!-- BorderThickness reste à 1 - pas de changement ! -->
             </Trigger>
         </Style.Triggers>
     </Style>
