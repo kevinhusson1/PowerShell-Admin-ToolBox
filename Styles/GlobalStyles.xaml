@@ -732,24 +732,6 @@
     </Style>
 
     <!-- =============================================== -->
-    <!-- STYLES DE CONTRÔLES SIMPLES                    -->
-    <!-- =============================================== -->
-    
-    <Style x:Key="ToolBoxCheckBox" TargetType="CheckBox">
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Margin" Value="0,0,0,4" />
-    </Style>
-    
-    <Style x:Key="ToolBoxRadioButton" TargetType="RadioButton">
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Margin" Value="0,0,0,4" />
-    </Style>
-
-    <!-- =============================================== -->
     <!-- STYLES DE CONTENEURS SIMPLES                   -->
     <!-- =============================================== -->
     
@@ -1001,5 +983,368 @@
                 <Setter Property="BorderThickness" Value="1" />
             </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <!-- =============================================== -->
+    <!-- STYLE LISTBOX                                  -->
+    <!-- =============================================== -->
+
+    <Style x:Key="ToolBoxListBox" TargetType="ListBox">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <Border x:Name="ListBoxBorder" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <ScrollViewer x:Name="ScrollViewer" 
+                                    Padding="{TemplateBinding Padding}"
+                                    Focusable="False">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="ListBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="ListBoxBorder" Property="BorderThickness" Value="2" />
+                            <Setter TargetName="ScrollViewer" Property="Padding" Value="3" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ListBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ListBoxBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="ListBoxBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Style pour les éléments ListBoxItem - Application automatique -->
+    <Style TargetType="ListBoxItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="Margin" Value="1" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="ItemBorder" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}" 
+                                        VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ToolBoxPrimary50}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ToolBoxPrimary100}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimary700}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ToolBoxPrimary200}" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- =============================================== -->
+    <!-- STYLE LISTVIEW                                 -->
+    <!-- =============================================== -->
+
+    <Style x:Key="ToolBoxListView" TargetType="ListView">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListView">
+                    <Border x:Name="ListViewBorder" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <ScrollViewer x:Name="ScrollViewer" 
+                                    Padding="{TemplateBinding Padding}"
+                                    Focusable="False">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="ListViewBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                            <Setter TargetName="ListViewBorder" Property="BorderThickness" Value="2" />
+                            <Setter TargetName="ScrollViewer" Property="Padding" Value="3" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ListViewBorder" Property="BorderBrush" Value="{StaticResource ToolBoxBorderFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ListViewBorder" Property="Background" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter TargetName="ListViewBorder" Property="BorderBrush" Value="{StaticResource ToolBoxDisabledBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="GridViewColumnHeader">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="12,12,12,8" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxGray700}" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Bottom" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GridViewColumnHeader">
+                    <Border Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}" 
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource ToolBoxPrimary400}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Style pour ListViewItem adaptatif selon le mode -->
+    <Style TargetType="ListViewItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border x:Name="ItemBorder" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="3"
+                            Margin="1"
+                            SnapsToDevicePixels="True">
+                        <GridViewRowPresenter VerticalAlignment="Center" 
+                                            Margin="{TemplateBinding Padding}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ToolBoxPrimary50}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ToolBoxPrimary100}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxPrimary700}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ToolBoxPrimary200}" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- =============================================== -->
+    <!-- STYLE CHECKBOX MODERNE                         -->
+    <!-- =============================================== -->
+
+    <Style x:Key="ToolBoxCheckBox" TargetType="CheckBox">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <DockPanel>
+                        <!-- Case à cocher -->
+                        <Border x:Name="CheckBorder" 
+                                DockPanel.Dock="Left"
+                                Width="18" Height="18" 
+                                Background="White"
+                                BorderBrush="{StaticResource ToolBoxBorderBrush}" 
+                                BorderThickness="2"
+                                CornerRadius="4"
+                                VerticalAlignment="Center"
+                                Margin="0,0,8,0">
+                            
+                            <Grid>
+                                <!-- Coche -->
+                                <TextBlock x:Name="CheckMark" 
+                                        Text="✓"
+                                        FontSize="12"
+                                        FontWeight="Bold"
+                                        Foreground="White"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed"/>
+                                
+                                <!-- État indéterminé -->
+                                <Rectangle x:Name="IndeterminateMark" 
+                                        Width="10" Height="2" 
+                                        Fill="White"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Texte - DockPanel.Fill automatique -->
+                        <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                    </DockPanel>
+                    
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckBorder" Property="Background" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        
+                        <Trigger Property="IsChecked" Value="{x:Null}">
+                            <Setter TargetName="CheckBorder" Property="Background" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter TargetName="IndeterminateMark" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary400}" />
+                        </Trigger>
+                        
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="CheckBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- =============================================== -->
+    <!-- STYLE RADIOBUTTON                              -->
+    <!-- =============================================== -->
+
+    <Style x:Key="ToolBoxRadioButton" TargetType="RadioButton">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource ToolBoxTextBrush}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <DockPanel>
+                        <!-- Cercle radio -->
+                        <Border x:Name="RadioBorder" 
+                                DockPanel.Dock="Left"
+                                Width="18" Height="18" 
+                                Background="White"
+                                BorderBrush="{StaticResource ToolBoxBorderBrush}" 
+                                BorderThickness="2"
+                                CornerRadius="9"
+                                VerticalAlignment="Center"
+                                Margin="0,0,8,0">
+                            
+                            <!-- Point central (sélection) -->
+                            <Ellipse x:Name="RadioDot" 
+                                    Width="8" Height="8" 
+                                    Fill="{StaticResource ToolBoxPrimary600}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Visibility="Collapsed"/>
+                        </Border>
+                        
+                        <!-- Texte -->
+                        <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                    </DockPanel>
+                    
+                    <ControlTemplate.Triggers>
+                        <!-- État sélectionné -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="RadioBorder" Property="Background" Value="White" />
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary600}" />
+                            <Setter TargetName="RadioDot" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        
+                        <!-- Survol -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary400}" />
+                        </Trigger>
+                        
+                        <!-- Survol + sélectionné -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsChecked" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="{StaticResource ToolBoxPrimary700}" />
+                            <Setter TargetName="RadioDot" Property="Fill" Value="{StaticResource ToolBoxPrimary700}" />
+                        </MultiTrigger>
+                        
+                        <!-- Désactivé -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="RadioBorder" Property="Background" Value="{StaticResource ToolBoxGray200}" />
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="{StaticResource ToolBoxGray300}" />
+                            <Setter Property="Foreground" Value="{StaticResource ToolBoxTextDisabledBrush}" />
+                            <Setter TargetName="RadioDot" Property="Fill" Value="{StaticResource ToolBoxGray400}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 </ResourceDictionary>

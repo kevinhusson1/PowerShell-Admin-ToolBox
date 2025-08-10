@@ -262,12 +262,12 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                                 </Grid.RowDefinitions>
                                 
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                                    <RadioButton Content="Liste" x:Name="ListViewMode" IsChecked="True" Margin="0,0,16,0"/>
-                                    <RadioButton Content="Détails" x:Name="DetailsViewMode" Margin="0,0,16,0"/>
-                                    <RadioButton Content="Icônes" x:Name="IconViewMode"/>
+                                    <RadioButton Content="Liste" x:Name="ListViewMode" IsChecked="True" Margin="0,0,16,0" Style="{DynamicResource ToolBoxRadioButton}"/>
+                                    <RadioButton Content="Détails" x:Name="DetailsViewMode" Margin="0,0,16,0" Style="{DynamicResource ToolBoxRadioButton}"/>
+                                    <RadioButton Content="Icônes" x:Name="IconViewMode" Style="{DynamicResource ToolBoxRadioButton}"/>
                                 </StackPanel>
                                 
-                                <ListView Grid.Row="1" x:Name="DemoListView" Style="{DynamicResource ToolBoxListView}">
+                                <ListView Grid.Row="1" x:Name="DemoListView">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="Fichier" DisplayMemberBinding="{Binding FileName}" Width="200"/>
@@ -365,7 +365,7 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                                 <TabItem Header="Onglet 1" Style="{DynamicResource ToolBoxTabItem}">
                                     <StackPanel Margin="16">
                                         <TextBlock Text="Contenu de l'onglet 1"/>
-                                        <CheckBox Content="Option dans l'onglet" Margin="0,8,0,0"/>
+                                        <CheckBox Content="Option dans l'onglet" Margin="0,8,0,0" Style="{DynamicResource ToolBoxCheckBox}"/>
                                     </StackPanel>
                                 </TabItem>
                                 <TabItem Header="Onglet 2" Style="{DynamicResource ToolBoxTabItem}">
@@ -404,7 +404,7 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                                         
                                         <Label Grid.Row="0" Grid.Column="0" Content="Paramètre :"/>
                                         <TextBox Grid.Row="0" Grid.Column="1" Text="Valeur"/>
-                                        <CheckBox Grid.Row="1" Grid.Column="1" Content="Activer cette option" Margin="0,8,0,0"/>
+                                        <CheckBox Grid.Row="1" Grid.Column="1" Content="Activer cette option" Margin="0,8,0,0" Style="{DynamicResource ToolBoxCheckBox}"/>
                                     </Grid>
                                 </Expander>
                             </StackPanel>
@@ -430,16 +430,16 @@ Ligne 3" Style="{DynamicResource ToolBoxMultilineTextBox}" Height="80" Margin="0
                                 
                                 <GroupBox Grid.Column="0" Header="Groupe 1" Style="{DynamicResource ToolBoxSection}" Margin="0,0,8,0">
                                     <StackPanel>
-                                        <RadioButton Content="Option A" IsChecked="True"/>
-                                        <RadioButton Content="Option B"/>
-                                        <RadioButton Content="Option C"/>
+                                        <RadioButton Content="Option A" IsChecked="True" Style="{DynamicResource ToolBoxRadioButton}"/>
+                                        <RadioButton Content="Option B" Style="{DynamicResource ToolBoxRadioButton}"/>
+                                        <RadioButton Content="Option C" Style="{DynamicResource ToolBoxRadioButton}"/>
                                     </StackPanel>
                                 </GroupBox>
                                 
                                 <GroupBox Grid.Column="1" Header="Groupe 2" Style="{DynamicResource ToolBoxSection}" Margin="8,0,0,0">
                                     <StackPanel>
-                                        <CheckBox Content="Paramètre 1" IsChecked="True"/>
-                                        <CheckBox Content="Paramètre 2"/>
+                                        <CheckBox Content="Paramètre 1" IsChecked="True" Style="{DynamicResource ToolBoxCheckBox}"/>
+                                        <CheckBox Content="Paramètre 2" Style="{DynamicResource ToolBoxCheckBox}"/>
                                         <TextBox Text="Valeur" Margin="0,8,0,0"/>
                                     </StackPanel>
                                 </GroupBox>
