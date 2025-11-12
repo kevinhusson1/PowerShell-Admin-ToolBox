@@ -1,0 +1,15 @@
+{
+    "designer": {
+        "settings": {
+            "name": "[DESIGNER] Paramètres",
+            "description": "Script de développement pour le design de la page des paramètres.",
+            "window_title": "Designer - Squelette des Paramètres",
+            "card_general_title": "Paramètres généraux",
+            "card_general_subtitle": "Configuration de base de l'application",
+            "card_execution_title": "Paramètres d'exécution",
+            "card_execution_subtitle": "Paramètres d'exécution des scripts PowerShell",
+            "card_logging_title": "Journalisation et diagnostic",
+            "card_logging_subtitle": "Configuration des journaux d'événements"
+        }
+    }
+}

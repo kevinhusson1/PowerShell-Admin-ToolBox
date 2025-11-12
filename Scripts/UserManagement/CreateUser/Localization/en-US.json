@@ -1,0 +1,17 @@
+{
+    "create_user": {
+        "window_title": "Create New User",
+        "main_instruction": "User creation interface.",
+        "test_api_button": "Test API Call (/me)",
+        "first_name_label": "First Name",
+        "last_name_label": "Last Name",
+        "model_user_label": "Model User (for groups)",
+        "create_button": "Create User",
+        "close_button": "Close",
+        "log_header": "Execution Log",
+        
+        "api_call_inprogress": "Call in progress...",
+        "api_call_success": "API call successful! Hello,",
+        "api_call_error": "API ERROR:"
+    }
+}

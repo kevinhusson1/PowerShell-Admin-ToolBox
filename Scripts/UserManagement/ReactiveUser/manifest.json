@@ -1,0 +1,19 @@
+{
+    "id": "Reactive-User-v1",
+    "scriptFile": "ReactiveUser.ps1",
+    "name": "scripts.reactive-user.name",
+    "description": "scripts.reactive-user.description",
+    "version": "1.0.0",
+    "category": "UserManagement",
+    "author": "Service IT",
+    "enabled": false,
+    "icon": { 
+        "type": "png", 
+        "value": "user-check.png",
+        "backgroundColor": "#10b981" 
+    },
+    "security": {
+        "allowedADGroups": ["M365_APPS_SCRIPTS_ADMIN"]
+    },
+    "maxConcurrentRuns": 1
+}

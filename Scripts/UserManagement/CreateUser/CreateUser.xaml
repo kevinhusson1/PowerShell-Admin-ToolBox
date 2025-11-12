@@ -1,0 +1,15 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="##loc:scripts.create-user.name##"
+        Width="500" Height="300"
+        WindowStartupLocation="CenterScreen">
+    
+    <Grid Margin="20">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="##loc:create_user.model_user_label##" FontSize="16" Margin="0,0,0,20"/>
+            <Button x:Name="TestApiButton" Content="Tester l'appel API (/me)" Padding="10,5" Cursor="Hand"/>
+            <TextBox x:Name="ResultTextBox" Margin="0,10,0,0" Width="400" Height="50" IsReadOnly="True" TextWrapping="Wrap"/>
+        </StackPanel>
+    </Grid>
+
+</Window>

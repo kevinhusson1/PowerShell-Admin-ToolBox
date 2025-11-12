@@ -1,0 +1,17 @@
+{
+    "create_user": {
+        "window_title": "Créer un Nouvel Utilisateur",
+        "main_instruction": "Interface pour la création d'utilisateur.",
+        "test_api_button": "Tester l'appel API (/me)",
+        "first_name_label": "Prénom",
+        "last_name_label": "Nom de famille",
+        "model_user_label": "Utilisateur modèle (pour les groupes)",
+        "create_button": "Créer l'utilisateur",
+        "close_button": "Fermer",
+        "log_header": "Journal d'exécution",
+        
+        "api_call_inprogress": "Appel en cours...",
+        "api_call_success": "Appel API réussi ! Bonjour,",
+        "api_call_error": "ERREUR API :"
+    }
+}

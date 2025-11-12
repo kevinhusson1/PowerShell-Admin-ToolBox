@@ -1,0 +1,84 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="##loc:designer.settings.window_title##"
+        Width="800" Height="700"
+        Background="#F5F5F5"
+        WindowStartupLocation="CenterScreen">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="25">
+            
+            <!-- Carte 1 : Paramètres Généraux -->
+            <Expander x:Name="GeneralSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="True">
+                <StackPanel Margin="0,10,0,0">
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.company_name##">
+                        <TextBox x:Name="SettingsCompanyNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🏢"/>
+                    </ContentControl>
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.app_version##">
+                        <TextBox x:Name="SettingsAppVersionTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="ℹ️" IsReadOnly="True" Width="100" HorizontalAlignment="Left" Text="1.0"/>
+                    </ContentControl>
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.default_language##">
+                        <!-- AJOUT : Tag pour l'icône -->
+                        <ComboBox x:Name="SettingsLanguageComboBox" Style="{DynamicResource StandardComboBoxStyle}" Tag="🗣️">
+                            <ComboBoxItem IsSelected="True">fr-FR</ComboBoxItem>
+                            <ComboBoxItem>en-US</ComboBoxItem>
+                        </ComboBox>
+                    </ContentControl>
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <CheckBox x:Name="SettingsVerboseLoggingCheckBox" Style="{DynamicResource ToggleSwitchStyle}"/>
+                        <TextBlock Text="##loc:settings.enable_verbose##" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <!-- Carte 2 : Interface Utilisateur -->
+            <Expander x:Name="UiSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="True">
+                 <StackPanel Margin="0,10,0,0">
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.launcher_width##">
+                        <TextBox x:Name="SettingsLauncherWidthTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="↔️"/>
+                    </ContentControl>
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.launcher_height##">
+                        <TextBox x:Name="SettingsLauncherHeightTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="↕️"/>
+                    </ContentControl>
+                </StackPanel>
+            </Expander>
+
+            <!-- Carte 3 : Configuration Azure -->
+            <Expander x:Name="AzureSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="True">
+                 <StackPanel Margin="0,10,0,0">
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.tenant_id##">
+                        <TextBox x:Name="SettingsTenantIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🌐"/>
+                    </ContentControl>
+                    <Expander Header="##loc:settings.azure_usermode##" IsExpanded="True" Margin="0,5,0,0">
+                        <StackPanel Margin="15,10,0,5">
+                            <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_appid##">
+                                <TextBox x:Name="SettingsUserAuthAppIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🆔"/>
+                            </ContentControl>
+                            <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_scopes##">
+                                <TextBox x:Name="SettingsUserAuthScopesTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🔍" AcceptsReturn="True" Height="60" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                            </ContentControl>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Expander>
+            
+            <!-- Carte 4 : Sécurité -->
+            <Expander x:Name="SecuritySettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="True">
+                <StackPanel Margin="0,10,0,0">
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.security_admingroup##">
+                        <TextBox x:Name="SettingsAdminGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="👥"/>
+                    </ContentControl>
+                    <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.security_startupmode##">
+                        <!-- AJOUT : Tag pour l'icône -->
+                        <ComboBox x:Name="SettingsStartupAuthModeComboBox" Style="{DynamicResource StandardComboBoxStyle}" Tag="⚙️">
+                            <ComboBoxItem IsSelected="True">System</ComboBoxItem>
+                            <ComboBoxItem>User</ComboBoxItem>
+                        </ComboBox>
+                    </ContentControl>
+                </StackPanel>
+            </Expander>
+
+            <Button x:Name="SettingsSaveButton" Content="##loc:settings.save_button##" Style="{DynamicResource PrimaryButtonStyle}" HorizontalAlignment="Right" Margin="0,10,0,0"/>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

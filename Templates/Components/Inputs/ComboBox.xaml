@@ -1,0 +1,109 @@
+<!-- Templates/Components/Inputs/ComboBox.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <BooleanToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+    <Style TargetType="ComboBoxItem" x:Key="StandardComboBoxItemStyle">
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource DarkTextBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#F0F9FD"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#E3F3FA"/>
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="ComboBox" x:Key="StandardComboBoxStyle">
+        <!-- Les propriétés par défaut sont identiques à celles de la TextBox -->
+        <Setter Property="Background" Value="#F3F4F6"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource DarkTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource StandardComboBoxItemStyle}"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid SnapsToDevicePixels="True">
+                        <!-- Le ToggleButton hérite maintenant de la bordure via TemplateBinding -->
+                        <ToggleButton x:Name="toggleButton" 
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Background="{TemplateBinding Background}"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      BorderThickness="{TemplateBinding BorderThickness}">
+                            <ToggleButton.Template>
+                                <!-- Le template du bouton ne contient plus les triggers de couleur -->
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border CornerRadius="8"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
+                                                       FontFamily="Segoe UI Symbol" FontSize="16" VerticalAlignment="Center" 
+                                                       Margin="10,0,5,0" Foreground="{DynamicResource GrayBrush}"
+                                                       Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                            
+                                            <ContentPresenter Grid.Column="1" Margin="20,0,0,0"
+                                                              VerticalAlignment="Center" HorizontalAlignment="Left" 
+                                                              Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                            
+                                            <Path Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  Margin="0,0,10,0" Data="M 0 0 L 4 4 L 8 0"
+                                                  Stroke="{DynamicResource GrayBrush}" StrokeThickness="2"/>
+                                        </Grid>
+                                    </Border>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <Popup x:Name="PART_Popup" AllowsTransparency="True" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               Placement="Bottom" StaysOpen="False" PopupAnimation="Fade"
+                               MinWidth="{Binding ActualWidth, ElementName=toggleButton}">
+                            <Border Background="White" BorderBrush="{DynamicResource GrayBrush}" BorderThickness="1" CornerRadius="8" Margin="0,5,0,0">
+                                <ScrollViewer MaxHeight="200" CanContentScroll="True">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    
+                    <!-- CORRECTION : Les Triggers sont maintenant sur le ControlTemplate principal, comme pour la TextBox -->
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsEnabled" Value="True"/>
+                                <Condition Property="IsReadOnly" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="toggleButton" Property="BorderBrush" Value="{DynamicResource GrayBrush}"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="toggleButton" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,42 @@
+<!-- Templates/Styles/Colors.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Couleurs de la marque -->
+    <Color x:Key="PrimaryColor">#36A9E0</Color>
+    <Color x:Key="PrimaryHoverColor">#182865</Color>
+
+    <!-- Couleurs neutres -->
+    <Color x:Key="GrayColor">#B3B3B3</Color>
+    <Color x:Key="LightGrayColor">#E6E6E6</Color>
+    <Color x:Key="DarkTextColor">#333333</Color>
+
+    <!-- Couleurs d'état -->
+    <Color x:Key="GreenColor">#4CAF50</Color>
+    <Color x:Key="GreenHoverColor">#388E3C</Color>
+    <Color x:Key="RedColor">#E53935</Color>
+    <Color x:Key="RedHoverColor">#C62828</Color>
+
+    <!-- Brushes pour utilisation directe -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{DynamicResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{DynamicResource PrimaryHoverColor}"/>
+    <SolidColorBrush x:Key="GrayBrush" Color="{DynamicResource GrayColor}"/>
+    <SolidColorBrush x:Key="LightGrayBrush" Color="{DynamicResource LightGrayColor}"/>
+    <SolidColorBrush x:Key="DarkTextBrush" Color="{DynamicResource DarkTextColor}"/>
+    <SolidColorBrush x:Key="GreenBrush" Color="{DynamicResource GreenColor}"/>
+    <SolidColorBrush x:Key="GreenHoverBrush" Color="{DynamicResource GreenHoverColor}"/>
+    <SolidColorBrush x:Key="RedBrush" Color="{DynamicResource RedColor}"/>
+    <SolidColorBrush x:Key="RedHoverBrush" Color="{DynamicResource RedHoverColor}"/>
+    <SolidColorBrush x:Key="HeaderIconBackgroundBrush" Color="{DynamicResource HeaderIconBackgroundColor}"/>
+    
+    <!-- Couleur de fond par défaut pour les icônes dans l'en-tête -->
+    <Color x:Key="HeaderIconBackgroundColor">#2B7FFF</Color>
+
+    <!-- BRUSHES POUR LE MACARON D'AUTH ▼▼▼ -->
+    <!-- Fond du macaron quand l'utilisateur est connecté -->
+    <SolidColorBrush x:Key="AuthButtonUserBackgroundBrush" Color="CornflowerBlue"/>
+    <!-- Texte (initiales) du macaron quand l'utilisateur est connecté -->
+    <SolidColorBrush x:Key="AuthButtonUserForegroundBrush" Color="White"/>
+    <!-- Fond du macaron pour l'état par défaut (Système) -->
+    <SolidColorBrush x:Key="AuthButtonSystemBackgroundBrush" Color="#E0E0E0"/>
+</ResourceDictionary>

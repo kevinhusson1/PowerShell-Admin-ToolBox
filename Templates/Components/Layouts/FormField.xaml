@@ -1,0 +1,22 @@
+<!-- Templates/Components/Layouts/FormField.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Clé de style mise à jour -->
+    <Style TargetType="ContentControl" x:Key="FormFieldStyle">
+        <Setter Property="Margin" Value="0,0,0,15"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" 
+                                   Style="{DynamicResource H4Style}" 
+                                   Margin="0,0,0,5"/>
+                        <ContentPresenter/>
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
