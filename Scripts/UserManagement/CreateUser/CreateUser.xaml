@@ -1,15 +1,183 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="##loc:scripts.create-user.name##"
-        Width="500" Height="300"
-        WindowStartupLocation="CenterScreen">
-    
-    <Grid Margin="20">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="##loc:create_user.model_user_label##" FontSize="16" Margin="0,0,0,20"/>
-            <Button x:Name="TestApiButton" Content="Tester l'appel API (/me)" Padding="10,5" Cursor="Hand"/>
-            <TextBox x:Name="ResultTextBox" Margin="0,10,0,0" Width="400" Height="50" IsReadOnly="True" TextWrapping="Wrap"/>
-        </StackPanel>
-    </Grid>
+        Title="##loc:create_user.window_title##"
+        Height="900" Width="1350"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WhiteBrush}">    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- En-tête bleu -->
+            <RowDefinition Height="*"/>    <!-- Contenu principal -->
+            <RowDefinition Height="Auto"/> <!-- Pied de page avec boutons -->
+        </Grid.RowDefinitions>
 
+        <!-- En-tête Bleu -->
+        <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" Padding="15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Border Grid.Column="0" 
+                        Width="56" Height="56" 
+                        CornerRadius="28" 
+                        BorderBrush="{DynamicResource WhiteBrush}" 
+                        BorderThickness="2"
+                        Background="{DynamicResource PrimaryLightBrush}">
+                    <Rectangle Fill="{DynamicResource WhiteBrush}" Margin="14">
+                        <Rectangle.OpacityMask>
+                            <ImageBrush x:Name="IconImageBrush" Stretch="Uniform"/>
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+                </Border>
+                
+                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="##loc:create_user.header_title##" Foreground="{DynamicResource WhiteBrush}" FontSize="24" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="SubtitleText" Text="##loc:create_user.header_subtitle##" Foreground="{DynamicResource WhiteBrush}" Opacity="0.8"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Contenu Principal -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="350"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,20,0">
+                <StackPanel>
+                    <!-- Section 1: Informations personnelles -->
+                    <StackPanel>
+                        <TextBlock Text="##loc:create_user.section_personal##" Style="{DynamicResource H3Style}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>      <!-- Prénom -->
+                                <ColumnDefinition Width="*"/>      <!-- Nom -->
+                                <ColumnDefinition Width="200"/>    <!-- Matricule -->
+                                <ColumnDefinition Width="200"/>    <!-- Description -->
+                            </Grid.ColumnDefinitions>
+                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.firstname## *" Margin="0,0,10,0">
+                                <TextBox x:Name="textBoxPrenom" Style="{DynamicResource StandardTextBoxStyle}"/>
+                            </ContentControl>
+                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.lastname## *" Margin="0,0,10,0">
+                                <TextBox x:Name="textBoxNom" Style="{DynamicResource StandardTextBoxStyle}" CharacterCasing="Upper"/>
+                            </ContentControl>
+                            <ContentControl Grid.Column="2" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.employeeid##" Margin="0,0,10,0">
+                                <TextBox x:Name="textBoxMatricule" Style="{DynamicResource StandardTextBoxStyle}"/>
+                            </ContentControl>
+                            <ContentControl Grid.Column="3" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.description##">
+                                <ComboBox x:Name="comboBoxDescription" Style="{DynamicResource StandardComboBoxStyle}"/>
+                            </ContentControl>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Section 2: Organisation -->
+                    <StackPanel Margin="0,15,0,0">
+                        <TextBlock Text="##loc:create_user.section_organization##" Style="{DynamicResource H3Style}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.jobtitle##" Margin="0,0,10,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" x:Name="comboBoxEmploi" Style="{DynamicResource StandardComboBoxStyle}"/>
+                                    <TextBox Grid.Column="0" x:Name="textBoxEmploi" Style="{DynamicResource StandardTextBoxStyle}" Visibility="Collapsed"/>
+                                    <Button Grid.Column="1" x:Name="btnEditEmploi" Content="⚙️" Style="{DynamicResource IconButtonStyle}" VerticalAlignment="Bottom" Margin="5,0,0,0"/>
+                                </Grid>
+                            </ContentControl>
+                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.department##">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" x:Name="comboBoxServices" Style="{DynamicResource StandardComboBoxStyle}"/>
+                                    <TextBox Grid.Column="0" x:Name="textBoxServices" Style="{DynamicResource StandardTextBoxStyle}" Visibility="Collapsed"/>
+                                    <Button Grid.Column="1" x:Name="btnEditServices" Content="⚙️" Style="{DynamicResource IconButtonStyle}" VerticalAlignment="Bottom" Margin="5,0,0,0"/>
+                                </Grid>
+                            </ContentControl>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.manager##" Margin="0,0,10,0">
+                                <TextBox x:Name="textBoxManager" Style="{DynamicResource StandardTextBoxStyle}" Tag="✉️"/>
+                            </ContentControl>
+                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.copyfrom##">
+                                <TextBox x:Name="textBoxUserCopie" Style="{DynamicResource StandardTextBoxStyle}" Tag="👥"/>
+                            </ContentControl>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Section 3: Horaires, Licence & Identifiants -->
+                    <StackPanel Margin="0,15,0,0">
+                        <TextBlock Text="##loc:create_user.section_hours_license##" Style="{DynamicResource H3Style}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,40,0">
+                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.hours##">
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                        <RadioButton x:Name="radioHorairesFull" Content="7/7j" GroupName="horairesGroup" IsChecked="True" Margin="0,0,25,0" Style="{DynamicResource StandardRadioButtonStyle}"/>
+                                        <RadioButton x:Name="radioHorairesHebdo" Content="5/7j" GroupName="horairesGroup" Style="{DynamicResource StandardRadioButtonStyle}"/>
+                                    </StackPanel>
+                                </ContentControl>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <CheckBox x:Name="checkLicence" Style="{DynamicResource ToggleSwitchStyle}"/>
+                                    <TextBlock Text="##loc:create_user.activate_license##" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.alias##" Margin="0,0,10,0">
+                                    <TextBox x:Name="textBoxAlias" Style="{DynamicResource StandardTextBoxStyle}" IsEnabled="False"/>
+                                </ContentControl>
+                                <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.email##">
+                                    <TextBox x:Name="textBoxEmail" Style="{DynamicResource StandardTextBoxStyle}" IsEnabled="False"/>
+                                </ContentControl>
+                            </Grid>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Section 4: Coordonnées -->
+                    <StackPanel Margin="0,15,0,0">
+                        <TextBlock Text="##loc:create_user.section_contact##" Style="{DynamicResource H3Style}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.phone##" Margin="0,0,10,0">
+                                <TextBox x:Name="textBoxTelephoneNumber" Style="{DynamicResource StandardTextBoxStyle}"/>
+                            </ContentControl>
+                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.phone_short##">
+                                <TextBox x:Name="textBoxTelCourt" Style="{DynamicResource StandardTextBoxStyle}"/>
+                            </ContentControl>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.mobile##" Margin="0,0,10,0">
+                                <TextBox x:Name="textBoxMobile" Style="{DynamicResource StandardTextBoxStyle}"/>
+                            </ContentControl>
+                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:create_user.mobile_short##">
+                                <TextBox x:Name="textBoxMobileCourt" Style="{DynamicResource StandardTextBoxStyle}"/>
+                            </ContentControl>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- COLONNE DROITE : JOURNALISATION (inchangée) -->
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="##loc:create_user.section_logging##" Style="{DynamicResource H3Style}"/>
+                <RichTextBox x:Name="richTextBox" Style="{DynamicResource StandardRichTextBoxStyle}" Height="590" Margin="0,10,0,0">
+                    <FlowDocument><Paragraph Foreground="{DynamicResource TextSecondaryBrush}">##loc:create_user.log_default##</Paragraph></FlowDocument>
+                </RichTextBox>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Pied de page -->
+        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderLightBrush}" Padding="20">
+            <Grid>
+                <Button x:Name="btnReset" Content="##loc:create_user.button_reset##" Style="{DynamicResource SecondaryButtonStyle}" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="btnVerif" Content="##loc:create_user.button_verify##" Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,10,0"/>
+                    <Button x:Name="btnCreate" Content="##loc:create_user.button_create##" Style="{DynamicResource GreenButtonStyle}" Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
 </Window>

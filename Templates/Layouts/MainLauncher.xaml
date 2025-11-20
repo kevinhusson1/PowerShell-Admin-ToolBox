@@ -4,7 +4,8 @@
         Title="##loc:app.title##"
         WindowStartupLocation="CenterScreen">
 
-    <Grid Background="White" Cursor="Arrow">
+    <!-- Amélioration : Le fond principal est maintenant un gris très clair -->
+    <Grid Background="{DynamicResource BackgroundControlBrush}" Cursor="Arrow">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- En-tête -->
             <RowDefinition Height="*"/>    <!-- Contenu principal -->
@@ -21,7 +22,7 @@
             <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <Grid Width="48" Height="48" VerticalAlignment="Center" Margin="0,0,15,0">
                     <Ellipse Fill="{DynamicResource HeaderIconBackgroundBrush}"/>
-                    <Rectangle Fill="White" Margin="12">
+                    <Rectangle Fill="{DynamicResource WhiteBrush}" Margin="12">
                         <Rectangle.OpacityMask>
                             <ImageBrush x:Name="HeaderIconMask" Stretch="Uniform"/>
                         </Rectangle.OpacityMask>
@@ -33,9 +34,44 @@
                 </StackPanel>
             </StackPanel>
 
-            <Button x:Name="AuthStatusButton" Grid.Column="1" 
-                    Style="{DynamicResource ProfileButtonStyle}" 
-                    VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                
+                <!-- Nouveau bouton Texte (Se connecter / Se déconnecter) -->
+                <Button x:Name="AuthTextButton" 
+                        Content="Se connecter"
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Center"
+                        Cursor="Hand"
+                        FontSize="13"
+                        FontWeight="SemiBold">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}">
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Macaron existant (ProfileButton) -->
+                <Button x:Name="AuthStatusButton" 
+                        Style="{DynamicResource ProfileButtonStyle}" 
+                        VerticalAlignment="Center"/>
+            </StackPanel>
         </Grid>
 
         <!-- 2. Contenu principal : le TabControl -->
@@ -55,9 +91,23 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <ListBox x:Name="ScriptsListBox" Grid.Row="0" Margin="15,0,15,0" Style="{DynamicResource ScriptGridListBoxStyle}"/>
+                    <!-- Zone de contenu dynamique : Message ou Liste -->
+                    <Grid Grid.Row="0">
+                        <!-- Message d'invitation à la connexion (Visible par défaut) -->
+                        <StackPanel x:Name="ConnectPromptPanel" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="🔒" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,20" Foreground="{DynamicResource Gray300Brush}"/>
+                            <TextBlock Text="##loc:launcher.connect_prompt_title##" Style="{DynamicResource H1Style}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                            <TextBlock Text="##loc:launcher.connect_prompt_desc##" Style="{DynamicResource H2Style}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="400" TextWrapping="Wrap"/>
+                        </StackPanel>
 
-                    <Border Grid.Row="1" Margin="25" Padding="20" MinHeight="100" Background="#F5F5F5" CornerRadius="8">
+                        <!-- Liste des scripts (Masquée par défaut) -->
+                        <ListBox x:Name="ScriptsListBox" Margin="15,0,15,0" Style="{DynamicResource ScriptGridListBoxStyle}" Visibility="Collapsed"/>
+                    </Grid>
+
+                    <Border x:Name="DetailsPanelBorder" Visibility="Collapsed" 
+                        Grid.Row="1" Margin="25" Padding="20" MinHeight="100" 
+                        Background="{DynamicResource WhiteBrush}" CornerRadius="8"
+                        BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
                         <Grid>
                             <TextBlock x:Name="DefaultDetailText" Text="##loc:launcher.details_default##" Style="{DynamicResource H2Style}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             <Grid x:Name="ScriptDetailPanel" Visibility="Collapsed">
@@ -70,7 +120,25 @@
                                     <TextBlock x:Name="VersionTextBlock" Style="{DynamicResource DescriptionTextStyle}" Margin="0,5,0,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <Button x:Name="BringToFrontButton" Content="##loc:launcher.bring_to_front_button##" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0"/>
                                     <Button x:Name="ExecuteButton" Content="##loc:launcher.execute_button##" Style="{DynamicResource PrimaryButtonStyle}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid x:Name="ScriptLoadingPanel" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock x:Name="LoadingScriptName" Style="{DynamicResource H3Style}" Margin="0,0,0,15" Text="Création d'utilisateur"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="⏳" FontFamily="Segoe UI Symbol" FontSize="16" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Column="1" x:Name="LoadingStatusText" Text="##loc:ui.progressUpdate##" Style="{DynamicResource H4Style}" Margin="0"/>
+                                    </Grid>
+                                    <Border CornerRadius="4" Height="8" Margin="0,10,0,0" Background="{DynamicResource Gray200Brush}" ClipToBounds="True">
+                                        <ProgressBar x:Name="LoadingProgressBar" BorderThickness="0" Foreground="{DynamicResource SuccessBrush}" Background="Transparent"/>
+                                    </Border>
+                                    <TextBlock x:Name="LoadingProgressText" Text="0%" HorizontalAlignment="Right" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 </StackPanel>
                             </Grid>
                         </Grid>
@@ -78,18 +146,263 @@
                 </Grid>
             </TabItem>
             
-            <!-- ONGLET 2 : WinRM -->
-            <TabItem>
+            <!-- ONGLET 2 : GOUVERNANCE -->
+            <!-- Visibilité gérée par le code : Visible uniquement si Admin -->
+            <TabItem x:Name="GovernanceTabItem" Visibility="Collapsed">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🛡️" FontFamily="Segoe UI Symbol" Margin="0,0,5,0"/>
+                        <TextBlock Text="Gouvernance"/>
+                    </StackPanel>
+                </TabItem.Header>
+                
+                <!-- Layout en 3 Colonnes -->
+                <Grid Margin="15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/> <!-- Demandes (Gauche) -->
+                        <ColumnDefinition Width="15"/> <!-- Espacement -->
+                        <ColumnDefinition Width="*"/> <!-- Permissions Actuelles (Milieu) -->
+                        <ColumnDefinition Width="15"/> <!-- Espacement -->
+                        <ColumnDefinition Width="*"/> <!-- Membres (Droite) -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- COLONNE 1 : GESTION DES DEMANDES -->
+                    <Border Grid.Column="0" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Demandes en attente" Style="{DynamicResource H3Style}"/>
+                            
+                            <!-- Placeholder pour la liste des demandes -->
+                            <ListBox Grid.Row="1" x:Name="PermissionRequestsListBox" Style="{DynamicResource StandardListBoxStyle}" Margin="0,10,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding RequesterUPN}" FontWeight="Bold"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Demande : " Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
+                                                    <TextBlock Text="{Binding RequestedScope}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="11"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Reason}" FontSize="10" FontStyle="Italic" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Bouton VALIDER -->
+                                                <Button Content="✅" Width="30" Height="25" Style="{DynamicResource GreenButtonStyle}" Margin="0,0,5,0"
+                                                        ToolTip="Approuver et ajouter la permission"
+                                                        Tag="{Binding}"/> <!-- Le Tag contient tout l'objet demande -->
+                                                
+                                                <!-- Bouton REFUSER -->
+                                                <Button Content="❌" Width="30" Height="25" Style="{DynamicResource RedButtonStyle}"
+                                                        ToolTip="Refuser la demande"
+                                                        CommandParameter="{Binding RequestID}"/> <!-- On passe l'ID pour supprimer -->
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            
+                            <TextBlock Grid.Row="1" x:Name="NoRequestsText" Text="Aucune demande en attente." 
+                                        Visibility="Collapsed" 
+                                        VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- COLONNE 2 : PERMISSIONS DE L'APPLICATION -->
+                    <Border Grid.Column="2" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Permissions Actives" Style="{DynamicResource H3Style}"/>
+                            <TextBlock Grid.Row="1" Text="Droits actuellement accordés à l'application dans Azure AD." Style="{DynamicResource DescriptionTextStyle}" Margin="0,0,0,10"/>
+
+                            <!-- Liste des scopes -->
+                            <ListBox Grid.Row="2" x:Name="CurrentScopesListBox" Style="{DynamicResource StandardListBoxStyle}">
+                                <!-- Les items seront peuplés dynamiquement -->
+                            </ListBox>
+
+                            <StackPanel Grid.Row="3" Margin="0,10,0,0">
+                                <Button x:Name="AddPermissionButton" Content="➕   Ajouter manuellement" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,0,5"/>
+                                <Button x:Name="GrantConsentButton" Content="🛡️   Valider les droits (Admin Consent)" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,0,5"/>
+                                <Button x:Name="SyncAzureButton" Content="🔄   Synchroniser avec Azure" Style="{DynamicResource PrimaryButtonStyle}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- COLONNE 3 : AUDIT & MEMBRES -->
+                    <Border Grid.Column="4" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Membres &amp; Rôles" Style="{DynamicResource H3Style}"/>
+                            
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <!-- Groupe Admin -->
+                                    <Expander Header="Administrateurs" IsExpanded="True" Margin="0,0,0,10">
+                                        <ListBox x:Name="AdminMembersListBox" MaxHeight="150" Style="{DynamicResource StandardListBoxStyle}" BorderThickness="0"/>
+                                    </Expander>
+
+                                    <!-- Groupe User -->
+                                    <Expander Header="Utilisateurs Autorisés" IsExpanded="False">
+                                        <ListBox x:Name="UserMembersListBox" MaxHeight="150" Style="{DynamicResource StandardListBoxStyle}" BorderThickness="0"/>
+                                    </Expander>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                </Grid>
+            </TabItem>
+
+            <!-- ONGLET 3 : GESTION DES SCRIPTS (NOUVEAU) -->
+            <TabItem x:Name="ManagementTabItem" Visibility="Collapsed">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="🛠️" FontFamily="Segoe UI Symbol" Margin="0,0,5,0"/>
-                        <TextBlock Text="##loc:tabs.winrm##"/>
+                        <TextBlock Text="Gestion"/>
                     </StackPanel>
                 </TabItem.Header>
-                <TextBlock Text="##loc:tabs.winrm_content##" Style="{DynamicResource H1Style}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                
+                <Grid Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/> <!-- Colonne Gauche (Bibliothèque + Scripts) -->
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>   <!-- Colonne Droite (Détails) -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- COLONNE GAUCHE -->
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/> <!-- Bibliothèque -->
+                            <RowDefinition Height="15"/>
+                            <RowDefinition Height="*"/>    <!-- Scripts -->
+                        </Grid.RowDefinitions>
+
+                        <!-- 1. BIBLIOTHÈQUE DE GROUPES -->
+                        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                            <StackPanel>
+                                <TextBlock Text="Bibliothèque de Groupes" Style="{DynamicResource H3Style}"/>
+                                <TextBlock Text="Ajouter ou supprimer des groupes connus." Style="{DynamicResource DescriptionTextStyle}" Margin="0,0,0,10"/>
+                                
+                                <!-- Ligne 1 : Ajouter -->
+                                <Grid Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" x:Name="LibraryNewGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="Nouveau groupe Azure AD..."/>
+                                    <Button Grid.Column="1" x:Name="LibraryAddGroupButton" Content="+" Style="{DynamicResource SecondaryButtonStyle}" Width="40" Margin="5,0,0,0" ToolTip="Vérifier et Ajouter à la bibliothèque"/>
+                                </Grid>
+
+                                <!-- Ligne 2 : Supprimer (Liste déroulante) -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" x:Name="LibraryGroupsComboBox" Style="{DynamicResource StandardComboBoxStyle}" Tag="Sélectionner pour supprimer...">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding GroupName}" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <Button Grid.Column="1" x:Name="LibraryRemoveGroupButton" Content="🗑️" Style="{DynamicResource IconButtonStyle}" 
+                                            Width="40" Height="38" Margin="5,0,0,0" ToolTip="Supprimer le groupe sélectionné de la bibliothèque"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2. LISTE DES SCRIPTS (Déplacée en bas) -->
+                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="0">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <TextBlock Text="Scripts Installés" Style="{DynamicResource H3Style}" Margin="15,15,0,10"/>
+                                <ListBox x:Name="ManageScriptsListBox" Grid.Row="1" Style="{DynamicResource StandardListBoxStyle}" BorderThickness="0" Margin="2">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding enabled}" Value="True"><Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/></DataTrigger>
+                                                                <DataTrigger Binding="{Binding enabled}" Value="False"><Setter Property="Fill" Value="{DynamicResource TextDisabledBrush}"/></DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock Text="{Binding name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- COLONNE DROITE : DÉTAILS -->
+                    <Border x:Name="ManageDetailPanel" Grid.Column="2" Visibility="Collapsed"
+                            Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="20">
+                        <StackPanel>
+                            <!-- En-tête (Inchangé) -->
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Image Width="48" Height="48" Source="{Binding IconSource}" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding name}" Style="{DynamicResource H1Style}" FontSize="20" Margin="0"/>
+                                    <TextBlock Text="{Binding id}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Activé" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold"/>
+                                    <CheckBox x:Name="ManageEnabledSwitch" Style="{DynamicResource ToggleSwitchStyle}" IsChecked="{Binding enabled}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Separator Margin="0,0,0,20" Background="{DynamicResource BorderLightBrush}"/>
+
+                            <!-- Exécution (Inchangé) -->
+                            <TextBlock Text="Exécution" Style="{DynamicResource H3Style}"/>
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" x:Name="ManageMaxRunsTextBox" Text="{Binding maxConcurrentRuns}" Width="60" HorizontalAlignment="Left" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                <TextBlock Grid.Column="1" Text="Max simultanées (-1 = illimité)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </Grid>
+
+                            <!-- NOUVEAU : Sécurité par CheckBox -->
+                            <TextBlock Text="Sécurité &amp; Accès" Style="{DynamicResource H3Style}" Margin="0,10,0,5"/>
+                            <TextBlock Text="Cochez les groupes autorisés pour ce script." Style="{DynamicResource DescriptionTextStyle}" Margin="0,0,0,10"/>
+
+                            <!-- Liste avec CheckBoxes -->
+                            <ListBox x:Name="ManageSecurityCheckList" MaxHeight="300" Style="{DynamicResource StandardListBoxStyle}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- CORRECTION : On stocke le nom dans Tag pour le script. On utilise TextBlock pour l'affichage correct des underscores -->
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2" Cursor="Hand" Tag="{Binding GroupName}">
+                                            <TextBlock Text="{Binding GroupName}"/>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Button x:Name="ManageSaveButton" Content="Enregistrer les modifications" Style="{DynamicResource PrimaryButtonStyle}" HorizontalAlignment="Right" Margin="0,20,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <TextBlock x:Name="ManageSelectPrompt" Grid.Column="2" Text="Sélectionnez un script pour le configurer." 
+                                VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Style="{DynamicResource H2Style}"/>
+                </Grid>
             </TabItem>
 
-            <!-- ONGLET 3 : Journal -->
+            <!-- ONGLET 4 : Journal -->
             <TabItem x:Name="LogTabItem">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -103,9 +416,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     
-                    <Border Grid.Row="0" Background="White" BorderBrush="{DynamicResource LightGrayBrush}" BorderThickness="1" CornerRadius="8">
-                        <RichTextBox x:Name="LauncherLogRichTextBox" Style="{DynamicResource TransparentRichTextBoxStyle}"/>
-                    </Border>
+                    <RichTextBox Grid.Row="0" x:Name="LauncherLogRichTextBox" Style="{DynamicResource StandardRichTextBoxStyle}"/>
                     
                     <Button Grid.Row="1" x:Name="ClearLocksButton" 
                             Content="##loc:launcher.clear_locks_button##" 
@@ -116,7 +427,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- ONGLET 4 : Paramètres -->
+            <!-- ONGLET 5 : Paramètres (Refonte complète) -->
             <TabItem x:Name="SettingsTabItem">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
@@ -127,75 +438,152 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="25">
                         
-                        <!-- Carte 1 : Paramètres Généraux -->
-                        <Expander x:Name="GeneralSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="True">
+                        <!-- Carte 1 : Paramètres Généraux & Interface -->
+                        <Expander x:Name="GeneralSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="False">
                             <StackPanel Margin="0,10,0,0">
+                                <!-- Info Entreprise -->
                                 <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.company_name##">
                                     <TextBox x:Name="SettingsCompanyNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🏢"/>
                                 </ContentControl>
                                 <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.app_version##">
                                     <TextBox x:Name="SettingsAppVersionTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="ℹ️" IsReadOnly="True"/>
                                 </ContentControl>
+                                
+                                <!-- Langue et Logs -->
                                 <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.default_language##">
                                     <ComboBox x:Name="SettingsLanguageComboBox" Style="{DynamicResource StandardComboBoxStyle}" Tag="🗣️"/>
                                 </ContentControl>
-                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                                     <CheckBox x:Name="SettingsVerboseLoggingCheckBox" Style="{DynamicResource ToggleSwitchStyle}"/>
                                     <TextBlock Text="##loc:settings.enable_verbose##" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                 </StackPanel>
+
+                                <!-- Dimensionnement (Déplacé ici) -->
+                                <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="##loc:settings.section_ui##" Style="{DynamicResource H3Style}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.launcher_width##" Margin="0,0,10,0">
+                                                <TextBox x:Name="SettingsLauncherWidthTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="↔️"/>
+                                            </ContentControl>
+                                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.launcher_height##">
+                                                <TextBox x:Name="SettingsLauncherHeightTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="↕️"/>
+                                            </ContentControl>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </Expander>
 
-                        <!-- Carte 2 : Interface Utilisateur -->
-                        <Expander x:Name="UiSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="False">
-                            <StackPanel Margin="0,10,0,0">
-                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.launcher_width##">
-                                    <TextBox x:Name="SettingsLauncherWidthTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="↔️"/>
-                                </ContentControl>
-                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.launcher_height##">
-                                    <TextBox x:Name="SettingsLauncherHeightTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="↕️"/>
-                                </ContentControl>
-                            </StackPanel>
-                        </Expander>
-
-                        <!-- Carte 3 : Configuration Azure -->
+                        <!-- Carte 2 : Configuration Azure (Nettoyée) -->
                         <Expander x:Name="AzureSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="False">
                             <StackPanel Margin="0,10,0,0">
                                 <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.tenant_id##">
                                     <TextBox x:Name="SettingsTenantIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🌐"/>
                                 </ContentControl>
-                                <!-- Note : Le sous-expander est conservé pour la structure -->
-                                <Expander Header="##loc:settings.azure_usermode##" IsExpanded="True" Margin="0,5,0,0">
-                                    <StackPanel Margin="15,10,0,5">
+                                
+                                <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,10">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="##loc:settings.azure_usermode##" Style="{DynamicResource H3Style}"/>
+                                            <Button Grid.Column="1" x:Name="SettingsUserAuthTestButton" Content="##loc:settings.azure_test_connection_button##" Style="{DynamicResource SecondaryButtonStyle}" IsEnabled="False"/>
+                                        </Grid>
                                         <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_appid##">
                                             <TextBox x:Name="SettingsUserAuthAppIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🆔"/>
                                         </ContentControl>
+                                        <!-- NOTE: Les scopes seront gérés dynamiquement plus tard, mais on garde le champ pour l'instant -->
                                         <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_scopes##">
                                             <TextBox x:Name="SettingsUserAuthScopesTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🔍" AcceptsReturn="True" Height="60" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
                                         </ContentControl>
                                     </StackPanel>
-                                </Expander>
-                                <Expander Header="##loc:settings.azure_systemmode##" IsExpanded="True" Margin="0,10,0,0">
-                                    <StackPanel Margin="15,5,0,5">
-                                        <TextBlock Style="{DynamicResource H4Style}" Margin="0,5,0,5" Text="##loc:settings.azure_appid##"/>
-                                        <TextBox x:Name="SettingsCertAuthAppIdTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
-                                        
-                                        <TextBlock Style="{DynamicResource H4Style}" Margin="0,15,0,5" Text="##loc:settings.azure_thumbprint##"/>
-                                        <TextBox x:Name="SettingsCertAuthThumbprintTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
-                                    </StackPanel>
-                                </Expander>
-                            </StackPanel>
-                        </Expander>
-                        
-                        <!-- Carte 4 : Sécurité -->
-                        <Expander x:Name="SecuritySettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="False">
-                            <StackPanel Margin="0,10,0,0">
+                                </Border>
+
+                                <!-- Groupe Admin (Déplacé ici) -->
                                 <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.security_admingroup##">
                                     <TextBox x:Name="SettingsAdminGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="👥"/>
                                 </ContentControl>
-                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.security_startupmode##">
-                                    <ComboBox x:Name="SettingsStartupAuthModeComboBox" Style="{DynamicResource StandardComboBoxStyle}" Tag="⚙️"/>
-                                </ContentControl>
+                            </StackPanel>
+                        </Expander>
+                        
+                        <!-- Carte 3 : Services Active Directory -->
+                        <Expander x:Name="ActiveDirectorySettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="False">
+                            <StackPanel>
+                                
+                                <!-- SECTION 1 : Authentification -->
+                                <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Authentification" Style="{DynamicResource H3Style}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_domain_name##" Margin="0,0,10,0">
+                                                <TextBox x:Name="SettingsADDomainNameTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                            </ContentControl>
+                                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_pdc_name##">
+                                                <TextBox x:Name="SettingsADPDCNameTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                            </ContentControl>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_service_user##" Margin="0,0,10,0">
+                                                <TextBox x:Name="SettingsADServiceUserTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="👤"/>
+                                            </ContentControl>
+                                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_service_password##" Margin="0,0,10,0">
+                                                <PasswordBox x:Name="SettingsADServicePasswordBox" Style="{DynamicResource StandardPasswordBoxStyle}" Tag="🔑"/>
+                                            </ContentControl>
+                                            <Button Grid.Column="2" x:Name="SettingsTestADCredsButton" Content="##loc:settings.ad_test_creds_button##" Style="{DynamicResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- SECTION 2 : Infrastructure -->
+                                <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Infrastructure" Style="{DynamicResource H3Style}"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_connect_server##" Margin="0,0,10,0">
+                                                <TextBox x:Name="SettingsADConnectServerTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                            </ContentControl>
+                                            <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_temp_server##" Margin="0,0,10,0">
+                                                <TextBox x:Name="SettingsADTempServerTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                            </ContentControl>
+                                            <Button Grid.Column="2" x:Name="SettingsTestInfraButton" Content="Valider les serveurs" Style="{DynamicResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <!-- SECTION 3 : Configuration de l'Annuaire -->
+                                <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Configuration de l'Annuaire" Style="{DynamicResource H3Style}"/>
+                                        <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_user_ou_path##">
+                                            <TextBox x:Name="SettingsADUserOUPathTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                        </ContentControl>
+                                        <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_excluded_groups##">
+                                            <TextBox x:Name="SettingsADExcludedGroupsTextBox" Style="{DynamicResource StandardTextBoxStyle}" AcceptsReturn="True" Height="90" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                        </ContentControl>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_domain_user_group##" Margin="0,0,10,0">
+                                                <TextBox x:Name="SettingsADDomainUserGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                            </ContentControl>
+                                            <Button Grid.Column="1" x:Name="SettingsTestADObjectsButton" Content="Valider les objets AD" Style="{DynamicResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </Expander>
 
@@ -208,9 +596,10 @@
         </TabControl>
 
         <!-- 3. Pied de page / Barre de statut (GLOBAL) -->
-        <Border Grid.Row="2" Padding="25,10" Background="#F5F5F5">
+        <Border x:Name="StatusBarBorder" Visibility="Collapsed" 
+            Grid.Row="2" Padding="25,10" Background="{DynamicResource BackgroundMediumBrush}">
             <Grid>
-                <TextBlock x:Name="StatusTextBlock" Text="##loc:launcher.status_available## : 0" Foreground="#333333" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <TextBlock x:Name="StatusTextBlock" Text="##loc:launcher.status_available## : 0" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                 <Button x:Name="GlobalCloseAppsButton" Content="❌   ##loc:launcher.close_button##" Style="{DynamicResource SecondaryButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"/>
             </Grid>
         </Border>

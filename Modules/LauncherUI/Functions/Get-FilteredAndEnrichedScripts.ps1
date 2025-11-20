@@ -21,15 +21,10 @@ function Get-FilteredAndEnrichedScripts {
         [string]$ProjectRoot
     )
 
-    # --- Fonction d'aide interne pour créer les icônes ---
-    # En la définissant ici, elle n'est visible que par Get-FilteredAndEnrichedScripts
+    # Fonction d'aide interne pour les icônes (Inchangée)
     function New-ScriptIcon {
         param($manifest, $iconFolderPath)
-        
-        if (-not ($manifest.icon -and $manifest.icon.type -eq 'png' -and -not [string]::IsNullOrEmpty($manifest.icon.value))) {
-            return $null
-        }
-        
+        if (-not ($manifest.icon -and $manifest.icon.type -eq 'png' -and -not [string]::IsNullOrEmpty($manifest.icon.value))) { return $null }
         $iconFullPath = Join-Path -Path $iconFolderPath -ChildPath $manifest.icon.value
         if (Test-Path $iconFullPath) {
             try {
@@ -38,88 +33,96 @@ function Get-FilteredAndEnrichedScripts {
                 $bitmap.UriSource = [System.Uri]::new($iconFullPath, [System.UriKind]::Absolute)
                 $bitmap.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
                 $bitmap.EndInit()
-                $bitmap.Freeze() # Important pour la performance et le multi-threading
+                $bitmap.Freeze()
                 return $bitmap
-            } catch {
-                Write-Warning "Impossible de charger l'image d'icône '$iconFullPath'."
-                return $null
-            }
+            } catch { return $null }
         }
         return $null
     }
-    # ----------------------------------------------------
 
     try {
-        # --- 1. RÉCUPÉRATION DES DONNÉES BRUTES ---
         $allManifests = Get-AppAvailableScript -ProjectRoot $ProjectRoot
-        
+        $adminGroup = $Global:AppConfig.security.adminGroupName
+
+        # --- A. SYNCHRONISATION BDD ---
+        foreach ($m in $allManifests) {
+            Sync-AppScriptSettings -ScriptId $m.id -AdminGroupName $adminGroup
+        }
+
+        # --- B. CHARGEMENT DES DONNÉES BDD ---
+        $securityMap = Get-AppScriptSecurity      # Table de liaison Groupes
+        $settingsMap = Get-AppScriptSettingsMap   # Table des paramètres (Enabled, MaxRuns)
+
         $userGroups = @()
         if ($Global:AppAzureAuth.UserAuth.Connected) {
             $userGroups = Get-AppUserAzureGroups
-            Write-Verbose (("{0} : {1}" -f (Get-AppText 'modules.launcherui.user_groups'), ($userGroups -join ', ')))
         }
 
-        # --- 2. FILTRAGE DES SCRIPTS ---
-        $allowedManifests = @(foreach ($manifest in $allManifests) {
+        $enrichedScripts = [System.Collections.Generic.List[psobject]]::new()
+        $iconFolderPath = Join-Path -Path $ProjectRoot -ChildPath "Templates\Resources\Icons\PNG"
+
+        foreach ($manifest in $allManifests) {
+            if (-not ($manifest.id -and $manifest.scriptFile)) { continue }
+
+            # Récupération des paramètres BDD
+            $dbSettings = $settingsMap[$manifest.id]
+            
+            # Valeurs par défaut si la BDD a raté (fallback)
+            $isEnabled = if ($dbSettings) { $dbSettings.IsEnabled } else { $true }
+            $maxRuns   = if ($dbSettings) { $dbSettings.MaxConcurrentRuns } else { 1 }
+
+            # 2. FILTRAGE SÉCURITÉ
             $isAllowed = $false
-            # Cas 1 : Mode Système, on voit tout
-            if (-not $Global:AppAzureAuth.UserAuth.Connected) {
-                $isAllowed = $true
-            } 
-            # Cas 2 : Le script n'a pas de restriction
-            elseif (-not ($manifest.PSObject.Properties['security'] -and $manifest.security.allowedADGroups)) {
-                $isAllowed = $true
+            $allowedGroupsDb = $securityMap[$manifest.id]
+
+            # Si aucun groupe en BDD => Accès restreint par défaut (ou public selon politique).
+            # Avec notre Sync, il y a toujours au moins le groupe Admin.
+            if ($null -eq $allowedGroupsDb -or $allowedGroupsDb.Count -eq 0) {
+                # Cas orphelin : on masque par sécurité
+                $isAllowed = $false 
             }
-            # Cas 3 : Le script a des restrictions, on vérifie les groupes
-            else {
-                foreach ($requiredGroup in $manifest.security.allowedADGroups) {
-                    if (($userGroups | ForEach-Object { $_.Trim() }) -contains $requiredGroup.Trim()) {
+            elseif ($Global:AppAzureAuth.UserAuth.Connected) {
+                foreach ($requiredGroup in $allowedGroupsDb) {
+                    if ($userGroups -contains $requiredGroup) {
                         $isAllowed = $true
                         break
                     }
                 }
             }
             
-            if ($isAllowed) { $manifest }
-        })
+            if (-not $isAllowed) { continue }
 
-        $logMsg = "{0} {1} {2} {3}." -f $allowedManifests.Count, (Get-AppText 'modules.launcherui.scripts_authorized_1'), $allManifests.Count, (Get-AppText 'modules.launcherui.scripts_authorized_2')
-        Write-Verbose $logMsg
-
-        # --- 3. ENRICHISSEMENT DES SCRIPTS FILTRÉS ---
-        $iconFolderPath = Join-Path -Path $ProjectRoot -ChildPath "Templates\Resources\Icons\PNG"
-        
-        $enrichedScripts = @(foreach ($manifest in $allowedManifests) {
-            # On vérifie la présence des propriétés obligatoires du manifeste
-            if (-not ($manifest.id -and $manifest.scriptFile -and $manifest.name)) {
-                Write-Warning (("{0} '{1}' {2}" -f (Get-AppText 'modules.launcherui.manifest_incomplete_1'), $manifest.PSPath, (Get-AppText 'modules.launcherui.manifest_incomplete_2')))
-                continue # On ignore ce manifeste corrompu
-            }
-
-            [PSCustomObject]@{
-                id                  = $manifest.id
-                scriptFile          = $manifest.scriptFile
-                lockFile            = $manifest.lockFile
-                name                = Get-AppText -Key $manifest.name
-                description         = Get-AppText -Key $manifest.description
-                ScriptPath          = $manifest.ScriptPath
-                version             = $manifest.version
-                enabled             = if ($manifest.PSObject.Properties['enabled']) { $manifest.enabled } else { $true }
-                IsRunning           = $false
-                pid                 = $null
-                sessionId           = $null
-                IconSource          = New-ScriptIcon -manifest $manifest -iconFolderPath $iconFolderPath
-                IconBackgroundColor = $manifest.icon.backgroundColor
-                requiredPermissions = $manifest.requiredPermissions
-                maxConcurrentRuns   = if ($manifest.PSObject.Properties['maxConcurrentRuns']) { $manifest.maxConcurrentRuns } else { 1 }
-            }
-        })
+            # 3. CONSTRUCTION
+            # On utilise les variables $maxRuns issue de la BDD
+            # On ignore ce qui vient du JSON pour 'enabled' et 'maxConcurrentRuns'
+            
+            try {
+                $scriptObj = [PSCustomObject]@{
+                    id                  = $manifest.id
+                    scriptFile          = $manifest.scriptFile
+                    lockFile            = $manifest.lockFile
+                    name                = Get-AppText -Key $manifest.name
+                    description         = Get-AppText -Key $manifest.description
+                    ScriptPath          = $manifest.ScriptPath
+                    version             = $manifest.version
+                    
+                    # PROPRIÉTÉS BDD
+                    enabled             = $isEnabled
+                    maxConcurrentRuns   = $maxRuns
+                    
+                    IsRunning           = $false
+                    pid                 = $null
+                    IconSource          = New-ScriptIcon -manifest $manifest -iconFolderPath $iconFolderPath
+                    IconBackgroundColor = if ($manifest.icon.backgroundColor) { $manifest.icon.backgroundColor } else { "#cccccc" }
+                    IsLoading           = $false
+                    LoadingProgress     = 0
+                    LoadingStatus       = ""
+                }
+                $enrichedScripts.Add($scriptObj)
+            } catch { Write-Warning "Erreur construct : $_" }
+        }
         
         return $enrichedScripts
     }
-    catch {
-        $errorMsg = Get-AppText -Key 'modules.launcherui.scan_filter_error'
-        [System.Windows.MessageBox]::Show("$errorMsg :`n$($_.Exception.Message)", "Erreur de Données", "OK", "Error")
-        return @() 
-    }
+    catch { return @() }
 }

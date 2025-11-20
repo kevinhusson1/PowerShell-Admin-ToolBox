@@ -48,17 +48,19 @@ function Initialize-AppUIComponents {
                 "$ProjectRoot\Templates\Components\Buttons\PrimaryButton.xaml",
                 "$ProjectRoot\Templates\Components\Buttons\SecondaryButton.xaml",
                 "$ProjectRoot\Templates\Components\Buttons\GreenButton.xaml",
-                "$ProjectRoot\Templates\Components\Buttons\RedButton.xaml"
+                "$ProjectRoot\Templates\Components\Buttons\RedButton.xaml",
+                "$ProjectRoot\Templates\Components\Buttons\IconButton.xaml"
             );
             'Inputs' = @(
-                "$ProjectRoot\Templates\Components\Inputs\TextBox.xaml",
                 "$ProjectRoot\Templates\Components\Inputs\ComboBox.xaml",
+                "$ProjectRoot\Templates\Components\Inputs\PasswordBox.xaml",
+                "$ProjectRoot\Templates\Components\Inputs\RadioButton.xaml",
+                "$ProjectRoot\Templates\Components\Inputs\TextBox.xaml",
                 "$ProjectRoot\Templates\Components\Inputs\ToggleSwitch.xaml"
             );
             'Display' = @(
                 "$ProjectRoot\Templates\Components\Display\ListBox.xaml",
-                "$ProjectRoot\Templates\Components\Display\ScriptTile.xaml",
-                "$ProjectRoot\Templates\Components\Display\RichTextBox.xaml"
+                "$ProjectRoot\Templates\Components\Display\LogViewer.xaml"
             );
             'Navigation' = @(
                 "$ProjectRoot\Templates\Components\Navigation\TabControl.xaml" 
@@ -69,6 +71,9 @@ function Initialize-AppUIComponents {
             'Layouts' = @(
                 "$ProjectRoot\Templates\Components\Layouts\CardExpander.xaml",
                 "$ProjectRoot\Templates\Components\Layouts\FormField.xaml"
+            );
+            'LauncherDisplay' = @(
+                "$ProjectRoot\Templates\Components\Launcher\ScriptTile.xaml" # Chemin corrigé
             );
         }
         # -----------------------------------------------

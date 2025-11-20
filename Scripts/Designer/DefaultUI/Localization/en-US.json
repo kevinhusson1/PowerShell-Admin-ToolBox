@@ -1,0 +1,7 @@
+{
+    "create_user": {
+        "window_title": "Default Page",
+        "text": "Default interface for custom scripts.",
+        "log_header": "Execution Log"
+    }
+}

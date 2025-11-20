@@ -21,6 +21,7 @@ $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSMod
 # On définit une préférence Verbose par défaut pour la phase de démarrage.
 # Elle sera écrasée par la configuration de la base de données à l'étape 2.
 $VerbosePreference = "Continue" 
+# $VerbosePreference = "SilentlyContinue" 
 
 # =====================================================================
 # VARIABLES GLOBALES
@@ -29,6 +30,38 @@ $Global:AppActiveScripts = [System.Collections.Generic.List[object]]::new()
 $Global:AppAzureAuth = @{ UserAuth = @{ Connected = $false } }
 $Global:AppControls = @{}
 $Global:IsAppAdmin = $false
+
+# Variables globales pour la gestion Active Directory
+$Global:ADPasswordManuallyChanged = $false
+$Global:PIDsToMonitor = [System.Collections.Generic.List[int]]::new()
+
+#création des timers globaux
+$Global:PIDsToMonitor = [System.Collections.Generic.List[int]]::new()
+$Global:uiTimer = New-Object System.Windows.Threading.DispatcherTimer
+$Global:progressTimer = New-Object System.Windows.Threading.DispatcherTimer
+
+# =====================================================================
+# DÉFINITION DES UTILITAIRES D'API WIN32
+# =====================================================================
+try {
+    # On définit les constantes nécessaires pour ShowWindow
+    $showWindowAsyncConstants = @{ SW_RESTORE = 9 }
+    
+    Add-Type -Name "WindowUtils" -Namespace "App" -MemberDefinition @"
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsIconic(IntPtr hWnd);
+"@
+} catch {
+    Write-Warning "Impossible de charger les utilitaires d'API Win32 pour la gestion des fenêtres."
+}
 
 # =====================================================================
 # ÉTAPE 1 : IMPORTATION DES MODULES
@@ -45,6 +78,8 @@ try {
     Import-Module "$projectRoot\Modules\Localization" -Force
     Import-Module "$projectRoot\Modules\Logging" -Force
     Import-Module "$projectRoot\Modules\UI" -Force
+    Import-Module "$projectRoot\Modules\Toolbox.ActiveDirectory" -Force
+    Import-Module "$projectRoot\Modules\Toolbox.Security" -Force
 }
 catch {
     [System.Windows.MessageBox]::Show("Erreur critique lors de l'import des modules : $($_.Exception.Message)", "Erreur de démarrage", "OK", "Error")
@@ -63,11 +98,7 @@ try {
     
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage
 
-    if ($Global:AppConfig.security.startupAuthMode -eq 'User') {
-        $authResult = Connect-AppAzureWithUser -Scopes $Global:AppConfig.azure.authentication.userAuth.scopes
-        if ($authResult.Success) { $Global:AppAzureAuth.UserAuth = $authResult }
-    }
-    
+    # Important : On vérifie le statut Admin APRÈS la tentative de connexion
     $Global:IsAppAdmin = Test-IsAppAdmin
 }
 catch {
@@ -95,11 +126,11 @@ try {
     $mainXamlPath = "$projectRoot\Templates\Layouts\MainLauncher.xaml"
     $mainWindow = Import-AppXamlTemplate -XamlPath $mainXamlPath
     $mainWindow.Title = "$(Get-AppText 'app.title') - $($Global:AppConfig.companyName)" 
-    $mainWindow.Width = $Global:AppConfig.ui.launcherWidth
-    $mainWindow.Height = $Global:AppConfig.ui.launcherHeight
+    $mainWindow.Width = 650
+    $mainWindow.Height = 750
     
     # ... (configuration de la fenêtre)
-    Initialize-AppUIComponents -Window $mainWindow -ProjectRoot $projectRoot -Components @('Buttons', 'Inputs', 'Display', 'Navigation', 'ProfileButton', 'Layouts')
+    Initialize-AppUIComponents -Window $mainWindow -ProjectRoot $projectRoot -Components @('Buttons', 'Inputs', 'Display', 'Navigation', 'ProfileButton', 'Layouts', 'LauncherDisplay')
 
     # --- 3. Peuplement de la hashtable de contrôles ---
     $Global:AppControls.Clear()
@@ -107,16 +138,59 @@ try {
     $Global:AppControls['mainWindow']                 = $mainWindow
     $Global:AppControls['scriptsListBox']             = $mainWindow.FindName('ScriptsListBox')
     $Global:AppControls['executeButton']              = $mainWindow.FindName('ExecuteButton')
+    $Global:AppControls['bringToFrontButton']         = $mainWindow.FindName('BringToFrontButton')
     $Global:AppControls['statusTextBlock']            = $mainWindow.FindName('StatusTextBlock')
     $Global:AppControls['globalCloseAppsButton']      = $mainWindow.FindName('GlobalCloseAppsButton')
     $Global:AppControls['authStatusButton']           = $mainWindow.FindName('AuthStatusButton')
+    $Global:AppControls['AuthTextButton']             = $mainWindow.FindName('AuthTextButton')
+
+    $Global:AppControls['ConnectPromptPanel']         = $mainWindow.FindName('ConnectPromptPanel')
     $Global:AppControls['descriptionTextBlock']       = $mainWindow.FindName('DescriptionTextBlock')
     $Global:AppControls['versionTextBlock']           = $mainWindow.FindName('VersionTextBlock')
     $Global:AppControls['defaultDetailText']          = $mainWindow.FindName('DefaultDetailText')
     $Global:AppControls['scriptDetailPanel']          = $mainWindow.FindName('ScriptDetailPanel')
+    $Global:AppControls['DetailsPanelBorder']         = $mainWindow.FindName('DetailsPanelBorder')
+    $Global:AppControls['StatusBarBorder']            = $mainWindow.FindName('StatusBarBorder')
+
+    $Global:AppControls['scriptLoadingPanel']         = $mainWindow.FindName('ScriptLoadingPanel')
+    $Global:AppControls['loadingScriptName']          = $mainWindow.FindName('LoadingScriptName')
+    $Global:AppControls['loadingStatusText']          = $mainWindow.FindName('LoadingStatusText')
+    $Global:AppControls['loadingStatusText']          = $mainWindow.FindName('LoadingStatusText')
+    $Global:AppControls['loadingProgressBar']         = $mainWindow.FindName('LoadingProgressBar')
+    $Global:AppControls['loadingProgressText']        = $mainWindow.FindName('LoadingProgressText')
 
     # --- CONTRÔLES DE L'ONGLET "ACCUEIL" ---
     $Global:AppControls['scriptsTabItem'] = $mainWindow.FindName('ScriptsTabItem')
+
+    # --- CONTRÔLES DE L'ONGLET "GOUVERNANCE" ---
+    $Global:AppControls['GovernanceTabItem']         = $mainWindow.FindName('GovernanceTabItem')
+    $Global:AppControls['PermissionRequestsListBox'] = $mainWindow.FindName('PermissionRequestsListBox')
+    $Global:AppControls['NoRequestsText']            = $mainWindow.FindName('NoRequestsText')
+    $Global:AppControls['CurrentScopesListBox']      = $mainWindow.FindName('CurrentScopesListBox')
+    $Global:AppControls['AddPermissionButton']       = $mainWindow.FindName('AddPermissionButton')
+    $Global:AppControls['SyncAzureButton']           = $mainWindow.FindName('SyncAzureButton')
+    $Global:AppControls['GrantConsentButton']        = $mainWindow.FindName('GrantConsentButton')
+    $Global:AppControls['AdminMembersListBox']       = $mainWindow.FindName('AdminMembersListBox')
+    $Global:AppControls['UserMembersListBox']        = $mainWindow.FindName('UserMembersListBox')
+
+    # --- CONTRÔLES DE L'ONGLET "GESTION" ---
+    $Global:AppControls['ManagementTabItem']       = $mainWindow.FindName('ManagementTabItem')
+    $Global:AppControls['ManageScriptsListBox']    = $mainWindow.FindName('ManageScriptsListBox')
+    $Global:AppControls['ManageDetailPanel']       = $mainWindow.FindName('ManageDetailPanel')
+    $Global:AppControls['ManageSelectPrompt']      = $mainWindow.FindName('ManageSelectPrompt')
+
+    $Global:AppControls['LibraryNewGroupTextBox']  = $mainWindow.FindName('LibraryNewGroupTextBox')
+    $Global:AppControls['LibraryAddGroupButton']   = $mainWindow.FindName('LibraryAddGroupButton')
+    $Global:AppControls['LibraryGroupsComboBox']   = $mainWindow.FindName('LibraryGroupsComboBox')
+    $Global:AppControls['LibraryRemoveGroupButton']= $mainWindow.FindName('LibraryRemoveGroupButton')
+    
+    $Global:AppControls['ManageSecurityCheckList'] = $mainWindow.FindName('ManageSecurityCheckList')
+    $Global:AppControls['ManageEnabledSwitch']     = $mainWindow.FindName('ManageEnabledSwitch')
+    $Global:AppControls['ManageMaxRunsTextBox']    = $mainWindow.FindName('ManageMaxRunsTextBox')
+    $Global:AppControls['ManageNewGroupTextBox']   = $mainWindow.FindName('ManageNewGroupTextBox')
+    $Global:AppControls['ManageAddGroupButton']    = $mainWindow.FindName('ManageAddGroupButton')
+    $Global:AppControls['ManageGroupsListBox']     = $mainWindow.FindName('ManageGroupsListBox')
+    $Global:AppControls['ManageSaveButton']        = $mainWindow.FindName('ManageSaveButton')
 
     # --- CONTRÔLES DE L'ONGLET "LOG" ---
     $Global:AppControls['launcherLogRichTextBox']     = $mainWindow.FindName('LauncherLogRichTextBox')
@@ -125,33 +199,40 @@ try {
     # --- CONTRÔLES DE L'ONGLET "PARAMÈTRES" ---
     $Global:AppControls['settingsTabItem'] = $mainWindow.FindName('SettingsTabItem')
 
-    #Section Expender
-    $Global:AppControls['generalSettingsCard']  = $mainWindow.FindName('GeneralSettingsCard')
-    $Global:AppControls['uiSettingsCard']       = $mainWindow.FindName('UiSettingsCard')
-    $Global:AppControls['azureSettingsCard']    = $mainWindow.FindName('AzureSettingsCard')
-    $Global:AppControls['securitySettingsCard'] = $mainWindow.FindName('SecuritySettingsCard')
-
-    # Section Générale
-    $Global:AppControls['settingsSaveButton']         = $mainWindow.FindName('SettingsSaveButton')
-    $Global:AppControls['settingsCompanyNameTextBox'] = $mainWindow.FindName('SettingsCompanyNameTextBox')
-    $Global:AppControls['settingsAppVersionTextBox']        = $mainWindow.FindName('SettingsAppVersionTextBox')
-    $Global:AppControls['settingsLanguageComboBox']   = $mainWindow.FindName('SettingsLanguageComboBox')
-    $Global:AppControls['settingsVerboseLoggingCheckBox']   = $mainWindow.FindName('SettingsVerboseLoggingCheckBox')
-
-    # Section UI
-    $Global:AppControls['settingsLauncherWidthTextBox']     = $mainWindow.FindName('SettingsLauncherWidthTextBox')
-    $Global:AppControls['settingsLauncherHeightTextBox']    = $mainWindow.FindName('SettingsLauncherHeightTextBox')
+    # Section Générale & UI
+    $Global:AppControls['generalSettingsCard']          = $mainWindow.FindName('GeneralSettingsCard')
+    $Global:AppControls['settingsCompanyNameTextBox']   = $mainWindow.FindName('SettingsCompanyNameTextBox')
+    $Global:AppControls['settingsAppVersionTextBox']    = $mainWindow.FindName('SettingsAppVersionTextBox')
+    $Global:AppControls['settingsLanguageComboBox']     = $mainWindow.FindName('SettingsLanguageComboBox')
+    $Global:AppControls['settingsVerboseLoggingCheckBox'] = $mainWindow.FindName('SettingsVerboseLoggingCheckBox')
+    $Global:AppControls['settingsLauncherWidthTextBox'] = $mainWindow.FindName('SettingsLauncherWidthTextBox')
+    $Global:AppControls['settingsLauncherHeightTextBox'] = $mainWindow.FindName('SettingsLauncherHeightTextBox')
 
     # Section Azure
-    $Global:AppControls['settingsTenantIdTextBox']   = $mainWindow.FindName('SettingsTenantIdTextBox')
+    $Global:AppControls['azureSettingsCard']            = $mainWindow.FindName('AzureSettingsCard')
+    $Global:AppControls['settingsTenantIdTextBox']      = $mainWindow.FindName('SettingsTenantIdTextBox')
     $Global:AppControls['settingsUserAuthAppIdTextBox'] = $mainWindow.FindName('SettingsUserAuthAppIdTextBox')
     $Global:AppControls['settingsUserAuthScopesTextBox'] = $mainWindow.FindName('SettingsUserAuthScopesTextBox')
-    $Global:AppControls['settingsCertAuthAppIdTextBox'] = $mainWindow.FindName('SettingsCertAuthAppIdTextBox')
-    $Global:AppControls['settingsCertAuthThumbprintTextBox'] = $mainWindow.FindName('SettingsCertAuthThumbprintTextBox')
+    $Global:AppControls['SettingsUserAuthTestButton']   = $mainWindow.FindName('SettingsUserAuthTestButton')
 
-    # Section Sécurité
-    $Global:AppControls['settingsAdminGroupTextBox'] = $mainWindow.FindName('SettingsAdminGroupTextBox')
-    $Global:AppControls['SettingsStartupAuthModeComboBox'] = $mainWindow.FindName('SettingsStartupAuthModeComboBox')
+    # Section Sécurité (intégrée)
+    $Global:AppControls['settingsAdminGroupTextBox']    = $mainWindow.FindName('SettingsAdminGroupTextBox')
+
+    # Section "ACTIVE DIRECTORY" ---
+    $Global:AppControls['activeDirectorySettingsCard']      = $mainWindow.FindName('ActiveDirectorySettingsCard')
+    $Global:AppControls['settingsADServiceUserTextBox']      = $mainWindow.FindName('SettingsADServiceUserTextBox')
+    $Global:AppControls['settingsADServicePasswordBox']      = $mainWindow.FindName('SettingsADServicePasswordBox')
+    $Global:AppControls['settingsTestADCredsButton']         = $mainWindow.FindName('SettingsTestADCredsButton')
+    $Global:AppControls['settingsADDomainNameTextBox']       = $mainWindow.FindName('SettingsADDomainNameTextBox')
+    $Global:AppControls['settingsADPDCNameTextBox']          = $mainWindow.FindName('SettingsADPDCNameTextBox')
+    $Global:AppControls['settingsADUserOUPathTextBox']       = $mainWindow.FindName('SettingsADUserOUPathTextBox')
+    $Global:AppControls['settingsADTempServerTextBox']       = $mainWindow.FindName('SettingsADTempServerTextBox')
+    $Global:AppControls['settingsADConnectServerTextBox']    = $mainWindow.FindName('SettingsADConnectServerTextBox')
+    $Global:AppControls['settingsADDomainUserGroupTextBox']  = $mainWindow.FindName('SettingsADDomainUserGroupTextBox')
+    $Global:AppControls['settingsADExcludedGroupsTextBox']   = $mainWindow.FindName('SettingsADExcludedGroupsTextBox')
+    $Global:AppControls['settingsTestInfraButton']           = $mainWindow.FindName('SettingsTestInfraButton')
+    $Global:AppControls['settingsTestADObjectsButton']       = $mainWindow.FindName('SettingsTestADObjectsButton')
+    $Global:AppControls['settingsSaveButton']                = $mainWindow.FindName('SettingsSaveButton')
 
     # --- 4. Initialisation des données de l'UI ---
     Initialize-LauncherData
@@ -180,63 +261,11 @@ catch {
     exit 1
 }
 
-
 # =====================================================================
 # GESTION DES TÂCHES DE FOND (TIMER)
 # =====================================================================
-$uiTimer = New-Object System.Windows.Threading.DispatcherTimer
-$uiTimer.Interval = [TimeSpan]::FromSeconds(2)
-$uiTimer.Add_Tick({
-    # Sécurité : ne rien faire si les contrôles ne sont pas encore chargés.
-    if (-not $Global:AppControls.ContainsKey('scriptsListBox')) { return }
-
-    # On cherche tous les processus de script qui se sont terminés.
-    $scriptsToRemove = @($Global:AppActiveScripts | Where-Object { $_.HasExited })
-    
-    if ($scriptsToRemove.Count -gt 0) {
-        foreach($process in $scriptsToRemove){
-            # On retrouve l'objet script correspondant dans notre liste interne.
-            $finishedScript = $Global:AppAvailableScripts | Where-Object { $_.pid -eq $process.Id }
-
-            if ($finishedScript) {
-                
-                Write-LauncherLog -Message "Le script '$($finishedScript.name)' (PID: $($finishedScript.pid)) a été détecté comme terminé." -Level Info
-
-                # --- LE LANCEUR NE GÈRE QUE SON PROPRE ÉTAT ---
-                
-                # 1. On réinitialise l'état de l'objet script en mémoire.
-                $finishedScript.IsRunning = $false
-                $finishedScript.pid = $null
-                
-                # 2. Si le script terminé était sélectionné, on met à jour l'UI du bouton principal.
-                if ($Global:AppControls.scriptsListBox.SelectedItem -eq $finishedScript) {
-                    $Global:AppControls.executeButton.Content = Get-AppText -Key 'launcher.execute_button'
-                    $Global:AppControls.executeButton.Style = $Global:AppControls.executeButton.FindResource('PrimaryButtonStyle')
-                }
-            }
-            # On retire le processus de la liste des scripts actifs.
-            $Global:AppActiveScripts.Remove($process)
-        }
-        # On force l'interface (les tuiles) à se redessiner pour refléter le nouvel état.
-        $Global:AppControls.scriptsListBox.Items.Refresh()
-    }
-
-    # --- MISE À JOUR DE L'UI GLOBALE (ne change pas) ---
-
-    # Mise à jour du bouton "Fermer toutes les applications"
-    if ($Global:AppActiveScripts.Count -gt 0) {
-        $Global:AppControls.globalCloseAppsButton.Visibility = 'Visible'
-    } else {
-        $Global:AppControls.globalCloseAppsButton.Visibility = 'Collapsed'
-    }
-
-    # Mise à jour de la barre de statut
-    $activeScriptsCount = $Global:AppActiveScripts.Count
-    $statusTextAvailable = Get-AppText 'launcher.status_available'
-    $statusTextActive = Get-AppText 'launcher.status_active'
-    $Global:AppControls.statusTextBlock.Text = "$statusTextAvailable : $($Global:AppAvailableScripts.Count)  •  $statusTextActive : $activeScriptsCount"
-})
-$uiTimer.Start()
+# Le timer lent démarre toujours au lancement. Son comportement est aussi déplacé.
+$Global:uiTimer.Start()
 
 # =====================================================================
 # ÉTAPE FINALE : AFFICHAGE DE LA FENÊTRE

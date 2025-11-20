@@ -7,14 +7,9 @@
     "version": "1.0.0",
     "category": "UserManagement",
     "author": "Service IT",
-    "enabled": true,
     "icon": { 
         "type": "png", 
         "value": "user-add.png",
         "backgroundColor": "#3b82f6" 
-    },
-    "security": {
-        "allowedADGroups": ["M365_APPS_SCRIPTS_ADMIN", "M365_APPS_SCRIPTS_DP"]
-    },
-    "maxConcurrentRuns": 1
+    }
 }

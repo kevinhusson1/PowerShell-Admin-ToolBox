@@ -1,0 +1,15 @@
+{
+    "id": "DefaultUI-v1",
+    "scriptFile": "DefaultUI.ps1",    
+    "lockFile": "DefaultUI.lock", 
+    "name": "scripts.DefaultUI.name",
+    "description": "scripts.DefaultUI.description",
+    "version": "1.0.0",
+    "category": "Designer",
+    "author": "Service IT",
+    "icon": { 
+        "type": "png", 
+        "value": "check.png",
+        "backgroundColor": "#fac42d" 
+    }
+}

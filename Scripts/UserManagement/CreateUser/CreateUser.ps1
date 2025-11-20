@@ -1,27 +1,16 @@
-#Requires -Version 5.1
+#Requires -Version 7.0
 
-<#
-.SYNOPSIS
-    (TEMPLATE) Interface autonome pour une action métier avec UI.
-.DESCRIPTION
-    Ce script est un modèle d'application autonome. Il gère son propre cycle de vie :
-    - Chargement des assemblages WPF.
-    - Importation des modules de l'application.
-    - Verrouillage pour empêcher les exécutions multiples.
-    - Initialisation du contexte (Configuration, Authentification, Traduction).
-    - Chargement de son interface XAML.
-    - Exécution de sa logique métier.
-    - Nettoyage (libération du verrou) à la fermeture.
-#>
+param( 
+    [string]$LauncherPID 
+)
 
 # =====================================================================
 # 1. PRÉ-CHARGEMENT DES ASSEMBLAGES WPF REQUIS
 # =====================================================================
-try {
-    Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
-} catch {
-    Write-Error "Impossible de charger les assemblages WPF. Le script ne peut pas continuer."
-    Read-Host "Appuyez sur Entrée pour quitter."; exit 1
+try { 
+    Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase 
+} catch { 
+    Write-Error "Impossible de charger les assemblages WPF."; exit 1 
 }
 
 # =====================================================================
@@ -32,11 +21,11 @@ $projectRoot = (Get-Item $scriptRoot).Parent.Parent.Parent.FullName
 $Global:ProjectRoot = $projectRoot
 $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSModulePath)"
 
-try {
-    Import-Module "PSSQLite" -Force
-    Import-Module "Core", "UI", "Localization", "Azure", "Logging", "Database" -Force
-} catch {
-    [System.Windows.MessageBox]::Show("Erreur critique lors de l'import des modules :`n$($_.Exception.Message)", "Erreur de Démarrage", "OK", "Error"); exit 1
+try { 
+    Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure" -Force
+    . (Join-Path $scriptRoot "Functions\Initialize-CreateUserUI.ps1")
+} catch { 
+    [System.Windows.MessageBox]::Show("Erreur critique lors de l'import des modules :`n$($_.Exception.Message)", "Erreur", "OK", "Error"); exit 1 
 }
 
 # =====================================================================
@@ -45,58 +34,74 @@ try {
 try {
     Initialize-AppDatabase -ProjectRoot $projectRoot
     $manifest = Get-Content (Join-Path $scriptRoot "manifest.json") -Raw | ConvertFrom-Json
-    
-    if (-not (Test-AppScriptLock -Script $manifest)) {
-        $title = Get-AppText -Key 'messages.execution_forbidden_title'
-        $message = Get-AppText -Key 'messages.execution_limit_reached'
-        [System.Windows.MessageBox]::Show("$message '$($manifest.name)'.", $title, "OK", "Error"); exit 1
+    if (-not (Test-AppScriptLock -Script $manifest)) { 
+        [System.Windows.MessageBox]::Show((Get-AppText -Key 'messages.execution_limit_reached'), (Get-AppText -Key 'messages.execution_forbidden_title'), "OK", "Error"); exit 1 
     }
-    # Si le test passe, on enregistre immédiatement notre verrou.
     Add-AppScriptLock -Script $manifest -OwnerPID $PID
-} catch {
-    $title = Get-AppText -Key 'messages.lock_error_title'
-    [System.Windows.MessageBox]::Show("Erreur critique lors du verrouillage :`n$($_.Exception.Message)", $title, "OK", "Error"); exit 1
+} catch { 
+    [System.Windows.MessageBox]::Show("Erreur critique lors du verrouillage :`n$($_.Exception.Message)", "Erreur", "OK", "Error"); exit 1 
 }
 
 # =====================================================================
 # 4. BLOC D'EXÉCUTION PRINCIPAL
 # =====================================================================
 try {
-    # --- Initialisation du contexte ---
+    # --- Étape 1 : Initialisation du contexte et du logging ---
     $Global:AppConfig = Get-AppConfiguration
     $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
+    
+    # --- Étape 2 : Détermination du mode et rapport de progression initial ---
+    $isLauncherMode = -not ([string]::IsNullOrEmpty($LauncherPID))
+    if ($isLauncherMode) { 
+        Write-Verbose "Mode Lanceur détecté." 
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 10 -StatusMessage "10% Initialisation du contexte..."
+    } else {
+        Write-Verbose "Mode Autonome détecté."
+    }
 
-    Connect-MgGraph -Scopes $Global:AppConfig.azure.authentication.userAuth.scopes -NoWelcome
-    Write-Verbose ((Get-AppText 'messages.auth_context_init') + " $((Get-MgContext).Account).")
-    
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage
-    
-    # --- Fusion des traductions locales ---
     $scriptLangFile = "$scriptRoot\Localization\$($Global:AppConfig.defaultLanguage).json"
     if(Test-Path $scriptLangFile){ Add-AppLocalizationSource -FilePath $scriptLangFile }
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 60 -StatusMessage "60% Contexte d'authentification établi."
+    }
 
-    # --- Chargement de l'interface ---
+    # 1. Chargement de l'interface
     $xamlPath = Join-Path $scriptRoot "CreateUser.xaml"
     $window = Import-AppXamlTemplate -XamlPath $xamlPath
-    $testApiButton = $window.FindName("TestApiButton")
-    $resultTextBox = $window.FindName("ResultTextBox")
+    
+    # 2. Chargement des composants de style
+    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display'
+    
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 80 -StatusMessage "80% Chargement de l'interface utilisateur..."
+    }
+    # 3. Peuplement de l'en-tête (logique de présentation)
+    try {
+        # CORRECTION : On cible maintenant l'ImageBrush à l'intérieur du masque
+        $iconImageBrush = $window.FindName("IconImageBrush")
+        $subtitleText = $window.FindName("SubtitleText")
 
-    # --- Gestion des événements ---
-    $testApiButton.Add_Click({
-        $resultTextBox.Text = (Get-AppText 'create_user.api_call_inprogress')
-        try {
-            $me = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=displayName' -Method GET
-            $resultTextBox.Text = (Get-AppText 'create_user.api_call_success') + " $($me.displayName)"
-        } catch {
-            $resultTextBox.Text = (Get-AppText 'create_user.api_call_error') + " $($_.Exception.Message)"
+        $iconFullPath = Join-Path -Path $projectRoot -ChildPath "Templates\Resources\Icons\PNG\$($manifest.icon.value)"
+        if (Test-Path $iconFullPath) {
+            $bitmap = [System.Windows.Media.Imaging.BitmapImage]::new([System.Uri]$iconFullPath)
+            # CORRECTION : On définit la propriété ImageSource de l'ImageBrush
+            $iconImageBrush.ImageSource = $bitmap
         }
-    })
+        
+        $subtitleText.Text = Get-AppText -Key $manifest.description
+    } catch {
+        Write-Warning "Erreur lors du peuplement de l'en-tête du script : $($_.Exception.Message)"
+    }
 
-    $window.Add_Closing({
-        Write-Verbose (Get-AppText 'messages.window_closing_log')
-    })
+    # 4. Initialisation de l'UI et attachement des événements
+    # La fonction retourne une hashtable des contrôles que nous stockons localement.
+    $scriptControls = Initialize-CreateUserUI -Window $window
 
-    # --- Affichage de la fenêtre ---
+    # 5. Affichage de la fenêtre
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 100 -StatusMessage "100% Interface prête."
+    }
     $window.ShowDialog() | Out-Null
 
 } catch {
@@ -104,6 +109,5 @@ try {
     [System.Windows.MessageBox]::Show("Une erreur fatale est survenue :`n$($_.Exception.Message)`n$($_.ScriptStackTrace)", $title, "OK", "Error")
 } finally {
     # --- NETTOYAGE FINAL ---
-    # Le script est TOUJOURS responsable de libérer son propre verrou.
     Unlock-AppScriptLock -OwnerPID $PID
 }

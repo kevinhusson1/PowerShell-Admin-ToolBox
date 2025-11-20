@@ -19,8 +19,13 @@
 
     # Liste explicite des fonctions à exporter (bonne pratique)
     FunctionsToExport = @(
+        'Add-AppGraphPermission',
         'Connect-AppAzureWithUser',
         'Disconnect-AppAzureUser',
-        'Get-AppUserAzureGroups'
+        'Get-AppAzureGroupMembers',
+        'Get-AppServicePrincipalPermissions',
+        'Get-AppUserAzureGroups',
+        'Test-AppAzureCertConnection',
+        'Test-AppAzureUserConnection'
     )
 }

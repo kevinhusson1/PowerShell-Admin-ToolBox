@@ -1,0 +1,7 @@
+{
+    "DefaultUI": {
+        "window_title": "Page par défaut",
+        "text": "Interface par défaut pour les scripts personnalisés.",
+        "log_header": "Journal d'exécution"
+    }
+}

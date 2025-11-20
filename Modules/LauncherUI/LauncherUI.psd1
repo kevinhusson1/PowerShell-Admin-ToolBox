@@ -25,7 +25,9 @@
         'Start-AppScript',
         'Stop-AppScript',
         'Test-IsAppAdmin',
+        'Update-GovernanceTab',
         'Update-LauncherAuthButton',
+        'Update-ManagementScriptList',
         'Update-ScriptListBoxUI'
     )
 }

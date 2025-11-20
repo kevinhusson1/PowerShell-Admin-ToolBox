@@ -1,13 +1,13 @@
-#Requires -Version 7.0
+#Requires -Version 5.1
 
 <#
 .SYNOPSIS
-    Script de test pour le design de la page des paramètres, basé sur le modèle CreateUser.
-.DESCRIPTION
-    Ce script est un bac à sable. Il utilise la structure complète et validée d'un script
-    enfant autonome (verrouillage, initialisation, nettoyage) pour charger et afficher
-    l'interface des paramètres en cours de développement.
+    (TEMPLATE) Interface autonome pour une action métier avec UI.
 #>
+
+param(
+    [string]$LauncherPID
+)
 
 # =====================================================================
 # 1. PRÉ-CHARGEMENT DES ASSEMBLAGES WPF REQUIS
@@ -29,7 +29,7 @@ $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSMod
 
 try {
     Import-Module "PSSQLite" -Force
-    Import-Module "Core", "UI", "Localization", "Logging", "Database" -Force
+    Import-Module "Core", "UI", "Localization", "Azure", "Logging", "Database" -Force
 } catch {
     [System.Windows.MessageBox]::Show("Erreur critique lors de l'import des modules :`n$($_.Exception.Message)", "Erreur de Démarrage", "OK", "Error"); exit 1
 }
@@ -48,65 +48,62 @@ try {
     }
     Add-AppScriptLock -Script $manifest -OwnerPID $PID
 } catch {
-    [System.Windows.MessageBox]::Show("Erreur critique lors du verrouillage :`n$($_.Exception.Message)", "Erreur de Verrouillage", "OK", "Error"); exit 1
+    $title = Get-AppText -Key 'messages.lock_error_title'
+    [System.Windows.MessageBox]::Show("Erreur critique lors du verrouillage :`n$($_.Exception.Message)", $title, "OK", "Error"); exit 1
 }
 
 # =====================================================================
 # 4. BLOC D'EXÉCUTION PRINCIPAL
 # =====================================================================
 try {
-    # --- Initialisation du contexte ---
+    # --- Étape 1 : Initialisation du contexte et du logging ---
     $Global:AppConfig = Get-AppConfiguration
     $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
+
+    # --- Étape 2 : Détermination du mode et rapport de progression initial ---
+    $isLauncherMode = -not ([string]::IsNullOrEmpty($LauncherPID))
+    if ($isLauncherMode) {
+        Write-Verbose "Mode Lanceur détecté (lancé par le PID: $LauncherPID)."
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 10 -StatusMessage "10% Initialisation du contexte..."
+    } else {
+        Write-Verbose "Mode Autonome détecté."
+    }
+
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 30 -StatusMessage "30% Configuration chargée."
+    }
     
+    # --- Étape 3 : Logique métier (connexion, etc.) ---
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 60 -StatusMessage "60% Contexte d'authentification établi."
+    }
+
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage
     
     $scriptLangFile = "$scriptRoot\Localization\$($Global:AppConfig.defaultLanguage).json"
     if(Test-Path $scriptLangFile){ Add-AppLocalizationSource -FilePath $scriptLangFile }
 
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 80 -StatusMessage "80% Chargement de l'interface utilisateur..."
+    }
+
     # --- Chargement de l'interface ---
-    $xamlPath = Join-Path $scriptRoot "SettingsDesigner.xaml"
+    $xamlPath = Join-Path $scriptRoot "DefaultUI.xaml"
     $window = Import-AppXamlTemplate -XamlPath $xamlPath
-    
-    # On charge les composants de Layout ET d'Inputs
-    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Layouts', 'Inputs', 'Buttons'
 
-    # --- LIAISON DES DONNÉES DEPUIS POWERSHELL (AVEC COULEURS) ---
-    $generalCard = $window.FindName("GeneralSettingsCard")
-    $uiCard = $window.FindName("UiSettingsCard")
-    $azureCard = $window.FindName("AzureSettingsCard")
-    $securityCard = $window.FindName("SecuritySettingsCard")
+    $window.Add_Closing({
+        Write-Verbose (Get-AppText 'messages.window_closing_log')
+    })
 
-    $generalCard.Tag = [PSCustomObject]@{
-        Icon     = "🌐"
-        Title    = Get-AppText 'settings.section_general'
-        Subtitle = "Configuration de base de l'application"
-        IconBackgroundColor = "#3b82f6" # Bleu
+    # --- Affichage de la fenêtre ---
+    if ($isLauncherMode) {
+        Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 100 -StatusMessage "100% Interface prête."
     }
-    $uiCard.Tag = [PSCustomObject]@{
-        Icon     = "🖼️"
-        Title    = Get-AppText 'settings.section_ui'
-        Subtitle = "Ajustement des dimensions du lanceur"
-        IconBackgroundColor = "#8b5cf6" # Violet
-    }
-    $azureCard.Tag = [PSCustomObject]@{
-        Icon     = "☁️"
-        Title    = Get-AppText 'settings.section_azure'
-        Subtitle = "Paramètres de connexion à Microsoft 365"
-        IconBackgroundColor = "#06b6d4" # Cyan
-    }
-    $securityCard.Tag = [PSCustomObject]@{
-        Icon     = "🔒"
-        Title    = Get-AppText 'settings.section_security'
-        Subtitle = "Gestion des accès et des droits"
-        IconBackgroundColor = "#f97316" # Orange
-    }
-    # ---------------------------------------------
-
     $window.ShowDialog() | Out-Null
 
 } catch {
-    [System.Windows.MessageBox]::Show("Une erreur fatale est survenue :`n$($_.Exception.Message)`n$($_.ScriptStackTrace)", "Erreur Fatale", "OK", "Error")
+    $title = Get-AppText -Key 'messages.fatal_error_title'
+    [System.Windows.MessageBox]::Show("Une erreur fatale est survenue :`n$($_.Exception.Message)`n$($_.ScriptStackTrace)", $title, "OK", "Error")
 } finally {
     # --- NETTOYAGE FINAL ---
     Unlock-AppScriptLock -OwnerPID $PID

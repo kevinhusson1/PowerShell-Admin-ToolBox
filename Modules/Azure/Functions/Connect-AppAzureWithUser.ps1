@@ -5,26 +5,25 @@
     Connecte l'utilisateur de manière interactive à Microsoft Graph.
 .DESCRIPTION
     Cette fonction initie une connexion à Microsoft Graph en utilisant les scopes fournis.
-    Elle gère l'ouverture de la fenêtre de connexion si nécessaire (ou utilise le cache de jetons).
-    En cas de succès, elle retourne un objet contenant les informations du profil de l'utilisateur.
-.PARAMETER Scopes
-    Un tableau de chaînes de caractères représentant les permissions (scopes) à demander pour la session Graph.
-.EXAMPLE
-    $authResult = Connect-AppAzureWithUser -Scopes "User.Read", "Mail.Read"
-    if ($authResult.Success) {
-        Write-Host "Connecté en tant que $($authResult.DisplayName)"
-    }
-.OUTPUTS
-    PSCustomObject - Un objet contenant le statut de la connexion et les informations de l'utilisateur.
+    Elle utilise le Tenant ID pour cibler l'annuaire spécifique de l'entreprise.
+.PARAMETER AppId
+    L'Application (Client) ID à utiliser pour l'authentification.
+.PARAMETER TenantId
+    L'ID du Tenant Azure AD (obligatoire pour les applications Single Tenant).
 #>
 function Connect-AppAzureWithUser {
     [CmdletBinding()]
     param(
-        [string[]]$Scopes = @("User.Read", "GroupMember.Read.All")
+        [string[]]$Scopes = @("User.Read", "GroupMember.Read.All"),
+        [Parameter(Mandatory)]
+        [string]$AppId,
+        [Parameter(Mandatory)]
+        [string]$TenantId
     )
 
     try {
-        Connect-MgGraph -Scopes $Scopes -NoWelcome
+        # CORRECTION : Ajout du paramètre -TenantId pour cibler le bon annuaire
+        Connect-MgGraph -Scopes $Scopes -AppId $AppId -TenantId $TenantId -NoWelcome
         
         $user = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=displayName,userPrincipalName' -Method GET
         $initials = (($user.DisplayName -split ' ' | Where-Object { $_ }) | ForEach-Object { $_.Substring(0,1) }) -join ''
@@ -38,9 +37,7 @@ function Connect-AppAzureWithUser {
         }
     } catch {
         $errorMessage = Get-AppText -Key 'modules.azure.auth_error'
-        # Le message technique de l'exception reste en anglais, ce qui est une bonne pratique.
         Write-Warning "$errorMessage : $($_.Exception.Message)"
-
         return [PSCustomObject]@{ Success = $false; Connected = $false }
     }
 }

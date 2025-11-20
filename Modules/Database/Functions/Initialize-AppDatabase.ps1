@@ -30,8 +30,6 @@ function Initialize-AppDatabase {
 
     try {
         # --- DÉFINITION DU SCHÉMA ATTENDU ---
-        # On définit toutes les tables dont notre application a besoin.
-        # À l'avenir, si on a besoin d'une nouvelle table, on l'ajoutera simplement ici.
         $schema = @{
             'active_sessions' = @"
                 CREATE TABLE active_sessions (
@@ -49,7 +47,49 @@ function Initialize-AppDatabase {
                     Type    TEXT NOT NULL CHECK(Type IN ('string', 'integer', 'boolean'))
                 );
 "@
-            # (Future) 'audit_log' = "CREATE TABLE audit_log (...);"
+            'script_progress' = @"
+                CREATE TABLE script_progress (
+                    OwnerPID            INTEGER PRIMARY KEY NOT NULL,
+                    ProgressPercentage  INTEGER,
+                    StatusMessage       TEXT
+                );
+"@
+            # --- NOUVELLE TABLE : Gestion des demandes de permissions ---
+            'permission_requests' = @"
+                CREATE TABLE permission_requests (
+                    RequestID       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    RequesterUPN    TEXT NOT NULL,
+                    RequestedScope  TEXT NOT NULL,
+                    Reason          TEXT,
+                    Status          TEXT DEFAULT 'Pending', -- Pending, Approved, Rejected
+                    RequestDate     TEXT,
+                    ResolutionDate  TEXT,
+                    ResolverUPN     TEXT
+                );
+"@
+            # --- Table des paramètres propres aux scripts ---
+            'script_settings' = @"
+                CREATE TABLE script_settings (
+                    ScriptId            TEXT PRIMARY KEY NOT NULL,
+                    IsEnabled           INTEGER DEFAULT 1, -- 1 = True, 0 = False
+                    MaxConcurrentRuns   INTEGER DEFAULT 1
+                );
+"@
+            # Table de liaison Script <-> Groupes AD
+            'script_security' = @"
+                CREATE TABLE script_security (
+                    ScriptId    TEXT NOT NULL,
+                    ADGroup     TEXT NOT NULL,
+                    PRIMARY KEY (ScriptId, ADGroup)
+                );
+"@
+            # --- Table des groupes connus (Bibliothèque) ---
+            'known_groups' = @"
+                CREATE TABLE known_groups (
+                    GroupName TEXT PRIMARY KEY NOT NULL,
+                    Description TEXT
+                );
+"@
         }
         # ------------------------------------
 

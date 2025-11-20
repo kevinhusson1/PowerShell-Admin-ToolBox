@@ -4,15 +4,13 @@
 .SYNOPSIS
     Vérifie si l'utilisateur actuel a les droits d'administrateur de l'application.
 .DESCRIPTION
-    Cette fonction détermine le statut d'administrateur selon deux règles :
-    1. Si l'application est en mode "Système" (aucun utilisateur Azure connecté),
-        les droits d'administrateur sont accordés par défaut.
-    2. Si un utilisateur Azure est connecté, la fonction vérifie son appartenance
-        au groupe d'administration défini dans la base de données.
+    Cette fonction détermine le statut d'administrateur selon les règles suivantes :
+    1. Si aucun groupe administrateur n'est défini (première installation), l'accès est accordé.
+    2. Si un groupe est défini, l'utilisateur doit être connecté ET membre de ce groupe.
 .EXAMPLE
     $isAdmin = Test-IsAppAdmin
 .OUTPUTS
-    [bool] - Retourne $true si l'utilisateur est considéré comme un administrateur, $false sinon.
+    [bool]
 #>
 function Test-IsAppAdmin {
     [CmdletBinding()]
@@ -21,25 +19,28 @@ function Test-IsAppAdmin {
 
     Write-Verbose (Get-AppText -Key 'modules.launcherui.admin_check_start')
 
-    if (-not $Global:AppAzureAuth.UserAuth.Connected) {
-        Write-Verbose (Get-AppText -Key 'modules.launcherui.admin_check_system_mode')
-        return $true
-    }
-
-    $logMsg = "{0} '{1}'" -f (Get-AppText 'modules.launcherui.admin_check_user_connected'), $Global:AppAzureAuth.UserAuth.UserPrincipalName
-    Write-Verbose $logMsg
-
     try {
+        # 1. Récupération des paramètres critiques de sécurité
         $adminGroup = Get-AppSetting -Key 'security.adminGroupName'
-        if ([string]::IsNullOrWhiteSpace($adminGroup)) {
-            Write-Verbose (Get-AppText -Key 'modules.launcherui.admin_check_no_group')
+        $appId = Get-AppSetting -Key 'azure.auth.user.appId'
+
+        # --- CAS SPÉCIAL : PREMIÈRE CONFIGURATION (BOOTSTRAP) ---
+        # Si le groupe admin n'est pas défini OU si l'App ID (nécessaire pour se connecter) manque,
+        # on considère que l'application n'est pas encore configurée.
+        # On donne les droits admin pour permettre de remplir les paramètres.
+        if ([string]::IsNullOrWhiteSpace($adminGroup) -or [string]::IsNullOrWhiteSpace($appId)) {
+            Write-Verbose "Configuration incomplète (Groupe Admin ou App ID manquant) : Mode 'Bootstrap' activé (Accès Admin accordé)."
+            return $true
+        }
+
+        # 2. Si la config est complète, la sécurité s'applique strictement
+        if (-not $Global:AppAzureAuth.UserAuth.Connected) {
+            Write-Verbose "Configuration présente mais aucun utilisateur connecté : Accès Admin refusé."
             return $false
         }
-        $logMsg = "{0} '{1}'" -f (Get-AppText 'modules.launcherui.admin_check_group_required'), $adminGroup
-        Write-Verbose $logMsg
-
-        $userGroups = Get-AppUserAzureGroups
         
+        # 3. Vérification de l'appartenance au groupe
+        $userGroups = Get-AppUserAzureGroups
         if ($userGroups -contains $adminGroup) {
             Write-Verbose (Get-AppText -Key 'modules.launcherui.admin_check_success')
             return $true
@@ -48,7 +49,6 @@ function Test-IsAppAdmin {
             return $false
         }
     } catch {
-        # Une erreur ici est plus grave qu'un simple verbose, on utilise Write-Warning
         $warningMsg = "{0} : $($_.Exception.Message)" -f (Get-AppText 'modules.launcherui.admin_check_error')
         Write-Warning $warningMsg
         return $false

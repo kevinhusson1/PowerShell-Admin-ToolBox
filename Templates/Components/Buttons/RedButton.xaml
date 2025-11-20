@@ -3,11 +3,13 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
     <Style TargetType="Button" x:Key="RedButtonStyle">
-        <Setter Property="Background" Value="{DynamicResource RedBrush}"/>      
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource RedBrush}"/>     
+        <!-- Propriétés de base utilisant les nouvelles Brush sémantiques -->
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>      
+        <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>     
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Padding" Value="15,8"/>
+        <Setter Property="Height" Value="38"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
@@ -20,21 +22,25 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
+            <!-- Trigger de survol conditionnel, CORRIGÉ -->
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsMouseOver" Value="True"/>
                     <Condition Property="IsEnabled" Value="True"/>
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>  
-                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHoverBrush}"/> 
+                <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}"/>  
+                <Setter Property="BorderBrush" Value="{DynamicResource DangerHoverBrush}"/> 
             </MultiTrigger>
+
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{DynamicResource RedHoverBrush}"/>  
+                <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}"/>  
             </Trigger>
+
+            <!-- Trigger pour l'état "désactivé", mis à jour -->
             <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Background" Value="{DynamicResource GrayBrush}"/>      
-                <Setter Property="BorderBrush" Value="{DynamicResource GrayBrush}"/>      
-                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Background" Value="{DynamicResource Gray300Brush}"/>      
+                <Setter Property="BorderBrush" Value="{DynamicResource Gray300Brush}"/>      
+                <Setter Property="Foreground" Value="{DynamicResource WhiteBrush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>

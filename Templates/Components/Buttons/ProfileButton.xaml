@@ -4,8 +4,9 @@
     <Style TargetType="Button" x:Key="ProfileButtonStyle">
         <Setter Property="Width" Value="40"/>
         <Setter Property="Height" Value="40"/>
-        <Setter Property="Background" Value="#E0E0E0"/>
-        <Setter Property="Foreground" Value="{DynamicResource DarkTextBrush}"/>
+        <!-- L'état par défaut (Système) est défini ici. L'état "Utilisateur" est appliqué dynamiquement. -->
+        <Setter Property="Background" Value="{DynamicResource AuthButtonSystemBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
@@ -18,8 +19,22 @@
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="backgroundEllipse" Property="Opacity" Value="0.8"/>
+                        <!-- Effet de survol amélioré : assombrissement subtil. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsEnabled" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="backgroundEllipse" Property="Opacity" Value="0.85"/>
+                        </MultiTrigger>
+                        <!-- Effet "pressé" pour un meilleur retour utilisateur -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="backgroundEllipse" Property="Opacity" Value="0.7"/>
+                        </Trigger>
+                        <!-- État désactivé -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="backgroundEllipse" Property="Opacity" Value="0.5"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -5,14 +5,15 @@
     <BooleanToVisibilityConverter x:Key="NullToVisibilityConverter"/>
 
     <Style TargetType="TextBox" x:Key="StandardTextBoxStyle">
-        <Setter Property="Background" Value="#F3F4F6"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource DarkTextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BackgroundControlBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <!-- MODIFIÉ : Padding vertical affiné de 6 à 5 -->
-        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="Padding" Value="10,5"/> <!-- Ajustement pour un meilleur centrage vertical avec MinHeight -->
+        <Setter Property="MinHeight" Value="34"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -28,13 +29,13 @@
                             </Grid.ColumnDefinitions>
                             
                             <TextBlock Grid.Column="0" Text="{TemplateBinding Tag}" FontFamily="Segoe UI Symbol"
-                                       FontSize="16" VerticalAlignment="Center" Margin="10,0,5,0"
-                                       Foreground="{DynamicResource GrayBrush}"
-                                       Visibility="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    FontSize="16" VerticalAlignment="Center" Margin="10,0,5,0"
+                                    Foreground="{DynamicResource TextSecondaryBrush}"
+                                    Visibility="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullToVisibilityConverter}}"/>
                             
                             <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" Focusable="false" 
-                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"
-                                          Margin="{TemplateBinding Padding}"/>
+                                        HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"
+                                        Margin="{TemplateBinding Padding}"/>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -44,13 +45,29 @@
                                 <Condition Property="IsReadOnly" Value="False"/>
                                 <Condition Property="IsEnabled" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource GrayBrush}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource BorderMediumBrush}"/>
                         </MultiTrigger>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource FocusBrush}"/>
                         </Trigger>
-                         <Trigger Property="IsReadOnly" Value="True">
-                            <Setter Property="Background" Value="#E5E7EB"/>
+                        <Trigger Property="IsReadOnly" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource BackgroundDisabledBrush}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="{DynamicResource BackgroundDisabledBrush}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                        </Trigger>
+
+                        <!-- AJOUT : Trigger pour l'état de Succès -->
+                        <Trigger Property="Tag" Value="Success">
+                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource SuccessBrush}"/>
+                        </Trigger>
+                        
+                        <!-- Trigger pour l'état d'Erreur -->
+                        <Trigger Property="Tag" Value="Error">
+                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource DangerBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

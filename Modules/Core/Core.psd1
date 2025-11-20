@@ -2,7 +2,7 @@
 
 @{
     # Version du module
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '2.1.0'
 
     # Un ID unique pour le module
     GUID = '0663e359-9fec-42cd-ae3a-2ed30dd51b89'

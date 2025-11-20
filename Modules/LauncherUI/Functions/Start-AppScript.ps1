@@ -27,16 +27,22 @@ function Start-AppScript {
         [string]$ProjectRoot
     )
 
-    # 1. On VÉRIFIE d'abord si on a le droit de se lancer.
-    if (-not (Test-AppScriptLock -Script $SelectedScript)) {
-        $title = Get-AppText -Key 'messages.execution_forbidden_title'
-        $message = Get-AppText -Key 'messages.execution_limit_reached'
-        [System.Windows.MessageBox]::Show("$message '$($SelectedScript.name)'.", $title, "OK", "Warning")
-        return $null
-    }
-
-    $process = $null
+    
     try {
+        # --- ÉTAPE 1 : Réinitialisation de l'état de progression de l'objet de données ---
+        $SelectedScript.LoadingProgress = 0
+        $SelectedScript.LoadingStatus = "Démarrage..." # Message initial
+
+        # 1. On VÉRIFIE d'abord si on a le droit de se lancer.
+        if (-not (Test-AppScriptLock -Script $SelectedScript)) {
+            $title = Get-AppText -Key 'messages.execution_forbidden_title'
+            $message = Get-AppText -Key 'messages.execution_limit_reached'
+            [System.Windows.MessageBox]::Show("$message '$($SelectedScript.name)'.", $title, "OK", "Warning")
+            return $null
+        }
+    
+        $process = $null
+
         # 2. On LANCE le processus enfant.
         $scriptFileName = $SelectedScript.scriptFile
         $fullScriptPath = Join-Path -Path $SelectedScript.ScriptPath -ChildPath $scriptFileName
@@ -45,7 +51,30 @@ function Start-AppScript {
             throw "$errorMsg : $fullScriptPath"
         }
 
-        $process = Start-Process pwsh.exe -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $fullScriptPath) -PassThru -WindowStyle Hidden
+        # --- AJOUT : Basculement de l'UI en mode chargement ---
+        $SelectedScript.IsLoading = $true
+        if ($Global:AppControls.scriptsListBox.SelectedItem -eq $SelectedScript) {
+            $Global:AppControls.scriptDetailPanel.Visibility = 'Collapsed'
+            $Global:AppControls.scriptLoadingPanel.Visibility = 'Visible'
+            $Global:AppControls.loadingScriptName.Text = $SelectedScript.name
+
+            # On force la mise à jour des contrôles visuels au moment où ils deviennent visibles.
+            $Global:AppControls.loadingProgressBar.Value = 0
+            $Global:AppControls.loadingProgressText.Text = "0%"
+            $Global:AppControls.loadingStatusText.Text = $SelectedScript.LoadingStatus
+
+            $Global:AppControls.bringToFrontButton.Visibility = 'Visible'
+        }
+        $Global:AppControls.scriptsListBox.Items.Refresh()
+        # --------------------------------------------------------
+
+        # --- AJOUT : Démarrage du timer de progression ---
+        if (-not $Global:progressTimer.IsEnabled) {
+            Write-Verbose "[TIMER] Le suivi de progression est démarré."
+            $Global:progressTimer.Start()
+        }
+
+        $process = Start-Process pwsh.exe -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $fullScriptPath, "-LauncherPID", $PID) -PassThru -WindowStyle Hidden
         
         # 3. On ENREGISTRE le verrou avec le PID de l'enfant qu'on vient d'obtenir.
         # Add-AppScriptLock -Script $SelectedScript -OwnerPID $process.Id
@@ -53,7 +82,11 @@ function Start-AppScript {
         # 4. On met à jour l'état interne et l'UI du lanceur.
         $SelectedScript.pid = $process.Id
         $SelectedScript.IsRunning = $true
+        
         $Global:AppActiveScripts.Add($process)
+
+        # --- AJOUT CRUCIAL : On ajoute le PID à la liste de surveillance ---
+        $Global:PIDsToMonitor.Add($process.Id)
 
         $Global:AppControls.executeButton.Content = Get-AppText -Key 'launcher.stop_button'
         $Global:AppControls.executeButton.Style = $Global:AppControls.executeButton.FindResource('RedButtonStyle')

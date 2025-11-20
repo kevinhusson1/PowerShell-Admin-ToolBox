@@ -5,7 +5,7 @@
     <!-- Style pour un onglet (TabItem) individuel -->
     <Style x:Key="NavTabItemStyle" TargetType="TabItem">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource DarkTextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
         <Setter Property="Padding" Value="15,6"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontSize" Value="12"/>
@@ -17,16 +17,18 @@
                         <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- État sélectionné -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="White"/>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource WhiteBrush}"/>
                             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
                         </Trigger>
+                        <!-- État survolé (non sélectionné) -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="False"/>
                                 <Condition Property="IsMouseOver" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="border" Property="Background" Value="#E0E0E0"/>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource Gray200Brush}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -36,7 +38,7 @@
 
     <!-- Style pour le conteneur TabControl global -->
     <Style x:Key="NavTabControlStyle" TargetType="TabControl">
-        <Setter Property="Background" Value="#F0F0F0"/>
+        <Setter Property="Background" Value="{DynamicResource Gray100Brush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="ItemContainerStyle" Value="{DynamicResource NavTabItemStyle}"/>
         <Setter Property="Template">

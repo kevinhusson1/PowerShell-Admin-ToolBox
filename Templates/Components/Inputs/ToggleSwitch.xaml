@@ -7,14 +7,13 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type CheckBox}">
-                    <!-- MODIFIÉ : Taille réduite pour un aspect plus fin -->
-                    <Grid Width="36" Height="20" VerticalAlignment="Center">
+                    <Grid x:Name="mainGrid" Width="36" Height="20" VerticalAlignment="Center">
                         <!-- La "piste" -->
-                        <Border x:Name="Track" CornerRadius="10" Background="{DynamicResource LightGrayBrush}"/>
+                        <Border x:Name="Track" CornerRadius="10" Background="{DynamicResource Gray300Brush}"/>
                         
-                        <!-- Le "pouce" (également réduit) -->
+                        <!-- Le "pouce" -->
                         <Border x:Name="Thumb" CornerRadius="8" Width="16" Height="16" 
-                                Background="White"
+                                Background="{DynamicResource WhiteBrush}"
                                 HorizontalAlignment="Left"
                                 Margin="2,0,0,0">
                             <Border.Effect>
@@ -27,32 +26,33 @@
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Track" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
                             <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
-                            <!-- MODIFIÉ : Ajout de la marge symétrique à droite -->
                             <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0"/>
                         </Trigger>
                         
-                        <!-- AJOUT : MultiTriggers pour le survol conditionnel -->
-                        <!-- Cas 1 : Survol ET le switch est INACTIF -->
+                        <!-- Cas 1 : Survol ET le switch est INACTIF et ACTIVÉ -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True"/>
                                 <Condition Property="IsChecked" Value="False"/>
-                                <!-- AJOUT : Condition d'activation -->
                                 <Condition Property="IsEnabled" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource GrayBrush}"/>
+                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource Gray400Brush}"/>
                         </MultiTrigger>
                         
-                        <!-- Cas 2 : Survol ET le switch est ACTIF ET ACTIVÉ -->
+                        <!-- Cas 2 : Survol ET le switch est ACTIF et ACTIVÉ -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True"/>
                                 <Condition Property="IsChecked" Value="True"/>
-                                <!-- AJOUT : Condition d'activation -->
                                 <Condition Property="IsEnabled" Value="True"/>
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Track" Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
                         </MultiTrigger>
+
+                        <!-- Amélioration : Trigger pour l'état désactivé -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="mainGrid" Property="Opacity" Value="0.6"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

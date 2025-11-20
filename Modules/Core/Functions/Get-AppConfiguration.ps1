@@ -20,7 +20,6 @@ function Get-AppConfiguration {
     param()
     
     try {
-        # Étape 1: On définit une structure de configuration de base avec des valeurs par défaut.
         $config = [PSCustomObject]@{
             # --- Section [app] ---
             companyName          = "Mon Entreprise"
@@ -39,15 +38,11 @@ function Get-AppConfiguration {
             azure = [PSCustomObject]@{
                 tenantId       = ""
                 authentication = [PSCustomObject]@{
-                    certificateAuth = [PSCustomObject]@{
-                        enabled    = $false
-                        thumbprint = ""
-                        appId      = ""
-                    }
+                    # Suppression complète de l'objet certificateAuth
                     userAuth = [PSCustomObject]@{
                         enabled = $true
                         appId   = ""
-                        scopes  = @("User.Read") # Un scope minimal par défaut
+                        scopes  = @("User.Read") 
                     }
                 }
             }
@@ -55,14 +50,31 @@ function Get-AppConfiguration {
             # --- Section [security] ---
             security = [PSCustomObject]@{
                 adminGroupName = ""
-                startupAuthMode = "System"
+                # Suppression de startupAuthMode (sera toujours User)
+            }
+
+            # --- Section AD ---
+            ad = [PSCustomObject]@{
+                serviceUser         = ""
+                servicePassword     = "" 
+                tempServer          = ""
+                connectServer       = ""
+                domainName          = ""
+                userOUPath          = ""
+                pdcName             = ""
+                domainUserGroup     = ""
+                excludedGroups      = @()
             }
         }
 
         # Étape 2: On peuple cet objet avec les valeurs de la base de données.
         # La valeur par défaut de Get-AppSetting est maintenant la valeur par défaut de notre structure.
         $config.companyName          = Get-AppSetting -Key 'app.companyName' -DefaultValue $config.companyName
-        $config.applicationVersion   = Get-AppSetting -Key 'app.version' -DefaultValue $config.applicationVersion
+        try {
+            $config.applicationVersion = (Get-Module Core).Version.ToString()
+        } catch {
+            $config.applicationVersion = "N/A" # Fallback en cas d'erreur
+        }
         $config.defaultLanguage      = Get-AppSetting -Key 'app.defaultLanguage' -DefaultValue $config.defaultLanguage
         $config.enableVerboseLogging = Get-AppSetting -Key 'app.enableVerboseLogging' -DefaultValue $config.enableVerboseLogging
         
@@ -75,12 +87,20 @@ function Get-AppConfiguration {
         $scopesFromDb = Get-AppSetting -Key 'azure.auth.user.scopes' -DefaultValue ($config.azure.authentication.userAuth.scopes -join ',')
         $config.azure.authentication.userAuth.scopes = $scopesFromDb -split ',' | ForEach-Object { $_.Trim() }
 
-        $config.azure.authentication.certificateAuth.appId = Get-AppSetting -Key 'azure.auth.cert.appId' -DefaultValue $config.azure.authentication.certificateAuth.appId
-        $config.azure.authentication.certificateAuth.thumbprint = Get-AppSetting -Key 'azure.auth.cert.thumbprint' -DefaultValue $config.azure.authentication.certificateAuth.thumbprint
-
         $config.security.adminGroupName = Get-AppSetting -Key 'security.adminGroupName' -DefaultValue $config.security.adminGroupName
-        $config.security.startupAuthMode = Get-AppSetting -Key 'security.startupAuthMode' -DefaultValue $config.security.startupAuthMode
 
+        # --- NOUVEAU : Peuplement de la section [ad] ---
+        $config.ad.serviceUser = Get-AppSetting -Key 'ad.serviceUser' -DefaultValue $config.ad.serviceUser
+        $config.ad.servicePassword = Get-AppSetting -Key 'ad.servicePassword' -DefaultValue $config.ad.servicePassword
+        $config.ad.tempServer = Get-AppSetting -Key 'ad.tempServer' -DefaultValue $config.ad.tempServer
+        $config.ad.connectServer = Get-AppSetting -Key 'ad.connectServer' -DefaultValue $config.ad.connectServer
+        $config.ad.domainName = Get-AppSetting -Key 'ad.domainName' -DefaultValue $config.ad.domainName
+        $config.ad.userOUPath = Get-AppSetting -Key 'ad.userOUPath' -DefaultValue $config.ad.userOUPath
+        $config.ad.pdcName = Get-AppSetting -Key 'ad.pdcName' -DefaultValue $config.ad.pdcName
+        $config.ad.domainUserGroup = Get-AppSetting -Key 'ad.domainUserGroup' -DefaultValue $config.ad.domainUserGroup
+        $excludedGroupsFromDb = Get-AppSetting -Key 'ad.excludedGroups' -DefaultValue ""
+        $config.ad.excludedGroups = $excludedGroupsFromDb -split ',' | ForEach-Object { $_.Trim() }
+        
         # On retourne l'objet final, entièrement peuplé et structuré.
         return $config
     }

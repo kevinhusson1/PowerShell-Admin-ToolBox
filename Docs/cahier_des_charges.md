@@ -1,124 +1,155 @@
-# Cahier des Charges v2.0 - Plateforme de Scripts "Script Tools Box"
+# Cahier des Charges v2.0 - Plateforme de Gestion "Script Tools Box"
+
 ## 1. Vision et Objectifs du Projet
+
 ### 1.1. Vision Globale
-Développer une plateforme modulaire, transportable et pilotée par les données permettant de centraliser, sécuriser et exécuter des scripts PowerShell dotés d'interfaces graphiques au sein d'une entreprise.
-### 1.2. Objectifs Clés Atteints
-`Modularité Extrême :` L'application est découpée en modules fonctionnels (Core, Database, UI, LauncherUI, etc.).
-`Autonomie des Scripts :` Chaque script est une application 100% autonome, responsable de son propre cycle de vie.
-`Configuration Centralisée :` Tous les paramètres sont stockés dans une base de données SQLite unique, modifiable via l'interface.
-`Sécurité Basée sur Azure AD :` L'accès aux scripts et aux fonctionnalités d'administration est contrôlé par l'appartenance à des groupes Azure AD.
-`Transportabilité :` L'application est autonome, avec sa seule dépendance (PSSQLite) embarquée dans le projet.
+La "Script Tools Box" est une plateforme d'entreprise modulaire développée en PowerShell 7+ et WPF. Elle ne se contente pas de lancer des scripts : elle centralise la gouvernance, la sécurité et la configuration de l'écosystème d'automatisation de l'entreprise. Elle agit comme un intermédiaire intelligent entre l'Active Directory (On-Premise & Azure) et les scripts opérationnels.
+
+### 1.2. Objectifs Clés
+*   **Centralisation Totale :** La configuration, la sécurité et l'état des scripts sont stockés dans une base de données unique.
+*   **Sécurité Hybride :** Authentification via Azure AD (Entra ID) pour l'identité, mais gestion fine des autorisations (RBAC) via la base de données locale.
+*   **Gouvernance Azure Dynamique :** Capacité pour l'application de gérer ses propres permissions API (Scopes) et de valider les membres des groupes directement depuis l'interface.
+*   **Expérience Utilisateur Adaptative :** L'interface change radicalement selon que l'utilisateur est un Administrateur (Tableaux de bord, Gestion) ou un Utilisateur Standard (Liste épurée).
+
+---
+
 ## 2. Architecture Technique
+
 ### 2.1. Principes Fondamentaux
-1) `Autonomie des Scripts Enfants :` Le lanceur ne fait que démarrer des processus. Chaque script est responsable de sa propre initialisation (configuration, authentification, verrouillage) et de son nettoyage. Il n'y a aucun passage de contexte via des fichiers de session.
-2) `Base de Données comme Source de Vérité Unique :` Un seul fichier database.sqlite centralise la configuration de l'application, les paramètres de sécurité et l'état des verrous d'exécution. Les fichiers .json de configuration ont été abandonnés.
-3) `Verrouillage Distribué via la Base de Données :` Un système de verrouillage basé sur la table active_sessions de la base de données empêche les exécutions multiples non désirées, y compris entre différentes machines (si la base de données est sur un partage réseau).
-4) `Authentification par Cache Partagé :` L'authentification repose sur le cache de jetons du module Microsoft.Graph, offrant une expérience de "Single Sign-On" transparente entre le lanceur et les scripts enfants.
-5) `Modularité Stricte :` Le code est organisé en modules PowerShell distincts avec des responsabilités claires. Le Launcher.ps1 est un simple orchestrateur, toute la logique complexe est déléguée aux modules.
-### 2.2. Technologies et Dépendances
-* Langage : PowerShell 7+
-* Framework UI : WPF (Windows Presentation Foundation)
-* Base de Données : SQLite
-* Dépendances Embarquées :
-PSSQLite : Module PowerShell stocké dans le dossier /Vendor pour interagir avec la base de données.
-* Dépendances Externes (Prérequis sur le poste client) :
-Microsoft.Graph : Pour l'authentification et les appels à l'API Microsoft Graph.
+1.  **Base de Données comme Source de Vérité (Single Source of Truth) :**
+    *   Le fichier `database.sqlite` contient tout : paramètres globaux, droits d'accès aux scripts, état d'activation, bibliothèque de groupes, et logs de session.
+    *   Les fichiers ne servent qu'au code. La politique est dans la donnée.
 
-## 3. Arborescence du Projet
+2.  **Séparation Manifeste / Politique :**
+    *   Le fichier `manifest.json` d'un script ne définit que ses caractéristiques techniques inmuables (ID, Nom, Fichier).
+    *   La sécurité (qui a le droit ?) et la configuration (est-il actif ?) sont définies en base de données via l'interface de gestion.
 
-Toolbox/
-├── Launcher.ps1                      # Point d'entrée principal, simple orchestrateur.
-│
-├─ Config/
-│  └─ database.sqlite                # SOURCE DE VÉRITÉ UNIQUE : config, sécurité, verrous.
-│
-├─ Docs/
-│  └─ cahier_des_charges.md            # Ce document.
-│
-├─ Localization/                       # Traductions globales du lanceur.
-│  ├─ en-US.json
-│  └─ fr-FR.json
-│
-├─ Logs/                               # Dossier pour les futurs logs sur fichier.
-│
-├─ Modules/                            # API interne de l'application.
-│  ├─ Azure/                          # Gère l'interaction avec Azure AD (connexion, groupes).
-│  ├─ Core/                           # Fonctions de base (découverte de scripts, abstraction de la config).
-│  ├─ Database/                       # Seul module autorisé à parler à la base de données.
-│  ├─ LauncherUI/                     # Toute la logique de l'interface du lanceur.
-│  ├─ Localization/                   # Moteur de traduction.
-│  ├─ Logging/                        # Moteur de logging (Write-AppLog).
-│  └─ UI/                             # Fonctions UI génériques (chargement XAML, composants).
-│
-├─ Scripts/                            # Contient tous les outils métier.
-│  └─ UserManagement/
-│     └─ CreateUser/                  # Exemple de script 100% autonome.
-│        ├─ Localization/              # Traductions spécifiques à ce script.
-│        ├─ CreateUser.ps1             # Le code du script.
-│        ├─ CreateUser.xaml            # L'interface du script.
-│        └─ manifest.json              # Métadonnées et contrat de sécurité du script.
-│
-├─ Templates/                          # Fichiers XAML réutilisables.
-│  └─ ...
-│
-└─ Vendor/                             # Dépendances tierces embarquées.
-   └─ PSSQLite/
-      └─ ...
-## 4. La Base de Données (database.sqlite)
-Le cœur de l'application. Initialisée et mise à jour automatiquement.
-#### Table `settings`
-| Colonne | Type | Description                                          | Exemple Clé                | Exemple Valeur |
-|---------|------|------------------------------------------------------|----------------------------|----------------|
-| Key     |	TEXT | Nom unique du paramètre (ex: ui.launcherWidth).      | `app.companyName`          | `VOSGELIS`     |
-| Value   |	TEXT | Valeur du paramètre, toujours stockée en texte.      | `ui.launcherHeight`        | `750`          |
-| Type    |	TEXT | Type de données original (string, integer, boolean). | `security.startupAuthMode` | `User`         |
-#### Table `active_sessions`
-| Colonne    | Type    | Description                                 |
-|------------|---------|---------------------------------------------|
-| RunID      |	INTEGER | Clé primaire unique pour chaque exécution.  |
-| ScriptName |	TEXT	  | id du script en cours (depuis le manifest). |
-| OwnerPID   |	INTEGER | PID du processus détenant le verrou.        |
-| OwnerHost  |	TEXT	  | Nom de la machine où le script s'exécute.   |
-| StartTime  |	TEXT	  | Horodatage du début de l'exécution.         |
+3.  **Authentification Utilisateur Exclusive :**
+    *   Abandon de l'authentification par certificat (Service Principal) pour le lanceur.
+    *   L'application utilise des "Delegated Permissions". Chaque action est tracée au nom de l'utilisateur connecté.
+    *   L'application possède des droits élevés (`Application.ReadWrite.All`, `Directory.Read.All`) lui permettant de s'auto-gérer via l'interface d'administration.
 
-## 5. Le Manifeste de Script (manifest.json)
-Chaque script doit fournir un manifeste qui est son contrat avec le lanceur et le système de verrouillage.
-Clé	Obligatoire	Description
-id	Oui	Identifiant unique du script (ex: create-user-v1).
-scriptFile	Oui	Nom du fichier .ps1 à exécuter.
-name	Oui	Clé de traduction pour le nom affiché du script.
-description	Oui	Clé de traduction pour la description.
-security.allowedADGroups	Non	Tableau de noms de groupes Azure AD. Si présent, seuls les membres peuvent voir et exécuter le script. Si absent, le script est public.
-maxConcurrentRuns	Non	Nombre d'exécutions simultanées autorisées. 1 par défaut. -1 pour illimité.
-icon	Non	Objet décrivant l'icône à afficher dans le lanceur.
-...		version, author, category, etc.
-## 6. Workflows Clés
-### 6.1. Démarrage du Lanceur
-1.  Charge les modules (y compris `PSSQLite` embarqué).
-2.  Appelle `Initialize-AppDatabase` qui vérifie/crée le schéma de la DB.
-3.  Appelle `Get-AppConfiguration` pour charger tous les paramètres depuis la DB dans `$Global:AppConfig`.
-4.  Lit le paramètre `security.startupAuthMode` depuis la configuration. Si la valeur est `User`, tente une connexion automatique via `Connect-MgGraph` (qui sera silencieuse si un jeton est en cache).
-5.  Appelle `Get-FilteredAndEnrichedScripts` qui filtre les scripts visibles en fonction des droits de l'utilisateur (s'il est connecté) ou affiche les scripts publics (s'il est en mode Système).
-6.  Charge l'interface WPF et la peuple avec les données.
-6.2. Cycle de Vie d'un Script Enfant (ex: CreateUser.ps1)
-Démarrage : Le script est lancé (par le lanceur ou en autonome).
-Prérequis : Charge les assemblages WPF et importe tous les modules nécessaires.
-Verrouillage :
-Appelle Initialize-AppDatabase.
-Lit son propre manifest.json.
-Appelle Test-AppScriptLock pour vérifier les limites de concurrence dans la DB. Si la limite est atteinte, il s'arrête.
-Appelle Add-AppScriptLock pour enregistrer sa session (avec son propre $PID) dans la DB.
-Initialisation :
-Appelle Get-AppConfiguration pour charger les paramètres.
-Appelle Connect-MgGraph (utilise le cache si disponible).
-Charge ses traductions locales avec Add-AppLocalizationSource.
-Exécution : Charge son XAML, affiche sa fenêtre et exécute sa logique métier.
-Nettoyage (finally block) :
-Appelle toujours Unlock-AppScriptLock -OwnerPID $PID pour supprimer sa propre entrée de la table active_sessions.
-S'il a été lancé en autonome, il supprime son fichier de session de développement.
+4.  **Verrouillage Distribué :**
+    *   Gestion de la concurrence (MaxConcurrentRuns) via la table `active_sessions` pour empêcher les conflits d'exécution, même sur des sessions multiples.
 
-## 7. Logging
-Le système de logging est centralisé autour de la fonction Write-AppLog.
-Write-AppLog : Fonction universelle qui formate un message et peut l'écrire dans le flux Verbose. Elle peut aussi le transmettre à une RichTextBox via la fonction Update-AppRichTextBox du module UI.
-Write-LauncherLog : Fonction privée au lanceur qui appelle Write-AppLog en ciblant la RichTextBox du journal principal.
-Chaque script enfant est responsable d'instancier sa propre RichTextBox et de la passer à Write-AppLog pour son logging interne.
+### 2.2. Stack Technique
+*   **Langage :** PowerShell 7.4+
+*   **Interface :** WPF (XAML) chargé dynamiquement.
+*   **Données :** SQLite (via module PSSQLite embarqué).
+*   **Connectivité :** Microsoft.Graph (Module PowerShell).
+
+---
+
+## 3. Modèle de Données (SQLite)
+
+Le schéma de la base de données `database.sqlite` est le cœur du système.
+
+### 3.1. Tables de Configuration & Sécurité
+| Table | Description | Colonnes Clés |
+| :--- | :--- | :--- |
+| **settings** | Paramètres globaux de l'application (Clé/Valeur). | `Key` (PK), `Value`, `Type` |
+| **script_settings** | Configuration propre à chaque script (surcharge le manifest). | `ScriptId` (PK), `IsEnabled` (bool), `MaxConcurrentRuns` (int) |
+| **script_security** | Table de liaison définissant les droits d'accès (N-N). | `ScriptId`, `ADGroup` (PK Composite) |
+| **known_groups** | Bibliothèque des groupes AD/Azure validés et utilisables. | `GroupName` (PK), `Description` |
+
+### 3.2. Tables Opérationnelles
+| Table | Description | Colonnes Clés |
+| :--- | :--- | :--- |
+| **active_sessions** | Verrous d'exécution en cours. | `RunID`, `ScriptName`, `OwnerPID`, `StartTime` |
+| **script_progress** | Communication temps-réel (Script -> Lanceur). | `OwnerPID`, `ProgressPercentage`, `StatusMessage` |
+| **permission_requests** | File d'attente des demandes de droits utilisateurs. | `RequestID`, `RequesterUPN`, `RequestedScope`, `Status` |
+
+---
+
+## 4. Le Manifeste de Script (manifest.json)
+
+Le manifeste est désormais allégé. Il ne contient plus de données de sécurité.
+
+```json
+{
+    "id": "Create-User-v1",             // Identifiant unique technique
+    "scriptFile": "CreateUser.ps1",     // Point d'entrée
+    "lockFile": "CreateUser.lock",      // (Legacy/Optionnel)
+    "name": "scripts.create-user.name", // Clé de traduction
+    "description": "scripts.create-user.description", // Clé de traduction
+    "version": "1.0.0",
+    "category": "UserManagement",
+    "author": "Service IT",
+    "icon": { 
+        "type": "png", 
+        "value": "user-add.png",
+        "backgroundColor": "#3b82f6" 
+    }
+    // Note : Pas de "security" ni "enabled" ici. C'est géré par la BDD.
+}
+```
+
+## 5. Fonctionnalités de l'Interface (Launcher)
+
+### 5.1. Accueil (Onglet Scripts)
+*   **Mode Déconnecté :** Affiche un message de verrouillage ("Connexion Requise") et masque les listes. Aucun script n'est visible par sécurité.
+*   **Mode Connecté (Utilisateur) :** Affiche uniquement les scripts pour lesquels l'utilisateur appartient à un groupe autorisé (vérification croisée entre ses groupes Azure et la table `script_security`).
+*   **Mode Connecté (Admin) :** Affiche tous les scripts.
+*   **Barre d'état :** Affiche le nombre de scripts *visibles* (filtrés par l'état activé) et le nombre de scripts *en cours d'exécution*.
+
+### 5.2. Onglet Gouvernance (Admin Only)
+Un tableau de bord en 3 colonnes pour gérer la relation avec Azure AD.
+1.  **Demandes en attente :** Liste les demandes d'élévation de privilèges des utilisateurs (stockées en BDD).
+    *   *Actions :* Valider (Déclenche l'ajout dans Azure) / Refuser.
+2.  **Permissions Actives :** Affiche les permissions API (Scopes) réelles de l'application (lues depuis Azure via `Get-AppServicePrincipalPermissions`).
+    *   *Indicateurs :* Vert (Consentement accordé) / Orange (Consentement manquant).
+    *   *Actions :* "Ajouter manuellement" (Injection via Graph API), "Valider les droits" (Lancement URL Admin Consent), "Synchroniser".
+3.  **Membres & Rôles :** Audit en temps réel des membres du groupe Administrateur configuré.
+
+### 5.3. Onglet Gestion (Admin Only)
+L'interface de pilotage des scripts (CRUD) et de la sécurité granulaire.
+*   **Bibliothèque de Groupes (Gauche-Haut) :** 
+    *   Zone pour ajouter des groupes Azure AD à une liste de "Groupes Connus".
+    *   Vérification en temps réel de l'existence du groupe dans Azure avant ajout.
+    *   Suppression possible via bouton corbeille.
+*   **Liste des Scripts (Gauche-Bas) :** 
+    *   Liste de tous les scripts détectés sur le disque.
+    *   Indicateur visuel d'état (Pastille Verte=Actif, Grise=Inactif).
+*   **Panneau de Détail (Droite) :**
+    *   Switch **Activé/Désactivé** (Impact immédiat pour tous les utilisateurs).
+    *   Configuration du **Max Concurrent Runs** (Nombre d'instances simultanées globales).
+    *   **Sécurité & Accès :** Liste à cocher générée depuis la Bibliothèque de Groupes. Cocher une case autorise immédiatement le groupe pour ce script.
+
+### 5.4. Onglet Paramètres (Admin Only)
+Configuration technique de l'application (stockée dans la table `settings`).
+*   **Général :** Nom de l'entreprise, Langue, Logs Verbose, Dimensions de la fenêtre Admin.
+*   **Azure :** Tenant ID, App ID, Scopes par défaut.
+*   **Sécurité :** Définition du groupe Administrateur (Clé de voûte de l'accès).
+*   **Active Directory :** Configuration du compte de service On-Prem et des serveurs (AD Connect, Fichiers).
+    *   Boutons de validation technique : "Tester les identifiants", "Valider les serveurs", "Valider les objets AD".
+
+---
+
+## 6. Workflows & Sécurité
+
+### 6.1. Démarrage et "Bootstrap"
+1.  L'application se lance.
+2.  **Mode Bootstrap :** Si la base est vide OU si l'App ID Azure est manquant -> L'accès Admin est accordé temporairement pour permettre la configuration initiale.
+3.  **Mode Verrouillé :** Si la config est présente -> L'accès Admin est refusé par défaut. L'utilisateur doit se connecter via le bouton d'authentification.
+
+### 6.2. Synchronisation des Scripts (Backend)
+À chaque démarrage ou action d'administration (via `Sync-AppScriptSettings`) :
+1.  Le système scanne le dossier `/Scripts`.
+2.  **Nouveau script ?** 
+    *   Création de l'entrée dans `script_settings` (Enabled=1, MaxRuns=1).
+    *   Création de l'entrée dans `script_security` (Ajout du groupe Admin par défaut pour sécurité).
+3.  **Script existant ?** 
+    *   On ne touche à rien. La base de données est prioritaire sur le fichier `manifest.json`.
+
+### 6.3. Exécution d'un Script
+1.  L'utilisateur double-clique sur une tuile.
+2.  `Start-AppScript` est appelé.
+3.  **Vérification 1 (Disponibilité) :** Le script est-il `Enabled` en BDD ?
+4.  **Vérification 2 (Sécurité) :** L'utilisateur connecté appartient-il à un des groupes listés dans `script_security` pour cet ID ?
+5.  **Vérification 3 (Concurrence) :** Le nombre d'instances en cours (table `active_sessions`) est-il inférieur au `MaxConcurrentRuns` de la BDD ?
+6.  Si tout est OK -> Lancement du processus enfant isolé avec passage du `LauncherPID`.
+7.  Enregistrement du verrou dans `active_sessions`.
+
+### 6.4. Gestion des Droits Azure (Self-Management)
+*   L'application utilise la permission `Application.ReadWrite.All` (consentie au préalable) pour modifier son propre objet Service Principal.
+*   Lorsqu'un admin ajoute une permission (ex: `Mail.Read`) via l'onglet Gouvernance, le Launcher appelle l'API Graph (`Update-MgApplication`) pour mettre à jour le manifeste de l'application dans Azure.

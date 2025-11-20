@@ -6,12 +6,15 @@
   "launcher": {
     "details_default": "Select a script to view details",
     "execute_button": "▶️   Run script",
+    "bring_to_front_button": "🔼   Bring to Front",
     "stop_button": "◎   Stop execution",
     "status_available": "Available scripts",
     "status_active": "Active scripts",
     "close_button": "Close all applications",
     "clear_locks_button": "Reset all locks",
-    "clear_locks_tooltip": "Administrator-only action. Forces removal of all script locks."
+    "clear_locks_tooltip": "Administrator-only action. Forces removal of all script locks.",
+    "connect_prompt_title": "Connection Required",
+    "connect_prompt_desc": "Please connect with your Microsoft 365 account to access authorized applications and scripts."
   },
   "launcherLog": {
     "successLaunch": "Launcher interface loaded successfully.",
@@ -21,15 +24,18 @@
     "stopScriptFailure1": "Unable to stop the process",
     "stopScriptFailure2": "It may have already finished.",
     "deleteSessionFile1": "Session file",
-    "deleteSessionFile2": "cleaned."
+    "deleteSessionFile2": "cleaned.",
+    "bringToFrontButtonFail1" : "The script window",
+    "bringToFrontButtonFail2" : "is not yet ready or is invisible.",
+    "bringToFrontButtonError" : "Unable to find the process for the script"
   },
   "messages": {
     "settings_saved_success": "Settings have been successfully saved to the database.",
     "settings_saved_error": "Error while saving settings",
     "clear_locks_success_log": "All script locks have been reset by an administrator.",
-    "clear_locks_success_ui": "The locks table has been successfully cleared.",
+    "clear_locks_success_ui": "The locks and progress table has been successfully cleared.",
     "clear_locks_error_ui": "An error occurred while resetting the locks.",
-    
+
     "execution_forbidden_title": "Execution Forbidden",
     "execution_limit_reached": "The maximum number of executions has been reached for the script",
     "script_file_not_found": "Script file not found",
@@ -39,7 +45,12 @@
     "user_disconnected_log": "User disconnected:",
     "settings_saved_log": "Application settings have been saved.",
     "script_list_refreshed_1": "Script list updated.",
-    "script_list_refreshed_2": "scripts now visible."
+    "script_list_refreshed_2": "scripts now visible.",
+
+    "timerPIDclose1" : "The script",
+    "timerPIDclose2" : "has been detected as finished.",
+
+    "timerProgressStop" : "[TIMER] Progress tracking stopped (no more scripts to monitor)."
   },
   "confirmation": {
     "title": "Confirmation",
@@ -55,7 +66,8 @@
     "settings": "Settings"
   },
   "settings": {
-    "save_button": "Save changes",
+    "save_button": "Save Changes",
+    "test_button_inprogress": "Test in progress...",
     "section_general": "General Settings",
     "company_name": "Company Name",
     "app_version": "Application Version",
@@ -68,12 +80,93 @@
     "tenant_id": "Tenant ID",
     "azure_usermode": "User Authentication",
     "azure_appid": "Application (Client) ID",
-    "azure_scopes": "Requested Scopes (comma separated)",
+    "azure_scopes": "Requested Scopes (comma-separated)",
     "azure_systemmode": "Certificate Authentication (System Mode)",
     "azure_thumbprint": "Certificate Thumbprint",
     "section_security": "Security",
-    "security_admingroup": "Azure AD Admin Group Name",
-    "security_startupmode": "Startup Authentication Mode"
+    "security_admingroup": "Azure AD Administrator Group Name",
+    "security_usergroup": "Azure AD Authorized User Group Name",
+    "security_startupmode": "Startup Authentication Mode",
+    "section_ad": "Active Directory Services",
+    "ad_service_user": "Service Account Username",
+    "ad_service_password": "Service Account Password",
+    "ad_test_creds_button": "Test Credentials",
+    "ad_temp_server": "Temporary File Server",
+    "ad_connect_server": "AD Connect Server",
+    "ad_domain_name": "Domain Name (e.g., contoso.org)",
+    "ad_user_ou_path": "User Creation OU Path",
+    "ad_pdc_name": "Primary Domain Controller",
+    "ad_domain_user_group": "'Domain Users' Group Name",
+    "ad_excluded_groups": "AD Groups to Exclude (comma-separated)",
+
+    "azure_section_general": "General Settings",
+    "azure_cert_status_label": "Certificate status:",
+    "azure_cert_status_unknown": "Unverified",
+    "azure_cert_status_no_thumbprint": "No thumbprint entered.",
+    "azure_cert_status_notfound": "Not found in CurrentUser store.",
+    "azure_cert_status_valid": "Valid, expires on {0}.",
+    "azure_cert_status_expiring": "Expiring soon (on {0}).",
+    "azure_cert_status_expired": "Expired (on {0}).",
+    "azure_cert_check_button": "Check",
+    "azure_cert_install_button": "Install a certificate (.pfx)...",
+    "azure_test_connection_button": "Test Connection",
+    "azure_section_security": "Security",
+    
+    "azure_authbutton_disabled_tooltip": "Please configure and save an 'Application (Client) ID' for user authentication to enable this button."
+  },
+  "settings_validation": {
+    "auth_start": "Starting Active Directory authentication test...",
+    "auth_use_saved_password": "Using saved password for the test.",
+    "auth_user_required": "Username is required.",
+    "auth_domain_required": "Domain name is required.",
+    "auth_password_required": "No password entered or saved.",
+    "auth_attempt": "Attempting to connect to domain '{0}' with user '{1}'...",
+    "auth_success_log": "Active Directory authentication successful!",
+    "auth_success_box_title": "Connection Test",
+    "auth_success_box_message": "Successfully connected to Active Directory.",
+    "auth_failure_log": "Authentication test failed: {0}",
+    "auth_failure_box_title": "Connection Test",
+    "auth_failure_box_message": "Failed to connect to Active Directory.\n\nError: {0}",
+
+    "infra_test_start": "Starting Active Directory infrastructure test...",
+    "infra_success_box_title": "Infrastructure Validation",
+    "infra_success_box_message": "Infrastructure servers were validated successfully!",
+    "infra_failure_box_title": "Infrastructure Validation",
+    "infra_adconnect_empty": "The AD Connect server name is required.",
+    "infra_tempserver_empty": "The temporary file server name is required.",
+    "infra_adconnect_ping_failed": "The AD Connect server '{0}' is unreachable (ping failed).",
+    "infra_tempserver_ping_failed": "The temporary file server '{0}' is unreachable (ping failed).",
+    "infra_adsync_not_found": "The AD Connect server '{0}' is reachable, but the 'ADSync' service could not be found.",
+
+    "adobjects_test_start": "Starting directory objects validation...",
+    "adobjects_success_box_title": "AD Objects Validation",
+    "adobjects_failure_box_title": "AD Objects Validation",
+    "adobjects_ou_empty": "The creation OU path is required.",
+    "adobjects_domainusergroup_empty": "The 'Domain Users' group name is required.",
+    "adobjects_ou_not_found": "The specified Organizational Unit was not found.",
+    "adobjects_domainusergroup_not_found": "The group with sAMAccountName '{0}' was not found.",
+    "adobjects_excluded_found": "Groups found: {0}.",
+    "adobjects_excluded_not_found": "Groups NOT found: {0}.",
+    "adobjects_excluded_all_found": "All excluded groups were validated: {0}.",
+    "adobjects_success_all": "The OU and the 'Domain Users' group were successfully validated.",
+    
+    "cert_install_password_title": "Certificate Password",
+    "cert_install_password_message": "Please enter the password for the PFX file:",
+    "cert_install_select_file_title": "Select a PFX Certificate File",
+    "cert_install_cu_success": "Certificate successfully installed in the CurrentUser store.",
+    "cert_install_cu_error": "Error during installation in CurrentUser",
+    "cert_install_lm_success_direct": "Certificate successfully installed in the LocalMachine store (direct admin rights).",
+    "cert_install_lm_success_elevated": "The elevated process successfully installed the certificate in the LocalMachine store.",
+    "cert_install_lm_elevating": "Privilege elevation required for installation in the LocalMachine store. Please follow the instructions in the new window.",
+    "cert_install_lm_error": "Error during installation in LocalMachine",
+    "cert_install_all_success": "Certificate successfully installed in both stores (CurrentUser and LocalMachine).",
+    "cert_install_cu_only_success": "Certificate installed in CurrentUser, but installation in LocalMachine failed or was canceled.",
+    "azure_test_success_title": "Connection Test Successful",
+    "azure_test_failure_title": "Connection Test Failed",
+    "azure_user_test_success": "The connection with the current user is valid and functional.",
+    "azure_user_test_failure": "User token validation failed.",
+    "azure_cert_test_success": "Connection with the certificate was established successfully.",
+    "azure_cert_test_failure": "Unable to connect with the provided certificate."
   },
   "scripts": {
     "copy-group": {
@@ -83,6 +176,10 @@
     "create-user": {
       "name": "Create User",
       "description": "Create account with Azure AD synchronization."
+    },
+    "DefaultUI": {
+      "name": "Default Interface",
+      "description": "Default user interface for custom scripts."
     },
     "disable-user": {
       "name": "Disable User",
@@ -115,7 +212,7 @@
       "lock_registered_1": "Lock for script",
       "lock_registered_2": "registered for PID",
       "lock_register_error": "Unable to register lock for script",
-      "all_locks_cleared": "All locks have been cleared from the database.",
+      "all_locks_cleared": "All locks have been cleared from the database (the 'active_sessions' and 'script_progress' tables have been emptied).",
       "clear_locks_error": "Unable to clear the locks table",
       "get_setting_error": "Error while retrieving setting",
       "setting_not_found_1": "Setting",
@@ -205,17 +302,16 @@
       "loading_xaml_file": "Loading XAML file",
       "replacing_keys_1": "Replacing",
       "replacing_keys_2": "translation keys...",
-      "xaml_parse_error": "Error while parsing XAML file",
-
+      "xaml_parse_error": "Error parsing XAML file",
       "component_unknown_1": "The UI component",
       "component_unknown_2": "is unknown and will not be loaded.",
       "loading_components_1": "Loading",
       "loading_components_2": "resource dictionaries",
       "style_file_not_found_1": "The style file",
       "style_file_not_found_2": "was not found.",
-      "component_init_error": "An error occurred while initializing UI components",
-      
-      "rtb_target_not_found": "RichTextBox log target not found. UI logging will be ignored."
+      "component_init_error": "An error occurred during UI component initialization",
+      "rtb_target_not_found": "RichTextBox log target not found. UI log will be ignored.",
+      "progressUpdate": "Loading..."
     }
   }
 }

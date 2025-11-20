@@ -19,17 +19,16 @@ function Initialize-LauncherData {
     [CmdletBinding()]
     param()
 
-    # --- AJOUT : Instanciation du convertisseur pour les styles d'input ---
-    if (-not $Global:AppControls.mainWindow.Resources.Contains("NullToVisibilityConverter")) {
+    # --- On s'assure que le convertisseur pour les styles d'input est disponible ---
+    if ($Global:AppControls.mainWindow -and -not $Global:AppControls.mainWindow.Resources.Contains("NullToVisibilityConverter")) {
         $nullToVisibilityConverter = New-Object System.Windows.Controls.BooleanToVisibilityConverter
         $Global:AppControls.mainWindow.Resources.Add("NullToVisibilityConverter", $nullToVisibilityConverter)
     }
     
     # --- AJOUT : LIAISON DES DONNÉES POUR LES NOUVELLES CARTES ---
     $generalCard = $Global:AppControls.mainWindow.FindName("GeneralSettingsCard")
-    $uiCard = $Global:AppControls.mainWindow.FindName("UiSettingsCard")
     $azureCard = $Global:AppControls.mainWindow.FindName("AzureSettingsCard")
-    $securityCard = $Global:AppControls.mainWindow.FindName("SecuritySettingsCard")
+    $adCard = $Global:AppControls.mainWindow.FindName("ActiveDirectorySettingsCard")
 
     if ($generalCard) {
         $generalCard.Tag = [PSCustomObject]@{
@@ -37,14 +36,6 @@ function Initialize-LauncherData {
             Title               = Get-AppText 'settings.section_general'
             Subtitle            = "Configuration de base de l'application"
             IconBackgroundColor = "#3b82f6"
-        }
-    }
-    if ($uiCard) {
-        $uiCard.Tag = [PSCustomObject]@{
-            Icon                = "🖼️"
-            Title               = Get-AppText 'settings.section_ui'
-            Subtitle            = "Ajustement des dimensions du lanceur"
-            IconBackgroundColor = "#8b5cf6"
         }
     }
     if ($azureCard) {
@@ -55,60 +46,84 @@ function Initialize-LauncherData {
             IconBackgroundColor = "#06b6d4"
         }
     }
-    if ($securityCard) {
-        $securityCard.Tag = [PSCustomObject]@{
-            Icon                = "🔒"
-            Title               = Get-AppText 'settings.section_security'
-            Subtitle            = "Gestion des accès et des droits"
-            IconBackgroundColor = "#f97316"
+    if ($adCard) {
+        $adCard.Tag = [PSCustomObject]@{
+            Icon                = "🗄️"
+            Title               = Get-AppText 'settings.section_ad'
+            Subtitle            = "Configuration pour l'interaction avec l'annuaire local"
+            IconBackgroundColor = "#787A7D" # Un gris neutre
         }
     }
-    # ----------------------------------------------------
-    
-    # --- 1. PEUPLEMENT DES PARAMÈTRES PUBLICS ---
-    # Section Générale
-    $Global:AppControls.settingsCompanyNameTextBox.Text = Get-AppSetting -Key 'app.companyName' -DefaultValue "Mon Entreprise"
-    $Global:AppControls.settingsAppVersionTextBox.Text = Get-AppSetting -Key 'app.version' -DefaultValue "1.0.0"
-    $Global:AppControls.settingsLanguageComboBox.ItemsSource = @("fr-FR", "en-US")
-    $Global:AppControls.settingsLanguageComboBox.SelectedItem = Get-AppSetting -Key 'app.defaultLanguage' -DefaultValue "fr-FR"
-    $Global:AppControls.settingsVerboseLoggingCheckBox.IsChecked = Get-AppSetting -Key 'app.enableVerboseLogging' -DefaultValue $false
 
-    # Section Interface Utilisateur
-    $Global:AppControls.settingsLauncherWidthTextBox.Text = Get-AppSetting -Key 'ui.launcherWidth' -DefaultValue 800
-    $Global:AppControls.settingsLauncherHeightTextBox.Text = Get-AppSetting -Key 'ui.launcherHeight' -DefaultValue 700
+    # --- 1. PEUPLEMENT DES PARAMÈTRES ---
+    # Général
+    $Global:AppControls.settingsCompanyNameTextBox.Text = $Global:AppConfig.companyName
+    $Global:AppControls.settingsAppVersionTextBox.Text = $Global:AppConfig.applicationVersion
+    $Global:AppControls.settingsLanguageComboBox.ItemsSource = @("fr-FR", "en-US")
+    $Global:AppControls.settingsLanguageComboBox.SelectedItem = $Global:AppConfig.defaultLanguage
+    $Global:AppControls.settingsVerboseLoggingCheckBox.IsChecked = $Global:AppConfig.enableVerboseLogging
+    $Global:AppControls.settingsLauncherWidthTextBox.Text = $Global:AppConfig.ui.launcherWidth
+    $Global:AppControls.settingsLauncherHeightTextBox.Text = $Global:AppConfig.ui.launcherHeight
 
     # --- 2. GESTION DES SECTIONS ADMINISTRATEUR ---
     if ($Global:IsAppAdmin) {
-        Write-Verbose (Get-AppText -Key 'modules.launcherui.admin_mode_detected')
-        
-        # On affiche l'onglet et on peuple ses champs
         $Global:AppControls.settingsTabItem.Visibility = 'Visible'
+        $Global:AppControls.GovernanceTabItem.Visibility = 'Visible' # NOUVEAU : Onglet Gouvernance visible pour admin
 
-        # Section Azure
-        $Global:AppControls.settingsTenantIdTextBox.Text = Get-AppSetting -Key 'azure.tenantId' -DefaultValue ""
-        $Global:AppControls.settingsUserAuthAppIdTextBox.Text = Get-AppSetting -Key 'azure.auth.user.appId' -DefaultValue ""
-        $Global:AppControls.settingsUserAuthScopesTextBox.Text = (Get-AppSetting -Key 'azure.auth.user.scopes' -DefaultValue "User.Read") -join ", "
-        $Global:AppControls.settingsCertAuthAppIdTextBox.Text = Get-AppSetting -Key 'azure.auth.cert.appId' -DefaultValue ""
-        $Global:AppControls.settingsCertAuthThumbprintTextBox.Text = Get-AppSetting -Key 'azure.auth.cert.thumbprint' -DefaultValue ""
-        
-        # Section Sécurité
-        $Global:AppControls.settingsAdminGroupTextBox.Text = Get-AppSetting -Key 'security.adminGroupName' -DefaultValue ""
-        $Global:AppControls.settingsStartupAuthModeComboBox.ItemsSource = @('System', 'User')
-        $Global:AppControls.settingsStartupAuthModeComboBox.SelectedItem = Get-AppSetting -Key 'security.startupAuthMode' -DefaultValue 'System'
+        # Azure & Sécurité
+        $Global:AppControls.settingsTenantIdTextBox.Text = $Global:AppConfig.azure.tenantId
+        $Global:AppControls.settingsUserAuthAppIdTextBox.Text = $Global:AppConfig.azure.authentication.userAuth.appId
+        $Global:AppControls.settingsUserAuthScopesTextBox.Text = $Global:AppConfig.azure.authentication.userAuth.scopes -join ", "
+        $Global:AppControls.settingsAdminGroupTextBox.Text = $Global:AppConfig.security.adminGroupName
+
+        # Peuplement de la section Active Directory ---
+        $Global:AppControls.settingsADServiceUserTextBox.Text = $Global:AppConfig.ad.serviceUser
+        if (-not [string]::IsNullOrEmpty($Global:AppConfig.ad.servicePassword)) {
+            $Global:AppControls.settingsADServicePasswordBox.Password = "●●●●●●●●"
+        }
+        # On réinitialise le drapeau à chaque chargement
+        $Global:ADPasswordManuallyChanged = $false
+        $Global:AppControls.settingsADTempServerTextBox.Text = $Global:AppConfig.ad.tempServer
+        $Global:AppControls.settingsADConnectServerTextBox.Text = $Global:AppConfig.ad.connectServer
+        $Global:AppControls.settingsADDomainNameTextBox.Text = $Global:AppConfig.ad.domainName
+        $Global:AppControls.settingsADUserOUPathTextBox.Text = $Global:AppConfig.ad.userOUPath
+        $Global:AppControls.settingsADPDCNameTextBox.Text = $Global:AppConfig.ad.pdcName
+        $Global:AppControls.settingsADDomainUserGroupTextBox.Text = $Global:AppConfig.ad.domainUserGroup
+        $Global:AppControls.settingsADExcludedGroupsTextBox.Text = $Global:AppConfig.ad.excludedGroups -join ",`n"
+
+        # On utilise la liste globale qui contient déjà les infos de la BDD (Enabled/MaxRuns)
+        Update-ManagementScriptList
 
     } else {
         Write-Verbose (Get-AppText -Key 'modules.launcherui.non_admin_mode_detected')
-        # On cache l'onglet "Paramètres" pour les utilisateurs non-administrateurs
         $Global:AppControls.settingsTabItem.Visibility = 'Collapsed'
+        $Global:AppControls.GovernanceTabItem.Visibility = 'Collapsed'
     }
 
     # --- 3. INITIALISATION DES AUTRES COMPOSANTS DE L'UI ---
-    # On active/désactive le bouton de nettoyage des verrous en fonction des droits
     $Global:AppControls.clearLocksButton.IsEnabled = $Global:IsAppAdmin
-    
-    # On met à jour l'apparence du macaron d'authentification
     Update-LauncherAuthButton -AuthButton $Global:AppControls.authStatusButton
-
-    # On peuple la liste des scripts et la barre de statut
     Update-ScriptListBoxUI -scripts $Global:AppAvailableScripts
+
+    # --- GESTION ÉTAT INITIAL DES BOUTONS AZURE ---
+    
+    # 1. Désactivation du bouton de connexion principal si pas d'AppID
+    $authButton = $Global:AppControls.authStatusButton
+    $userAppId = $Global:AppConfig.azure.authentication.userAuth.appId
+    
+    if ([string]::IsNullOrWhiteSpace($userAppId)) {
+        $authButton.IsEnabled = $false
+        $authButton.ToolTip = (Get-AppText 'settings.azure_authbutton_disabled_tooltip')
+    } else {
+        $authButton.IsEnabled = $true
+        # Le tooltip normal est géré par Update-LauncherAuthButton
+    }
+
+    # 2. Gestion du bouton "Tester la connexion" (User)
+    # On vérifie que le contrôle existe bien avant d'y toucher (sécurité)
+    if ($Global:AppControls.ContainsKey('SettingsUserAuthTestButton') -and $null -ne $Global:AppControls['SettingsUserAuthTestButton']) {
+        $Global:AppControls.SettingsUserAuthTestButton.IsEnabled = $Global:AppAzureAuth.UserAuth.Connected
+    }
+    
+    # NOTE : Le code concernant SettingsCertAuthTestButton a été SUPPRIMÉ ici pour éviter le crash.
 }

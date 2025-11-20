@@ -17,30 +17,26 @@ function Get-AppUserAzureGroups {
     param()
 
     try {
-        # On interroge l'endpoint /me/memberOf qui retourne tous les groupes (et rôles) de l'utilisateur.
-        # On ne sélectionne que le displayName, car c'est tout ce dont on a besoin pour la comparaison.
+        # On récupère uniquement la propriété displayName
         $groups = Invoke-MgGraphRequest -Uri '/v1.0/me/memberOf?$select=displayName' -Method GET
 
         if ($null -ne $groups.Value) {
-            # La commande retourne un objet avec une propriété "Value" qui contient la liste.
-            $groupNames = $groups.Value.displayName
+            # CORRECTION : On filtre pour ne garder que les chaînes non vides
+            $groupNames = $groups.Value.displayName | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
-            # Messages de succès en verbose
             $successMessage1 = Get-AppText -Key 'modules.azure.get_groups_success1'
-            $successMessage1 = Get-AppText -Key 'modules.azure.get_groups_success2'
-            Write-Verbose "$successMessage1 $($groupNames.Count) $successMessage1"
+            $successMessage2 = Get-AppText -Key 'modules.azure.get_groups_success2'
+            Write-Verbose "$successMessage1 $($groupNames.Count) $successMessage2"
 
             return $groupNames
         } else {
-            # Messages d'erreur en verbose
             $failureMessage = Get-AppText -Key 'modules.azure.get_groups_failure'
             Write-Verbose "$failureMessage"
-
             return @()
         }
     } catch {
         $errorMessage = Get-AppText -Key 'modules.azure.get_groups_error'
         Write-Warning "$errorMessage : $($_.Exception.Message)"
-        return @() # En cas d'erreur, on retourne toujours un tableau vide pour la sécurité.
+        return @()
     }
 }

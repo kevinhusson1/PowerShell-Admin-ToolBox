@@ -19,12 +19,26 @@
 
     # Liste explicite des fonctions à exporter (bonne pratique)
     FunctionsToExport = @(
+        'Add-AppKnownGroup',
         'Add-AppScriptLock',
+        'Add-AppScriptSecurityGroup',
         'Clear-AppScriptLock',
+        'Get-AppKnownGroups',
+        'Get-AppPermissionRequests',
+        'Get-AppScriptProgress',
+        'Get-AppScriptSecurity',
+        'Get-AppScriptSettingsMap',
         'Get-AppSetting',
         'Initialize-AppDatabase',
+        'Remove-AppKnownGroup',
+        'Remove-AppScriptProgress',
+        'Remove-AppScriptSecurityGroup',
+        'Set-AppScriptProgress',
+        'Set-AppScriptSettings',
         'Set-AppSetting',
-        'Unlock-AppScriptLock',
-        'Test-AppScriptLock'
+        'Sync-AppScriptSecurity',
+        'Sync-AppScriptSettings',
+        'Test-AppScriptLock',
+        'Unlock-AppScriptLock'
     )
 }
