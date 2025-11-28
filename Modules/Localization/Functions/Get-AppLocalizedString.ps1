@@ -34,12 +34,12 @@ function Get-AppLocalizedString {
     try {
         $parts = $Key.Split('.')
         $currentObject = $Global:AppLocalization
+
         foreach ($part in $parts) {
             if ($null -ne $currentObject -and $currentObject.PSObject.Properties[$part]) {
                 $currentObject = $currentObject.$part
             } else {
-                $warningMsg = "{0} : '{1}'" -f (Get-AppText -Key 'modules.localization.key_not_found'), $Key
-                Write-Warning $warningMsg
+                Write-Verbose "[Localization] Clé introuvable : '$Key'"
                 return "[$Key]"
             }
         }
@@ -53,8 +53,7 @@ function Get-AppLocalizedString {
         }
     } catch {
         # Intercepte toute erreur inattendue pendant la recherche
-        $warningMsg = "{0} '{1}': $($_.Exception.Message)" -f (Get-AppText -Key 'modules.localization.key_lookup_error'), $Key
-        Write-Warning $warningMsg
+        Write-Warning "[Localization] Erreur lookup '$Key': $($_.Exception.Message)"
         return "[$Key]"
     }
 }

@@ -1,7 +1,7 @@
 {
-    "create_user": {
-        "window_title": "Default Page",
-        "text": "Default interface for custom scripts.",
-        "log_header": "Execution Log"
+    "default_ui": {
+        "window_title": "Application Template",
+        "sample_text": "This is a demonstration text centered in the main content area. The interface automatically adapts to the window size.",
+        "footer_info": "Status or contextual information area."
     }
 }

@@ -74,7 +74,19 @@ function Start-AppScript {
             $Global:progressTimer.Start()
         }
 
-        $process = Start-Process pwsh.exe -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $fullScriptPath, "-LauncherPID", $PID) -PassThru -WindowStyle Hidden
+        # --- PRÉPARATION DU CONTEXTE D'AUTHENTIFICATION ---
+        # On force une profondeur de 5 pour être sûr de capturer toute la structure de l'objet
+        $authJson = $Global:AppAzureAuth | ConvertTo-Json -Depth 5 -Compress
+        $authContextEncoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($authJson))
+
+        # 2. On LANCE le processus enfant.
+        $process = Start-Process pwsh.exe -ArgumentList @(
+            "-NoProfile", 
+            "-ExecutionPolicy", "Bypass", 
+            "-File", $fullScriptPath, 
+            "-LauncherPID", $PID,
+            "-AuthContext", $authContextEncoded # <-- Vérifiez que cette ligne est bien là
+        ) -PassThru -WindowStyle Hidden
         
         # 3. On ENREGISTRE le verrou avec le PID de l'enfant qu'on vient d'obtenir.
         # Add-AppScriptLock -Script $SelectedScript -OwnerPID $process.Id

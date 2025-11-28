@@ -71,11 +71,17 @@ function Initialize-LauncherData {
         $Global:AppControls.GovernanceTabItem.Visibility = 'Visible' # NOUVEAU : Onglet Gouvernance visible pour admin
 
         # Azure & Sécurité
+        $Global:AppControls.settingsTenantNameTextBox.Text = $Global:AppConfig.azure.tenantName
         $Global:AppControls.settingsTenantIdTextBox.Text = $Global:AppConfig.azure.tenantId
         $Global:AppControls.settingsUserAuthAppIdTextBox.Text = $Global:AppConfig.azure.authentication.userAuth.appId
-        $Global:AppControls.settingsUserAuthScopesTextBox.Text = $Global:AppConfig.azure.authentication.userAuth.scopes -join ", "
         $Global:AppControls.settingsAdminGroupTextBox.Text = $Global:AppConfig.security.adminGroupName
+        $Global:AppControls.settingsUserAuthScopesTextBox.Text = $Global:AppConfig.azure.authentication.userAuth.scopes -join ", "
 
+        # Certificat
+        if ($Global:AppControls.ContainsKey('SettingsCertThumbprintTextBox')) {
+            $Global:AppControls.SettingsCertThumbprintTextBox.Text = $Global:AppConfig.azure.certThumbprint
+        }
+        
         # Peuplement de la section Active Directory ---
         $Global:AppControls.settingsADServiceUserTextBox.Text = $Global:AppConfig.ad.serviceUser
         if (-not [string]::IsNullOrEmpty($Global:AppConfig.ad.servicePassword)) {

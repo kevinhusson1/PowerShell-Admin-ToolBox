@@ -20,26 +20,33 @@
 function Add-AppLocalizationSource {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [string]$FilePath
+        [Parameter(Mandatory)] [string]$FilePath
     )
+    
     if (-not (Test-Path $FilePath)) {
-        $warningMsg = "{0} : {1}" -f (Get-AppText 'modules.localization.source_file_not_found'), $FilePath
-        Write-Warning $warningMsg
+        Write-Warning "Fichier introuvable : $FilePath"
         return
     }
-    try {
-        # On s'assure de lire en UTF8 pour la compatibilité
-        $scriptLocalization = Get-Content -Path $FilePath -Raw -Encoding UTF8 | ConvertFrom-Json
-        
-        # On appelle notre fonction d'aide (qui se trouve dans son propre fichier)
-        # pour fusionner intelligemment les dictionnaires
-        Merge-PSCustomObject -base $Global:AppLocalization -overlay $scriptLocalization
 
-        $logMsg = "{0} '{1}' {2}" -f (Get-AppText 'modules.localization.source_merged_1'), $FilePath, (Get-AppText 'modules.localization.source_merged_2')
-        Write-Verbose $logMsg
+    try {
+        $jsonContent = Get-Content -Path $FilePath -Raw -Encoding UTF8 | ConvertFrom-Json
+        
+        # Si le fichier JSON est vide ou invalide, on arrête
+        if ($null -eq $jsonContent) { return }
+
+        # --- CORRECTION CRITIQUE ---
+        # Si c'est le tout premier fichier, on l'assigne directement (Fast Path).
+        if ($null -eq $Global:AppLocalization) {
+            $Global:AppLocalization = $jsonContent
+            Write-Verbose "Source initiale chargée (Fast Path) : $(Split-Path $FilePath -Leaf)"
+        } 
+        else {
+            # Sinon, on fusionne (Slow Path)
+            Merge-PSCustomObject -base $Global:AppLocalization -overlay $jsonContent
+            Write-Verbose "Source fusionnée : $(Split-Path $FilePath -Leaf)"
+        }
+
     } catch {
-        $warningMsg = "{0} '{1}': $($_.Exception.Message)" -f (Get-AppText 'modules.localization.merge_error'), $FilePath
-        Write-Warning $warningMsg
+        Write-Warning "Erreur chargement '$FilePath': $($_.Exception.Message)"
     }
 }

@@ -38,7 +38,7 @@
                 
                 <!-- Nouveau bouton Texte (Se connecter / Se déconnecter) -->
                 <Button x:Name="AuthTextButton" 
-                        Content="Se connecter"
+                        Content="##loc:launcher.auth_login##"
                         Margin="0,0,10,0"
                         VerticalAlignment="Center"
                         Cursor="Hand"
@@ -126,7 +126,7 @@
                             </Grid>
                             <Grid x:Name="ScriptLoadingPanel" Visibility="Collapsed">
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock x:Name="LoadingScriptName" Style="{DynamicResource H3Style}" Margin="0,0,0,15" Text="Création d'utilisateur"/>
+                                    <TextBlock x:Name="LoadingScriptName" Style="{DynamicResource H3Style}" Margin="0,0,0,15" Text=""/>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
@@ -146,121 +146,224 @@
                 </Grid>
             </TabItem>
             
-            <!-- ONGLET 2 : GOUVERNANCE -->
-            <!-- Visibilité gérée par le code : Visible uniquement si Admin -->
+            <!-- ONGLET 2 : GOUVERNANCE (DESIGN V2 HARMONISÉ) -->
             <TabItem x:Name="GovernanceTabItem" Visibility="Collapsed">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="🛡️" FontFamily="Segoe UI Symbol" Margin="0,0,5,0"/>
-                        <TextBlock Text="Gouvernance"/>
+                        <TextBlock Text="##loc:governance.tab_title##"/>
                     </StackPanel>
                 </TabItem.Header>
                 
-                <!-- Layout en 3 Colonnes -->
-                <Grid Margin="15">
+                <Grid Margin="25" Background="{DynamicResource WhiteBrush}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/> <!-- Demandes (Gauche) -->
-                        <ColumnDefinition Width="15"/> <!-- Espacement -->
-                        <ColumnDefinition Width="*"/> <!-- Permissions Actuelles (Milieu) -->
-                        <ColumnDefinition Width="15"/> <!-- Espacement -->
-                        <ColumnDefinition Width="*"/> <!-- Membres (Droite) -->
+                        <ColumnDefinition Width="*"/>   <!-- Demandes -->
+                        <ColumnDefinition Width="25"/>  <!-- Gouttière -->
+                        <ColumnDefinition Width="*"/>   <!-- Permissions -->
+                        <ColumnDefinition Width="25"/>  <!-- Gouttière -->
+                        <ColumnDefinition Width="*"/>   <!-- Membres -->
                     </Grid.ColumnDefinitions>
 
-                    <!-- COLONNE 1 : GESTION DES DEMANDES -->
-                    <Border Grid.Column="0" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                    <!-- ======================================================= -->
+                    <!-- COLONNE 1 : DEMANDES (BLEU) -->
+                    <!-- ======================================================= -->
+                    <Border Grid.Column="0" Background="{DynamicResource WhiteBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="20">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Demandes en attente" Style="{DynamicResource H3Style}"/>
-                            
-                            <!-- Placeholder pour la liste des demandes -->
-                            <ListBox Grid.Row="1" x:Name="PermissionRequestsListBox" Style="{DynamicResource StandardListBoxStyle}" Margin="0,10,0,0">
+
+                            <!-- En-tête -->
+                            <Grid Grid.Row="0" Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="10" Background="{DynamicResource InfoBackgroundBrush}">
+                                    <TextBlock Text="📬" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="##loc:governance.requests_title##" Style="{DynamicResource H4Style}" FontSize="15"/>
+                                    <TextBlock Text="Approbation des scopes" Style="{DynamicResource DescriptionTextStyle}" FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Liste des demandes -->
+                            <ListBox Grid.Row="1" x:Name="PermissionRequestsListBox" 
+                                     BorderThickness="0" Background="Transparent" 
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                                     Padding="0">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Margin" Value="0,0,0,10"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <ContentPresenter/>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,5">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding RequesterUPN}" FontWeight="Bold"/>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="Demande : " Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
-                                                    <TextBlock Text="{Binding RequestedScope}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" FontSize="11"/>
-                                                </StackPanel>
-                                                <TextBlock Text="{Binding Reason}" FontSize="10" FontStyle="Italic" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <!-- Bouton VALIDER -->
-                                                <Button Content="✅" Width="30" Height="25" Style="{DynamicResource GreenButtonStyle}" Margin="0,0,5,0"
-                                                        ToolTip="Approuver et ajouter la permission"
-                                                        Tag="{Binding}"/> <!-- Le Tag contient tout l'objet demande -->
+                                        <Border CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Background="{DynamicResource BackgroundLightBrush}" Padding="12">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
                                                 
-                                                <!-- Bouton REFUSER -->
-                                                <Button Content="❌" Width="30" Height="25" Style="{DynamicResource RedButtonStyle}"
-                                                        ToolTip="Refuser la demande"
-                                                        CommandParameter="{Binding RequestID}"/> <!-- On passe l'ID pour supprimer -->
-                                            </StackPanel>
-                                        </Grid>
+                                                <!-- Info Demande -->
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                        <TextBlock Text="👤" FontSize="10" VerticalAlignment="Center" Margin="0,0,5,0" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding RequesterUPN}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    
+                                                    <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" HorizontalAlignment="Left" Padding="6,2" Margin="0,0,0,4">
+                                                        <TextBlock Text="{Binding RequestedScope}" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold" FontSize="11" FontFamily="Consolas"/>
+                                                    </Border>
+                                                    
+                                                    <TextBlock Text="{Binding Reason}" FontSize="11" FontStyle="Italic" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+
+                                                <!-- Actions -->
+                                                <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
+                                                    <!-- Bouton VALIDER -->
+                                                    <Button Content="✅" Width="32" Height="32" Style="{DynamicResource GreenButtonStyle}" Margin="0,0,0,5" CornerRadius="16"
+                                                            ToolTip="##loc:governance.requests_approve_tooltip##"
+                                                            Tag="{Binding}"/> 
+                                                    
+                                                    <!-- Bouton REFUSER -->
+                                                    <Button Content="❌" Width="32" Height="32" Style="{DynamicResource RedButtonStyle}" CornerRadius="16"
+                                                            ToolTip="##loc:governance.requests_reject_tooltip##"
+                                                            CommandParameter="{Binding RequestID}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             
-                            <TextBlock Grid.Row="1" x:Name="NoRequestsText" Text="Aucune demande en attente." 
-                                        Visibility="Collapsed" 
-                                        VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- COLONNE 2 : PERMISSIONS DE L'APPLICATION -->
-                    <Border Grid.Column="2" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Permissions Actives" Style="{DynamicResource H3Style}"/>
-                            <TextBlock Grid.Row="1" Text="Droits actuellement accordés à l'application dans Azure AD." Style="{DynamicResource DescriptionTextStyle}" Margin="0,0,0,10"/>
-
-                            <!-- Liste des scopes -->
-                            <ListBox Grid.Row="2" x:Name="CurrentScopesListBox" Style="{DynamicResource StandardListBoxStyle}">
-                                <!-- Les items seront peuplés dynamiquement -->
-                            </ListBox>
-
-                            <StackPanel Grid.Row="3" Margin="0,10,0,0">
-                                <Button x:Name="AddPermissionButton" Content="➕   Ajouter manuellement" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,0,5"/>
-                                <Button x:Name="GrantConsentButton" Content="🛡️   Valider les droits (Admin Consent)" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,0,5"/>
-                                <Button x:Name="SyncAzureButton" Content="🔄   Synchroniser avec Azure" Style="{DynamicResource PrimaryButtonStyle}"/>
+                            <!-- État Vide -->
+                            <StackPanel Grid.Row="1" x:Name="NoRequestsText" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
+                                <TextBlock Text="📭" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                <TextBlock Text="##loc:governance.requests_none##" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <!-- COLONNE 3 : AUDIT & MEMBRES -->
-                    <Border Grid.Column="4" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                    <!-- ======================================================= -->
+                    <!-- COLONNE 2 : PERMISSIONS (ORANGE) -->
+                    <!-- ======================================================= -->
+                    <Border Grid.Column="2" Background="{DynamicResource WhiteBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="20">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- En-tête -->
+                            <Grid Grid.Row="0" Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="10" Background="{DynamicResource WarningBackgroundBrush}">
+                                    <TextBlock Text="🔑" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="##loc:governance.permissions_title##" Style="{DynamicResource H4Style}" FontSize="15"/>
+                                    <TextBlock Text="##loc:governance.permissions_desc##" Style="{DynamicResource DescriptionTextStyle}" FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Liste des scopes -->
+                            <ListBox Grid.Row="1" x:Name="CurrentScopesListBox" BorderThickness="0" Background="Transparent" Padding="0">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <ContentPresenter/>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <!-- Note : Les items sont générés dynamiquement en C# dans Update-GovernanceTab. 
+                                     Idéalement on ferait un DataTemplate ici, mais pour la compatibilité avec le code existant 
+                                     on garde la structure, mais on stylisera les items via le code ou un style global -->
+                            </ListBox>
+
+                            <!-- Actions -->
+                            <StackPanel Grid.Row="2" Margin="0,15,0,0">
+                                <Button x:Name="SyncAzureButton" Content="##loc:governance.btn_sync##" Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,0,10"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" x:Name="AddPermissionButton" Content="##loc:governance.btn_add_manual##" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,5,0" FontSize="11"/>
+                                    <Button Grid.Column="1" x:Name="GrantConsentButton" Content="##loc:governance.btn_validate_consent##" Style="{DynamicResource SecondaryButtonStyle}" Margin="5,0,0,0" FontSize="11"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- ======================================================= -->
+                    <!-- COLONNE 3 : MEMBRES (VIOLET) -->
+                    <!-- ======================================================= -->
+                    <Border Grid.Column="4" Background="{DynamicResource WhiteBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="20">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Membres &amp; Rôles" Style="{DynamicResource H3Style}"/>
+
+                            <!-- En-tête -->
+                            <Grid Grid.Row="0" Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="10" Background="{DynamicResource SecondaryBackgroundBrush}">
+                                    <TextBlock Text="🛡️" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="##loc:governance.members_title##" Style="{DynamicResource H4Style}" FontSize="15"/>
+                                    <TextBlock Text="Audit des accès" Style="{DynamicResource DescriptionTextStyle}" FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
                             
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                 <StackPanel>
                                     <!-- Groupe Admin -->
-                                    <Expander Header="Administrateurs" IsExpanded="True" Margin="0,0,0,10">
-                                        <ListBox x:Name="AdminMembersListBox" MaxHeight="150" Style="{DynamicResource StandardListBoxStyle}" BorderThickness="0"/>
-                                    </Expander>
+                                    <Border Background="{DynamicResource BackgroundLightBrush}" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+                                        <StackPanel>
+                                            <TextBlock Text="##loc:governance.group_admins##" FontWeight="Bold" Foreground="{DynamicResource SecondaryBrush}" Margin="0,0,0,5"/>
+                                            <ListBox x:Name="AdminMembersListBox" MaxHeight="200" BorderThickness="0" Background="Transparent" Padding="0">
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="Padding" Value="2"/>
+                                                        <Setter Property="FontSize" Value="12"/>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </Border>
 
                                     <!-- Groupe User -->
-                                    <Expander Header="Utilisateurs Autorisés" IsExpanded="False">
-                                        <ListBox x:Name="UserMembersListBox" MaxHeight="150" Style="{DynamicResource StandardListBoxStyle}" BorderThickness="0"/>
-                                    </Expander>
+                                    <Border Background="{DynamicResource BackgroundLightBrush}" CornerRadius="8" Padding="10">
+                                        <StackPanel>
+                                            <TextBlock Text="##loc:governance.group_users##" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                                            <ListBox x:Name="UserMembersListBox" MaxHeight="200" BorderThickness="0" Background="Transparent" Padding="0">
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="Padding" Value="2"/>
+                                                        <Setter Property="FontSize" Value="12"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </ScrollViewer>
                         </Grid>
@@ -269,69 +372,133 @@
                 </Grid>
             </TabItem>
 
-            <!-- ONGLET 3 : GESTION DES SCRIPTS (NOUVEAU) -->
+            <!-- ONGLET 3 : GESTION (DESIGN FINAL v4) -->
             <TabItem x:Name="ManagementTabItem" Visibility="Collapsed">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="🛠️" FontFamily="Segoe UI Symbol" Margin="0,0,5,0"/>
-                        <TextBlock Text="Gestion"/>
+                        <TextBlock Text="##loc:management.tab_title##"/>
                     </StackPanel>
                 </TabItem.Header>
                 
-                <Grid Margin="20">
+                <Grid Margin="25" Background="{DynamicResource WhiteBrush}">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="350"/> <!-- Colonne Gauche (Bibliothèque + Scripts) -->
-                        <ColumnDefinition Width="20"/>
-                        <ColumnDefinition Width="*"/>   <!-- Colonne Droite (Détails) -->
+                        <ColumnDefinition Width="380"/> 
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- COLONNE GAUCHE -->
                     <Grid Grid.Column="0">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/> <!-- Bibliothèque -->
-                            <RowDefinition Height="15"/>
-                            <RowDefinition Height="*"/>    <!-- Scripts -->
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="20"/>
+                            <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- 1. BIBLIOTHÈQUE DE GROUPES -->
-                        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15">
+                        <!-- 1. BIBLIOTHÈQUE -->
+                        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" CornerRadius="12" Padding="20" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
                             <StackPanel>
-                                <TextBlock Text="Bibliothèque de Groupes" Style="{DynamicResource H3Style}"/>
-                                <TextBlock Text="Ajouter ou supprimer des groupes connus." Style="{DynamicResource DescriptionTextStyle}" Margin="0,0,0,10"/>
-                                
-                                <!-- Ligne 1 : Ajouter -->
-                                <Grid Margin="0,0,0,5">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0" x:Name="LibraryNewGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="Nouveau groupe Azure AD..."/>
-                                    <Button Grid.Column="1" x:Name="LibraryAddGroupButton" Content="+" Style="{DynamicResource SecondaryButtonStyle}" Width="40" Margin="5,0,0,0" ToolTip="Vérifier et Ajouter à la bibliothèque"/>
+                                <Grid Margin="0,0,0,15">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="10" Background="{DynamicResource SecondaryBackgroundBrush}">
+                                        <!-- Nouvelle Icône : Classeur -->
+                                        <TextBlock Text="🗃️" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                    </Border>
+                                    
+                                    <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="##loc:management.library_title##" Style="{DynamicResource H4Style}" FontSize="15"/>
+                                        <TextBlock Text="##loc:management.library_desc##" Style="{DynamicResource DescriptionTextStyle}" FontSize="11"/>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="2" Background="{DynamicResource Gray100Brush}" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Items.Count, ElementName=LibraryGroupsComboBox, FallbackValue='0'}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
                                 </Grid>
 
-                                <!-- Ligne 2 : Supprimer (Liste déroulante) -->
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0" x:Name="LibraryGroupsComboBox" Style="{DynamicResource StandardComboBoxStyle}" Tag="Sélectionner pour supprimer...">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding GroupName}" VerticalAlignment="Center"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <TextBox Grid.Column="0" x:Name="LibraryNewGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" 
+                                             Tag="##loc:management.library_placeholder_add##" Height="40" BorderThickness="1" Background="{DynamicResource BackgroundControlBrush}"/>
+                                    
+                                    <Button Grid.Column="1" x:Name="LibraryAddGroupButton" Content="➕" 
+                                            Style="{DynamicResource PrimaryButtonStyle}" Width="40" Height="40" Margin="10,0,0,0" Padding="0"
+                                            ToolTip="##loc:management.library_tooltip_add##"/>
+                                </Grid>
+                                <TextBlock Text="ℹ️ Le groupe sera validé dans Azure AD avant ajout" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Margin="5,5,0,0"/>
+
+                                <Separator Margin="0,15" Background="{DynamicResource BorderLightBrush}"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <!-- Correction : DisplayMemberPath pour éviter @{GroupName=...} -->
+                                    <ComboBox Grid.Column="0" x:Name="LibraryGroupsComboBox" Style="{DynamicResource StandardComboBoxStyle}" 
+                                              Tag="##loc:management.library_placeholder_select##" DisplayMemberPath="GroupName"/>
+                                    
                                     <Button Grid.Column="1" x:Name="LibraryRemoveGroupButton" Content="🗑️" Style="{DynamicResource IconButtonStyle}" 
-                                            Width="40" Height="38" Margin="5,0,0,0" ToolTip="Supprimer le groupe sélectionné de la bibliothèque"/>
+                                            Width="40" Height="40" Margin="10,0,0,0" Foreground="{DynamicResource DangerBrush}" Padding="0"
+                                            ToolTip="##loc:management.library_tooltip_remove##"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <!-- 2. LISTE DES SCRIPTS (Déplacée en bas) -->
-                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="0">
+                        <!-- 2. LISTE DES SCRIPTS (Sans recherche) -->
+                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" CornerRadius="12" Padding="0" ClipToBounds="True" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
                             <Grid>
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                                <TextBlock Text="Scripts Installés" Style="{DynamicResource H3Style}" Margin="15,15,0,10"/>
-                                <ListBox x:Name="ManageScriptsListBox" Grid.Row="1" Style="{DynamicResource StandardListBoxStyle}" BorderThickness="0" Margin="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="20,20,20,10">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource InfoBackgroundBrush}">
+                                        <TextBlock Text="📄" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="##loc:management.scripts_list_title##" Style="{DynamicResource H4Style}" FontSize="15"/>
+                                        <TextBlock Text="{Binding Items.Count, ElementName=ManageScriptsListBox, StringFormat='{}{0} scripts détectés'}" Style="{DynamicResource DescriptionTextStyle}" FontSize="11"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <ListBox Grid.Row="1" x:Name="ManageScriptsListBox" 
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         BorderThickness="0" Background="Transparent" Padding="10"
+                                         Focusable="False">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Margin" Value="0,0,0,8"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border x:Name="ItemBorder" CornerRadius="10" Background="{DynamicResource WhiteBrush}" 
+                                                                BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="15,12" Cursor="Hand">
+                                                            <ContentPresenter/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                                <Setter TargetName="ItemBorder" Property="BorderThickness" Value="2"/>
+                                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource PrimaryBackgroundBrush}"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource Gray50Brush}"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                <Ellipse Grid.Column="0" Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,15,0">
                                                     <Ellipse.Style>
                                                         <Style TargetType="Ellipse">
                                                             <Style.Triggers>
@@ -341,8 +508,11 @@
                                                         </Style>
                                                     </Ellipse.Style>
                                                 </Ellipse>
-                                                <TextBlock Text="{Binding name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding name}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding ScriptPath}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
@@ -350,55 +520,159 @@
                         </Border>
                     </Grid>
 
-                    <!-- COLONNE DROITE : DÉTAILS -->
-                    <Border x:Name="ManageDetailPanel" Grid.Column="2" Visibility="Collapsed"
-                            Background="{DynamicResource WhiteBrush}" CornerRadius="8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Padding="20">
-                        <StackPanel>
-                            <!-- En-tête (Inchangé) -->
-                            <Grid Margin="0,0,0,20">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <Image Width="48" Height="48" Source="{Binding IconSource}" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding name}" Style="{DynamicResource H1Style}" FontSize="20" Margin="0"/>
-                                    <TextBlock Text="{Binding id}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="Activé" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold"/>
-                                    <CheckBox x:Name="ManageEnabledSwitch" Style="{DynamicResource ToggleSwitchStyle}" IsChecked="{Binding enabled}"/>
-                                </StackPanel>
-                            </Grid>
-                            <Separator Margin="0,0,0,20" Background="{DynamicResource BorderLightBrush}"/>
+                    <!-- COLONNE DROITE -->
+                    <Grid Grid.Column="2">
+                        <Border x:Name="ManageSelectPrompt" Background="{DynamicResource WhiteBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="👆" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                                <TextBlock Text="##loc:management.detail_select_prompt##" Style="{DynamicResource H2Style}" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
 
-                            <!-- Exécution (Inchangé) -->
-                            <TextBlock Text="Exécution" Style="{DynamicResource H3Style}"/>
-                            <Grid Margin="0,0,0,20">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" x:Name="ManageMaxRunsTextBox" Text="{Binding maxConcurrentRuns}" Width="60" HorizontalAlignment="Left" Style="{DynamicResource StandardTextBoxStyle}"/>
-                                <TextBlock Grid.Column="1" Text="Max simultanées (-1 = illimité)" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            </Grid>
+                        <!-- PANNEAU DE DÉTAIL -->
+                        <ScrollViewer x:Name="ManageDetailPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" CanContentScroll="False">
+                            <!-- Correction Marge Droite pour la Scrollbar -->
+                            <StackPanel Margin="0,0,15,0">
+                                
+                                <!-- EN-TÊTE -->
+                                <Border Background="{DynamicResource WhiteBrush}" CornerRadius="12" Padding="20" Margin="0,0,0,20" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <Grid Grid.Column="0" Width="50" Height="50">
+                                            <Ellipse Fill="{Binding IconBackgroundColor}" Opacity="0.2"/>
+                                            <Image Source="{Binding IconSource}" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Grid>
+                                        <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Configuration du Script" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding name}" Style="{DynamicResource H3Style}" FontSize="18" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="15" Padding="10,5" VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding id}" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
 
-                            <!-- NOUVEAU : Sécurité par CheckBox -->
-                            <TextBlock Text="Sécurité &amp; Accès" Style="{DynamicResource H3Style}" Margin="0,10,0,5"/>
-                            <TextBlock Text="Cochez les groupes autorisés pour ce script." Style="{DynamicResource DescriptionTextStyle}" Margin="0,0,0,10"/>
+                                <!-- ÉTAT -->
+                                <Border Background="{DynamicResource WhiteBrush}" CornerRadius="8" Margin="0,0,0,20" ClipToBounds="True" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="0" Fill="{DynamicResource SuccessBrush}"/>
+                                        <Grid Grid.Column="1" Margin="20,15">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="État du Script" FontWeight="Bold" FontSize="14"/>
+                                                <TextBlock Text="Rendre le script accessible aux utilisateurs autorisés" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <CheckBox Grid.Column="1" x:Name="ManageEnabledSwitch" Style="{DynamicResource ToggleSwitchStyle}" IsChecked="{Binding enabled}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
 
-                            <!-- Liste avec CheckBoxes -->
-                            <ListBox x:Name="ManageSecurityCheckList" MaxHeight="300" Style="{DynamicResource StandardListBoxStyle}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <!-- CORRECTION : On stocke le nom dans Tag pour le script. On utilise TextBlock pour l'affichage correct des underscores -->
-                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2" Cursor="Hand" Tag="{Binding GroupName}">
-                                            <TextBlock Text="{Binding GroupName}"/>
-                                        </CheckBox>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                <!-- EXÉCUTION -->
+                                <Border Background="{DynamicResource WhiteBrush}" CornerRadius="8" Margin="0,0,0,20" ClipToBounds="True" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="0" Fill="{DynamicResource WarningBrush}"/>
+                                        <Grid Grid.Column="1" Margin="20,15">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                                                <TextBlock Text="##loc:management.detail_execution_title##" FontWeight="Bold" FontSize="14"/>
+                                                <TextBlock Text="Nombre maximal d'exécutions simultanées (-1 = illimité)" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Correction Style TextBox -->
+                                                <TextBox x:Name="ManageMaxRunsTextBox" Text="{Binding maxConcurrentRuns}" 
+                                                         Width="60" Height="40" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                                         Style="{DynamicResource StandardTextBoxStyle}" Background="{DynamicResource Gray50Brush}"/>
+                                                
+                                                <Border Margin="10,0,0,0" Background="{DynamicResource Gray200Brush}" CornerRadius="4" Padding="8,0" Height="35" VerticalAlignment="Center">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Text, ElementName=ManageMaxRunsTextBox}" Value="-1">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="♾️" FontSize="16" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
 
-                            <Button x:Name="ManageSaveButton" Content="Enregistrer les modifications" Style="{DynamicResource PrimaryButtonStyle}" HorizontalAlignment="Right" Margin="0,20,0,0"/>
-                        </StackPanel>
-                    </Border>
-                    
-                    <TextBlock x:Name="ManageSelectPrompt" Grid.Column="2" Text="Sélectionnez un script pour le configurer." 
-                                VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Style="{DynamicResource H2Style}"/>
+                                <!-- SÉCURITÉ -->
+                                <Border Background="{DynamicResource WhiteBrush}" CornerRadius="8" Margin="0,0,0,20" ClipToBounds="True" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="5"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <Rectangle Grid.Column="0" Fill="{DynamicResource SecondaryBrush}"/>
+                                        <StackPanel Grid.Column="1" Margin="20">
+                                            <TextBlock Text="##loc:management.detail_security_title##" FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
+                                            <TextBlock Text="##loc:management.detail_security_desc##" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,15"/>
+
+                                            <!-- Liste des Groupes (Style Toggle) -->
+                                            <ListBox x:Name="ManageSecurityCheckList" BorderThickness="0" Background="Transparent" Focusable="False">
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="Margin" Value="0,0,0,8"/>
+                                                        <Setter Property="Padding" Value="0"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="ListBoxItem">
+                                                                    <ContentPresenter/>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border x:Name="RowBorder" CornerRadius="6" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Background="{DynamicResource BackgroundLightBrush}" Padding="10">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                
+                                                                <!-- ToggleSwitch au lieu de CheckBox standard -->
+                                                                <CheckBox Grid.Column="0" 
+                                                                    IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                                    Tag="{Binding GroupName}" 
+                                                                    VerticalAlignment="Center" 
+                                                                    Style="{DynamicResource ToggleSwitchStyle}"/>
+                                                                
+                                                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding GroupName}" FontWeight="SemiBold" FontSize="12"/>
+                                                                    <TextBlock Text="Groupe Azure AD" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                                </StackPanel>
+
+                                                                <!-- Badge Autorisé Centré -->
+                                                                <Border Grid.Column="2" x:Name="BadgeAuth" Background="{DynamicResource SecondaryBrush}" CornerRadius="4" Padding="8,4" VerticalAlignment="Center" Visibility="Collapsed">
+                                                                    <TextBlock Text="Autorisé" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                                                </Border>
+                                                            </Grid>
+                                                        </Border>
+                                                        <DataTemplate.Triggers>
+                                                            <!-- BORDURE VIOLETTE IMMEDIATE SI SELECTIONNÉ -->
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter TargetName="RowBorder" Property="BorderBrush" Value="{DynamicResource SecondaryBrush}"/>
+                                                                <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource SecondaryBackgroundBrush}"/>
+                                                                <Setter TargetName="BadgeAuth" Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- BOUTON SAUVEGARDER -->
+                                <Button x:Name="ManageSaveButton" Content="💾   ##loc:management.btn_save##" 
+                                        Style="{DynamicResource GreenButtonStyle}" Height="45" FontSize="14"/>
+                                
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
             </TabItem>
 
@@ -479,31 +753,73 @@
                         <!-- Carte 2 : Configuration Azure (Nettoyée) -->
                         <Expander x:Name="AzureSettingsCard" Style="{DynamicResource CardExpanderStyle}" IsExpanded="False">
                             <StackPanel Margin="0,10,0,0">
-                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.tenant_id##">
-                                    <TextBox x:Name="SettingsTenantIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🌐"/>
-                                </ContentControl>
                                 
-                                <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,10">
-                                    <StackPanel>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="##loc:settings.azure_usermode##" Style="{DynamicResource H3Style}"/>
-                                            <Button Grid.Column="1" x:Name="SettingsUserAuthTestButton" Content="##loc:settings.azure_test_connection_button##" Style="{DynamicResource SecondaryButtonStyle}" IsEnabled="False"/>
-                                        </Grid>
-                                        <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_appid##">
-                                            <TextBox x:Name="SettingsUserAuthAppIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🆔"/>
-                                        </ContentControl>
-                                        <!-- NOTE: Les scopes seront gérés dynamiquement plus tard, mais on garde le champ pour l'instant -->
-                                        <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_scopes##">
-                                            <TextBox x:Name="SettingsUserAuthScopesTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🔍" AcceptsReturn="True" Height="60" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
-                                        </ContentControl>
-                                    </StackPanel>
-                                </Border>
+                                <!-- A. RÉFÉRENTIEL GLOBAL -->
+                                <TextBlock Text="##loc:settings.azure_subtitle_global##" Style="{DynamicResource H3Style}" Margin="0,0,0,10"/>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Nom du Tenant -->
+                                    <ContentControl Grid.Column="0" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_tenant_name##" Margin="0,0,10,0">
+                                        <TextBox x:Name="SettingsTenantNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="☁️"/>
+                                    </ContentControl>
+                                    <!-- Tenant ID -->
+                                    <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.tenant_id##">
+                                        <TextBox x:Name="SettingsTenantIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🆔"/>
+                                    </ContentControl>
+                                </Grid>
 
-                                <!-- Groupe Admin (Déplacé ici) -->
-                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.security_admingroup##">
-                                    <TextBox x:Name="SettingsAdminGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="👥"/>
+                                <!-- Client ID (Commun) -->
+                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_appid##">
+                                    <TextBox x:Name="SettingsUserAuthAppIdTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🔑"/>
                                 </ContentControl>
+
+                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,15"/>
+
+                                <!-- B. IDENTITÉ UTILISATEUR (Graph) -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="##loc:settings.azure_subtitle_identity##" Style="{DynamicResource H3Style}"/>
+                                    <Button Grid.Column="1" x:Name="SettingsUserAuthTestButton" Content="##loc:settings.azure_test_user_button##" Style="{DynamicResource SecondaryButtonStyle}" FontSize="11" Height="28" Padding="10,0"/>
+                                </Grid>
+
+                                <!-- Groupe Admin -->
+                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.security_admingroup##">
+                                    <TextBox x:Name="SettingsAdminGroupTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🛡️"/>
+                                </ContentControl>
+
+                                <!-- Scopes -->
+                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_scopes##" Margin="0,10,0,0">
+                                    <TextBox x:Name="SettingsUserAuthScopesTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="🔍" AcceptsReturn="True" Height="60" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                </ContentControl>
+
+                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,15"/>
+
+                                <!-- C. MOTEUR AUTOMATISATION (Certificat) -->
+                                <TextBlock Text="##loc:settings.azure_subtitle_automation##" Style="{DynamicResource H3Style}" Margin="0,0,0,10"/>
+                                
+                                <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.azure_cert_thumbprint##">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Champ Thumbprint -->
+                                        <TextBox x:Name="SettingsCertThumbprintTextBox" Style="{DynamicResource StandardTextBoxStyle}" Tag="📜" FontFamily="Consolas"/>
+                                        
+                                        <!-- Petit bouton de sélection "..." -->
+                                        <Button x:Name="SettingsSelectCertButton" Grid.Column="1" Content="..." 
+                                                Style="{DynamicResource SecondaryButtonStyle}" 
+                                                Width="35" Padding="0" Margin="5,0,5,0"
+                                                ToolTip="##loc:settings.azure_select_cert_tooltip##"/>
+                                        <Button Grid.Column="2" x:Name="SettingsTestCertButton" Content="##loc:settings.azure_test_cert_button##" Style="{DynamicResource SecondaryButtonStyle}" FontSize="11"/>
+                                    </Grid>
+                                </ContentControl>
+                                <TextBlock Text="Valide l'accès au Tenant via PnP PowerShell" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" FontStyle="Italic" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Expander>
                         
@@ -560,7 +876,7 @@
                                             <ContentControl Grid.Column="1" Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_temp_server##" Margin="0,0,10,0">
                                                 <TextBox x:Name="SettingsADTempServerTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
                                             </ContentControl>
-                                            <Button Grid.Column="2" x:Name="SettingsTestInfraButton" Content="Valider les serveurs" Style="{DynamicResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
+                                            <Button Grid.Column="2" x:Name="SettingsTestInfraButton" Content="##loc:settings.ad_btn_valid_server##" Style="{DynamicResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -568,7 +884,7 @@
                                 <!-- SECTION 3 : Configuration de l'Annuaire -->
                                 <Border Style="{DynamicResource SectionBorderStyle}" Margin="0,10,0,0">
                                     <StackPanel>
-                                        <TextBlock Text="Configuration de l'Annuaire" Style="{DynamicResource H3Style}"/>
+                                        <TextBlock Text="##loc:settings.ad_titleCard_directory##" Style="{DynamicResource H3Style}"/>
                                         <ContentControl Style="{DynamicResource FormFieldStyle}" Tag="##loc:settings.ad_user_ou_path##">
                                             <TextBox x:Name="SettingsADUserOUPathTextBox" Style="{DynamicResource StandardTextBoxStyle}"/>
                                         </ContentControl>

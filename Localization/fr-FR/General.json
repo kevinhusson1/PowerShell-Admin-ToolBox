@@ -1,0 +1,36 @@
+{
+    "app": {
+        "title": "Script Tools Box",
+        "subtitle": "Sélecteur dynamique de scripts"
+    },
+    "messages": {
+        "settings_saved_success": "Les paramètres ont été enregistrés avec succès dans la base de données.",
+        "settings_saved_error": "Erreur lors de la sauvegarde des paramètres",
+        "clear_locks_success_log": "Tous les verrous de scripts ont été réinitialisés par un administrateur.",
+        "clear_locks_success_ui": "Les tables de verrous et de progression ont été vidées avec succès.",
+        "clear_locks_error_ui": "Une erreur est survenue lors de la réinitialisation des verrous.",
+        "execution_forbidden_title": "Exécution Interdite",
+        "execution_limit_reached": "Le nombre maximum d'exécutions a été atteint pour le script",
+        "script_file_not_found": "Le fichier de script est introuvable",
+        "script_launch_error": "Erreur lors du lancement du script",
+        "user_connected_log": "Utilisateur connecté avec succès :",
+        "user_disconnected_log": "Utilisateur déconnecté :",
+        "settings_saved_log": "Les paramètres de l'application ont été sauvegardés.",
+        "script_list_refreshed_1": "Liste des scripts mise à jour.",
+        "script_list_refreshed_2": "scripts maintenant visibles.",
+        "timerPIDclose1" : "Le script",
+        "timerPIDclose2" : "a été détecté comme terminé.",
+        "timerProgressStop" : "[TIMER] Le suivi de progression est arrêté (plus aucun script à surveiller)."
+    },
+    "confirmation": {
+        "title": "Confirmation",
+        "close_all_apps": "Êtes-vous sûr de vouloir fermer tous les scripts en cours d'exécution ?\nToute progression non sauvegardée sera perdue.",
+        "clear_locks_title": "Confirmation de réinitialisation",
+        "clear_locks_message": "Êtes-vous sûr de vouloir forcer la suppression de TOUS les verrous de scripts actifs ?\nCette action est irréversible et peut interrompre des utilisateurs."
+    },
+    "tabs": {
+        "scripts": "Scripts",
+        "journal": "Journal",
+        "settings": "Paramètres"
+    }
+}

@@ -14,6 +14,8 @@
 # =====================================================================
 # ÉTAPE 0 : CONFIGURATION DE BASE
 # =====================================================================
+try {Add-Type -AssemblyName WindowsBase, PresentationCore, PresentationFramework} catch {}
+
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Global:ProjectRoot = $projectRoot
 $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSModulePath)"
@@ -200,26 +202,34 @@ try {
     $Global:AppControls['settingsTabItem'] = $mainWindow.FindName('SettingsTabItem')
 
     # Section Générale & UI
-    $Global:AppControls['generalSettingsCard']          = $mainWindow.FindName('GeneralSettingsCard')
-    $Global:AppControls['settingsCompanyNameTextBox']   = $mainWindow.FindName('SettingsCompanyNameTextBox')
-    $Global:AppControls['settingsAppVersionTextBox']    = $mainWindow.FindName('SettingsAppVersionTextBox')
-    $Global:AppControls['settingsLanguageComboBox']     = $mainWindow.FindName('SettingsLanguageComboBox')
+    $Global:AppControls['generalSettingsCard']            = $mainWindow.FindName('GeneralSettingsCard')
+    $Global:AppControls['settingsCompanyNameTextBox']     = $mainWindow.FindName('SettingsCompanyNameTextBox')
+    $Global:AppControls['settingsAppVersionTextBox']      = $mainWindow.FindName('SettingsAppVersionTextBox')
+    $Global:AppControls['settingsLanguageComboBox']       = $mainWindow.FindName('SettingsLanguageComboBox')
     $Global:AppControls['settingsVerboseLoggingCheckBox'] = $mainWindow.FindName('SettingsVerboseLoggingCheckBox')
-    $Global:AppControls['settingsLauncherWidthTextBox'] = $mainWindow.FindName('SettingsLauncherWidthTextBox')
-    $Global:AppControls['settingsLauncherHeightTextBox'] = $mainWindow.FindName('SettingsLauncherHeightTextBox')
+    $Global:AppControls['settingsLauncherWidthTextBox']   = $mainWindow.FindName('SettingsLauncherWidthTextBox')
+    $Global:AppControls['settingsLauncherHeightTextBox']  = $mainWindow.FindName('SettingsLauncherHeightTextBox')
 
     # Section Azure
     $Global:AppControls['azureSettingsCard']            = $mainWindow.FindName('AzureSettingsCard')
+    
+    # Global
+    $Global:AppControls['settingsTenantNameTextBox']    = $mainWindow.FindName('SettingsTenantNameTextBox')
     $Global:AppControls['settingsTenantIdTextBox']      = $mainWindow.FindName('SettingsTenantIdTextBox')
     $Global:AppControls['settingsUserAuthAppIdTextBox'] = $mainWindow.FindName('SettingsUserAuthAppIdTextBox')
-    $Global:AppControls['settingsUserAuthScopesTextBox'] = $mainWindow.FindName('SettingsUserAuthScopesTextBox')
-    $Global:AppControls['SettingsUserAuthTestButton']   = $mainWindow.FindName('SettingsUserAuthTestButton')
-
-    # Section Sécurité (intégrée)
-    $Global:AppControls['settingsAdminGroupTextBox']    = $mainWindow.FindName('SettingsAdminGroupTextBox')
+    
+    # Identité
+    $Global:AppControls['settingsAdminGroupTextBox']        = $mainWindow.FindName('SettingsAdminGroupTextBox')
+    $Global:AppControls['settingsUserAuthScopesTextBox']    = $mainWindow.FindName('SettingsUserAuthScopesTextBox')
+    $Global:AppControls['SettingsUserAuthTestButton']       = $mainWindow.FindName('SettingsUserAuthTestButton')
+    
+    # Automatisation (Certificat)
+    $Global:AppControls['SettingsCertThumbprintTextBox']    = $mainWindow.FindName('SettingsCertThumbprintTextBox')
+    $Global:AppControls['SettingsSelectCertButton']         = $mainWindow.FindName('SettingsSelectCertButton')
+    $Global:AppControls['SettingsTestCertButton']           = $mainWindow.FindName('SettingsTestCertButton')
 
     # Section "ACTIVE DIRECTORY" ---
-    $Global:AppControls['activeDirectorySettingsCard']      = $mainWindow.FindName('ActiveDirectorySettingsCard')
+    $Global:AppControls['activeDirectorySettingsCard']       = $mainWindow.FindName('ActiveDirectorySettingsCard')
     $Global:AppControls['settingsADServiceUserTextBox']      = $mainWindow.FindName('SettingsADServiceUserTextBox')
     $Global:AppControls['settingsADServicePasswordBox']      = $mainWindow.FindName('SettingsADServicePasswordBox')
     $Global:AppControls['settingsTestADCredsButton']         = $mainWindow.FindName('SettingsTestADCredsButton')

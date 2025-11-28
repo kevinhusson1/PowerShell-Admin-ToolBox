@@ -1,0 +1,63 @@
+{
+    "modules": {
+        "launcherui": {
+            "user_groups": "Groupes de l'utilisateur",
+            "scripts_authorized_1": "scripts autorisés trouvés sur",
+            "scripts_authorized_2": "au total",
+            "manifest_incomplete_1": "Le manifeste",
+            "manifest_incomplete_2": "est incomplet et sera ignoré.",
+            "scan_filter_error": "Erreur lors du scan des scripts",
+            
+            "admin_mode_detected": "Mode Administrateur détecté.",
+            "non_admin_mode_detected": "Mode Non-Administrateur détecté.",
+            "stop_process_error": "Impossible d'arrêter le processus",
+            "stop_attempt_1": "Tentative d'arrêt forcé du processus",
+            "stop_attempt_2": "pour le script",
+            
+            "admin_check_start": "--- Début de la vérification des droits ---",
+            "admin_check_system_mode": "Mode Système (Admin par défaut).",
+            "admin_check_user_connected": "Utilisateur Azure connecté",
+            "admin_check_no_group": "Groupe admin non configuré. Accès refusé.",
+            "admin_check_group_required": "Groupe administrateur requis",
+            "admin_check_success": "CORRESPONDANCE TROUVÉE ! Accès accordé.",
+            "admin_check_failure": "Aucune correspondance trouvée. Accès refusé.",
+            "admin_check_error": "Erreur vérification droits",
+            
+            "auth_tooltip_connected": "Connecté en tant que",
+            "auth_tooltip_system": "Connecté en tant que : Système",
+            "updating_script_list_ui_1": "Mise à jour UI avec",
+            "updating_script_list_ui_2": "scripts.",
+
+            "dialog_logout_title": "Déconnexion",
+            "dialog_logout_message": "Voulez-vous vraiment vous déconnecter ?",
+            
+            "dialog_sync_title": "Info",
+            "dialog_sync_required": "Vous devez être connecté pour synchroniser.",
+            
+            "gov_reject_title": "Confirmation",
+            "gov_reject_message": "Rejeter cette demande ?",
+            "gov_approve_title": "Confirmation",
+            "gov_approve_message": "Approuver la permission '{0}' pour l'application ?\nCela l'ajoutera à Azure AD.",
+            "gov_success_title": "Succès",
+            "gov_success_added": "Permission ajoutée.\nN'oubliez pas de valider le Consentement Admin.",
+            "gov_manual_prompt": "Entrez le nom exact de la permission (ex: Mail.Read) :",
+            "gov_manual_title": "Ajouter une permission",
+            "gov_manual_success": "La permission '{0}' a été ajoutée.\nIMPORTANT : Vous devez accorder le Consentement Admin.",
+            "gov_consent_title": "Consentement Requis",
+            "gov_consent_message": "Une page web va s'ouvrir.\nConnectez-vous avec un compte Admin Global et acceptez.",
+
+            "man_group_added": "Groupe '{0}' ajouté à la bibliothèque.",
+            "man_group_not_found_title": "Introuvable",
+            "man_group_not_found": "Le groupe '{0}' n'a pas été trouvé dans Azure AD.",
+            "man_confirm_delete_title": "Confirmer",
+            "man_confirm_delete": "Supprimer '{0}' de la bibliothèque ?\nCela le retirera aussi de tous les scripts.",
+            "man_select_group_title": "Info",
+            "man_select_group": "Veuillez sélectionner un groupe à supprimer.",
+            "man_save_error_title": "Erreur",
+            "man_save_error_int": "Le nombre d'instances doit être un chiffre entier.",
+            "man_save_error_save": "Erreur lors de la sauvegarde des paramètres.",
+            "man_save_success_title": "Succès",
+            "man_save_success": "Configuration enregistrée avec succès."
+        }
+    }
+}

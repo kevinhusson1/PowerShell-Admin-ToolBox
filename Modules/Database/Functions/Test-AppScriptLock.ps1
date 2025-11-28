@@ -2,19 +2,11 @@
 
 <#
 .SYNOPSIS
-    Vérifie si un script a le droit de s'exécuter en fonction des limites de concurrence.
+    Vérifie si un script a le droit de s'exécuter (Concurrency check).
 .DESCRIPTION
-    Cette fonction lit la configuration 'maxConcurrentRuns' du manifeste d'un script.
-    Elle interroge ensuite la base de données pour compter le nombre d'instances
-    de ce script déjà en cours d'exécution.
-    Elle retourne $true si le lancement est autorisé, et $false sinon.
-.PARAMETER Script
-    L'objet manifest (ou un objet similaire) du script à vérifier. Doit contenir
-    les propriétés 'id' et optionnellement 'maxConcurrentRuns'.
-.EXAMPLE
-    if (Test-AppScriptLock -Script $manifest) { # Lancement autorisé }
-.OUTPUTS
-    [bool] - $true si le script peut se lancer, $false sinon.
+    Version Corrigée v2.0 : 
+    Ne se fie PAS à la propriété 'maxConcurrentRuns' de l'objet passé en paramètre (qui peut venir d'un JSON obsolète).
+    Interroge la base de données pour obtenir la configuration réelle en temps réel.
 #>
 function Test-AppScriptLock {
     [CmdletBinding()]
@@ -25,40 +17,52 @@ function Test-AppScriptLock {
     )
 
     try {
-        # --- 1. Déterminer la limite d'exécutions simultanées ---
-        $limit = 1 # Valeur par défaut si non spécifié
-        if ($Script.PSObject.Properties['maxConcurrentRuns']) {
+        $scriptId = $Script.id
+        $safeScriptId = $scriptId.Replace("'", "''")
+
+        # --- CORRECTION MAJEURE : On récupère la limite depuis la BDD ---
+        # On ignore ce qu'il y a dans $Script.maxConcurrentRuns
+        
+        $queryConfig = "SELECT MaxConcurrentRuns FROM script_settings WHERE ScriptId = '$safeScriptId';"
+        $dbConfig = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $queryConfig -ErrorAction Stop
+        
+        $limit = 1 # Valeur par défaut si introuvable en BDD
+        
+        if ($dbConfig) {
+            $limit = [int]$dbConfig.MaxConcurrentRuns
+        } elseif ($Script.PSObject.Properties['maxConcurrentRuns']) {
+            # Fallback sur le manifeste uniquement si la BDD est muette (cas rare)
             $limit = $Script.maxConcurrentRuns
         }
+
         $logLimit = if ($limit -eq -1) { "illimitées" } else { $limit }
-        Write-Verbose (("{0} '{1}' : {2} {3}." -f (Get-AppText 'modules.database.lock_check_1'), $Script.id, (Get-AppText 'modules.database.lock_check_2'), $logLimit))
+        Write-Verbose (("{0} '{1}' : {2} {3}." -f (Get-AppText 'modules.database.lock_check_1'), $scriptId, (Get-AppText 'modules.database.lock_check_2'), $logLimit))
 
         if ($limit -eq -1) {
-            return $true # Illimité, pas besoin de vérifier la base de données.
+            return $true # Illimité
         }
 
-        # --- 2. Compter le nombre d'instances déjà en cours (de manière sécurisée) ---
-        $safeScriptId = $Script.id.Replace("'", "''")
+        # --- Compter le nombre d'instances en cours ---
         $countQuery = "SELECT COUNT(*) AS RunCount FROM active_sessions WHERE ScriptName = '$safeScriptId';"
-        
         $result = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $countQuery -ErrorAction Stop
-        $currentRuns = $result.RunCount
+        $currentRuns = [int]$result.RunCount
         
-        Write-Verbose (("{0} '{1}' : {2}." -f (Get-AppText 'modules.database.lock_check_3'), $Script.id, $currentRuns))
+        Write-Verbose (("{0} '{1}' : {2}." -f (Get-AppText 'modules.database.lock_check_3'), $scriptId, $currentRuns))
 
-        # --- 3. Comparer à la limite ---
+        # --- Vérification ---
+        # Note : Si on est dans le script qui tente de se lancer, on ne s'est pas encore enregistré.
+        # Donc si Limit=2 et qu'il y a déjà 2 instances, on refuse.
         if ($currentRuns -ge $limit) {
-            $warningMsg = "{0} ($limit) {1} '$($Script.id)' {2}" -f (Get-AppText 'modules.database.lock_limit_reached_1'), (Get-AppText 'modules.database.lock_limit_reached_2'), (Get-AppText 'modules.database.lock_limit_reached_3')
+            $warningMsg = "{0} ($limit) {1} '$scriptId' {2}" -f (Get-AppText 'modules.database.lock_limit_reached_1'), (Get-AppText 'modules.database.lock_limit_reached_2'), (Get-AppText 'modules.database.lock_limit_reached_3')
             Write-Warning $warningMsg
             return $false
         }
 
-        # Si on arrive ici, le lancement est autorisé.
         return $true
     }
     catch {
         $errorMsg = Get-AppText -Key 'modules.database.lock_check_error'
         Write-Warning "$errorMsg '$($Script.id)': $($_.Exception.Message)"
-        return $false # Par sécurité, on refuse le verrou en cas d'erreur.
+        return $false
     }
 }

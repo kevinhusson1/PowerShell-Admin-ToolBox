@@ -1,4 +1,10 @@
 {
+    "scripts": {
+        "create-user": {
+            "name": "Création d'utilisateur",
+            "description": "Création de compte avec synchronisation Azure AD."
+        }
+    },
     "create_user": {
         "window_title": "Création d'un Nouvel Utilisateur",
         "header_title": "Création d'utilisateur",

@@ -19,33 +19,42 @@
 function Initialize-AppLocalization {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [string]$ProjectRoot,
-
-        [Parameter(Mandatory)]
-        [string]$Language
+        [Parameter(Mandatory)] [string]$ProjectRoot,
+        [Parameter(Mandatory)] [string]$Language
     )
+
+    # CORRECTION : On initialise à $null pour forcer le "Fast Path" au premier fichier trouvé
+    $Global:AppLocalization = $null
     
-    $langFilePath = Join-Path -Path $ProjectRoot -ChildPath "Localization\$Language.json"
+    Write-Verbose "--- DÉBUT INITIALISATION TRADUCTION ($Language) ---"
 
-    # On initialise toujours la variable globale avec une hashtable vide pour la sécurité
-    $Global:AppLocalization = @{}
-
-    if (-not (Test-Path $langFilePath)) {
-        $warningMsg = "{0} '{1}'. {2}" -f (Get-AppText 'modules.localization.lang_file_not_found_1'), $Language, (Get-AppText 'modules.localization.lang_file_not_found_2')
-        Write-Warning $warningMsg
-        return
+    # 1. CHARGEMENT DES TRADUCTIONS GLOBALES
+    $globalLangFolder = Join-Path -Path $ProjectRoot -ChildPath "Localization\$Language"
+    if (Test-Path $globalLangFolder) {
+        $globalFiles = Get-ChildItem -Path $globalLangFolder -Filter "*.json"
+        foreach ($file in $globalFiles) {
+            Write-Verbose "Source Globale : $($file.Name)"
+            Add-AppLocalizationSource -FilePath $file.FullName
+        }
+    } else {
+        $legacyFile = Join-Path -Path $ProjectRoot -ChildPath "Localization\$Language.json"
+        if (Test-Path $legacyFile) {
+            Write-Verbose "Source Globale (Legacy) : $Language.json"
+            Add-AppLocalizationSource -FilePath $legacyFile
+        }
     }
 
-    try {
-        # On lit le fichier en UTF8 et on le charge dans la variable globale
-        $Global:AppLocalization = Get-Content -Path $langFilePath -Raw -Encoding UTF8 | ConvertFrom-Json
-        
-        $logMsg = "{0} '{1}' {2}" -f (Get-AppText 'modules.localization.lang_file_loaded_1'), $Language, (Get-AppText 'modules.localization.lang_file_loaded_2')
-        Write-Verbose $logMsg
+    # 2. DÉCOUVERTE AUTOMATIQUE MODULES
+    $modulesRoot = Join-Path -Path $ProjectRoot -ChildPath "Modules"
+    if (Test-Path $modulesRoot) {
+        $modules = Get-ChildItem -Path $modulesRoot -Directory
+        foreach ($module in $modules) {
+            $moduleLangFile = Join-Path -Path $module.FullName -ChildPath "Localization\$Language.json"
+            if (Test-Path $moduleLangFile) {
+                Write-Verbose "Source Module [$($module.Name)] : $Language.json"
+                Add-AppLocalizationSource -FilePath $moduleLangFile
+            }
+        }
     }
-    catch {
-        $errorMsg = Get-AppText -Key 'modules.localization.lang_file_error'
-        throw "$errorMsg '$langFilePath': $($_.Exception.Message)"
-    }
+    Write-Verbose "--- FIN INITIALISATION TRADUCTION ---"
 }

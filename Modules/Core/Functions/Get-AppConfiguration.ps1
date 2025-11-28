@@ -36,7 +36,9 @@ function Get-AppConfiguration {
 
             # --- Section [azure] ---
             azure = [PSCustomObject]@{
+                tenantName     = ""
                 tenantId       = ""
+                certThumbprint = ""
                 authentication = [PSCustomObject]@{
                     # Suppression complète de l'objet certificateAuth
                     userAuth = [PSCustomObject]@{
@@ -81,7 +83,9 @@ function Get-AppConfiguration {
         $config.ui.launcherWidth  = Get-AppSetting -Key 'ui.launcherWidth' -DefaultValue $config.ui.launcherWidth
         $config.ui.launcherHeight = Get-AppSetting -Key 'ui.launcherHeight' -DefaultValue $config.ui.launcherHeight
 
+        $config.azure.tenantName = Get-AppSetting -Key 'azure.tenantName' -DefaultValue ""
         $config.azure.tenantId = Get-AppSetting -Key 'azure.tenantId' -DefaultValue $config.azure.tenantId
+        $config.azure.certThumbprint = Get-AppSetting -Key 'azure.cert.thumbprint' -DefaultValue ""
         
         $config.azure.authentication.userAuth.appId = Get-AppSetting -Key 'azure.auth.user.appId' -DefaultValue $config.azure.authentication.userAuth.appId
         $scopesFromDb = Get-AppSetting -Key 'azure.auth.user.scopes' -DefaultValue ($config.azure.authentication.userAuth.scopes -join ',')

@@ -138,17 +138,18 @@ function Register-LauncherEvents {
                 if ($Global:IsAppAdmin) {
                     
                     # --- AZURE ---
+                    Set-AppSetting -Key 'azure.tenantName' -Value $Global:AppControls.settingsTenantNameTextBox.Text
                     Set-AppSetting -Key 'azure.tenantId' -Value $Global:AppControls.settingsTenantIdTextBox.Text
                     Set-AppSetting -Key 'azure.auth.user.appId' -Value $Global:AppControls.settingsUserAuthAppIdTextBox.Text
 
                     # Authentification Utilisateur
                     $scopesToSave = ($Global:AppControls.settingsUserAuthScopesTextBox.Text -split ',').Trim() -join ','
                     Set-AppSetting -Key 'azure.auth.user.scopes' -Value $scopesToSave
-
-                    # --- SÉCURITÉ ---
-                    # Sauvegarde du groupe admin (déplacé visuellement mais toujours sauvegardé)
                     Set-AppSetting -Key 'security.adminGroupName' -Value $Global:AppControls.settingsAdminGroupTextBox.Text
 
+                    # --- CERTIFICAT ---
+                    Set-AppSetting -Key 'azure.cert.thumbprint' -Value $Global:AppControls.SettingsCertThumbprintTextBox.Text
+                    
                     # --- ACTIVE DIRECTORY ---
                     Set-AppSetting -Key 'ad.serviceUser' -Value $Global:AppControls.settingsADServiceUserTextBox.Text
                     
@@ -243,8 +244,8 @@ function Register-LauncherEvents {
         # 1. LOGIQUE DE DÉCONNEXION
         if ($wasConnected) {
             $confirm = [System.Windows.MessageBox]::Show(
-                "Voulez-vous vraiment vous déconnecter ?", 
-                "Déconnexion", 
+                (Get-AppText 'modules.launcherui.dialog_logout_message'), # Message
+                (Get-AppText 'modules.launcherui.dialog_logout_title'),   # Titre
                 [System.Windows.MessageBoxButton]::YesNo, 
                 [System.Windows.MessageBoxImage]::Question
             )
@@ -255,6 +256,15 @@ function Register-LauncherEvents {
 
             Disconnect-AppAzureUser
             $Global:AppAzureAuth.UserAuth = @{ Connected = $false }
+            $Global:CurrentUserGroups = $null # <--- VIDAGE DU CACHE
+
+            # --- CORRECTION : Nettoyage de l'interface ---
+            $Global:AppAvailableScripts = @()  # On vide la variable globale
+            Update-ScriptListBoxUI -scripts @() # On vide la liste visuelle
+
+            # On cache les panneaux de détails
+            $Global:AppControls.DetailsPanelBorder.Visibility = 'Collapsed'
+            $Global:AppControls.StatusBarBorder.Visibility = 'Collapsed'
 
             # Utilisation du nom sauvegardé
             $logMsg = "{0} '{1}'." -f (Get-AppText 'messages.user_disconnected_log'), $userDisplayName
@@ -262,25 +272,37 @@ function Register-LauncherEvents {
         } 
         # 2. LOGIQUE DE CONNEXION
         else {
-            $authResult = Connect-AppAzureWithUser `
-                -AppId $Global:AppConfig.azure.authentication.userAuth.appId `
-                -TenantId $Global:AppConfig.azure.tenantId `
-                -Scopes $Global:AppConfig.azure.authentication.userAuth.scopes
-            
-            if ($authResult.Success) {
-                $Global:AppAzureAuth.UserAuth = $authResult
-                $logMsg = "{0} '{1}'." -f (Get-AppText 'messages.user_connected_log'), $authResult.DisplayName
-                Write-LauncherLog -Message $logMsg -Level Success
-            } else {
-                $Global:AppAzureAuth.UserAuth = @{ Connected = $false }
+            $Global:AppControls.mainWindow.Cursor = [System.Windows.Input.Cursors]::Wait
+            try {
+                $authResult = Connect-AppAzureWithUser `
+                    -AppId $Global:AppConfig.azure.authentication.userAuth.appId `
+                    -TenantId $Global:AppConfig.azure.tenantId `
+                    -Scopes $Global:AppConfig.azure.authentication.userAuth.scopes
+                
+                if ($authResult.Success) {
+                    $Global:AppAzureAuth.UserAuth = $authResult
+                    
+                    # --- CACHE CRITIQUE : On récupère les groupes ICI et une seule fois ---
+                    Write-LauncherLog -Message "Récupération des droits..." -Level Info
+                    $Global:CurrentUserGroups = Get-AppUserAzureGroups
+                    # -------------------------------------------------------------------
+
+                    Write-LauncherLog -Message "{0} '{1}'." -f (Get-AppText 'messages.user_connected_log'), $authResult.DisplayName -Level Success
+                } else {
+                    $Global:AppAzureAuth.UserAuth = @{ Connected = $false }
+                }
+            } finally {
+                $Global:AppControls.mainWindow.Cursor = [System.Windows.Input.Cursors]::Arrow
             }
         }
         
-        # 3. MISE À JOUR UI (Globale)
+        # 3. MISE À JOUR UI
+        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+
+        # ... (Bloc redimensionnement fenêtre inchangé) ...
         $isAdmin = Test-IsAppAdmin
         $Global:IsAppAdmin = $isAdmin
         
-        # A. Taille Fenêtre
         if ($isAdmin) {
             $Global:AppControls.mainWindow.Width = $Global:AppConfig.ui.launcherWidth
             $Global:AppControls.mainWindow.Height = $Global:AppConfig.ui.launcherHeight
@@ -288,28 +310,38 @@ function Register-LauncherEvents {
             $Global:AppControls.mainWindow.Width = 650
             $Global:AppControls.mainWindow.Height = 750
         }
+        # ...
 
-        # B. Contenu Central & Panneaux (NOUVEAU)
         if ($Global:AppAzureAuth.UserAuth.Connected) {
-            # CONNECTÉ : On affiche tout
+            # ... (Visibilité panneaux inchangée) ...
             $Global:AppControls.ConnectPromptPanel.Visibility = 'Collapsed'
             $Global:AppControls.ScriptsListBox.Visibility = 'Visible'
-            
-            # On affiche le détail et la barre de statut
             $Global:AppControls.DetailsPanelBorder.Visibility = 'Visible'
             $Global:AppControls.StatusBarBorder.Visibility = 'Visible'
             
-            $Global:AppAvailableScripts = Get-FilteredAndEnrichedScripts -ProjectRoot $ProjectRoot
+            Write-LauncherLog -Message "Chargement des scripts et de la configuration..." -Level Info
+            
+            if ($Global:uiTimer.IsEnabled) { $Global:uiTimer.Stop() }
+
+            try {
+                # === CORRECTION : On passe les groupes explicitement ===
+                $groupsToPass = if ($Global:CurrentUserGroups) { $Global:CurrentUserGroups } else { @() }
+                
+                $Global:AppAvailableScripts = Get-FilteredAndEnrichedScripts `
+                    -ProjectRoot $ProjectRoot `
+                    -UserGroups $groupsToPass  # <--- PASSAGE PAR PARAMÈTRE
+                # ======================================================
+            } finally {
+                $Global:uiTimer.Start()
+            }
+            
             Update-ScriptListBoxUI -scripts $Global:AppAvailableScripts
         } else {
-            # DÉCONNECTÉ : On cache tout sauf le prompt
+            # ... (Cas déconnecté inchangé) ...
             $Global:AppControls.ConnectPromptPanel.Visibility = 'Visible'
             $Global:AppControls.ScriptsListBox.Visibility = 'Collapsed'
-            
-            # On masque le détail et la barre de statut
             $Global:AppControls.DetailsPanelBorder.Visibility = 'Collapsed'
             $Global:AppControls.StatusBarBorder.Visibility = 'Collapsed'
-            
             Update-ScriptListBoxUI -scripts @()
         }
 
@@ -752,14 +784,32 @@ function Register-LauncherEvents {
 
     if ($Global:AppControls.SettingsUserAuthTestButton) {
         $Global:AppControls.SettingsUserAuthTestButton.Add_Click({
+            # On récupère les valeurs saisies dans les champs (pas celles en config, celles à tester)
             $appId = $Global:AppControls.settingsUserAuthAppIdTextBox.Text
+            $tenantId = $Global:AppControls.settingsTenantIdTextBox.Text # AJOUT
             $scopes = ($Global:AppControls.settingsUserAuthScopesTextBox.Text -split ',').Trim()
             
-            $result = Test-AppAzureUserConnection -AppId $appId -Scopes $scopes
-            if ($result.Success) {
-                [System.Windows.MessageBox]::Show($result.Message, (Get-AppText 'settings_validation.azure_test_success_title'), "OK", "Information")
-            } else {
-                [System.Windows.MessageBox]::Show($result.Message, (Get-AppText 'settings_validation.azure_test_failure_title'), "OK", "Error")
+            # On désactive le bouton pendant le test pour éviter le double-clic
+            $this.IsEnabled = $false
+            $originalContent = $this.Content
+            $this.Content = "Test..."
+            
+            # On force le rafraîchissement visuel
+            [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+
+            try {
+                # Appel avec le nouveau paramètre TenantId
+                $result = Test-AppAzureUserConnection -AppId $appId -TenantId $tenantId -Scopes $scopes
+                
+                if ($result.Success) {
+                    [System.Windows.MessageBox]::Show($result.Message, (Get-AppText 'settings_validation.azure_test_success_title'), "OK", "Information")
+                } else {
+                    [System.Windows.MessageBox]::Show($result.Message, (Get-AppText 'settings_validation.azure_test_failure_title'), "OK", "Error")
+                }
+            } finally {
+                # Restauration du bouton (état connecté)
+                $this.Content = $originalContent
+                $this.IsEnabled = $true
             }
         }.GetNewClosure())
     } else {
@@ -773,7 +823,7 @@ function Register-LauncherEvents {
     if ($Global:AppControls.SyncAzureButton) {
         $Global:AppControls.SyncAzureButton.Add_Click({
             if (-not $Global:AppAzureAuth.UserAuth.Connected) {
-                [System.Windows.MessageBox]::Show("Vous devez être connecté pour synchroniser.", "Info", "OK", "Warning")
+                [System.Windows.MessageBox]::Show((Get-AppText 'modules.launcherui.dialog_sync_required'), (Get-AppText 'modules.launcherui.dialog_sync_title'), "OK", "Warning")
                 return
             }
 
@@ -933,10 +983,10 @@ function Register-LauncherEvents {
                 if (Add-AppKnownGroup -GroupName $group.DisplayName -Description $group.Description) {
                     $Global:AppControls.LibraryNewGroupTextBox.Text = ""
                     Update-ManagementScriptList # Rafraîchir la liste
-                    Write-LauncherLog -Message "Groupe '$groupName' ajouté à la bibliothèque." -Level Success
+                    Write-LauncherLog -Message ((Get-AppText 'modules.launcherui.man_group_added') -f $groupName) -Level Success
                 }
             } else {
-                [System.Windows.MessageBox]::Show("Le groupe '$groupName' n'a pas été trouvé dans Azure AD.", "Introuvable", "OK", "Warning")
+                [System.Windows.MessageBox]::Show(((Get-AppText 'modules.launcherui.man_group_not_found') -f $groupName), (Get-AppText 'modules.launcherui.man_group_not_found_title'), "OK", "Warning")
             }
         } catch {
             Write-LauncherLog -Message "Erreur vérification groupe : $($_.Exception.Message)" -Level Error
@@ -952,7 +1002,7 @@ function Register-LauncherEvents {
         
         if ($selectedItem) {
             $gName = $selectedItem.GroupName
-            if ([System.Windows.MessageBox]::Show("Supprimer '$gName' de la bibliothèque ?`nCela le retirera aussi de tous les scripts.", "Confirmer", "YesNo", "Warning") -eq 'Yes') {
+            if ([System.Windows.MessageBox]::Show(((Get-AppText 'modules.launcherui.man_confirm_delete') -f $gName), (Get-AppText 'modules.launcherui.man_confirm_delete_title'), "YesNo", "Warning") -eq 'Yes') {
                 Remove-AppKnownGroup -GroupName $gName
                 Update-ManagementScriptList
                 
@@ -969,50 +1019,164 @@ function Register-LauncherEvents {
         }
     }.GetNewClosure())
 
+    # ===================================================================
+    # GESTION DES MODIFICATIONS NON SAUVEGARDÉES (DIRTY STATE)
+    # ===================================================================
+    
+    $ViewState = @{
+        UnsavedChanges = $false
+        IsLoading = $false
+        OriginalSelection = $null
+    }
 
-    # B. SÉLECTION DU SCRIPT & CHECKBOXES
-    # -----------------------------------
-    $Global:AppControls.ManageScriptsListBox.Add_SelectionChanged({
-        $selectedScript = $Global:AppControls.ManageScriptsListBox.SelectedItem
+    # Fonction locale pour marquer comme "Modifié"
+    $markAsDirty = {
+        if ($ViewState.IsLoading) { return }
+
+        if (-not $ViewState.UnsavedChanges) {
+            $ViewState.UnsavedChanges = $true
+            $Global:AppControls.ManageSaveButton.Content = "💾   Enregistrer les modifications *"
+            $Global:AppControls.ManageSaveButton.Background = $Global:AppControls.mainWindow.FindResource('WarningBrush')
+            $Global:AppControls.ManageSaveButton.BorderBrush = $Global:AppControls.mainWindow.FindResource('WarningBrush')
+        }
+    }.GetNewClosure()
+
+    # Fonction locale pour marquer comme "Propre"
+    $markAsClean = {
+        $ViewState.UnsavedChanges = $false
+        $Global:AppControls.ManageSaveButton.Content = "💾   " + (Get-AppText 'management.btn_save')
+        $Global:AppControls.ManageSaveButton.Background = $Global:AppControls.mainWindow.FindResource('GreenBrush')
+        $Global:AppControls.ManageSaveButton.BorderBrush = $Global:AppControls.mainWindow.FindResource('GreenBrush')
+    }.GetNewClosure()
+
+    # Fonction pour ANNULER les changements en mémoire (Rollback COMPLET)
+    $rollbackChanges = {
+        param($scriptObject)
+        if (-not $scriptObject) { return }
         
-        if ($selectedScript) {
+        # 1. Rollback des paramètres simples (Gauche)
+        $dbSettings = Get-AppScriptSettingsMap
+        if ($dbSettings.ContainsKey($scriptObject.id)) {
+            $scriptObject.enabled = [bool]$dbSettings[$scriptObject.id].IsEnabled
+            $scriptObject.maxConcurrentRuns = [int]$dbSettings[$scriptObject.id].MaxConcurrentRuns
+        }
+
+        # 2. Rollback de la sécurité (Droite) - NOUVEAU
+        # On doit recharger la liste visuelle pour qu'elle recoche les bonnes cases
+        $securityMap = Get-AppScriptSecurity
+        $authorizedGroups = $securityMap[$scriptObject.id]
+        if (-not $authorizedGroups) { $authorizedGroups = @() }
+        
+        # On parcourt la liste actuelle liée à l'UI et on remet les valeurs d'origine
+        $currentList = $Global:AppControls.ManageSecurityCheckList.ItemsSource
+        if ($currentList) {
+            foreach ($item in $currentList) {
+                # On remet IsSelected à la valeur BDD sans déclencher d'événement (car on est dans le flux logique)
+                $item.IsSelected = $authorizedGroups -contains $item.GroupName
+            }
+            $Global:AppControls.ManageSecurityCheckList.Items.Refresh()
+        }
+
+        $Global:AppControls.ManageScriptsListBox.Items.Refresh()
+    }.GetNewClosure()
+
+    # --- 1. Détection des changements (Inputs) ---
+    
+    $Global:AppControls.ManageEnabledSwitch.Add_Click({ & $markAsDirty }.GetNewClosure())
+    
+    $Global:AppControls.ManageMaxRunsTextBox.Add_TextChanged({ 
+        if ($this.IsKeyboardFocusWithin) { & $markAsDirty } 
+    }.GetNewClosure())
+
+    $Global:AppControls.ManageSecurityCheckList.Add_PreviewMouseLeftButtonUp({
+        # On regarde sur quoi l'utilisateur a cliqué physiquement
+        $element = $this.InputHitTest($_.GetPosition($this))
+        
+        # On remonte l'arbre visuel pour voir si on a cliqué sur une CheckBox (ou ses composants internes comme la Border/Ellipse)
+        while ($element -and $element -isnot [System.Windows.Controls.CheckBox]) {
+            $element = [System.Windows.Media.VisualTreeHelper]::GetParent($element)
+        }
+
+        # Si on a trouvé une CheckBox dans la lignée du clic
+        if ($element) {
+            # On marque comme modifié
+            & $markAsDirty
+            
+            # PETITE ASTUCE : Comme c'est un événement "Preview", le changement de valeur n'a pas encore eu lieu.
+            # WPF va traiter le clic juste après. C'est parfait pour nous.
+        }
+    }.GetNewClosure())
+
+
+    # --- 2. Protection de la Navigation (Changement de script) ---
+    
+    $Global:AppControls.ManageScriptsListBox.Add_SelectionChanged({
+        $newSelection = $Global:AppControls.ManageScriptsListBox.SelectedItem
+        
+        if ($ViewState.UnsavedChanges) {
+            $result = [System.Windows.MessageBox]::Show(
+                "Des modifications n'ont pas été enregistrées sur le script précédent.`nVoulez-vous les ignorer ?", 
+                "Modifications en cours", 
+                [System.Windows.MessageBoxButton]::YesNo, 
+                [System.Windows.MessageBoxImage]::Warning
+            )
+
+            if ($result -eq 'No') {
+                if ($ViewState.OriginalSelection -and $ViewState.OriginalSelection -ne $newSelection) {
+                    $ViewState.IsLoading = $true
+                    $Global:AppControls.ManageScriptsListBox.SelectedItem = $ViewState.OriginalSelection
+                    $Global:AppControls.mainWindow.Dispatcher.Invoke([Action]{ $ViewState.IsLoading = $false }, [System.Windows.Threading.DispatcherPriority]::Input)
+                }
+                return
+            } else {
+                # OUI : On ignore les changements -> ROLLBACK COMPLET
+                & $rollbackChanges -scriptObject $ViewState.OriginalSelection
+                & $markAsClean
+            }
+        }
+
+        $ViewState.IsLoading = $true
+        $ViewState.OriginalSelection = $newSelection
+        
+        & $markAsClean
+
+        if ($newSelection) {
             $Global:AppControls.ManageSelectPrompt.Visibility = 'Collapsed'
             $Global:AppControls.ManageDetailPanel.Visibility = 'Visible'
-            $Global:AppControls.ManageDetailPanel.DataContext = $selectedScript
-
-            # Construction de la liste avec cases à cocher
+            $Global:AppControls.ManageDetailPanel.DataContext = $newSelection
+            
             $allGroups = Get-AppKnownGroups
             $securityMap = Get-AppScriptSecurity
-            $authorizedGroups = $securityMap[$selectedScript.id]
+            $authorizedGroups = $securityMap[$newSelection.id]
             if (-not $authorizedGroups) { $authorizedGroups = @() }
 
             $checkBoxList = @()
             foreach ($g in $allGroups) {
-                $isChecked = $authorizedGroups -contains $g.GroupName
                 $checkBoxList += [PSCustomObject]@{
                     GroupName = $g.GroupName
-                    IsSelected = $isChecked
+                    IsSelected = $authorizedGroups -contains $g.GroupName
                 }
             }
-            
-            $Global:AppControls.ManageSecurityCheckList.ItemsSource = $null
             $Global:AppControls.ManageSecurityCheckList.ItemsSource = $checkBoxList
-
         } else {
             $Global:AppControls.ManageDetailPanel.Visibility = 'Collapsed'
             $Global:AppControls.ManageSelectPrompt.Visibility = 'Visible'
         }
+
+        $Global:AppControls.mainWindow.Dispatcher.Invoke([Action]{ 
+            $ViewState.IsLoading = $false 
+        }, [System.Windows.Threading.DispatcherPriority]::Input)
+
     }.GetNewClosure())
 
-    # 4. BOUTON ENREGISTRER (Tout : État, MaxRuns, ET Sécurité)
+    # 4. BOUTON ENREGISTRER
     $Global:AppControls.ManageSaveButton.Add_Click({
         $selectedScript = $Global:AppControls.ManageScriptsListBox.SelectedItem
         if (-not $selectedScript) { return }
 
-        # --- 1. Sauvegarde des Paramètres (Enabled / MaxRuns) ---
         $maxRuns = 1
         if (-not [int]::TryParse($selectedScript.maxConcurrentRuns, [ref]$maxRuns)) {
-            [System.Windows.MessageBox]::Show("Le nombre d'instances doit être un chiffre entier.", "Erreur", "OK", "Error")
+            [System.Windows.MessageBox]::Show((Get-AppText 'modules.launcherui.man_save_error_int'), (Get-AppText 'modules.launcherui.man_save_error_title'), "OK", "Error")
             return
         }
 
@@ -1021,30 +1185,67 @@ function Register-LauncherEvents {
             return
         }
 
-        # --- 2. Sauvegarde des Groupes (Sécurité) ---
-        # On parcourt la liste visuelle (ItemsSource) pour voir ce qui est coché
         $groupsList = $Global:AppControls.ManageSecurityCheckList.ItemsSource
-
         foreach ($item in $groupsList) {
-            $groupName = $item.GroupName
-            $isChecked = $item.IsSelected # La propriété liée à la CheckBox
-
-            if ($isChecked) {
-                Add-AppScriptSecurityGroup -ScriptId $selectedScript.id -ADGroup $groupName | Out-Null
+            if ($item.IsSelected) {
+                Add-AppScriptSecurityGroup -ScriptId $selectedScript.id -ADGroup $item.GroupName | Out-Null
             } else {
-                Remove-AppScriptSecurityGroup -ScriptId $selectedScript.id -ADGroup $groupName | Out-Null
+                Remove-AppScriptSecurityGroup -ScriptId $selectedScript.id -ADGroup $item.GroupName | Out-Null
             }
         }
 
-        # --- 3. Rafraîchissement Global ---
         $Global:AppControls.ManageScriptsListBox.Items.Refresh()
-        
-        # Rechargement des listes principales
         $Global:AppAvailableScripts = Get-FilteredAndEnrichedScripts -ProjectRoot $ProjectRoot
         Update-ScriptListBoxUI -scripts $Global:AppAvailableScripts
             
         Write-LauncherLog -Message "Configuration du script '$($selectedScript.name)' enregistrée." -Level Success
-        [System.Windows.MessageBox]::Show("Configuration enregistrée avec succès.", "Succès", "OK", "Information")
+        [System.Windows.MessageBox]::Show((Get-AppText 'modules.launcherui.man_save_success'), (Get-AppText 'modules.launcherui.man_save_success_title'), "OK", "Information")
+
+        & $markAsClean
 
     }.GetNewClosure())
+
+    # --- BOUTON TESTER CERTIFICAT ---
+    if ($Global:AppControls.SettingsTestCertButton) {
+        $Global:AppControls.SettingsTestCertButton.Add_Click({
+            
+            # 1. Récupération des valeurs
+            $tenantId = $Global:AppControls.SettingsTenantIdTextBox.Text # On utilise l'ID pour Graph
+            $clientId = $Global:AppControls.SettingsUserAuthAppIdTextBox.Text
+            $thumb = $Global:AppControls.SettingsCertThumbprintTextBox.Text
+
+            if ([string]::IsNullOrWhiteSpace($tenantId) -or [string]::IsNullOrWhiteSpace($clientId) -or [string]::IsNullOrWhiteSpace($thumb)) {
+                [System.Windows.MessageBox]::Show("Veuillez remplir le Tenant ID, l'App ID et le Thumbprint.", "Données manquantes", "OK", "Warning")
+                return
+            }
+
+            # 2. UI En cours
+            $btn = $Global:AppControls.SettingsTestCertButton
+            $oldContent = $btn.Content
+            $btn.Content = "Test Graph..."
+            $btn.IsEnabled = $false
+            $Global:AppControls.mainWindow.Cursor = [System.Windows.Input.Cursors]::Wait
+            $Global:AppControls.mainWindow.Dispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Render)
+
+            # 3. Test de Connexion via le module AZURE (Graph)
+            try {
+                # Plus besoin d'importer Toolbox.SharePoint ici !
+                $result = Test-AppAzureCertConnection -TenantId $tenantId -ClientId $clientId -Thumbprint $thumb
+                
+                if ($result.Success) {
+                    [System.Windows.MessageBox]::Show("Connexion RÉUSSIE (Graph API) !`n`nLe certificat est valide pour l'application Azure.", "Succès", "OK", "Information")
+                } else {
+                    [System.Windows.MessageBox]::Show("Échec de la connexion :`n$($result.Message)", "Échec", "OK", "Error")
+                }
+            } catch {
+                [System.Windows.MessageBox]::Show("Erreur technique : $($_.Exception.Message)", "Erreur", "OK", "Error")
+            } finally {
+                # 4. Restauration UI
+                $btn.Content = $oldContent
+                $btn.IsEnabled = $true
+                $Global:AppControls.mainWindow.Cursor = [System.Windows.Input.Cursors]::Arrow
+            }
+
+        }.GetNewClosure())
+    }
 }

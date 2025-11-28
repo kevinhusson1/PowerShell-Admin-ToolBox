@@ -1,0 +1,32 @@
+{
+    "scripts": {
+        "copy-group": {
+            "name": "Copie de Groupe",
+            "description": "Copie les membres d'un groupe AD vers un autre."
+        },
+        "create-user": {
+            "name": "Création d'utilisateur",
+            "description": "Création de compte avec synchronisation Azure AD."
+        },
+        "DefaultUI": {
+            "name": "Interface par défaut",
+            "description": "Interface utilisateur par défaut pour les scripts personnalisés."
+        },
+        "disable-user": {
+            "name": "Désactiver utilisateur",
+            "description": "Désactive un compte et gère ses dépendances."
+        },
+        "list-user-graph": {
+            "name": "Annuaire Entreprise",
+            "description": "Affiche la liste des utilisateurs depuis Azure AD."
+        },
+        "reactive-user": {
+            "name": "Réactiver utilisateur",
+            "description": "Réactive un compte utilisateur précédemment désactivé."
+        },
+        "sharepoint": {
+            "name": "SharePoint Builder",
+            "description": "Générateur d'arborescence et gestion des droits."
+        }
+    }
+}

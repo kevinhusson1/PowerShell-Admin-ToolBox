@@ -24,23 +24,31 @@ function Merge-PSCustomObject {
         [psobject]$overlay
     )
 
-    # Sécurité de base
     if ($null -eq $base -or $null -eq $overlay) { return }
 
     foreach ($key in $overlay.PSObject.Properties.Name) {
-        # Si la clé existe dans les deux et que les deux valeurs sont des objets, on continue la fusion en profondeur (récursivité)
-        if ($base.PSObject.Properties[$key] -and $base.$key -is [psobject] -and $overlay.$key -is [psobject]) {
+        $baseValue = $base.$key
+        $overlayValue = $overlay.$key
+
+        # --- CORRECTION CRITIQUE ---
+        # On vérifie si les valeurs sont des OBJETS COMPLEXES (Conteneurs) et non des types simples.
+        # En PowerShell, [string] est un [psobject], ce qui causait une récursivité infinie sur le texte.
+        $isBaseComplex = ($baseValue -is [psobject]) -and ($baseValue -isnot [string]) -and ($baseValue -isnot [System.ValueType])
+        $isOverlayComplex = ($overlayValue -is [psobject]) -and ($overlayValue -isnot [string]) -and ($overlayValue -isnot [System.ValueType])
+
+        # Si la clé existe et que les DEUX valeurs sont des objets complexes (ex: sous-sections JSON), on fusionne.
+        if ($base.PSObject.Properties[$key] -and $isBaseComplex -and $isOverlayComplex) {
             Write-Verbose "Fusion en profondeur pour la clé '$key'."
-            Merge-PSCustomObject -base $base.$key -overlay $overlay.$key
+            Merge-PSCustomObject -base $baseValue -overlay $overlayValue
         } 
-        # Sinon, on ajoute ou on écrase simplement la valeur
+        # Sinon, on écrase ou on ajoute (cas des Textes, Booléens, Entiers)
         else {
             if ($base.PSObject.Properties[$key]) {
                 Write-Verbose "Mise à jour de la clé '$key'."
-                $base.$key = $overlay.$key
+                $base.$key = $overlayValue
             } else {
                 Write-Verbose "Ajout de la nouvelle clé '$key'."
-                Add-Member -InputObject $base -MemberType NoteProperty -Name $key -Value $overlay.$key
+                Add-Member -InputObject $base -MemberType NoteProperty -Name $key -Value $overlayValue
             }
         }
     }

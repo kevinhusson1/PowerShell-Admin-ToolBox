@@ -60,6 +60,8 @@ function Initialize-AppUIComponents {
             );
             'Display' = @(
                 "$ProjectRoot\Templates\Components\Display\ListBox.xaml",
+                "$ProjectRoot\Templates\Components\Display\TreeView.xaml",
+                "$ProjectRoot\Templates\Components\Display\DataGrid.xaml",
                 "$ProjectRoot\Templates\Components\Display\LogViewer.xaml"
             );
             'Navigation' = @(
@@ -98,7 +100,7 @@ function Initialize-AppUIComponents {
         foreach ($file in $filesToLoad) {
             if(Test-Path $file) {
                 Write-Verbose "    -> $file"
-                $resourceDictionary = Import-AppXamlTemplate -XamlPath $file
+                $resourceDictionary = Import-AppXamlTemplate -XamlPath $file #-DebugMode
                 $Window.Resources.MergedDictionaries.Add($resourceDictionary)
             } else {
                 $warningMsg = "{0} '{1}' {2}" -f (Get-AppText 'modules.ui.style_file_not_found_1'), $file, (Get-AppText 'modules.ui.style_file_not_found_2')

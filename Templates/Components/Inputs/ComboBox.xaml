@@ -57,9 +57,12 @@
                                                        Margin="10,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"
                                                        Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}, Converter={StaticResource NullToVisibilityConverter}}"/>
                                             
-                                            <ContentPresenter Grid.Column="1" Margin="10,0,0,0"
-                                                              VerticalAlignment="Center" HorizontalAlignment="Left" 
-                                                              Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                            <!-- CORRECTION : On affiche directement la propriété Text de la ComboBox.
+                                                Elle contient la valeur correcte résolue par DisplayMemberPath. -->
+                                            <TextBlock Grid.Column="1" Margin="10,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Left" 
+                                                    Text="{Binding Text, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                    TextTrimming="CharacterEllipsis"/>
                                             
                                             <Path Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center"
                                                   Margin="0,0,10,0" Data="M 0 0 L 4 4 L 8 0"

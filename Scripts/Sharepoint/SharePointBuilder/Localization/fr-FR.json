@@ -1,0 +1,16 @@
+{
+    "scripts": {
+        "sharepoint_builder": {
+            "name": "SharePoint Builder",
+            "description": "Usine de déploiement d'architectures documentaires."
+        }
+    },
+    "sp_builder": {
+        "window_title": "SharePoint Builder",
+        "auth_graph_status": "Identité Azure (Graph) :",
+        "auth_pnp_status": "Connexion SharePoint (PnP) :",
+        "status_connected": "Connecté",
+        "status_disconnected": "Déconnecté",
+        "waiting_for_auth": "En attente d'identification..."
+    }
+}

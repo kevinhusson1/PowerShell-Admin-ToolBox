@@ -40,7 +40,7 @@ function Test-IsAppAdmin {
         }
         
         # 3. Vérification de l'appartenance au groupe
-        $userGroups = Get-AppUserAzureGroups
+        $userGroups = if ($Global:CurrentUserGroups) { $Global:CurrentUserGroups } else { Get-AppUserAzureGroups }
         if ($userGroups -contains $adminGroup) {
             Write-Verbose (Get-AppText -Key 'modules.launcherui.admin_check_success')
             return $true

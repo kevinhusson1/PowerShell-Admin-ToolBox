@@ -90,6 +90,38 @@ function Initialize-AppDatabase {
                     Description TEXT
                 );
 "@
+            # --- Table des Modèles d'arborescence (JSON) ---
+            'sp_templates' = @"
+                CREATE TABLE sp_templates (
+                    TemplateId      TEXT PRIMARY KEY,
+                    DisplayName     TEXT NOT NULL,
+                    Description     TEXT,
+                    Category        TEXT,
+                    StructureJson   TEXT NOT NULL, -- L'arbre complet
+                    NamingRuleId    TEXT,
+                    AutoSelectGroup TEXT,
+                    DateModified    TEXT
+                );
+"@
+            # --- Table des Règles de Nommage (Formulaire Dynamique) ---
+            'sp_naming_rules' = @"
+                CREATE TABLE sp_naming_rules (
+                    RuleId          TEXT PRIMARY KEY,
+                    DefinitionJson  TEXT NOT NULL  -- La structure du formulaire (Labels, Inputs)
+                );
+"@
+            # --- Table des Logs de Déploiement ---
+            'sp_deploy_logs' = @"
+                CREATE TABLE sp_deploy_logs (
+                    LogId           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Date            TEXT,
+                    UserUPN         TEXT,
+                    TargetUrl       TEXT,
+                    TemplateId      TEXT,
+                    Status          TEXT,
+                    Details         TEXT
+                );
+"@
         }
         # ------------------------------------
 
