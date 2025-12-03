@@ -67,7 +67,7 @@ try {
 Send-Progress 60 "Chargement de l'interface..."
 try {
     $window = Import-AppXamlTemplate -XamlPath (Join-Path $scriptRoot "SharePointBuilder.xaml")
-    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'ProfileButton'
+    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'ProfileButton', 'Navigation'
 
     # Icône
     $imgBrush = $window.FindName("HeaderIconBrush")
@@ -84,7 +84,14 @@ try {
     if (Test-Path $builderLogicPath) {
         . $builderLogicPath
         # ... (Configuration du contexte Autopilot inchangée) ...
-        $context = @{ Window = $window; AutoSiteUrl = $AutoSiteUrl; AutoLibraryName = $AutoLibraryName; AutoTemplateId = $AutoTemplateId; AutoFormData = $AutoFormData }
+        $context = @{ 
+            Window = $window;
+            ScriptRoot = $scriptRoot;
+            AutoSiteUrl = $AutoSiteUrl;
+            AutoLibraryName = $AutoLibraryName;
+            AutoTemplateId = $AutoTemplateId;
+            AutoFormData = $AutoFormData;
+        }
         Initialize-BuilderLogic -Context $context
     }
 

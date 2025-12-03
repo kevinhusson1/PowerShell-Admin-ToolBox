@@ -1,18 +1,34 @@
 function Get-AppSPLibraries {
     [CmdletBinding()]
-    param([string]$SiteUrl)
+    param(
+        [Parameter(Mandatory=$false)] [string]$SiteUrl,
+        [Parameter(Mandatory=$false)] $Connection
+    )
 
     try {
-        # On doit se connecter au site spécifique pour lister ses listes
-        # Astuce : On utilise le Connect-PnPOnline interactif qui utilisera le token en cache
-        # Attention : C'est une opération lente, faudra la mettre dans un Job côté UI
-        $conn = Connect-PnPOnline -Url $SiteUrl -Interactive -ErrorAction Stop -ReturnConnection
+        $params = @{ ErrorAction = "Stop" }
+        if ($Connection) { $params.Connection = $Connection }
+        elseif (-not [string]::IsNullOrWhiteSpace($SiteUrl)) {
+             $conn = Connect-PnPOnline -Url $SiteUrl -Interactive -ReturnConnection -ErrorAction Stop
+             $params.Connection = $conn
+        }
+
+        # Filtre Legacy strict
+        $libs = Get-PnPList @params | Where-Object { $_.BaseTemplate -eq 101 } | Sort-Object Title
         
-        $libs = Get-PnPList -Connection $conn | Where-Object { $_.BaseTemplate -eq 101 -and $_.Hidden -eq $false } | Select-Object Title, Id, RootFolder
-        
-        return $libs | Sort-Object Title
+        # Projection pour l'UI
+        $results = @()
+        foreach ($lib in $libs) {
+            $results += [PSCustomObject]@{
+                Title = $lib.Title
+                Id = $lib.Id
+                RootFolder = $lib.RootFolder # Utile pour le path relatif
+            }
+        }
+
+        return $results
     }
     catch {
-        return @()
+        throw "Erreur récupération bibliothèques : $($_.Exception.Message)"
     }
 }

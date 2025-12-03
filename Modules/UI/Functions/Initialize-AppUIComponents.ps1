@@ -38,7 +38,9 @@ function Initialize-AppUIComponents {
         # Définir les ressources de base toujours chargées
         $baseResources = @(
             "$ProjectRoot\Templates\Styles\Colors.xaml",
-            "$ProjectRoot\Templates\Styles\Typography.xaml"
+            "$ProjectRoot\Templates\Styles\Typography.xaml",
+            "$ProjectRoot\Templates\Styles\Cards.xaml",   # <--- AJOUT
+            "$ProjectRoot\Templates\Styles\Badges.xaml"
         )
         
         # --- CORRECTION DE LA LISTE DES COMPOSANTS ---

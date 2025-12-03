@@ -20,8 +20,13 @@
     # Fonctions à exporter
     FunctionsToExport = @(
         'Connect-AppSharePoint',
-        'Get-AppSPLibraries',
         'Get-AppSPSites',
+        'Get-AppSPLibraries',
+        'New-AppSPFolder',
+        'Set-AppSPPermission',
+        'Set-AppSPMetadata',
+        'Add-AppSPFile',
+        'Get-AppSPFile',
         'New-AppSPStructure'
     )
 }

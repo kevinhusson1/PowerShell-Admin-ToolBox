@@ -1,46 +1,68 @@
-# Seed-SharePointData.ps1
-# Script temporaire pour peupler la base avec un exemple
+# Scripts/SharePoint/SharePointBuilder/Seed-SharePointData.ps1
 
-Import-Module ".\Modules\Database" -Force
-Import-Module ".\Vendor\PSSQLite" -Force
+# 1. Chargement du contexte (si lancé manuellement)
+if (-not $Global:AppDatabasePath) {
+    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $projectRoot = (Get-Item $scriptRoot).Parent.Parent.Parent.FullName
+    Import-Module "$projectRoot\Modules\Database" -Force
+    Initialize-AppDatabase -ProjectRoot $projectRoot
+}
 
-$dbPath = ".\Config\database.sqlite"
-$Global:AppDatabasePath = $dbPath
+Write-Host "Injection des données de test SharePoint..." -ForegroundColor Cyan
 
-# 1. Règle de Nommage (JSON)
-# Correspond à votre ancien FolderNameTemplates.ps1
+# --- A. Règle de Nommage (Formulaire Dynamique) ---
+# Simule l'ancien FolderNameTemplates.ps1
 $namingRule = @{
     Layout = @(
-        @{ Type = "Label"; Content = "Année :" },
-        @{ Type = "TextBox"; Name = "Year"; DefaultValue = "$(Get-Date -Format yyyy)" },
+        @{ Type = "Label"; Content = "C-" },
+        @{ Type = "TextBox"; Name = "CodeChantier"; DefaultValue = ""; Width = 60 },
         @{ Type = "Label"; Content = "_" },
-        @{ Type = "ComboBox"; Name = "Type"; Options = @("PROJET", "CHANTIER", "APPEL_OFFRE") },
+        @{ Type = "TextBox"; Name = "NomChantier"; DefaultValue = "NomDuChantier"; Width = 150 },
         @{ Type = "Label"; Content = "_" },
-        @{ Type = "TextBox"; Name = "Client"; DefaultValue = "" }
+        @{ Type = "ComboBox"; Name = "Annee"; Options = @("2024", "2025", "2026"); Width = 70 }
     )
-    Description = "Format : ANNEE_TYPE_CLIENT"
-} | ConvertTo-Json -Depth 5
+    Description = "Format standard : C-000_Nom_Annee"
+}
+$jsonRule = $namingRule | ConvertTo-Json -Depth 10 -Compress
 
-$q1 = "INSERT OR REPLACE INTO sp_naming_rules (RuleId, DefinitionJson) VALUES ('RULE_PROJET_V1', '$namingRule');"
-Invoke-SqliteQuery -DataSource $dbPath -Query $q1
+# Insertion Règle
+$ruleId = "Rule-Chantier-v1"
+$q1 = "INSERT OR REPLACE INTO sp_naming_rules (RuleId, DefinitionJson) VALUES ('$ruleId', '$($jsonRule.Replace("'", "''"))');"
+Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $q1
 
-# 2. Modèle d'arborescence (Structure JSON simplifiée pour le test)
-# Correspond à la structure de vos anciens XML
+# --- B. Modèle d'Arborescence (Template) ---
+# Simule l'ancien XML
 $structure = @{
-    Root = @{
-        Folders = @(
-            @{ Name = "01_Administratif"; Folders = @() },
-            @{ Name = "02_Technique"; Folders = @(
-                @{ Name = "Plans" }
+    Folders = @(
+        @{ 
+            Name = "01_Administratif"
+            Folders = @(
+                @{ Name = "Contrats" },
+                @{ Name = "Factures" }
+            )
+        },
+        @{ 
+            Name = "02_Technique"
+            Folders = @(
+                @{ Name = "Plans" },
                 @{ Name = "Rapports" }
-            )},
-            @{ Name = "03_Financier"; Security = @{ Inherit = $false; Readers = @("Direction") } }
-        )
-    }
-} | ConvertTo-Json -Depth 10
+            )
+        },
+        @{
+            Name = "03_Photos"
+            # Exemple de permission spécifique (optionnel)
+            Permissions = @(
+                @{ Email = "G_Direction"; Level = "Read" }
+            )
+        }
+    )
+}
+$jsonStructure = $structure | ConvertTo-Json -Depth 10 -Compress
 
-$q2 = "INSERT OR REPLACE INTO sp_templates (TemplateId, DisplayName, Description, Category, StructureJson, NamingRuleId, DateModified) 
-       VALUES ('TPL_CHANTIER', 'Modèle Chantier Standard', 'Structure classique pour les chantiers de réhabilitation.', 'Chantier', '$structure', 'RULE_PROJET_V1', '$(Get-Date)');"
-Invoke-SqliteQuery -DataSource $dbPath -Query $q2
+# Insertion Template
+$tplId = "Tpl-Chantier-Std"
+$q2 = "INSERT OR REPLACE INTO sp_templates (TemplateId, DisplayName, Description, Category, StructureJson, NamingRuleId) 
+       VALUES ('$tplId', 'Modèle Chantier Standard', 'Structure classique pour les nouveaux chantiers.', 'Opérations', '$($jsonStructure.Replace("'", "''"))', '$ruleId');"
+Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $q2
 
-Write-Host "Données injectées avec succès." -ForegroundColor Green
+Write-Host "✅ Données injectées avec succès." -ForegroundColor Green

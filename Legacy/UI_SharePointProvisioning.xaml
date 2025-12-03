@@ -1,0 +1,216 @@
+<Window 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Name="SharePointProvisioningWindow"
+    Title="Génération Arborescence SharePoint" 
+    Height="950"
+    Width="1200" 
+    WindowStartupLocation="CenterScreen"
+    Background="#F5F7FA"
+    FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <!-- ... (Vos ressources locales restent inchangées) ... -->
+        <Style x:Key="LocalComboBoxItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource DarkTextColor}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#F0F9FD"/></Trigger>
+                <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#E3F3FA"/></Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SharePointComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,0,0,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource GrayColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource DarkTextColor}"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource LocalComboBoxItemStyle}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/></Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- En-tête -->
+            <RowDefinition Height="*"/>    <!-- Zone de contenu principale (Source/Cible) -->
+            <RowDefinition Height="Auto"/> <!-- NOUVEAU : Panneau de Configuration -->
+            <RowDefinition Height="200"/>  <!-- Zone de logs -->
+            <RowDefinition Height="Auto"/> <!-- Barre de progression -->
+            <RowDefinition Height="Auto"/> <!-- Barre de statut et boutons principaux -->
+        </Grid.RowDefinitions>
+
+        <!-- En-tête (Grid.Row="0") - INCHANGÉ -->
+        <DockPanel Grid.Row="0" Margin="20,10,20,10">
+            <!-- ... (contenu de l'en-tête inchangé) ... -->
+            <Border Background="{DynamicResource PrimaryColor}" Width="60" Height="60" CornerRadius="30" DockPanel.Dock="Left">
+                <TextBlock Text="SP" FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Margin="15,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Génération d'Arborescence SharePoint" Style="{DynamicResource H1Style}"/>
+                <TextBlock Text="Déploiement de structures via modèle XML" Style="{DynamicResource H2Style}"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Zone Source/Cible (Grid.Row="1") - INCHANGÉ -->
+        <Grid Grid.Row="1" Margin="20,0,20,10">
+            <!-- ... (tout le contenu de la grille avec les deux panneaux est inchangé) ... -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="350"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" MinWidth="350"/>
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Background="White" BorderBrush="{DynamicResource LightGrayColor}" BorderThickness="1" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Étape 1 : Cible du Déploiement" Style="{DynamicResource H3Style}"/>
+                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                        <TextBlock Text="Site SharePoint" Style="{DynamicResource H4Style}"/>
+                        <ComboBox x:Name="SiteComboBox" Style="{StaticResource SharePointComboBoxStyle}" DisplayMemberPath="Title" IsEnabled="False" Margin="0,0,0,10"/>
+                        <TextBlock Text="Bibliothèque de Documents" Style="{DynamicResource H4Style}"/>
+                        <ComboBox x:Name="LibraryComboBox" Style="{StaticResource SharePointComboBoxStyle}" DisplayMemberPath="Title" IsEnabled="False" Margin="0,0,0,10"/>
+                    </StackPanel>
+                    <Border Grid.Row="3" BorderBrush="{DynamicResource LightGrayColor}" BorderThickness="1" Margin="0,15,0,0" Padding="5">
+                        <ScrollViewer x:Name="TargetTreeViewScrollViewer" VerticalScrollBarVisibility="Auto">
+                            <TreeView x:Name="TargetTreeView" BorderThickness="0"/>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+            <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
+            <Border Grid.Column="2" Background="White" BorderBrush="{DynamicResource LightGrayColor}" BorderThickness="1" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Étape 2 : Modèle à Appliquer" Style="{DynamicResource H3Style}" VerticalAlignment="Center"/>
+                        
+                        <!-- NOUVEAU TEXTBLOCK POUR LE NOM DU FICHIER -->
+                        <TextBlock x:Name="XmlFileNameTextBlock" Grid.Column="1"
+                                Text=""
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource GrayColor}"
+                                VerticalAlignment="Center"
+                                Margin="0,0,10,0"
+                                ToolTip="Modèle XML actuellement chargé."/>
+                        
+                        <Button x:Name="LoadXmlModelButton" Grid.Column="2" Content="Charger Modèle..." 
+                                Style="{DynamicResource PrimaryButtonStyle}" Height="32" Width="150"/>
+                    </Grid>
+                    <Border Grid.Row="1" BorderBrush="{DynamicResource LightGrayColor}" BorderThickness="1" Padding="5">
+                        <ScrollViewer x:Name="SourceXmlTreeViewScrollViewer" VerticalScrollBarVisibility="Auto">
+                            <TreeView x:Name="SourceXmlTreeView" BorderThickness="0" />
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- NOUVEAU PANNEAU DE CONFIGURATION (Grid.Row="2") -->
+        <Border Grid.Row="2" Background="White" BorderBrush="{DynamicResource LightGrayColor}" BorderThickness="1" Margin="20,0,20,10" Padding="15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- PANNEAU DE GAUCHE : Création de la destination -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Étape 3 : Création de la Destination (Optionnel)" Style="{DynamicResource H3Style}"/>
+                    
+                    <!-- Ligne avec la CheckBox et la ComboBox -->
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox x:Name="CreateFolderCheckBox" Content="Créer un dossier de destination" 
+                                VerticalAlignment="Center" Style="{DynamicResource StandardCheckBoxStyle}"/>
+                        
+                        <ComboBox x:Name="TemplateComboBox" MinWidth="180" Margin="10,0,0,0" 
+                                IsEnabled="False" Style="{DynamicResource SharePointComboBoxStyle}"/>
+                    </StackPanel>
+
+                    <!-- Ce panneau est le CONTENEUR VIDE où le formulaire dynamique sera injecté -->
+                    <StackPanel x:Name="DynamicFormHolder" Margin="0,15,0,0" />
+
+                </StackPanel>
+
+                <!-- Séparateur visuel -->
+                <GridSplitter Grid.Column="1" Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="{DynamicResource LightGrayColor}" Margin="10,0,10,0"/>
+
+                <!-- PANNEAU DE DROITE : Options avancées -->
+                <StackPanel Grid.Column="2" Margin="10,0,0,0">
+                    <TextBlock Text="Options Avancées" Style="{DynamicResource H3Style}"/>
+                    
+                    <CheckBox x:Name="OverwritePermissionsCheckBox" Content="Écraser les permissions sans demander" 
+                            Margin="0,10,0,0" Style="{DynamicResource StandardCheckBoxStyle}"/>
+                    
+                    <!-- NOUVEAU : On utilise un WrapPanel pour aligner les deux boutons sur la même ligne -->
+                    <WrapPanel Margin="0,15,0,0" HorizontalAlignment="Center">
+                        <Button x:Name="ExportConfigButton" Content="Exporter la commande"  MinWidth="140" 
+                                Height="32" Style="{DynamicResource PrimaryButtonStyle}"/>
+                        
+                        <!-- NOUVEAU BOUTON DE RÉINITIALISATION -->
+                        <Button x:Name="ResetUIButton" Content="Réinitialiser" 
+                                Height="32" Style="{DynamicResource RedButtonStyle}" Margin="10,0,0,0" MinWidth="120" 
+                                ToolTip="Efface toutes les sélections et configurations pour recommencer."/>
+                    </WrapPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Zone de Logs (Grid.Row="3") - INCHANGÉ -->
+        <Border Grid.Row="3" Background="White" BorderBrush="{DynamicResource LightGrayColor}" BorderThickness="1" Margin="20,0,20,10" Padding="15">
+            <!-- ... (contenu de la zone de logs inchangé) ... -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Journal des Opérations" Style="{DynamicResource H3Style}" Margin="0,0,0,10"/>
+                <RichTextBox x:Name="LogRichTextBox" Grid.Row="1" IsReadOnly="True" Style="{DynamicResource LogsRichTextBoxStyle}" FontFamily="Consolas" FontSize="11"/>
+            </Grid>
+        </Border>
+
+        <!-- NOUVELLE PROGRESSBAR (Grid.Row="4") -->
+        <ProgressBar x:Name="DeploymentProgressBar" Grid.Row="4" 
+                    Height="5" Margin="20,5,20,5" 
+                    BorderThickness="0"
+                    Background="{DynamicResource LightGrayColor}"
+                    Foreground="{DynamicResource GreenColor}"
+                    Visibility="Collapsed"/>
+
+        <!-- Barre de Statut (Grid.Row="4") - INCHANGÉ -->
+        <Border Grid.Row="5" Background="{DynamicResource LightGrayColor}" BorderThickness="0,1,0,0" Padding="20,15">
+            <!-- ... (contenu de la barre de statut inchangé) ... -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="StatusTextBox" Grid.Column="0" Text="Veuillez sélectionner une bibliothèque." VerticalAlignment="Center" IsReadOnly="True" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource DarkTextColor}"/>
+                <Button x:Name="CopyUrlButton" Grid.Column="1" Content="Copier URL" Style="{DynamicResource SecondaryButtonStyle}" IsEnabled="False" Height="32" MinWidth="110" Margin="0,0,10,0" ToolTip="Copier l'URL complète de la destination dans le presse-papiers"/>
+                <Button x:Name="OpenUrlButton" Grid.Column="2" Content="Ouvrir ↗" Style="{DynamicResource PrimaryButtonStyle}" IsEnabled="False" Height="32" MinWidth="90" Margin="0,0,20,0" ToolTip="Ouvrir l'emplacement dans le navigateur"/>
+                <Button x:Name="DeployButton" Grid.Column="3" Content="Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" IsEnabled="False" MinWidth="180" Height="36" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
