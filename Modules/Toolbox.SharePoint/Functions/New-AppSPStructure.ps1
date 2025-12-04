@@ -3,7 +3,8 @@ function New-AppSPStructure {
     param(
         [Parameter(Mandatory)] [string]$TargetSiteUrl,
         [Parameter(Mandatory)] [string]$TargetLibraryName,
-        [Parameter(Mandatory)] [string]$RootFolderName,
+        # CORRECTION 1 : Ce paramètre n'est plus obligatoire pour permettre le déploiement racine
+        [Parameter(Mandatory = $false)] [string]$RootFolderName, 
         [Parameter(Mandatory)] [string]$StructureJson,
         [Parameter(Mandatory)] [string]$ClientId,
         [Parameter(Mandatory)] [string]$Thumbprint,
@@ -12,7 +13,7 @@ function New-AppSPStructure {
 
     $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new() }
 
-    function Log { param($m, $l="INFO") $result.Logs.Add("$l|$m"); Write-Verbose "[$l] $m" }
+    function Log { param($m, $l = "INFO") $result.Logs.Add("$l|$m"); Write-Verbose "[$l] $m" }
     function Err { param($m) $result.Errors.Add($m); $result.Success = $false; Log $m "ERROR"; Write-Error $m }
 
     try {
@@ -35,7 +36,6 @@ function New-AppSPStructure {
             param($CurrentPath, $FolderObj)
 
             $folderName = $FolderObj.Name
-            if ($CurrentPath -eq $libUrl) { $folderName = $RootFolderName }
             $fullPath = "$CurrentPath/$folderName"
             
             Log "Traitement du dossier : $fullPath" "INFO"
@@ -44,10 +44,12 @@ function New-AppSPStructure {
             try {
                 $folder = Add-PnPFolder -Name $folderName -Folder $CurrentPath -Connection $conn -ErrorAction Stop
                 Log "Dossier validé : $($folder.Name)" "DEBUG"
-            } catch {
+            }
+            catch {
                 try {
                     $folder = Resolve-PnPFolder -SiteRelativePath $fullPath -Connection $conn -ErrorAction Stop
-                } catch {
+                }
+                catch {
                     Err "CRASH sur '$fullPath' : $($_.Exception.Message)"
                     return 
                 }
@@ -61,7 +63,8 @@ function New-AppSPStructure {
                     $tempObj = Get-PnPFolder -Url $folder.ServerRelativeUrl -Includes ListItemAllFields -Connection $conn -ErrorAction Stop
                     $folderItem = $tempObj.ListItemAllFields
                     if ($null -eq $folderItem.Id) { throw "ID vide" }
-                } catch {
+                }
+                catch {
                     Start-Sleep -Milliseconds 500
                     $retry++
                 }
@@ -71,38 +74,31 @@ function New-AppSPStructure {
                 Log "⚠️ Impossible de récupérer l'Item SharePoint (Droits/Tags ignorés)." "WARNING"
             } 
             else {
-                # 3. PERMISSIONS (Mode Additif par défaut)
+                # 3. PERMISSIONS
                 if ($FolderObj.Permissions) {
                     Log "Application des permissions..." "DEBUG"
                     try {
-                        # --- OPTIONNEL : CASSER L'HÉRITAGE SI DEMANDÉ ---
-                        # Si tu ajoutes "BreakInheritance": true dans le JSON plus tard :
-                        if ($FolderObj.BreakInheritance -eq $true) {
-                             Log "Rupture d'héritage demandée." "INFO"
-                             # Break-PnPListItemRoleInheritance -List $TargetLibraryName -Identity $folderItem.Id -CopyRoleAssignments:$false -Connection $conn
-                        }
-                        # ------------------------------------------------
-
                         foreach ($perm in $FolderObj.Permissions) {
                             $email = $perm.Email
                             $role = $perm.Level
-                            $spRole = switch ($role.ToLower()) { "read" {"Read"} "contribute" {"Contribute"} "full" {"Full Control"} Default {"Read"} }
-                            
+                            $spRole = switch ($role.ToLower()) { "read" { "Read" } "contribute" { "Contribute" } "full" { "Full Control" } Default { "Read" } }
                             try {
                                 Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $email -AddRole $spRole -Connection $conn -ErrorAction Stop
                                 Log "Permission ajoutée : $email -> $spRole" "INFO"
-                            } catch {
-                                # Retry avec création user
+                            }
+                            catch {
                                 try {
                                     New-PnPUser -LoginName $email -Connection $conn -ErrorAction SilentlyContinue | Out-Null
                                     Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $email -AddRole $spRole -Connection $conn -ErrorAction Stop
                                     Log "Permission ajoutée (après résolution) : $email" "INFO"
-                                } catch {
+                                }
+                                catch {
                                     Log "Erreur permission pour $email : $($_.Exception.Message)" "WARNING"
                                 }
                             }
                         }
-                    } catch { Err "Erreur globale Permissions : $($_.Exception.Message)" }
+                    }
+                    catch { Err "Erreur globale Permissions : $($_.Exception.Message)" }
                 }
 
                 # 4. TAGS
@@ -114,7 +110,8 @@ function New-AppSPStructure {
                         try {
                             Set-PnPListItem -List $TargetLibraryName -Identity $folderItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
                             Log "Tags appliqués." "INFO"
-                        } catch { Err "Erreur Tags : $($_.Exception.Message)" }
+                        }
+                        catch { Err "Erreur Tags : $($_.Exception.Message)" }
                     }
                 }
             }
@@ -129,7 +126,8 @@ function New-AppSPStructure {
                         Add-PnPFile -Path $tempFile -Folder $folder.ServerRelativeUrl -NewFileName "$($link.Name).url" -Connection $conn | Out-Null
                         Remove-Item $tempFile -Force
                         Log "Raccourci créé." "INFO"
-                    } catch { Err "Erreur Lien : $($_.Exception.Message)" }
+                    }
+                    catch { Err "Erreur Lien : $($_.Exception.Message)" }
                 }
             }
 
@@ -141,28 +139,39 @@ function New-AppSPStructure {
             }
         }
 
-        # Lancement Racine
-        Log "Création racine : $RootFolderName" "INFO"
-        try {
-            $rootFolder = Add-PnPFolder -Name $RootFolderName -Folder $libUrl -Connection $conn -ErrorAction Stop
-            Log "Racine OK : $($rootFolder.ServerRelativeUrl)" "SUCCESS"
-        } catch {
-            Err "Erreur racine : $($_.Exception.Message)"
-            return $result
+        # --- CORRECTION 2 : Gestion Racine vs Pas de Racine ---
+        $startPath = $libUrl
+
+        if (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
+            Log "Création racine : $RootFolderName" "INFO"
+            try {
+                $rootFolder = Add-PnPFolder -Name $RootFolderName -Folder $libUrl -Connection $conn -ErrorAction Stop
+                $startPath = $rootFolder.ServerRelativeUrl
+                Log "Racine OK : $startPath" "SUCCESS"
+            }
+            catch {
+                Err "Erreur racine : $($_.Exception.Message)"
+                return $result
+            }
+        }
+        else {
+            Log "Déploiement direct à la racine de la bibliothèque." "INFO"
         }
 
         # Lancement Récursion
         if ($structure.Folders) {
             foreach ($f in $structure.Folders) { 
-                Process-Folder -CurrentPath $rootFolder.ServerRelativeUrl -FolderObj $f 
+                Process-Folder -CurrentPath $startPath -FolderObj $f 
             }
-        } else {
-            Process-Folder -CurrentPath $libUrl -FolderObj $structure
+        }
+        else {
+            Process-Folder -CurrentPath $startPath -FolderObj $structure
         }
 
         Log "Déploiement terminé." "SUCCESS"
 
-    } catch {
+    }
+    catch {
         Err "CRASH MOTEUR : $($_.Exception.Message)"
     }
 

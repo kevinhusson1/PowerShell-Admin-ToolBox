@@ -276,9 +276,200 @@
                 </TabItem>
 
                 <!-- PLACEHOLDERS -->
+                <!-- ONGLET 2 : ÉDITEUR DE MODÈLE -->
                 <TabItem Header="✏️ Éditeur de Modèle">
-                    <Grid Background="{DynamicResource WhiteBrush}">
+                    <Grid Background="{DynamicResource BackgroundLightBrush}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- Toolbar -->
+                            <RowDefinition Height="*"/>
+                            <!-- Workspace -->
+                        </Grid.RowDefinitions>
 
+                        <!-- 1. BARRE D'OUTILS & CONTEXTE -->
+                        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Gestion Fichier -->
+                                    <ColumnDefinition Width="*"/>
+                                    <!-- Espace -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Validation Context -->
+                                    <ColumnDefinition Width="20"/>
+                                    <!-- Espace -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Actions Principales -->
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Gestion BDD -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <TextBlock Text="Modèle existant" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
+                                    </StackPanel>
+                                    <Button x:Name="EditorLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom"/>
+                                </StackPanel>
+
+                                <!-- Contexte de Validation (IntelliSense) -->
+                                <Border Grid.Column="2" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="8" Padding="10,5" BorderBrush="{DynamicResource InfoBrush}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎯" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Contexte de validation" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
+                                            <TextBlock x:Name="EditorContextStatusText" Text="Aucun site cible défini" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
+                                        </StackPanel>
+                                        <Button x:Name="EditorDefineTargetButton" Content="Définir" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Actions Globales -->
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="EditorNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
+                                    <Button x:Name="EditorSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 2. ZONE DE TRAVAIL -->
+                        <Grid Grid.Row="1" Margin="25">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <!-- Arbre -->
+                                <ColumnDefinition Width="25"/>
+                                <!-- Espace -->
+                                <ColumnDefinition Width="1.5*"/>
+                                <!-- Propriétés -->
+                            </Grid.ColumnDefinitions>
+
+                            <!-- COLONNE GAUCHE : STRUCTURE -->
+                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header Arbre -->
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="📂" Margin="0,0,10,0"/>
+                                                <TextBlock Text="Structure du modèle" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- TreeView Éditable -->
+                                    <TreeView x:Name="EditorTreeView" Grid.Row="1" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Margin="5"/>
+
+                                    <!-- Toolbar Arbre -->
+                                    <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button x:Name="EditorAddRootButton" Content="+ Racine" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
+                                            <Button x:Name="EditorAddChildButton" Content="+ Dossier" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
+                                            <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Foreground="{DynamicResource DangerBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- COLONNE DROITE : INSPECTEUR -->
+                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header Inspecteur -->
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🛠️" Margin="0,0,10,0"/>
+                                            <TextBlock Text="Propriétés du dossier sélectionné" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Formulaire Propriétés -->
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+                                        <StackPanel x:Name="EditorPropertiesPanel">
+
+                                            <!-- 1. Identification -->
+                                            <TextBlock Text="Nom du dossier" Style="{DynamicResource H4Style}"/>
+                                            <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                            <!-- 2. Permissions -->
+                                            <Grid Margin="0,0,0,10">
+                                                <TextBlock Text="Permissions" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                <Button x:Name="EditorAddPermButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter une permission"/>
+                                            </Grid>
+
+                                            <!-- Liste Permissions (Template Item défini en Code ou Resources) -->
+                                            <ListBox x:Name="EditorPermissionsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
+                                                <!-- Style Placeholder pour le design, sera remplacé par DataTemplate -->
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="Padding" Value="0"/>
+                                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="ListBoxItem">
+                                                                    <ContentPresenter/>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                            </ListBox>
+
+                                            <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
+
+                                            <!-- 3. Métadonnées -->
+                                            <Grid Margin="0,0,0,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Métadonnées / Tags" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                    <!-- Badge Context -->
+                                                    <Border x:Name="EditorMetadataBadge" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" Visibility="Collapsed">
+                                                        <TextBlock Text="Schéma lié" FontSize="9" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <Button x:Name="EditorAddTagButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un tag"/>
+                                            </Grid>
+
+                                            <!-- Liste Tags -->
+                                            <ListBox x:Name="EditorTagsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="Padding" Value="0"/>
+                                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="ListBoxItem">
+                                                                    <ContentPresenter/>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                            </ListBox>
+
+                                            <!-- 4. Liens (Optionnel pour l'instant) -->
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <!-- Overlay "Aucune sélection" -->
+                                    <Grid Grid.Row="1" x:Name="EditorNoSelectionPanel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
+                                            <TextBlock Text="👆" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                            <TextBlock Text="Sélectionnez un dossier dans l'arbre" FontSize="14"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
                     </Grid>
                 </TabItem>
 
