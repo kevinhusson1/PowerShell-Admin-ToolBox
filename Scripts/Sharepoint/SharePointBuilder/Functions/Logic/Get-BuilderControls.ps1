@@ -43,6 +43,7 @@ function Get-BuilderControls {
         EdBtnLoad            = $Window.FindName("EditorLoadButton")
         EdBtnNew             = $Window.FindName("EditorNewButton")
         EdBtnSave            = $Window.FindName("EditorSaveButton")
+        EdBtnDeleteTpl       = $Window.FindName("EditorDeleteTemplateButton")
 
         # --- EDITEUR (Tree) ---
         EdTree               = $Window.FindName("EditorTreeView")
@@ -62,6 +63,10 @@ function Get-BuilderControls {
         # --- EDITEUR --- Tags
         EdTagsListBox        = $Window.FindName("EditorTagsListBox")
         EdBtnAddTag          = $Window.FindName("EditorAddTagButton")
+
+        # Liens (NOUVEAU)
+        EdLinksListBox       = $Window.FindName("EditorLinksListBox")
+        EdBtnAddLink         = $Window.FindName("EditorAddLinkButton")
     }
 
     if (-not $Ctrl.CbSites -or -not $Ctrl.BtnDeploy) { return $null }

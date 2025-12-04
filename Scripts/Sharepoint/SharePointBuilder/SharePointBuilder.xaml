@@ -309,6 +309,7 @@
                                         <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
                                     </StackPanel>
                                     <Button x:Name="EditorLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom"/>
+                                    <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
                                 </StackPanel>
 
                                 <!-- Contexte de Validation (IntelliSense) -->
@@ -456,7 +457,32 @@
                                                 </ListBox.ItemContainerStyle>
                                             </ListBox>
 
-                                            <!-- 4. Liens (Optionnel pour l'instant) -->
+                                            <!-- 4. Liens  -->
+                                            <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
+                                            <Grid Margin="0,0,0,10">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Liens / Raccourcis" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <Button x:Name="EditorAddLinkButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un lien"/>
+                                            </Grid>
+
+                                            <!-- Liste Liens -->
+                                            <ListBox x:Name="EditorLinksListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
+                                                <ListBox.ItemContainerStyle>
+                                                    <Style TargetType="ListBoxItem">
+                                                        <Setter Property="Padding" Value="0"/>
+                                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="ListBoxItem">
+                                                                    <ContentPresenter/>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ListBox.ItemContainerStyle>
+                                            </ListBox>
                                         </StackPanel>
                                     </ScrollViewer>
 
