@@ -32,4 +32,6 @@ function Initialize-BuilderLogic {
     Register-DeployEvents   -Ctrl $Ctrl -Window $Window
     # NOUVEAU : Câblage de l'éditeur
     Register-EditorLogic    -Ctrl $Ctrl -Window $Window
+
+    Register-FormEditorLogic -Ctrl $Ctrl -Window $Window
 }

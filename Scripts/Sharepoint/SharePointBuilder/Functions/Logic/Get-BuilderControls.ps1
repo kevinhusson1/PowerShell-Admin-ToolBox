@@ -67,6 +67,41 @@ function Get-BuilderControls {
         # Liens (NOUVEAU)
         EdLinksListBox       = $Window.FindName("EditorLinksListBox")
         EdBtnAddLink         = $Window.FindName("EditorAddLinkButton")
+
+        # --- FORMULAIRE EDITOR (Toolbar) ---
+        FormLoadCb           = $Window.FindName("FormLoadComboBox")
+        FormBtnLoad          = $Window.FindName("FormLoadButton")
+        FormBtnNew           = $Window.FindName("FormNewButton")
+        FormBtnSave          = $Window.FindName("FormSaveButton")
+        FormBtnDelTpl        = $Window.FindName("FormDeleteButton")
+
+        # --- FORMULAIRE EDITOR (List & Actions) ---
+        FormList             = $Window.FindName("FormFieldsListBox")
+        FormBtnAddLbl        = $Window.FindName("FormAddLabelBtn")
+        FormBtnAddTxt        = $Window.FindName("FormAddTextBtn")
+        FormBtnAddCmb        = $Window.FindName("FormAddComboBtn")
+        FormBtnUp            = $Window.FindName("FormMoveUpBtn")
+        FormBtnDown          = $Window.FindName("FormMoveDownBtn")
+        FormBtnDel           = $Window.FindName("FormRemoveBtn")
+
+        # --- FORMULAIRE EDITOR (Properties) ---
+        FormPropPanel        = $Window.FindName("FormPropertiesPanel")
+        FormNoSelPanel       = $Window.FindName("FormNoSelectionPanel")
+        
+        PropName             = $Window.FindName("PropNameBox")
+        PropContent          = $Window.FindName("PropContentBox")
+        PropDefault          = $Window.FindName("PropDefaultBox")
+        PropOptions          = $Window.FindName("PropOptionsBox")
+        PropWidth            = $Window.FindName("PropWidthBox")
+        
+        PanelName            = $Window.FindName("PanelPropName")     # <--- AJOUT
+        PanelContent         = $Window.FindName("PanelPropContent")
+        PanelDefault         = $Window.FindName("PanelPropDefault")
+        PanelOptions         = $Window.FindName("PanelPropOptions")
+        PanelWidth           = $Window.FindName("PanelPropWidth")
+
+        # --- FORMULAIRE EDITOR (Preview) ---
+        FormLivePreview      = $Window.FindName("FormLivePreviewPanel")
     }
 
     if (-not $Ctrl.CbSites -or -not $Ctrl.BtnDeploy) { return $null }

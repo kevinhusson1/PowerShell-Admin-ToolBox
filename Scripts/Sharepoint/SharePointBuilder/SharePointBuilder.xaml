@@ -499,9 +499,202 @@
                     </Grid>
                 </TabItem>
 
+                <!-- ONGLET 3 : FORMULAIRE DESTINATION -->
                 <TabItem Header="📋 Formulaire Destination">
-                    <Grid Background="{DynamicResource WhiteBrush}">
+                    <Grid Background="{DynamicResource BackgroundLightBrush}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- Toolbar -->
+                            <RowDefinition Height="*"/>
+                            <!-- Workspace -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Preview -->
+                        </Grid.RowDefinitions>
 
+                        <!-- 1. BARRE D'OUTILS -->
+                        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Gestion Fichier -->
+                                    <ColumnDefinition Width="*"/>
+                                    <!-- Espace -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Actions -->
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Gestion BDD -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <TextBlock Text="Règle existante" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <ComboBox x:Name="FormLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
+                                    </StackPanel>
+                                    <Button x:Name="FormLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom"/>
+                                    <Button x:Name="FormDeleteButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}"/>
+                                </StackPanel>
+
+                                <!-- Actions -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="FormNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
+                                    <Button x:Name="FormSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 2. ZONE DE TRAVAIL -->
+                        <Grid Grid.Row="1" Margin="25">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <!-- Liste Champs -->
+                                <ColumnDefinition Width="25"/>
+                                <!-- Espace -->
+                                <ColumnDefinition Width="1*"/>
+                                <!-- Propriétés -->
+                            </Grid.ColumnDefinitions>
+
+                            <!-- GAUCHE : LISTE DES CHAMPS -->
+                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header -->
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="abc" FontFamily="Consolas" Margin="0,0,10,0" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="Structure du nommage" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Liste Champs -->
+                                    <ListBox x:Name="FormFieldsListBox" Grid.Row="1" BorderThickness="0" Background="{DynamicResource WhiteBrush}" Padding="10">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Padding" Value="10"/>
+                                                <Setter Property="Margin" Value="0,0,0,5"/>
+                                                <Setter Property="Background" Value="{DynamicResource BackgroundLightBrush}"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                                    <Setter Property="Background" Value="{DynamicResource PrimaryBackgroundColor}"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <!-- Le Template des items sera généré en code pour plus de flexibilité -->
+                                    </ListBox>
+
+                                    <!-- Toolbar Bas -->
+                                    <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button x:Name="FormAddLabelBtn" Content="+ Texte Fixe" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
+                                            <Button x:Name="FormAddTextBtn" Content="+ Champ Saisie" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
+                                            <Button x:Name="FormAddComboBtn" Content="+ Liste Choix" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,15,0"/>
+
+                                            <!-- Correction Icônes -->
+                                            <Button x:Name="FormMoveUpBtn" Content="⬆️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Margin="0,0,5,0"/>
+                                            <Button x:Name="FormMoveDownBtn" Content="⬇️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Margin="0,0,15,0"/>
+
+                                            <Button x:Name="FormRemoveBtn" Content="🗑️" Style="{DynamicResource IconButtonStyle}" Width="34" Height="30" Foreground="{DynamicResource DangerBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- DROITE : PROPRIÉTÉS -->
+                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="⚙️" Margin="0,0,10,0"/>
+                                            <TextBlock Text="Configuration du champ" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+                                        <StackPanel x:Name="FormPropertiesPanel">
+
+                                            <!-- 1. Nom Interne (ENCAPSULÉ) -->
+                                            <StackPanel x:Name="PanelPropName">
+                                                <TextBlock Text="Nom de la variable (Interne)" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="PropNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15"/>
+                                                <TextBlock Text="Utilisé pour l'autopilot. Ex: 'CodeChantier'" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,-10,0,20"/>
+                                            </StackPanel>
+
+                                            <!-- 2. Contenu (Label) -->
+                                            <StackPanel x:Name="PanelPropContent">
+                                                <TextBlock Text="Texte affiché" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="PropContentBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                            </StackPanel>
+
+                                            <!-- 3. Valeur par défaut -->
+                                            <StackPanel x:Name="PanelPropDefault">
+                                                <TextBlock Text="Valeur par défaut" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="PropDefaultBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                            </StackPanel>
+
+                                            <!-- 4. Options -->
+                                            <StackPanel x:Name="PanelPropOptions">
+                                                <TextBlock Text="Options (séparées par virgule)" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="PropOptionsBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                            </StackPanel>
+
+                                            <!-- 5. Largeur (ENCAPSULÉ) -->
+                                            <StackPanel x:Name="PanelPropWidth">
+                                                <TextBlock Text="Largeur visuelle (px)" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="PropWidthBox" Style="{DynamicResource StandardTextBoxStyle}" Width="80" HorizontalAlignment="Left" Margin="0,5,0,20"/>
+                                            </StackPanel>
+
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <!-- Overlay Vide -->
+                                    <Grid Grid.Row="1" x:Name="FormNoSelectionPanel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
+                                            <TextBlock Text="👈" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                            <TextBlock Text="Sélectionnez un champ à gauche" FontSize="14"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- 3. PREVIEW LIVE -->
+                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Aperçu en temps réel :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                                <!-- Conteneur du formulaire généré -->
+                                <StackPanel x:Name="FormLivePreviewPanel" Grid.Column="1" Orientation="Horizontal"/>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </TabItem>
             </TabControl>
