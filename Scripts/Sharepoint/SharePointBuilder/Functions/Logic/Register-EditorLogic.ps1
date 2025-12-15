@@ -7,111 +7,110 @@ function Register-EditorLogic {
     )
 
     # ==========================================================================
-    # 1. HELPER : RENDU LIGNES (Suppression par ReferenceEquals)
+    # 1. HELPER : RENDU LIGNES (Avec Capture du TreeItem pour éviter la perte de focus)
     # ==========================================================================
     
     # --- A. PERMISSIONS ---
     $RenderPermissionRow = {
-        param($PermData, $ParentList)
+        # AJOUT DU PARAMETRE $CurrentTreeItem
+        param($PermData, $ParentList, $CurrentTreeItem)
         if ($null -eq $ParentList) { return }
         
         $row = New-Object System.Windows.Controls.Grid; $row.Margin = "0,0,0,5"
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "*"; })); $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "120"; })); $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "Auto"; }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "*" }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "120" }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "Auto" }))
         
         $t1 = New-Object System.Windows.Controls.TextBox -Property @{Text = $PermData.Email; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $t1.Add_TextChanged({ $PermData.Email = $this.Text }.GetNewClosure())
         $c1 = New-Object System.Windows.Controls.ComboBox -Property @{ItemsSource = @("Read", "Contribute", "Full Control"); SelectedItem = $PermData.Level; Style = $Window.FindResource("StandardComboBoxStyle"); Margin = "0,0,5,0"; Height = 34 }; $c1.Add_SelectionChanged({ if ($this.SelectedItem) { $PermData.Level = $this.SelectedItem } }.GetNewClosure())
         
-        # SUPPRESSION BLINDEE
+        # SUPPRESSION
         $b1 = New-Object System.Windows.Controls.Button -Property @{Content = "🗑️"; Style = $Window.FindResource("IconButtonStyle"); Width = 34; Height = 34; Foreground = $Window.FindResource("DangerBrush") }
         $b1.Add_Click({ 
-                $sel = $Ctrl.EdTree.SelectedItem
+                # ICI : On utilise la variable CAPTURÉE ($CurrentTreeItem) et non le SelectedItem dynamique
+                $sel = $CurrentTreeItem
+            
                 if ($sel -and $sel.Tag.Permissions) {
-                    # On reconstruit une liste propre (ArrayList est très stable)
-                    $newList = [System.Collections.ArrayList]::new()
-                    foreach ($p in $sel.Tag.Permissions) {
-                        # Si ce n'est pas STRICTEMENT le même objet en mémoire, on le garde
-                        if (-not [System.Object]::ReferenceEquals($p, $PermData)) {
-                            $newList.Add($p) | Out-Null
-                        }
+                    if ($sel.Tag.Permissions -is [System.Array]) {
+                        $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Permissions)
                     }
-                    # On remplace la liste du Tag
-                    $sel.Tag.Permissions = $newList
-                
-                    Update-EditorBadges -TreeItem $sel 
-                }
-                $ParentList.Items.Remove($row) 
-            }.GetNewClosure())
-
-        [System.Windows.Controls.Grid]::SetColumn($t1, 0); $row.Children.Add($t1) | Out-Null; [System.Windows.Controls.Grid]::SetColumn($c1, 1); $row.Children.Add($c1) | Out-Null; [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
-        $ParentList.Items.Add($row) | Out-Null
-    }
-
-    # --- B. TAGS ---
-    $RenderTagRow = {
-        param($TagData, $ParentList)
-        if ($null -eq $ParentList) { return }
-        
-        $row = New-Object System.Windows.Controls.Grid; $row.Margin = "0,0,0,5"
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "*"; })); $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "*"; })); $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "Auto"; }))
-        
-        $t1 = New-Object System.Windows.Controls.TextBox -Property @{Text = $TagData.Name; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $t1.Add_TextChanged({ $TagData.Name = $this.Text }.GetNewClosure())
-        $t2 = New-Object System.Windows.Controls.TextBox -Property @{Text = $TagData.Value; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $t2.Add_TextChanged({ $TagData.Value = $this.Text }.GetNewClosure())
-        
-        # SUPPRESSION BLINDEE
-        $b1 = New-Object System.Windows.Controls.Button -Property @{Content = "🗑️"; Style = $Window.FindResource("IconButtonStyle"); Width = 34; Height = 34; Foreground = $Window.FindResource("DangerBrush") }
-        $b1.Add_Click({ 
-                $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Tags) {
-                    $newList = [System.Collections.ArrayList]::new()
-                    foreach ($t in $sel.Tag.Tags) {
-                        if (-not [System.Object]::ReferenceEquals($t, $TagData)) {
-                            $newList.Add($t) | Out-Null
-                        }
-                    }
-                    $sel.Tag.Tags = $newList
+                    $sel.Tag.Permissions.Remove($PermData)
                     Update-EditorBadges -TreeItem $sel
                 }
                 $ParentList.Items.Remove($row) 
             }.GetNewClosure())
 
-        [System.Windows.Controls.Grid]::SetColumn($t1, 0); $row.Children.Add($t1) | Out-Null; [System.Windows.Controls.Grid]::SetColumn($t2, 1); $row.Children.Add($t2) | Out-Null; [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($t1, 0); $row.Children.Add($t1) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($c1, 1); $row.Children.Add($c1) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
+        $ParentList.Items.Add($row) | Out-Null
+    }
+
+    # --- B. TAGS ---
+    $RenderTagRow = {
+        param($TagData, $ParentList, $CurrentTreeItem)
+        if ($null -eq $ParentList) { return }
+        
+        $row = New-Object System.Windows.Controls.Grid; $row.Margin = "0,0,0,5"
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "*" }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "*" }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "Auto" }))
+        
+        $t1 = New-Object System.Windows.Controls.TextBox -Property @{Text = $TagData.Name; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $t1.Add_TextChanged({ $TagData.Name = $this.Text }.GetNewClosure())
+        $t2 = New-Object System.Windows.Controls.TextBox -Property @{Text = $TagData.Value; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $t2.Add_TextChanged({ $TagData.Value = $this.Text }.GetNewClosure())
+        
+        # SUPPRESSION
+        $b1 = New-Object System.Windows.Controls.Button -Property @{Content = "🗑️"; Style = $Window.FindResource("IconButtonStyle"); Width = 34; Height = 34; Foreground = $Window.FindResource("DangerBrush") }
+        $b1.Add_Click({ 
+                $sel = $CurrentTreeItem # Capture
+            
+                if ($sel -and $sel.Tag.Tags) {
+                    if ($sel.Tag.Tags -is [System.Array]) {
+                        $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Tags)
+                    }
+                    $sel.Tag.Tags.Remove($TagData)
+                    Update-EditorBadges -TreeItem $sel
+                }
+                $ParentList.Items.Remove($row) 
+            }.GetNewClosure())
+
+        [System.Windows.Controls.Grid]::SetColumn($t1, 0); $row.Children.Add($t1) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($t2, 1); $row.Children.Add($t2) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
         $ParentList.Items.Add($row) | Out-Null
     }
 
     # --- C. LIENS ---
     $RenderLinkRow = {
-        param($LinkData, $ParentList)
+        param($LinkData, $ParentList, $CurrentTreeItem)
         if ($null -eq $ParentList) { return }
         
         $row = New-Object System.Windows.Controls.Grid; $row.Margin = "0,0,0,5"
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, "Star") })) 
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(2, "Star") })) 
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::Auto }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "1*" }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "2*" }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "Auto" }))
 
-        $tName = New-Object System.Windows.Controls.TextBox -Property @{ Text = $LinkData.Name; Margin = "0,0,5,0"; VerticalContentAlignment = "Center" }; $tName.Style = $Window.FindResource("StandardTextBoxStyle")
-        $tName.Add_TextChanged({ $LinkData.Name = $this.Text }.GetNewClosure())
+        $tName = New-Object System.Windows.Controls.TextBox -Property @{Text = $LinkData.Name; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $tName.Add_TextChanged({ $LinkData.Name = $this.Text }.GetNewClosure())
+        $tUrl = New-Object System.Windows.Controls.TextBox -Property @{Text = $LinkData.Url; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $tUrl.Add_TextChanged({ $LinkData.Url = $this.Text }.GetNewClosure())
 
-        $tUrl = New-Object System.Windows.Controls.TextBox -Property @{ Text = $LinkData.Url; Margin = "0,0,5,0"; VerticalContentAlignment = "Center" }; $tUrl.Style = $Window.FindResource("StandardTextBoxStyle")
-        $tUrl.Add_TextChanged({ $LinkData.Url = $this.Text }.GetNewClosure())
-
-        # SUPPRESSION BLINDEE
-        $btnDel = New-Object System.Windows.Controls.Button -Property @{ Content = "🗑️"; Width = 34; Height = 34; Foreground = $Window.FindResource("DangerBrush") }; $btnDel.Style = $Window.FindResource("IconButtonStyle")
-        $btnDel.Add_Click({
-                $sel = $Ctrl.EdTree.SelectedItem
+        # SUPPRESSION
+        $b1 = New-Object System.Windows.Controls.Button -Property @{Content = "🗑️"; Style = $Window.FindResource("IconButtonStyle"); Width = 34; Height = 34; Foreground = $Window.FindResource("DangerBrush") }
+        $b1.Add_Click({
+                $sel = $CurrentTreeItem # Capture
+            
                 if ($sel -and $sel.Tag.Links) { 
-                    $newList = [System.Collections.ArrayList]::new()
-                    foreach ($l in $sel.Tag.Links) {
-                        if (-not [System.Object]::ReferenceEquals($l, $LinkData)) {
-                            $newList.Add($l) | Out-Null
-                        }
+                    if ($sel.Tag.Links -is [System.Array]) {
+                        $sel.Tag.Links = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Links)
                     }
-                    $sel.Tag.Links = $newList
-                    Update-EditorBadges -TreeItem $sel 
+                    $sel.Tag.Links.Remove($LinkData)
+                    Update-EditorBadges -TreeItem $sel
                 }
                 $ParentList.Items.Remove($row)
             }.GetNewClosure())
 
-        [System.Windows.Controls.Grid]::SetColumn($tName, 0); $row.Children.Add($tName) | Out-Null; [System.Windows.Controls.Grid]::SetColumn($tUrl, 1); $row.Children.Add($tUrl) | Out-Null; [System.Windows.Controls.Grid]::SetColumn($btnDel, 2); $row.Children.Add($btnDel) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($tName, 0); $row.Children.Add($tName) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($tUrl, 1); $row.Children.Add($tUrl) | Out-Null
+        [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
         $ParentList.Items.Add($row) | Out-Null
     }
 
@@ -129,9 +128,19 @@ function Register-EditorLogic {
                 $data = $selectedItem.Tag
                 if ($data) { $Ctrl.EdNameBox.Text = $data.Name }
 
-                if ($Ctrl.EdPermissionsListBox) { $Ctrl.EdPermissionsListBox.Items.Clear(); if ($data.Permissions) { foreach ($p in $data.Permissions) { & $RenderPermissionRow -PermData $p -ParentList $Ctrl.EdPermissionsListBox } } }
-                if ($Ctrl.EdTagsListBox) { $Ctrl.EdTagsListBox.Items.Clear(); if ($data.Tags) { foreach ($t in $data.Tags) { & $RenderTagRow -TagData $t -ParentList $Ctrl.EdTagsListBox } } }
-                if ($Ctrl.EdLinksListBox) { $Ctrl.EdLinksListBox.Items.Clear(); if ($data.Links) { foreach ($l in $data.Links) { & $RenderLinkRow -LinkData $l -ParentList $Ctrl.EdLinksListBox } } }
+                # ON PASSE $selectedItem A CHAQUE APPEL DE RENDU
+                if ($Ctrl.EdPermissionsListBox) { 
+                    $Ctrl.EdPermissionsListBox.Items.Clear()
+                    if ($data.Permissions) { foreach ($p in $data.Permissions) { & $RenderPermissionRow -PermData $p -ParentList $Ctrl.EdPermissionsListBox -CurrentTreeItem $selectedItem } } 
+                }
+                if ($Ctrl.EdTagsListBox) { 
+                    $Ctrl.EdTagsListBox.Items.Clear()
+                    if ($data.Tags) { foreach ($t in $data.Tags) { & $RenderTagRow -TagData $t -ParentList $Ctrl.EdTagsListBox -CurrentTreeItem $selectedItem } } 
+                }
+                if ($Ctrl.EdLinksListBox) { 
+                    $Ctrl.EdLinksListBox.Items.Clear()
+                    if ($data.Links) { foreach ($l in $data.Links) { & $RenderLinkRow -LinkData $l -ParentList $Ctrl.EdLinksListBox -CurrentTreeItem $selectedItem } } 
+                }
             }
         }.GetNewClosure())
 
@@ -179,7 +188,10 @@ function Register-EditorLogic {
                 if ($null -eq $sel.Tag.Permissions) { $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new() }
                 elseif ($sel.Tag.Permissions -is [System.Array]) { $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Permissions) }
                 $sel.Tag.Permissions.Add($obj)
-                if ($Ctrl.EdPermissionsListBox) { & $RenderPermissionRow -PermData $obj -ParentList $Ctrl.EdPermissionsListBox }
+            
+                # PASSAGE DE $sel ICI
+                if ($Ctrl.EdPermissionsListBox) { & $RenderPermissionRow -PermData $obj -ParentList $Ctrl.EdPermissionsListBox -CurrentTreeItem $sel }
+            
                 Update-EditorBadges -TreeItem $sel
             }.GetNewClosure())
     }
@@ -191,7 +203,10 @@ function Register-EditorLogic {
                 if ($null -eq $sel.Tag.Tags) { $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new() }
                 elseif ($sel.Tag.Tags -is [System.Array]) { $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Tags) }
                 $sel.Tag.Tags.Add($obj)
-                if ($Ctrl.EdTagsListBox) { & $RenderTagRow -TagData $obj -ParentList $Ctrl.EdTagsListBox }
+            
+                # PASSAGE DE $sel ICI
+                if ($Ctrl.EdTagsListBox) { & $RenderTagRow -TagData $obj -ParentList $Ctrl.EdTagsListBox -CurrentTreeItem $sel }
+            
                 Update-EditorBadges -TreeItem $sel
             }.GetNewClosure())
     }
@@ -203,7 +218,10 @@ function Register-EditorLogic {
                 if ($null -eq $sel.Tag.Links) { $sel.Tag.Links = [System.Collections.Generic.List[psobject]]::new() }
                 elseif ($sel.Tag.Links -is [System.Array]) { $sel.Tag.Links = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Links) }
                 $sel.Tag.Links.Add($obj)
-                if ($Ctrl.EdLinksListBox) { & $RenderLinkRow -LinkData $obj -ParentList $Ctrl.EdLinksListBox }
+            
+                # PASSAGE DE $sel ICI
+                if ($Ctrl.EdLinksListBox) { & $RenderLinkRow -LinkData $obj -ParentList $Ctrl.EdLinksListBox -CurrentTreeItem $sel }
+            
                 Update-EditorBadges -TreeItem $sel
             }.GetNewClosure())
     }
@@ -211,6 +229,11 @@ function Register-EditorLogic {
     # ==========================================================================
     # 5. PERSISTANCE (LOAD / SAVE / NEW / DELETE)
     # ==========================================================================
+    # (Copiez ici le bloc persistance existant s'il n'est pas déjà présent dans votre version locale)
+    # Je ne le répète pas pour éviter la surcharge, mais il doit être présent à la fin du fichier.
+    
+    # ... BLOC PERSISTANCE ...
+    
     $ResetUI = {
         $Ctrl.EdTree.Items.Clear()
         $Ctrl.EdNameBox.Text = ""
@@ -249,7 +272,6 @@ function Register-EditorLogic {
 
             $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree
             $cleanJson = $json.Replace("'", "''")
-
             $currentId = $Ctrl.EdLoadCb.Tag
             $currentName = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "" }
 
