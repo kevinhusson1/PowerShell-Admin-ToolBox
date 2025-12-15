@@ -271,7 +271,8 @@ function Register-EditorLogic {
             if ($Ctrl.EdTree.Items.Count -eq 0) { [System.Windows.MessageBox]::Show("L'arbre est vide.", "Erreur", "OK", "Warning"); return }
 
             $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree
-            $cleanJson = $json.Replace("'", "''")
+            # Note : Plus besoin de faire le .Replace("'", "''") ici, c'est géré par le module Database
+        
             $currentId = $Ctrl.EdLoadCb.Tag
             $currentName = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "" }
 
@@ -300,16 +301,18 @@ function Register-EditorLogic {
             }
 
             try {
-                $query = "INSERT OR REPLACE INTO sp_templates (TemplateId, DisplayName, Description, Category, StructureJson, DateModified) 
-                      VALUES ('$currentId', '$currentName', 'Modèle personnalisé', 'Custom', '$cleanJson', '$(Get-Date -Format 'o')');"
-                Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query
+                # APPEL PROPRE AU MODULE DATABASE
+                Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description "Modèle personnalisé" -StructureJson $json
+            
                 [System.Windows.MessageBox]::Show("Modèle '$currentName' sauvegardé !", "Succès", "OK", "Information")
             
                 & $LoadTemplateList
                 $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1
                 if ($newItem) { $Ctrl.EdLoadCb.SelectedItem = $newItem; $Ctrl.EdLoadCb.Tag = $currentId }
+
             }
-            catch { [System.Windows.MessageBox]::Show("Erreur sauvegarde : $($_.Exception.Message)", "Erreur", "OK", "Error") }
+            catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
+
         }.GetNewClosure())
 
     if ($Ctrl.EdBtnDeleteTpl) {
@@ -317,10 +320,14 @@ function Register-EditorLogic {
                 $currentId = $Ctrl.EdLoadCb.Tag
                 if (-not $currentId -and $Ctrl.EdLoadCb.SelectedItem) { $currentId = $Ctrl.EdLoadCb.SelectedItem.TemplateId }
                 if (-not $currentId) { [System.Windows.MessageBox]::Show("Aucun modèle sélectionné.", "Info", "OK", "Information"); return }
+            
                 $nom = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "ce modèle" }
+            
                 if ([System.Windows.MessageBox]::Show("Supprimer définitivement '$nom' ?", "Suppression", "YesNo", "Error") -eq 'Yes') {
                     try {
-                        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query "DELETE FROM sp_templates WHERE TemplateId = '$currentId'"
+                        # APPEL PROPRE AU MODULE DATABASE
+                        Remove-AppSPTemplate -TemplateId $currentId
+                    
                         [System.Windows.MessageBox]::Show("Modèle supprimé.", "Succès", "OK", "Information")
                         & $LoadTemplateList; & $ResetUI
                     }
