@@ -46,35 +46,36 @@ function Initialize-AppUIComponents {
         # --- CORRECTION DE LA LISTE DES COMPOSANTS ---
         # On définit tous les composants disponibles et leurs fichiers XAML respectifs.
         $availableComponents = @{
-            'Buttons' = @(
+            'Buttons'         = @(
                 "$ProjectRoot\Templates\Components\Buttons\PrimaryButton.xaml",
                 "$ProjectRoot\Templates\Components\Buttons\SecondaryButton.xaml",
                 "$ProjectRoot\Templates\Components\Buttons\GreenButton.xaml",
                 "$ProjectRoot\Templates\Components\Buttons\RedButton.xaml",
                 "$ProjectRoot\Templates\Components\Buttons\IconButton.xaml"
             );
-            'Inputs' = @(
+            'Inputs'          = @(
                 "$ProjectRoot\Templates\Components\Inputs\ComboBox.xaml",
                 "$ProjectRoot\Templates\Components\Inputs\PasswordBox.xaml",
                 "$ProjectRoot\Templates\Components\Inputs\RadioButton.xaml",
                 "$ProjectRoot\Templates\Components\Inputs\TextBox.xaml",
                 "$ProjectRoot\Templates\Components\Inputs\ToggleSwitch.xaml"
             );
-            'Display' = @(
+            'Display'         = @(
                 "$ProjectRoot\Templates\Components\Display\ListBox.xaml",
                 "$ProjectRoot\Templates\Components\Display\TreeView.xaml",
                 "$ProjectRoot\Templates\Components\Display\DataGrid.xaml",
                 "$ProjectRoot\Templates\Components\Display\LogViewer.xaml"
             );
-            'Navigation' = @(
+            'Navigation'      = @(
                 "$ProjectRoot\Templates\Components\Navigation\TabControl.xaml" 
             );
-            'ProfileButton' = @(
+            'ProfileButton'   = @(
                 "$ProjectRoot\Templates\Components\Buttons\ProfileButton.xaml"
             );
-            'Layouts' = @(
+            'Layouts'         = @(
                 "$ProjectRoot\Templates\Components\Layouts\CardExpander.xaml",
-                "$ProjectRoot\Templates\Components\Layouts\FormField.xaml"
+                "$ProjectRoot\Templates\Components\Layouts\FormField.xaml",
+                "$ProjectRoot\Templates\Components\Layouts\GridSplitter.xaml"
             );
             'LauncherDisplay' = @(
                 "$ProjectRoot\Templates\Components\Launcher\ScriptTile.xaml" # Chemin corrigé
@@ -90,7 +91,8 @@ function Initialize-AppUIComponents {
         foreach ($componentName in $componentsToLoad) {
             if ($availableComponents.ContainsKey($componentName)) {
                 $filesToLoad += $availableComponents[$componentName]
-            } else {
+            }
+            else {
                 $warningMsg = "{0} '{1}' {2}" -f (Get-AppText 'modules.ui.component_unknown_1'), $componentName, (Get-AppText 'modules.ui.component_unknown_2')
                 Write-Warning $warningMsg
             }
@@ -100,11 +102,12 @@ function Initialize-AppUIComponents {
 
         # Charger et fusionner les ressources
         foreach ($file in $filesToLoad) {
-            if(Test-Path $file) {
+            if (Test-Path $file) {
                 Write-Verbose "    -> $file"
                 $resourceDictionary = Import-AppXamlTemplate -XamlPath $file #-DebugMode
                 $Window.Resources.MergedDictionaries.Add($resourceDictionary)
-            } else {
+            }
+            else {
                 $warningMsg = "{0} '{1}' {2}" -f (Get-AppText 'modules.ui.style_file_not_found_1'), $file, (Get-AppText 'modules.ui.style_file_not_found_2')
                 Write-Warning $warningMsg
             }

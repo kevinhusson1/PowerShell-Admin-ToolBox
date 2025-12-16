@@ -141,71 +141,41 @@ function Register-FormEditorLogic {
     # ==========================================================================
     # 5. GESTION SÉLECTION & PROPRIÉTÉS
     # ==========================================================================
-    
     $Ctrl.FormPropPanel.Tag = "Ready" 
-
     $Ctrl.FormList.Add_SelectionChanged({
             $sel = $Ctrl.FormList.SelectedItem
             $Ctrl.FormPropPanel.Tag = "Loading"
 
             if ($null -eq $sel) {
-                $Ctrl.FormNoSelPanel.Visibility = "Visible"
-                $Ctrl.FormPropPanel.Visibility = "Collapsed"
+                $Ctrl.FormNoSelPanel.Visibility = "Visible"; $Ctrl.FormPropPanel.Visibility = "Collapsed"
             }
             else {
-                $Ctrl.FormNoSelPanel.Visibility = "Collapsed"
-                $Ctrl.FormPropPanel.Visibility = "Visible"
-            
+                $Ctrl.FormNoSelPanel.Visibility = "Collapsed"; $Ctrl.FormPropPanel.Visibility = "Visible"
                 $data = $sel.Tag
 
-                # Chargement Valeurs
                 $Ctrl.PropName.Text = if ($data.Name) { $data.Name } else { "" }
                 $Ctrl.PropWidth.Text = if ($data.Width) { $data.Width } else { "" }
                 $Ctrl.PropContent.Text = if ($data.Content) { $data.Content } else { "" }
                 $Ctrl.PropDefault.Text = if ($data.DefaultValue) { $data.DefaultValue } else { "" }
                 $Ctrl.PropOptions.Text = if ($data.Options) { $data.Options -join "," } else { "" }
 
-                # Gestion Visibilité selon Type
-                $visName = "Collapsed"
-                $visContent = "Collapsed"
-                $visDefault = "Collapsed"
-                $visOptions = "Collapsed"
-                $visWidth = "Collapsed"
+                $visName = if ($data.Type -eq "Label") { "Collapsed" } else { "Visible" }
+                $visContent = if ($data.Type -eq "Label") { "Visible" } else { "Collapsed" }
+                $visDefault = if ($data.Type -eq "Label") { "Collapsed" } else { "Visible" }
+                $visOptions = if ($data.Type -eq "ComboBox") { "Visible" } else { "Collapsed" }
 
-                switch ($data.Type) {
-                    "Label" {
-                        $visContent = "Visible" # Texte Fixe
-                        # Pas de nom, pas de default, pas de width pour un label simple
-                    }
-                    "TextBox" {
-                        $visName = "Visible"
-                        $visDefault = "Visible"
-                        $visWidth = "Visible"
-                    }
-                    "ComboBox" {
-                        $visName = "Visible"
-                        $visOptions = "Visible"
-                        $visDefault = "Visible"
-                        $visWidth = "Visible"
-                    }
-                }
-
-                # Application sur les PANNEAUX nommés (Plus de .Parent hasardeux)
                 if ($Ctrl.PanelName) { $Ctrl.PanelName.Visibility = $visName }
                 if ($Ctrl.PanelContent) { $Ctrl.PanelContent.Visibility = $visContent }
                 if ($Ctrl.PanelDefault) { $Ctrl.PanelDefault.Visibility = $visDefault }
                 if ($Ctrl.PanelOptions) { $Ctrl.PanelOptions.Visibility = $visOptions }
-                if ($Ctrl.PanelWidth) { $Ctrl.PanelWidth.Visibility = $visWidth }
+                if ($Ctrl.PanelWidth) { $Ctrl.PanelWidth.Visibility = "Visible" } 
             }
-        
             $Ctrl.FormPropPanel.Tag = "Ready"
-
         }.GetNewClosure())
 
     # ==========================================================================
     # 6. MODIFICATION PROPRIÉTÉS
     # ==========================================================================
-    
     $RefreshListItem = {
         if ($Ctrl.FormPropPanel.Tag -eq "Loading") { return }
         $sel = $Ctrl.FormList.SelectedItem
@@ -232,20 +202,18 @@ function Register-FormEditorLogic {
         }.GetNewClosure())
 
     # ==========================================================================
-    # 7. PERSISTANCE (SAUVEGARDE INTELLIGENTE)
+    # 7. PERSISTANCE (LOAD / SAVE / NEW / DELETE)
     # ==========================================================================
     
+    # A. CHARGEMENT LISTE (CLEAN)
     $LoadFormList = {
-        try {
-            $rules = @(Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query "SELECT * FROM sp_naming_rules")
-            $Ctrl.FormLoadCb.ItemsSource = $rules
-            $Ctrl.FormLoadCb.DisplayMemberPath = "RuleId"
-        }
-        catch { }
+        $rules = @(Get-AppNamingRules) # Appel Module Database
+        $Ctrl.FormLoadCb.ItemsSource = $rules
+        $Ctrl.FormLoadCb.DisplayMemberPath = "RuleId"
     }.GetNewClosure()
     & $LoadFormList
 
-    # NOUVEAU
+    # B. NOUVEAU
     $Ctrl.FormBtnNew.Add_Click({
             if ([System.Windows.MessageBox]::Show("Vider le formulaire ?", "Confirmer", "YesNo", "Warning") -eq 'Yes') {
                 $Ctrl.FormList.Items.Clear()
@@ -255,7 +223,7 @@ function Register-FormEditorLogic {
             }
         }.GetNewClosure())
 
-    # SAUVEGARDE (Logique mise à jour)
+    # C. SAUVEGARDE (CLEAN)
     $Ctrl.FormBtnSave.Add_Click({
             if ($Ctrl.FormList.Items.Count -eq 0) { return }
 
@@ -263,48 +231,24 @@ function Register-FormEditorLogic {
             foreach ($item in $Ctrl.FormList.Items) { $layoutList += $item.Tag }
             $finalObj = @{ Layout = $layoutList; Description = "Règle personnalisée" }
             $json = $finalObj | ConvertTo-Json -Depth 5 -Compress
-            $cleanJson = $json.Replace("'", "''")
-
+        
+            # Note : Le .Replace() est géré par le module Database, on envoie le JSON brut
+        
             $currentId = $Ctrl.FormLoadCb.Tag
-            $currentName = if ($Ctrl.FormLoadCb.SelectedItem) { $Ctrl.FormLoadCb.SelectedItem.RuleId } else { "" }
-
-            # 1. Logique de choix si existant
-            if ($currentId) {
-                $msg = "La règle '$currentName' est actuellement chargée.`n`nVoulez-vous écraser les modifications ?`n`nOUI : Écraser l'existant`nNON : Créer une copie (Enregistrer sous)`nANNULER : Ne rien faire"
-                $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
-
-                switch ($choice) {
-                    'Cancel' { return }
-                    'No' {
-                        # Save As
-                        $currentId = $null
-                        Add-Type -AssemblyName Microsoft.VisualBasic
-                        $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom de la nouvelle règle (ID) :", "Enregistrer une copie", "$currentName-Copie")
-                        if ([string]::IsNullOrWhiteSpace($newName)) { return }
-                        $currentId = $newName
-                    }
-                    'Yes' { 
-                        # Overwrite : on garde l'ID
-                    }
-                }
-            }
-
-            # 2. Logique Nouveau
             if (-not $currentId) {
                 Add-Type -AssemblyName Microsoft.VisualBasic
-                $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom de la règle (ID unique) :", "Sauvegarder", "Rule-Custom-01")
-                if ([string]::IsNullOrWhiteSpace($newName)) { return }
-                $currentId = $newName
+                $name = [Microsoft.VisualBasic.Interaction]::InputBox("Nom de la règle (ID unique) :", "Sauvegarder", "Rule-Custom-01")
+                if ([string]::IsNullOrWhiteSpace($name)) { return }
+                $currentId = $name
             }
 
-            # 3. SQL
             try {
-                $query = "INSERT OR REPLACE INTO sp_naming_rules (RuleId, DefinitionJson) VALUES ('$currentId', '$cleanJson');"
-                Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query
+                # APPEL PROPRE MODULE DATABASE
+                Set-AppNamingRule -RuleId $currentId -DefinitionJson $json
+            
                 [System.Windows.MessageBox]::Show("Règle sauvegardée !", "Succès", "OK", "Information")
             
                 & $LoadFormList
-            
                 $newItem = $Ctrl.FormLoadCb.ItemsSource | Where-Object { $_.RuleId -eq $currentId } | Select-Object -First 1
                 if ($newItem) { 
                     $Ctrl.FormLoadCb.SelectedItem = $newItem 
@@ -315,15 +259,11 @@ function Register-FormEditorLogic {
             catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
         }.GetNewClosure())
 
-    # CHARGER
+    # D. CHARGER
     $Ctrl.FormBtnLoad.Add_Click({
             $sel = $Ctrl.FormLoadCb.SelectedItem
             if (-not $sel) { return }
         
-            if ($Ctrl.FormList.Items.Count -gt 0) {
-                if ([System.Windows.MessageBox]::Show("Charger va écraser le formulaire actuel.", "Attention", "YesNo", "Warning") -ne 'Yes') { return }
-            }
-
             $Ctrl.FormList.Items.Clear()
             $Ctrl.FormLoadCb.Tag = $sel.RuleId
 
@@ -345,7 +285,7 @@ function Register-FormEditorLogic {
 
         }.GetNewClosure())
     
-    # SUPPRIMER
+    # E. SUPPRIMER (CLEAN)
     if ($Ctrl.FormBtnDelTpl) {
         $Ctrl.FormBtnDelTpl.Add_Click({
                 $id = $Ctrl.FormLoadCb.Tag
@@ -353,11 +293,16 @@ function Register-FormEditorLogic {
                 if (-not $id) { return }
 
                 if ([System.Windows.MessageBox]::Show("Supprimer la règle '$id' ?", "Confirmer", "YesNo", "Error") -eq 'Yes') {
-                    Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query "DELETE FROM sp_naming_rules WHERE RuleId = '$id'"
-                    $Ctrl.FormList.Items.Clear()
-                    $Ctrl.FormLoadCb.Tag = $null
-                    & $LoadFormList
-                    & $UpdateLivePreview
+                    try {
+                        # APPEL PROPRE MODULE DATABASE
+                        Remove-AppNamingRule -RuleId $id
+                    
+                        $Ctrl.FormList.Items.Clear()
+                        $Ctrl.FormLoadCb.Tag = $null
+                        & $LoadFormList
+                        & $UpdateLivePreview
+                    }
+                    catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
                 }
             }.GetNewClosure())
     }

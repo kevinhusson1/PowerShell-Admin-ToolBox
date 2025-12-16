@@ -73,17 +73,15 @@
                 <!-- ONGLET DÉPLOIEMENT -->
                 <TabItem Header="🚀 Déploiement" IsSelected="True">
                     <Grid Background="{DynamicResource WhiteBrush}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="25">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="500"/>
-                                    <ColumnDefinition Width="30"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="600" MinWidth="400"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="25,25,8,25">
                                 <!-- COLONNE GAUCHE (CONFIG) -->
-                                <StackPanel Grid.Column="0">
-
+                                <StackPanel>
                                     <!-- CARTE 1 : CIBLE -->
                                     <Border Style="{DynamicResource CardBorderStyle}">
                                         <StackPanel>
@@ -189,89 +187,86 @@
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
+                            </ScrollViewer>
 
-                                <!-- COLONNE DROITE (VISUALISATION) -->
-                                <Grid Grid.Column="2">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"/>
-                                        <!-- Espace -->
-                                        <RowDefinition Height="250"/>
-                                        <!-- Logs -->
-                                    </Grid.RowDefinitions>
+                            <GridSplitter Style="{DynamicResource ModernGridSplitterStyle}" Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" ResizeBehavior="PreviousAndNext"/>
 
-                                    <!-- CARTE 2 : ARBORESCENCE -->
-                                    <Border Grid.Row="0" Style="{DynamicResource CardBorderStyle}">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="*"/>
-                                            </Grid.RowDefinitions>
+                            <Grid Grid.Column="2" Margin="8,25,25,25">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="250"/>
+                                </Grid.RowDefinitions>
+                                <!-- CARTE 2 : ARBORESCENCE -->
+                                <Border Grid.Row="0" Style="{DynamicResource CardBorderStyle}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
 
-                                            <!-- Header Interne -->
-                                            <Border Grid.Row="0">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <!-- Icone -->
-                                                        <ColumnDefinition Width="*"/>
-                                                        <!-- Titre -->
-                                                        <ColumnDefinition Width="*"/>
-                                                        <!-- ComboBox -->
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <!-- Info -->
-                                                    </Grid.ColumnDefinitions>
+                                        <!-- Header Interne -->
+                                        <Border Grid.Row="0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <!-- Icone -->
+                                                    <ColumnDefinition Width="*"/>
+                                                    <!-- Titre -->
+                                                    <ColumnDefinition Width="*"/>
+                                                    <!-- ComboBox -->
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <!-- Info -->
+                                                </Grid.ColumnDefinitions>
 
-                                                    <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
-                                                        <TextBlock Text="2" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <TextBlock Grid.Column="1" Text="Modèle à Appliquer" Style="{DynamicResource StepHeaderTextStyle}"/>
+                                                <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
+                                                    <TextBlock Text="2" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Modèle à Appliquer" Style="{DynamicResource StepHeaderTextStyle}"/>
 
-                                                    <ComboBox Grid.Column="2" x:Name="TemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
+                                                <ComboBox Grid.Column="2" x:Name="TemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
 
-                                                    <TextBlock Grid.Column="3" x:Name="TemplateDescText" Text="ℹ️" ToolTip="Sélectionnez un modèle pour voir sa description" Margin="10,0,0,0" VerticalAlignment="Center" Cursor="Help"/>
-                                                </Grid>
-                                            </Border>
-                                            <!-- TreeView -->
-                                            <Border Grid.Row="1" Margin="15" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Background="{DynamicResource WhiteBrush}">
-                                                <TreeView x:Name="PreviewTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0"/>
-                                            </Border>
+                                                <TextBlock Grid.Column="3" x:Name="TemplateDescText" Text="ℹ️" ToolTip="Sélectionnez un modèle pour voir sa description" Margin="10,0,0,0" VerticalAlignment="Center" Cursor="Help"/>
+                                            </Grid>
+                                        </Border>
+                                        <!-- TreeView -->
+                                        <Border Grid.Row="1" Margin="15" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Background="{DynamicResource WhiteBrush}">
+                                            <TreeView x:Name="PreviewTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0"/>
+                                        </Border>
 
-                                        </Grid>
-                                    </Border>
+                                    </Grid>
+                                </Border>
 
-                                    <!-- CARTE LOGS -->
-                                    <Border Grid.Row="1" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="*"/>
-                                            </Grid.RowDefinitions>
+                                <!-- CARTE LOGS -->
+                                <Border Grid.Row="1" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
 
-                                            <!-- Header Logs -->
-                                            <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,8">
-                                                <Grid>
-                                                    <TextBlock Text="Journal des Opérations" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                        <TextBlock Text="Niveau :" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                        <ComboBox x:Name="LogLevelComboBox" Width="80" Height="24" FontSize="11" SelectedIndex="1" Margin="0,0,10,0">
-                                                            <ComboBoxItem Content="Light" Tag="Light"/>
-                                                            <ComboBoxItem Content="Normal" Tag="Normal"/>
-                                                            <ComboBoxItem Content="Expert" Tag="Hard"/>
-                                                        </ComboBox>
-                                                        <Ellipse Width="10" Height="10" Fill="#FF5F56" Margin="0,0,6,0"/>
-                                                        <Ellipse Width="10" Height="10" Fill="#FFBD2E" Margin="0,0,6,0"/>
-                                                        <Ellipse Width="10" Height="10" Fill="#27C93F"/>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
+                                        <!-- Header Logs -->
+                                        <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,8">
+                                            <Grid>
+                                                <TextBlock Text="Journal des Opérations" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <TextBlock Text="Niveau :" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    <ComboBox x:Name="LogLevelComboBox" Width="80" Height="24" FontSize="11" SelectedIndex="1" Margin="0,0,10,0">
+                                                        <ComboBoxItem Content="Light" Tag="Light"/>
+                                                        <ComboBoxItem Content="Normal" Tag="Normal"/>
+                                                        <ComboBoxItem Content="Expert" Tag="Hard"/>
+                                                    </ComboBox>
+                                                    <Ellipse Width="10" Height="10" Fill="#FF5F56" Margin="0,0,6,0"/>
+                                                    <Ellipse Width="10" Height="10" Fill="#FFBD2E" Margin="0,0,6,0"/>
+                                                    <Ellipse Width="10" Height="10" Fill="#27C93F"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
 
-                                            <RichTextBox Grid.Row="1" x:Name="LogRichTextBox" Style="{DynamicResource StandardRichTextBoxStyle}" BorderThickness="0" Background="{DynamicResource WhiteBrush}" FontFamily="Consolas" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </Grid>
-                                    </Border>
-
-                                </Grid>
+                                        <RichTextBox Grid.Row="1" x:Name="LogRichTextBox" Style="{DynamicResource StandardRichTextBoxStyle}" BorderThickness="0" Background="{DynamicResource WhiteBrush}" FontFamily="Consolas" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </Grid>
+                                </Border>
                             </Grid>
-                        </ScrollViewer>
+                        </Grid>
                     </Grid>
                 </TabItem>
 
