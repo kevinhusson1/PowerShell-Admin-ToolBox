@@ -59,6 +59,7 @@ function Get-BuilderControls {
         # --- EDITEUR --- Permissions
         EdPermissionsListBox = $Window.FindName("EditorPermissionsListBox")
         EdBtnAddPerm         = $Window.FindName("EditorAddPermButton")
+        EdStatusText         = $Window.FindName("EditorStatusText") # <--- AJOUT
         
         # --- EDITEUR --- Tags
         EdTagsListBox        = $Window.FindName("EditorTagsListBox")
@@ -74,6 +75,7 @@ function Get-BuilderControls {
         FormBtnNew           = $Window.FindName("FormNewButton")
         FormBtnSave          = $Window.FindName("FormSaveButton")
         FormBtnDelTpl        = $Window.FindName("FormDeleteButton")
+        FormStatusText       = $Window.FindName("FormStatusText") # <--- AJOUT
 
         # --- FORMULAIRE EDITOR (List & Actions) ---
         FormList             = $Window.FindName("FormFieldsListBox")
@@ -102,6 +104,7 @@ function Get-BuilderControls {
 
         # --- FORMULAIRE EDITOR (Preview) ---
         FormLivePreview      = $Window.FindName("FormLivePreviewPanel")
+        FormResultText       = $Window.FindName("FormResultPreviewText") # <--- AJOUT
     }
 
     if (-not $Ctrl.CbSites -or -not $Ctrl.BtnDeploy) { return $null }

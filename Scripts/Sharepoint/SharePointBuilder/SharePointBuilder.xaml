@@ -7,8 +7,7 @@
             <!-- 0: En-tête + Menu -->
             <RowDefinition Height="*"/>
             <!-- 1: Contenu -->
-            <RowDefinition Height="Auto"/>
-            <!-- 2: Pied de page -->
+
         </Grid.RowDefinitions>
 
         <!-- =============================================================== -->
@@ -74,6 +73,10 @@
                 <TabItem Header="🚀 Déploiement" IsSelected="True">
                     <Grid Background="{DynamicResource WhiteBrush}">
                         <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="600" MinWidth="400"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -266,6 +269,32 @@
                                     </Grid>
                                 </Border>
                             </Grid>
+                            <!-- Footer Déploiement -->
+                            <Grid Grid.Row="1" Grid.ColumnSpan="3">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <!-- Barre de progression -->
+                                <ProgressBar Grid.Row="0" x:Name="MainProgressBar" Height="4" BorderThickness="0" Background="{DynamicResource BorderLightBrush}" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Top"/>
+                                <!-- Contenu -->
+                                <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" Padding="25,15" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" x:Name="ProgressStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <StackPanel x:Name="PostDeployActionsPanel" Orientation="Horizontal" Visibility="Visible">
+                                                <Button x:Name="CopyUrlButton" Content="📋 Copier URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
+                                                <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
+                                                <Button x:Name="DeployButton" Content="🚀 Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" Width="240" Height="40" FontSize="14" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </Grid>
                     </Grid>
                 </TabItem>
@@ -279,6 +308,8 @@
                             <!-- Toolbar -->
                             <RowDefinition Height="*"/>
                             <!-- Workspace -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Footer -->
                         </Grid.RowDefinitions>
 
                         <!-- 1. BARRE D'OUTILS & CONTEXTE -->
@@ -289,12 +320,6 @@
                                     <!-- Gestion Fichier -->
                                     <ColumnDefinition Width="*"/>
                                     <!-- Espace -->
-                                    <ColumnDefinition Width="Auto"/>
-                                    <!-- Validation Context -->
-                                    <ColumnDefinition Width="20"/>
-                                    <!-- Espace -->
-                                    <ColumnDefinition Width="Auto"/>
-                                    <!-- Actions Principales -->
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Gestion BDD -->
@@ -305,24 +330,6 @@
                                     </StackPanel>
                                     <Button x:Name="EditorLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom"/>
                                     <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
-                                </StackPanel>
-
-                                <!-- Contexte de Validation (IntelliSense) -->
-                                <Border Grid.Column="2" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="8" Padding="10,5" BorderBrush="{DynamicResource InfoBrush}" BorderThickness="1">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="🎯" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Contexte de validation" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
-                                            <TextBlock x:Name="EditorContextStatusText" Text="Aucun site cible défini" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
-                                        </StackPanel>
-                                        <Button x:Name="EditorDefineTargetButton" Content="Définir" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Actions Globales -->
-                                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="EditorNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
-                                    <Button x:Name="EditorSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -491,6 +498,36 @@
                                 </Grid>
                             </Border>
                         </Grid>
+                        <!-- Footer Editeur -->
+                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Status Text -->
+                                <TextBlock Grid.Column="0" x:Name="EditorStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                                <!-- Actions Globales -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Contexte de Validation -->
+                                    <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="8" Padding="10,5" BorderBrush="{DynamicResource InfoBrush}" BorderThickness="1" Margin="0,0,10,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🎯" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Contexte de validation" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
+                                                <TextBlock x:Name="EditorContextStatusText" Text="Aucun site cible défini" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
+                                            </StackPanel>
+                                            <Button x:Name="EditorDefineTargetButton" Content="Définir" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Button x:Name="EditorNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
+                                    <Button x:Name="EditorSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </TabItem>
 
@@ -504,6 +541,8 @@
                             <!-- Workspace -->
                             <RowDefinition Height="Auto"/>
                             <!-- Preview -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- Footer -->
                         </Grid.RowDefinitions>
 
                         <!-- 1. BARRE D'OUTILS -->
@@ -514,24 +553,17 @@
                                     <!-- Gestion Fichier -->
                                     <ColumnDefinition Width="*"/>
                                     <!-- Espace -->
-                                    <ColumnDefinition Width="Auto"/>
-                                    <!-- Actions -->
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Gestion BDD -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                    <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                <!-- Gestion BDD -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <StackPanel VerticalAlignment="Bottom" Margin="0,0,10,0">
                                         <TextBlock Text="Règle existante" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                         <ComboBox x:Name="FormLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
                                     </StackPanel>
-                                    <Button x:Name="FormLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom"/>
-                                    <Button x:Name="FormDeleteButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}"/>
-                                </StackPanel>
-
-                                <!-- Actions -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="FormNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
-                                    <Button x:Name="FormSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                    <Button x:Name="FormLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom" ToolTip="##loc:form_editor.load_tooltip##"/>
+                                    <Button x:Name="FormDeleteButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" Padding="0" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="##loc:form_editor.delete_tooltip##"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -600,15 +632,15 @@
                                     <!-- Toolbar Bas -->
                                     <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button x:Name="FormAddLabelBtn" Content="+ Texte Fixe" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
-                                            <Button x:Name="FormAddTextBtn" Content="+ Champ Saisie" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
-                                            <Button x:Name="FormAddComboBtn" Content="+ Liste Choix" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,15,0"/>
+                                            <Button x:Name="FormAddLabelBtn" Content="+ Texte Fixe" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:form_editor.add_label_tooltip##"/>
+                                            <Button x:Name="FormAddTextBtn" Content="+ Champ Saisie" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:form_editor.add_text_tooltip##"/>
+                                            <Button x:Name="FormAddComboBtn" Content="+ Liste Choix" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,15,0" ToolTip="##loc:form_editor.add_combo_tooltip##"/>
 
                                             <!-- Correction Icônes -->
-                                            <Button x:Name="FormMoveUpBtn" Content="⬆️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Margin="0,0,5,0"/>
-                                            <Button x:Name="FormMoveDownBtn" Content="⬇️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Margin="0,0,15,0"/>
+                                            <Button x:Name="FormMoveUpBtn" Content="⬆️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Padding="0" Margin="0,0,5,0" ToolTip="##loc:form_editor.move_up_tooltip##"/>
+                                            <Button x:Name="FormMoveDownBtn" Content="⬇️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Padding="0" Margin="0,0,15,0" ToolTip="##loc:form_editor.move_down_tooltip##"/>
 
-                                            <Button x:Name="FormRemoveBtn" Content="🗑️" Style="{DynamicResource IconButtonStyle}" Width="34" Height="30" Foreground="{DynamicResource DangerBrush}"/>
+                                            <Button x:Name="FormRemoveBtn" Content="🗑️" Style="{DynamicResource IconButtonStyle}" Width="34" Height="30" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="##loc:form_editor.remove_item_tooltip##"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -680,14 +712,42 @@
                         <!-- 3. PREVIEW LIVE -->
                         <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
                             <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Aperçu en temps réel :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
-                                <!-- Conteneur du formulaire généré -->
-                                <StackPanel x:Name="FormLivePreviewPanel" Grid.Column="1" Orientation="Horizontal"/>
+                                <!-- Ligne 0 : Visuel -->
+                                <TextBlock Grid.Row="0" Text="Aperçu en temps réel :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <StackPanel Grid.Row="0" Grid.Column="1" x:Name="FormLivePreviewPanel" Orientation="Horizontal"/>
+
+                                <!-- Ligne 1 : Résultat Textuel -->
+                                <TextBlock Grid.Row="1" Text="Résultat généré :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,15,20,0"/>
+                                <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="6" Padding="12,8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Margin="0,15,0,0" HorizontalAlignment="Left">
+                                    <TextBlock x:Name="FormResultPreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                </Border>
+                            </Grid>
+
+                        </Border>
+                        <!-- Footer Formulaire -->
+                        <Border Grid.Row="3" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Status Text -->
+                                <TextBlock Grid.Column="0" x:Name="FormStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <Button x:Name="FormNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
+                                    <Button x:Name="FormSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </Grid>
@@ -695,36 +755,7 @@
             </TabControl>
         </Grid>
 
-        <!-- =============================================================== -->
-        <!-- 3. PIED DE PAGE (Footer) -->
-        <!-- =============================================================== -->
-        <Grid Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
 
-            <!-- Barre de progression -->
-            <ProgressBar Grid.Row="0" x:Name="MainProgressBar" Height="4" BorderThickness="0" Background="{DynamicResource BorderLightBrush}" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Top"/>
-
-            <!-- Contenu Footer -->
-            <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" Padding="25,15">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" x:Name="ProgressStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel x:Name="PostDeployActionsPanel" Orientation="Horizontal" Visibility="Visible">
-                            <Button x:Name="CopyUrlButton" Content="📋 Copier URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
-                            <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
-                            <Button x:Name="DeployButton" Content="🚀 Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" Width="240" Height="40" FontSize="14" FontWeight="Bold"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
 
     </Grid>
 </Window>

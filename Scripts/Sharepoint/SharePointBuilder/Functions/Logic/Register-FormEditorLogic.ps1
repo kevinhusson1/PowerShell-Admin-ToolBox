@@ -7,6 +7,61 @@ function Register-FormEditorLogic {
     )
 
     # ==========================================================================
+    # 0. HELPER : STATUS
+    # ==========================================================================
+    $SetFormStatus = {
+        param([string]$Msg, [string]$Type = "Normal")
+        if ($Ctrl.FormStatusText) {
+            $Ctrl.FormStatusText.Text = $Msg
+            $brushKey = switch ($Type) {
+                "Success" { "SuccessBrush" }
+                "Error" { "DangerBrush" }
+                "Warning" { "WarningBrush" }
+                Default { "TextSecondaryBrush" }
+            }
+            try { $Ctrl.FormStatusText.Foreground = $Window.FindResource($brushKey) } catch { }
+        }
+    }.GetNewClosure()
+
+    # ==========================================================================
+    # 0B. HELPER : RECALCUL PREVIEW (Définition Scopée)
+    # ==========================================================================
+    $RecalculateResult = {
+        param($s, $e) 
+        
+        if (-not $Ctrl.FormLivePreview) { return }
+
+        try {
+            $txt = ""
+            $children = $Ctrl.FormLivePreview.Children
+            foreach ($child in $children) {
+                if ($child -is [System.Windows.Controls.TextBlock]) {
+                    $txt += $child.Text
+                }
+                elseif ($child -is [System.Windows.Controls.TextBox]) {
+                    $val = $child.Text
+                    if ([string]::IsNullOrWhiteSpace($val)) { $val = "..." }
+                    $txt += $val
+                }
+                elseif ($child -is [System.Windows.Controls.ComboBox]) {
+                    if ($child.SelectedItem) {
+                        $txt += $child.SelectedItem.ToString()
+                    }
+                    elseif (-not [string]::IsNullOrWhiteSpace($child.Text)) {
+                        $txt += $child.Text
+                    }
+                }
+            }
+            if ($Ctrl.FormResultText) { 
+                $Ctrl.FormResultText.Text = if ([string]::IsNullOrWhiteSpace($txt)) { "..." } else { $txt } 
+            }
+        }
+        catch {
+            # Silencieux pour ne pas crasher l'UI
+        }
+    }.GetNewClosure()
+
+    # ==========================================================================
     # 1. HELPER : RENDU DE LA PREVIEW (BAS)
     # ==========================================================================
     $UpdateLivePreview = {
@@ -14,6 +69,9 @@ function Register-FormEditorLogic {
         
         $panel = $Ctrl.FormLivePreview
         $panel.Children.Clear()
+
+        # NOTE: $RecalculateResult est défini au-dessus, donc accessible par la closure d'ici
+
 
         foreach ($item in $Ctrl.FormList.Items) {
             $data = $item.Tag
@@ -38,6 +96,10 @@ function Register-FormEditorLogic {
                 $ctrl.Width = $finalWidth
                 $ctrl.Margin = "0,0,5,0"
                 $ctrl.Style = $Window.FindResource("StandardTextBoxStyle")
+                
+                # Event temps réel (TextChanged)
+                $ctrl.add_TextChanged($RecalculateResult)
+                
                 $panel.Children.Add($ctrl) | Out-Null
             }
             elseif ($data.Type -eq "ComboBox") {
@@ -47,11 +109,25 @@ function Register-FormEditorLogic {
                 $ctrl.Style = $Window.FindResource("StandardComboBoxStyle")
                 if ($data.Options) {
                     $ctrl.ItemsSource = $data.Options
-                    $ctrl.SelectedIndex = 0
+                    # Sélection par défaut (soit DefaultValue, soit le premier)
+                    if ($data.DefaultValue -and $data.Options -contains $data.DefaultValue) {
+                        $ctrl.SelectedItem = $data.DefaultValue
+                    }
+                    elseif ($data.Options.Count -gt 0) {
+                        $ctrl.SelectedIndex = 0
+                    }
                 }
+                
+                # Event temps réel (SelectionChanged)
+                $ctrl.add_SelectionChanged($RecalculateResult)
+                
                 $panel.Children.Add($ctrl) | Out-Null
             }
         }
+        
+        # Calcul initial
+        & $RecalculateResult $null $null
+
     }.GetNewClosure()
 
     # ==========================================================================
@@ -214,19 +290,22 @@ function Register-FormEditorLogic {
     & $LoadFormList
 
     # B. NOUVEAU
+    # B. NOUVEAU
     $Ctrl.FormBtnNew.Add_Click({
-            if ([System.Windows.MessageBox]::Show("Vider le formulaire ?", "Confirmer", "YesNo", "Warning") -eq 'Yes') {
-                $Ctrl.FormList.Items.Clear()
-                $Ctrl.FormLoadCb.Tag = $null
-                $Ctrl.FormLoadCb.SelectedIndex = -1
-                & $UpdateLivePreview
+            if ($Ctrl.FormList.Items.Count -gt 0) {
+                if ([System.Windows.MessageBox]::Show("Vider le formulaire ?", "Confirmer", "YesNo", "Warning") -eq 'No') { return }
             }
+            $Ctrl.FormList.Items.Clear()
+            $Ctrl.FormLoadCb.Tag = $null
+            $Ctrl.FormLoadCb.SelectedIndex = -1
+            & $UpdateLivePreview
+            & $SetFormStatus -Msg "Nouveau formulaire vierge prêt."
         }.GetNewClosure())
 
     # C. SAUVEGARDE (CLEAN)
     $Ctrl.FormBtnSave.Add_Click({
-            if ($Ctrl.FormList.Items.Count -eq 0) { return }
-
+            if ($Ctrl.FormList.Items.Count -eq 0) { & $SetFormStatus -Msg "Le formulaire est vide." -Type "Warning"; return }
+            
             $layoutList = @()
             foreach ($item in $Ctrl.FormList.Items) { $layoutList += $item.Tag }
             $finalObj = @{ Layout = $layoutList; Description = "Règle personnalisée" }
@@ -235,6 +314,18 @@ function Register-FormEditorLogic {
             # Note : Le .Replace() est géré par le module Database, on envoie le JSON brut
         
             $currentId = $Ctrl.FormLoadCb.Tag
+            if ($currentId) {
+                # Mode "Enregistrer Sous" ou "Écraser" si c'est déjà un modèle existant
+                $msg = "La règle '$currentId' est chargée.`n`nOUI : Écraser`nNON : Enregistrer copie`nANNULER : Retour"
+                $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
+                switch ($choice) {
+                    'Cancel' { return }
+                    'No' {
+                        $currentId = $null # Force nouvelle saisie
+                    }
+                }
+            }
+
             if (-not $currentId) {
                 Add-Type -AssemblyName Microsoft.VisualBasic
                 $name = [Microsoft.VisualBasic.Interaction]::InputBox("Nom de la règle (ID unique) :", "Sauvegarder", "Rule-Custom-01")
@@ -246,7 +337,7 @@ function Register-FormEditorLogic {
                 # APPEL PROPRE MODULE DATABASE
                 Set-AppNamingRule -RuleId $currentId -DefinitionJson $json
             
-                [System.Windows.MessageBox]::Show("Règle sauvegardée !", "Succès", "OK", "Information")
+                & $SetFormStatus -Msg "Règle '$currentId' sauvegardée avec succès." -Type "Success"
             
                 & $LoadFormList
                 $newItem = $Ctrl.FormLoadCb.ItemsSource | Where-Object { $_.RuleId -eq $currentId } | Select-Object -First 1
@@ -256,7 +347,7 @@ function Register-FormEditorLogic {
                 }
 
             }
-            catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
+            catch { & $SetFormStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
         }.GetNewClosure())
 
     # D. CHARGER
@@ -280,8 +371,9 @@ function Register-FormEditorLogic {
                     }
                     & $RenderListItem -Data $obj
                 }
+                & $SetFormStatus -Msg "Règle '$($sel.RuleId)' chargée." -Type "Success"
             }
-            catch { Write-AppLog "Erreur chargement règle : $_" }
+            catch { & $SetFormStatus -Msg "Erreur chargement : $_" -Type "Error" }
 
         }.GetNewClosure())
     
@@ -301,8 +393,9 @@ function Register-FormEditorLogic {
                         $Ctrl.FormLoadCb.Tag = $null
                         & $LoadFormList
                         & $UpdateLivePreview
+                        & $SetFormStatus -Msg "Règle '$id' supprimée." -Type "Normal"
                     }
-                    catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
+                    catch { & $SetFormStatus -Msg "Erreur suppression : $($_.Exception.Message)" -Type "Error" }
                 }
             }.GetNewClosure())
     }

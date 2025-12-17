@@ -7,6 +7,24 @@ function Register-EditorLogic {
     )
 
     # ==========================================================================
+    # 0. HELPER : STATUS
+    # ==========================================================================
+    $SetStatus = {
+        param([string]$Msg, [string]$Type = "Normal")
+        if ($Ctrl.EdStatusText) {
+            $Ctrl.EdStatusText.Text = $Msg
+            $brushKey = switch ($Type) {
+                "Success" { "SuccessBrush" }
+                "Error" { "DangerBrush" }
+                "Warning" { "WarningBrush" }
+                Default { "TextSecondaryBrush" }
+            }
+            # Fallback simple si la ressource n'existe pas, sinon on prend la ressource du thème
+            try { $Ctrl.EdStatusText.Foreground = $Window.FindResource($brushKey) } catch { }
+        }
+    }.GetNewClosure()
+
+    # ==========================================================================
     # 1. HELPER : RENDU LIGNES (Avec Capture du TreeItem pour éviter la perte de focus)
     # ==========================================================================
     
@@ -157,9 +175,11 @@ function Register-EditorLogic {
     # 3. ACTIONS ARBRE
     # ==========================================================================
     $Ctrl.EdBtnNew.Add_Click({
-            if ([System.Windows.MessageBox]::Show("Tout effacer ?", "Confirmation", "YesNo", "Warning") -eq 'Yes') {
-                $Ctrl.EdTree.Items.Clear(); $Ctrl.EdNameBox.Text = ""; if ($Ctrl.EdPermissionsListBox) { $Ctrl.EdPermissionsListBox.Items.Clear() }; if ($Ctrl.EdTagsListBox) { $Ctrl.EdTagsListBox.Items.Clear() }; if ($Ctrl.EdLinksListBox) { $Ctrl.EdLinksListBox.Items.Clear() }
+            if ($Ctrl.EdTree.Items.Count -gt 0) {
+                if ([System.Windows.MessageBox]::Show("Tout effacer ?", "Confirmation", "YesNo", "Warning") -eq 'No') { return }
             }
+            $Ctrl.EdTree.Items.Clear(); $Ctrl.EdNameBox.Text = ""; if ($Ctrl.EdPermissionsListBox) { $Ctrl.EdPermissionsListBox.Items.Clear() }; if ($Ctrl.EdTagsListBox) { $Ctrl.EdTagsListBox.Items.Clear() }; if ($Ctrl.EdLinksListBox) { $Ctrl.EdLinksListBox.Items.Clear() }
+            & $SetStatus -Msg "Nouvel espace de travail vierge prêt."
         }.GetNewClosure())
 
     $Ctrl.EdBtnRoot.Add_Click({ $newItem = New-EditorNode -Name "Racine"; $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true }.GetNewClosure())
@@ -242,6 +262,7 @@ function Register-EditorLogic {
         if ($Ctrl.EdLinksListBox) { $Ctrl.EdLinksListBox.Items.Clear() }
         $Ctrl.EdNoSelPanel.Visibility = "Visible"; $Ctrl.EdPropPanel.Visibility = "Collapsed"
         $Ctrl.EdLoadCb.Tag = $null; $Ctrl.EdLoadCb.SelectedIndex = -1
+        & $SetStatus -Msg "Interface réinitialisée."
     }.GetNewClosure()
 
     $LoadTemplateList = {
@@ -255,16 +276,24 @@ function Register-EditorLogic {
     & $LoadTemplateList
 
     $Ctrl.EdBtnNew.Add_Click({
-            if ([System.Windows.MessageBox]::Show("Tout effacer et créer un nouveau modèle ?", "Confirmation", "YesNo", "Warning") -eq 'Yes') { & $ResetUI }
+            if ($Ctrl.EdTree.Items.Count -gt 0) {
+                if ([System.Windows.MessageBox]::Show("Tout effacer et créer un nouveau modèle ?", "Confirmation", "YesNo", "Warning") -eq 'No') { return }
+            }
+            & $ResetUI
+            & $SetStatus -Msg "Nouveau modèle vierge prêt."
         }.GetNewClosure())
 
     $Ctrl.EdBtnLoad.Add_Click({
             $selectedTpl = $Ctrl.EdLoadCb.SelectedItem
-            if (-not $selectedTpl) { return }
+            if (-not $selectedTpl) { & $SetStatus -Msg "Aucun modèle sélectionné." -Type "Warning"; return }
+            
             if ($Ctrl.EdTree.Items.Count -gt 0) { if ([System.Windows.MessageBox]::Show("Charger va écraser le modèle actuel. Continuer ?", "Attention", "YesNo", "Warning") -ne 'Yes') { return } }
+            
             Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree
             $Ctrl.EdNoSelPanel.Visibility = "Visible"; $Ctrl.EdPropPanel.Visibility = "Collapsed"
             $Ctrl.EdLoadCb.Tag = $selectedTpl.TemplateId
+            
+            & $SetStatus -Msg "Modèle '$($selectedTpl.DisplayName)' chargé." -Type "Success"
         }.GetNewClosure())
 
     $Ctrl.EdBtnSave.Add_Click({
@@ -304,14 +333,15 @@ function Register-EditorLogic {
                 # APPEL PROPRE AU MODULE DATABASE
                 Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description "Modèle personnalisé" -StructureJson $json
             
-                [System.Windows.MessageBox]::Show("Modèle '$currentName' sauvegardé !", "Succès", "OK", "Information")
+                # [System.Windows.MessageBox]::Show("Modèle '$currentName' sauvegardé !", "Succès", "OK", "Information")
+                & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
             
                 & $LoadTemplateList
                 $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1
                 if ($newItem) { $Ctrl.EdLoadCb.SelectedItem = $newItem; $Ctrl.EdLoadCb.Tag = $currentId }
 
             }
-            catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
+            catch { & $SetStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
 
         }.GetNewClosure())
 
@@ -328,10 +358,10 @@ function Register-EditorLogic {
                         # APPEL PROPRE AU MODULE DATABASE
                         Remove-AppSPTemplate -TemplateId $currentId
                     
-                        [System.Windows.MessageBox]::Show("Modèle supprimé.", "Succès", "OK", "Information")
+                        & $SetStatus -Msg "Modèle '$nom' supprimé." -Type "Normal"
                         & $LoadTemplateList; & $ResetUI
                     }
-                    catch { [System.Windows.MessageBox]::Show("Erreur : $($_.Exception.Message)", "Erreur", "OK", "Error") }
+                    catch { & $SetStatus -Msg "Erreur suppression : $($_.Exception.Message)" -Type "Error" }
                 }
             }.GetNewClosure())
     }

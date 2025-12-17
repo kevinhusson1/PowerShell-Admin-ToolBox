@@ -1,16 +1,26 @@
 {
-    "scripts": {
-        "sharepoint_builder": {
-            "name": "SharePoint Builder",
-            "description": "Usine de déploiement d'architectures documentaires."
-        }
-    },
-    "sp_builder": {
-        "window_title": "SharePoint Builder",
-        "auth_graph_status": "Identité Azure (Graph) :",
-        "auth_pnp_status": "Connexion SharePoint (PnP) :",
-        "status_connected": "Connecté",
-        "status_disconnected": "Déconnecté",
-        "waiting_for_auth": "En attente d'identification..."
+  "scripts": {
+    "sharepoint_builder": {
+      "name": "SharePoint Builder",
+      "description": "Usine de déploiement d'architectures documentaires."
     }
+  },
+  "sp_builder": {
+    "window_title": "SharePoint Builder",
+    "auth_graph_status": "Identité Azure (Graph) :",
+    "auth_pnp_status": "Connexion SharePoint (PnP) :",
+    "status_connected": "Connecté",
+    "status_disconnected": "Déconnecté",
+    "waiting_for_auth": "En attente d'identification..."
+  },
+  "form_editor": {
+    "load_tooltip": "Charger la règle sélectionnée",
+    "delete_tooltip": "Supprimer la règle sélectionnée",
+    "add_label_tooltip": "Ajouter un texte fixe (Label)",
+    "add_text_tooltip": "Ajouter un champ de saisie (TextBox)",
+    "add_combo_tooltip": "Ajouter une liste de choix (ComboBox)",
+    "move_up_tooltip": "Monter l'élément sélectionné",
+    "move_down_tooltip": "Descendre l'élément sélectionné",
+    "remove_item_tooltip": "Supprimer l'élément de la liste"
+  }
 }
