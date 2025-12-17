@@ -76,6 +76,7 @@ function Register-TemplateEvents {
                         }
                         elseif ($elem.Type -eq "TextBox") {
                             $t = New-Object System.Windows.Controls.TextBox -Property @{ Text = $defaultValue; Width = $elem.Width; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }
+                            if ($elem.IsUppercase) { $t.CharacterCasing = [System.Windows.Controls.CharacterCasing]::Upper }
                             $t.Add_TextChanged($PreviewLogic) 
                             $Ctrl.PanelForm.Children.Add($t)
                         }

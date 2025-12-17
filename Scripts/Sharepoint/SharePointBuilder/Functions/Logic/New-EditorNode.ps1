@@ -146,6 +146,82 @@ function Global:Update-EditorBadges {
     
     # Write-Host "  ✅ Badges reconstruits avec succès!" -ForegroundColor Green
     
+    # ==========================================================================
+    # GESTION DES SOUS-ÉLÉMENTS (Metadata : Permissions, Tags, Links)
+    # ==========================================================================
+    
+    # 1. Nettoyage des anciens items metadata (identifiés par Name="MetaItem")
+    $metaItems = @()
+    foreach ($child in $TreeItem.Items) {
+        if ($child.Name -eq "MetaItem") { $metaItems += $child }
+    }
+    foreach ($m in $metaItems) { $TreeItem.Items.Remove($m) }
+
+    # Helper pour la création d'items
+    $fnAddMeta = {
+        param($Icon, $Text, $Color, $Data)
+        $mItem = New-Object System.Windows.Controls.TreeViewItem
+        $mItem.Name = "MetaItem"
+        $mItem.Tag = $Data
+        
+        $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
+        $mIcon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Icon; Margin = "0,0,5,0"; Foreground = $Color; FontSize = 12 }
+        $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Text; FontSize = 11; VerticalAlignment = "Center" }
+        
+        $mStack.Children.Add($mIcon) | Out-Null
+        $mStack.Children.Add($mText) | Out-Null
+        $mItem.Header = $mStack
+        
+        # Insertion au début (index 0, puis 1, etc.)
+        # Mais comme on insert, l'ordre s'inverse si on insert toujours à 0.
+        # On va les collecter et les insérer dans le bon ordre à la fin, ou insérer à l'index approprié.
+        return $mItem
+    }
+
+    $idx = 0
+
+    # 2. Permissions
+    if ($data.Permissions) {
+        foreach ($p in $data.Permissions) {
+            $pName = ""
+            if ($p.PSObject.Properties['Identity']) { $pName = "$($p.Identity) ($($p.Level))" }
+            elseif ($p.PSObject.Properties['User']) { $pName = "$($p.User) ($($p.Level))" }
+            else { $pName = [string]$p } # Fallback
+
+            $newItem = & $fnAddMeta -Icon "👤" -Text $pName -Color "#1976D2" -Data $p
+            $TreeItem.Items.Insert($idx, $newItem)
+            $idx++
+        }
+    }
+
+    # 3. Tags
+    if ($data.Tags) {
+        foreach ($t in $data.Tags) {
+            $tName = ""
+            if ($t.PSObject.Properties['Name'] -and $t.PSObject.Properties['Value']) { $tName = "$($t.Name) : $($t.Value)" }
+            elseif ($t.PSObject.Properties['Column'] -and $t.PSObject.Properties['Term']) { $tName = "$($t.Column) : $($t.Term)" }
+            else { $tName = [string]$t }
+
+            $newItem = & $fnAddMeta -Icon "🏷️" -Text $tName -Color "#689F38" -Data $t
+            $TreeItem.Items.Insert($idx, $newItem)
+            $idx++
+        }
+    }
+
+    # 4. Liens
+    if ($data.Links) {
+        foreach ($l in $data.Links) {
+            $lName = if ($l.PSObject.Properties['Name']) { $l.Name } else { $l.Url }
+            $newItem = & $fnAddMeta -Icon "🔗" -Text $lName -Color "#F57C00" -Data $l
+            
+            # Style italique pour le lien
+            $newItem.Header.Children[1].FontStyle = "Italic"
+
+            $TreeItem.Items.Insert($idx, $newItem)
+            $idx++
+        }
+    }
+
     # ⭐ Force le refresh visuel
     try {
         $header.InvalidateVisual()
@@ -153,7 +229,5 @@ function Global:Update-EditorBadges {
         $header.UpdateLayout()
         $TreeItem.UpdateLayout()
     }
-    catch {
-        # Write-Host "  ⚠️ Erreur UpdateLayout: $($_.Exception.Message)" -ForegroundColor Yellow
-    }
+    catch { }
 }

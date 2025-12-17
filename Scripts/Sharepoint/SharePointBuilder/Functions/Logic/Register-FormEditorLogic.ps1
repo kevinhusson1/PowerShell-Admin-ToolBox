@@ -99,6 +99,11 @@ function Register-FormEditorLogic {
                 
                 # Event temps réel (TextChanged)
                 $ctrl.add_TextChanged($RecalculateResult)
+
+                # Gestion Majuscules
+                if ($data.IsUppercase) {
+                    $ctrl.CharacterCasing = [System.Windows.Controls.CharacterCasing]::Upper
+                }
                 
                 $panel.Children.Add($ctrl) | Out-Null
             }
@@ -156,6 +161,12 @@ function Register-FormEditorLogic {
         
         $txtDesc = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $desc; VerticalAlignment = "Center" }
         
+        # Indicateur Visuel [MAJ]
+        if ($Data.IsUppercase) {
+            $txtDesc.Text += " [MAJ]"
+            $txtDesc.Foreground = [System.Windows.Media.Brushes]::Orange
+        }
+
         $stack.Children.Add($border) | Out-Null
         $stack.Children.Add($txtDesc) | Out-Null
         
@@ -175,7 +186,7 @@ function Register-FormEditorLogic {
         }.GetNewClosure())
 
     $Ctrl.FormBtnAddTxt.Add_Click({
-            $obj = [PSCustomObject]@{ Type = "TextBox"; Name = "Variable"; DefaultValue = ""; Width = "100"; Content = ""; Options = @() }
+            $obj = [PSCustomObject]@{ Type = "TextBox"; Name = "Variable"; DefaultValue = ""; Width = "100"; Content = ""; Options = @(); IsUppercase = $false }
             & $RenderListItem -Data $obj
         }.GetNewClosure())
 
@@ -239,12 +250,19 @@ function Register-FormEditorLogic {
                 $visContent = if ($data.Type -eq "Label") { "Visible" } else { "Collapsed" }
                 $visDefault = if ($data.Type -eq "Label") { "Collapsed" } else { "Visible" }
                 $visOptions = if ($data.Type -eq "ComboBox") { "Visible" } else { "Collapsed" }
+                $visUpper = if ($data.Type -eq "TextBox") { "Visible" } else { "Collapsed" }
 
                 if ($Ctrl.PanelName) { $Ctrl.PanelName.Visibility = $visName }
                 if ($Ctrl.PanelContent) { $Ctrl.PanelContent.Visibility = $visContent }
                 if ($Ctrl.PanelDefault) { $Ctrl.PanelDefault.Visibility = $visDefault }
                 if ($Ctrl.PanelOptions) { $Ctrl.PanelOptions.Visibility = $visOptions }
                 if ($Ctrl.PanelWidth) { $Ctrl.PanelWidth.Visibility = "Visible" } 
+                if ($Ctrl.PanelForceUpper) { $Ctrl.PanelForceUpper.Visibility = $visUpper }
+                
+                # Binding Valeur Checkbox
+                if ($Ctrl.PropForceUpper) {
+                    $Ctrl.PropForceUpper.IsChecked = if ($data.IsUppercase) { $true } else { $false }
+                }
             }
             $Ctrl.FormPropPanel.Tag = "Ready"
         }.GetNewClosure())
@@ -260,7 +278,16 @@ function Register-FormEditorLogic {
             $stack = $sel.Content
             $txt = $stack.Children[1]
             if ($d.Type -eq "Label") { $txt.Text = "'$($d.Content)'" }
-            else { $txt.Text = "$($d.Name) (Def: '$($d.DefaultValue)')" }
+            else { 
+                $txt.Text = "$($d.Name) (Def: '$($d.DefaultValue)')" 
+                if ($d.IsUppercase) { 
+                    $txt.Text += " [MAJ]" 
+                    $txt.Foreground = [System.Windows.Media.Brushes]::Orange 
+                }
+                else {
+                    $txt.Foreground = [System.Windows.Media.Brushes]::Black
+                }
+            }
             & $UpdateLivePreview
         }
     }.GetNewClosure()
@@ -273,6 +300,33 @@ function Register-FormEditorLogic {
             if ($Ctrl.FormList.SelectedItem) { 
                 $arr = $this.Text.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
                 $Ctrl.FormList.SelectedItem.Tag.Options = $arr
+                & $RefreshListItem 
+            } 
+        }.GetNewClosure())
+
+    $Ctrl.PropForceUpper.Add_Checked({ 
+            if ($Ctrl.FormList.SelectedItem) { 
+                # Ensure propery exists
+                $t = $Ctrl.FormList.SelectedItem.Tag
+                if ($null -eq $t.PSObject.Properties["IsUppercase"]) {
+                    $t | Add-Member -MemberType NoteProperty -Name "IsUppercase" -Value $true -Force
+                }
+                else {
+                    $t.IsUppercase = $true
+                }
+                & $RefreshListItem 
+            } 
+        }.GetNewClosure())
+
+    $Ctrl.PropForceUpper.Add_Unchecked({ 
+            if ($Ctrl.FormList.SelectedItem) { 
+                $t = $Ctrl.FormList.SelectedItem.Tag
+                if ($null -eq $t.PSObject.Properties["IsUppercase"]) {
+                    $t | Add-Member -MemberType NoteProperty -Name "IsUppercase" -Value $false -Force
+                }
+                else {
+                    $t.IsUppercase = $false
+                }
                 & $RefreshListItem 
             } 
         }.GetNewClosure())
@@ -368,6 +422,7 @@ function Register-FormEditorLogic {
                         DefaultValue = if ($field.DefaultValue) { $field.DefaultValue }else { "" }
                         Width        = if ($field.Width) { $field.Width }else { "100" }
                         Options      = if ($field.Options) { $field.Options }else { @() }
+                        IsUppercase  = if ($field.IsUppercase) { $field.IsUppercase } else { $false }
                     }
                     & $RenderListItem -Data $obj
                 }
