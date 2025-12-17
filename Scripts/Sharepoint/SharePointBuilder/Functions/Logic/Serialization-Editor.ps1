@@ -21,6 +21,9 @@ function Global:Convert-EditorTreeToJson {
 
         # Récursion sur les enfants visuels
         foreach ($childItem in $Item.Items) {
+            # FIX: Ignorer les métadonnées visuelles (qui sont dans le TreeView pour l'édition)
+            if ($childItem.Name -eq "MetaItem") { continue }
+
             $nodeHash.Folders += Get-NodeData -Item $childItem
         }
         

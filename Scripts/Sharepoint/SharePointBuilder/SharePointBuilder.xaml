@@ -396,100 +396,158 @@
 
                                     <!-- Formulaire Propriétés -->
                                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
-                                        <StackPanel x:Name="EditorPropertiesPanel">
+                                        <Grid>
 
-                                            <!-- 1. Identification -->
-                                            <TextBlock Text="Nom du dossier" Style="{DynamicResource H4Style}"/>
-                                            <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                            <!-- A. MODE DOSSIER -->
+                                            <StackPanel x:Name="EdPanelFolder">
 
-                                            <!-- 2. Permissions -->
-                                            <Grid Margin="0,0,0,10">
-                                                <TextBlock Text="Permissions" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
-                                                <Button x:Name="EditorAddPermButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter une permission"/>
-                                            </Grid>
+                                                <!-- 1. Identification -->
+                                                <TextBlock Text="Nom du dossier" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
 
-                                            <!-- Liste Permissions (Template Item défini en Code ou Resources) -->
-                                            <ListBox x:Name="EditorPermissionsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
-                                                <!-- Style Placeholder pour le design, sera remplacé par DataTemplate -->
-                                                <ListBox.ItemContainerStyle>
-                                                    <Style TargetType="ListBoxItem">
-                                                        <Setter Property="Padding" Value="0"/>
-                                                        <Setter Property="Margin" Value="0,0,0,5"/>
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="ListBoxItem">
-                                                                    <ContentPresenter/>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Style>
-                                                </ListBox.ItemContainerStyle>
-                                            </ListBox>
+                                                <!-- 2. Permissions -->
+                                                <Grid Margin="0,0,0,10">
+                                                    <TextBlock Text="Permissions" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                    <Button x:Name="EditorAddPermButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter une permission"/>
+                                                </Grid>
 
-                                            <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
+                                                <!-- Liste Permissions -->
+                                                <ListBox x:Name="EditorPermissionsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style TargetType="ListBoxItem">
+                                                            <Setter Property="Padding" Value="0"/>
+                                                            <Setter Property="Margin" Value="0,0,0,5"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                                        <ContentPresenter/>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </ListBox.ItemContainerStyle>
+                                                </ListBox>
 
-                                            <!-- 3. Métadonnées -->
-                                            <Grid Margin="0,0,0,10">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="Métadonnées / Tags" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
-                                                    <!-- Badge Context -->
-                                                    <Border x:Name="EditorMetadataBadge" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" Visibility="Collapsed">
-                                                        <TextBlock Text="Schéma lié" FontSize="9" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold"/>
-                                                    </Border>
-                                                </StackPanel>
-                                                <Button x:Name="EditorAddTagButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un tag"/>
-                                            </Grid>
+                                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
 
-                                            <!-- Liste Tags -->
-                                            <ListBox x:Name="EditorTagsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
-                                                <ListBox.ItemContainerStyle>
-                                                    <Style TargetType="ListBoxItem">
-                                                        <Setter Property="Padding" Value="0"/>
-                                                        <Setter Property="Margin" Value="0,0,0,5"/>
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="ListBoxItem">
-                                                                    <ContentPresenter/>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Style>
-                                                </ListBox.ItemContainerStyle>
-                                            </ListBox>
+                                                <!-- 3. Métadonnées -->
+                                                <Grid Margin="0,0,0,10">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="Métadonnées / Tags" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                        <Border x:Name="EditorMetadataBadge" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" Visibility="Collapsed">
+                                                            <TextBlock Text="Schéma lié" FontSize="9" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <Button x:Name="EditorAddTagButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un tag"/>
+                                                </Grid>
 
-                                            <!-- 4. Liens  -->
-                                            <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
-                                            <Grid Margin="0,0,0,10">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="Liens / Raccourcis" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <Button x:Name="EditorAddLinkButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un lien"/>
-                                            </Grid>
+                                                <!-- Liste Tags -->
+                                                <ListBox x:Name="EditorTagsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style TargetType="ListBoxItem">
+                                                            <Setter Property="Padding" Value="0"/>
+                                                            <Setter Property="Margin" Value="0,0,0,5"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                                        <ContentPresenter/>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </ListBox.ItemContainerStyle>
+                                                </ListBox>
 
-                                            <!-- Liste Liens -->
-                                            <ListBox x:Name="EditorLinksListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
-                                                <ListBox.ItemContainerStyle>
-                                                    <Style TargetType="ListBoxItem">
-                                                        <Setter Property="Padding" Value="0"/>
-                                                        <Setter Property="Margin" Value="0,0,0,5"/>
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="ListBoxItem">
-                                                                    <ContentPresenter/>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Style>
-                                                </ListBox.ItemContainerStyle>
-                                            </ListBox>
-                                        </StackPanel>
+                                                <!-- 4. Liens  -->
+                                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
+                                                <Grid Margin="0,0,0,10">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="Liens / Raccourcis" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                    <Button x:Name="EditorAddLinkButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un lien"/>
+                                                </Grid>
+
+                                                <!-- Liste Liens -->
+                                                <ListBox x:Name="EditorLinksListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style TargetType="ListBoxItem">
+                                                            <Setter Property="Padding" Value="0"/>
+                                                            <Setter Property="Margin" Value="0,0,0,5"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                                        <ContentPresenter/>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </ListBox.ItemContainerStyle>
+                                                </ListBox>
+
+                                            </StackPanel>
+
+                                            <!-- B. MODE PERMISSION -->
+                                            <StackPanel x:Name="EdPanelPerm" Visibility="Collapsed">
+                                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="👤" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Édition de permission" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <TextBlock Text="Utilisateur ou Groupe (Email)" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdPermIdentityBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <TextBlock Text="Niveau d'accès" Style="{DynamicResource H4Style}"/>
+                                                <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <Button x:Name="EdPermDeleteButton" Content="Supprimer cette permission" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- C. MODE TAG -->
+                                            <StackPanel x:Name="EdPanelTag" Visibility="Collapsed">
+                                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🏷️" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Édition de Tag" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <TextBlock Text="Nom de la colonne" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdTagNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <TextBlock Text="Valeur (Terme)" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <Button x:Name="EdTagDeleteButton" Content="Supprimer ce tag" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- D. MODE LINK -->
+                                            <StackPanel x:Name="EdPanelLink" Visibility="Collapsed">
+                                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🔗" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Édition de Lien" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <TextBlock Text="Nom affiché" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <TextBlock Text="URL Cible" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <Button x:Name="EdLinkDeleteButton" Content="Supprimer ce lien" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                            </StackPanel>
+
+                                        </Grid>
                                     </ScrollViewer>
 
                                     <!-- Overlay "Aucune sélection" -->
-                                    <Grid Grid.Row="1" x:Name="EditorNoSelectionPanel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
+                                    <Grid Grid.Row="1" x:Name="EdPanelNoSel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
                                             <TextBlock Text="👆" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                             <TextBlock Text="Sélectionnez un dossier dans l'arbre" FontSize="14"/>
@@ -693,6 +751,12 @@
                                             <StackPanel x:Name="PanelPropWidth">
                                                 <TextBlock Text="Largeur visuelle (px)" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="PropWidthBox" Style="{DynamicResource StandardTextBoxStyle}" Width="80" HorizontalAlignment="Left" Margin="0,5,0,20"/>
+                                            </StackPanel>
+
+                                            <!-- 6. Majuscules -->
+                                            <StackPanel x:Name="PanelPropForceUpper" Orientation="Horizontal" Margin="0,0,0,20">
+                                                <CheckBox x:Name="PropForceUpperCheck" Style="{DynamicResource ToggleSwitchStyle}"/>
+                                                <TextBlock Text="Forcer majuscules" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                             </StackPanel>
 
                                         </StackPanel>

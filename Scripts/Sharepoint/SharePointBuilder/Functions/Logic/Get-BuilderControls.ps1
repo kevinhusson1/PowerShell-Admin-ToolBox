@@ -3,6 +3,32 @@
 function Get-BuilderControls {
     param([System.Windows.Window]$Window)
 
+    # Helper for deep search (Robustness against NameScope)
+    function Find-ControlByName {
+        param($Parent, $Name)
+        if (-not $Parent) { return $null }
+        if ($Parent.Name -eq $Name) { return $Parent }
+        
+        $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($Parent)
+        for ($i = 0; $i -lt $count; $i++) {
+            $child = [System.Windows.Media.VisualTreeHelper]::GetChild($Parent, $i)
+            # Check visual child
+            if ($child -is [System.Windows.FrameworkElement] -and $child.Name -eq $Name) { return $child }
+            
+            # Recursive
+            $res = Find-ControlByName -Parent $child -Name $Name
+            if ($res) { return $res }
+        }
+        return $null
+    }
+
+    # Fallback search if FindName fails for key panels
+    $Find = { param($n) 
+        $o = $Window.FindName($n)
+        if (-not $o) { $o = Find-ControlByName -Parent $Window -Name $n }
+        return $o
+    }
+
     $Ctrl = @{
         # --- INPUTS ---
         CbSites              = $Window.FindName("SiteComboBox")
@@ -52,14 +78,36 @@ function Get-BuilderControls {
         EdBtnDel             = $Window.FindName("EditorDeleteNodeButton")
 
         # --- EDITEUR (Props) ---
-        EdPropPanel          = $Window.FindName("EditorPropertiesPanel")
-        EdNoSelPanel         = $Window.FindName("EditorNoSelectionPanel")
-        EdNameBox            = $Window.FindName("EditorFolderNameTextBox")
+        # --- EDITEUR (Props Panels) ---
+        # USE ROBUST FIND
+        EdPropPanel          = & $Find "EdPanelFolder" # Renamed from EditorPropertiesPanel
+        EdPropPanelPerm      = & $Find "EdPanelPerm"   # Renamed from EditorPermissionPanel
+        EdPropPanelTag       = & $Find "EdPanelTag"    # Renamed from EditorTagPanel
+        EdPropPanelLink      = & $Find "EdPanelLink"   # Renamed from EditorLinkPanel
 
-        # --- EDITEUR --- Permissions
+        EdNoSelPanel         = & $Find "EdPanelNoSel"  # Renamed from EditorNoSelectionPanel
+        
+        # Folder Inputs
+        EdNameBox            = $Window.FindName("EditorFolderNameTextBox")
         EdPermissionsListBox = $Window.FindName("EditorPermissionsListBox")
         EdBtnAddPerm         = $Window.FindName("EditorAddPermButton")
-        EdStatusText         = $Window.FindName("EditorStatusText") # <--- AJOUT
+        
+        # Permission Inputs
+        EdPermIdentityBox    = $Window.FindName("EdPermIdentityBox")
+        EdPermLevelBox       = $Window.FindName("EdPermLevelBox")
+        EdPermDeleteButton   = $Window.FindName("EdPermDeleteButton")
+
+        # Tag Inputs
+        EdTagNameBox         = $Window.FindName("EdTagNameBox")
+        EdTagValueBox        = $Window.FindName("EdTagValueBox")
+        EdTagDeleteButton    = $Window.FindName("EdTagDeleteButton")
+
+        # Link Inputs
+        EdLinkNameBox        = $Window.FindName("EdLinkNameBox")
+        EdLinkUrlBox         = $Window.FindName("EdLinkUrlBox")
+        EdLinkDeleteButton   = $Window.FindName("EdLinkDeleteButton")
+
+        EdStatusText         = $Window.FindName("EditorStatusText")
         
         # --- EDITEUR --- Tags
         EdTagsListBox        = $Window.FindName("EditorTagsListBox")
@@ -101,6 +149,9 @@ function Get-BuilderControls {
         PanelDefault         = $Window.FindName("PanelPropDefault")
         PanelOptions         = $Window.FindName("PanelPropOptions")
         PanelWidth           = $Window.FindName("PanelPropWidth")
+        
+        PropForceUpper       = $Window.FindName("PropForceUpperCheck")
+        PanelForceUpper      = $Window.FindName("PanelPropForceUpper")
 
         # --- FORMULAIRE EDITOR (Preview) ---
         FormLivePreview      = $Window.FindName("FormLivePreviewPanel")
