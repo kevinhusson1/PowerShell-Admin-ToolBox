@@ -1,6 +1,6 @@
 <!-- Templates/Components/Inputs/ComboBox.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <BooleanToVisibilityConverter x:Key="NullToVisibilityConverter"/>
 
@@ -10,6 +10,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="{DynamicResource SelectionHoverBackgroundBrush}"/>
@@ -30,21 +31,15 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="ItemContainerStyle" Value="{StaticResource StandardComboBoxItemStyle}"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid SnapsToDevicePixels="True">
-                        <ToggleButton x:Name="toggleButton" 
-                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                      Background="{TemplateBinding Background}"
-                                      BorderBrush="{TemplateBinding BorderBrush}"
-                                      BorderThickness="{TemplateBinding BorderThickness}">
+                        <ToggleButton x:Name="toggleButton" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Cursor="Hand">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="ToggleButtonBorder" CornerRadius="8"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="1">
+                                    <Border x:Name="ToggleButtonBorder" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -52,30 +47,20 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <TextBlock Grid.Column="0" Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
-                                                       FontFamily="Segoe UI Symbol" FontSize="16" VerticalAlignment="Center" 
-                                                       Margin="10,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}, Converter={StaticResource NullToVisibilityConverter}}"/>
-                                            
+                                            <TextBlock Grid.Column="0" Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}" FontFamily="Segoe UI Symbol" FontSize="16" VerticalAlignment="Center" Margin="10,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=ComboBox}, Converter={StaticResource NullToVisibilityConverter}}"/>
+
                                             <!-- CORRECTION : On affiche directement la propriété Text de la ComboBox.
                                                 Elle contient la valeur correcte résolue par DisplayMemberPath. -->
-                                            <TextBlock Grid.Column="1" Margin="10,0,0,0"
-                                                    VerticalAlignment="Center" HorizontalAlignment="Left" 
-                                                    Text="{Binding Text, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                    TextTrimming="CharacterEllipsis"/>
-                                            
-                                            <Path Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                  Margin="0,0,10,0" Data="M 0 0 L 4 4 L 8 0"
-                                                  Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="2"/>
+                                            <TextBlock Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Text, RelativeSource={RelativeSource AncestorType=ComboBox}}" TextTrimming="CharacterEllipsis"/>
+
+                                            <Path Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0" Data="M 0 0 L 4 4 L 8 0" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="2"/>
                                         </Grid>
                                     </Border>
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
 
-                        <Popup x:Name="PART_Popup" AllowsTransparency="True" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                               Placement="Bottom" StaysOpen="False" PopupAnimation="Fade"
-                               MinWidth="{Binding ActualWidth, ElementName=toggleButton}">
+                        <Popup x:Name="PART_Popup" AllowsTransparency="True" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Bottom" StaysOpen="False" PopupAnimation="Fade" MinWidth="{Binding ActualWidth, ElementName=toggleButton}">
                             <!-- CORRECTION : Remplacement de l'effet par une définition explicite -->
                             <Border Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1" CornerRadius="8" Margin="0,5,0,0">
                                 <Border.Effect>
@@ -87,7 +72,7 @@
                             </Border>
                         </Popup>
                     </Grid>
-                    
+
                     <ControlTemplate.Triggers>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -112,9 +97,10 @@
     <!-- Style pour ComboBox Éditable (Recherche) -->
     <Style TargetType="ComboBox" x:Key="StandardEditableComboBoxStyle" BasedOn="{StaticResource StandardComboBoxStyle}">
         <Setter Property="IsEditable" Value="True"/>
-        <Setter Property="IsTextSearchEnabled" Value="False"/> <!-- On gère la recherche nous-même -->
+        <Setter Property="IsTextSearchEnabled" Value="False"/>
+        <!-- On gère la recherche nous-même -->
         <Setter Property="StaysOpenOnEdit" Value="True"/>
-        
+
         <!-- Le Template doit être redéfini pour inclure le TextBox éditable -->
         <Setter Property="Template">
             <Setter.Value>
@@ -126,40 +112,21 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Zone de Saisie (TextBox) -->
-                        <TextBox x:Name="PART_EditableTextBox"
-                                 Style="{DynamicResource StandardTextBoxStyle}"
-                                 HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                 VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                 Padding="10,0,0,0"
-                                 BorderThickness="1,1,0,1"
-                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                 Background="{TemplateBinding Background}"/>
+                        <TextBox x:Name="PART_EditableTextBox" Style="{DynamicResource StandardTextBoxStyle}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Padding="10,0,0,0" BorderThickness="1,1,0,1" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}"/>
 
                         <!-- Bouton Flèche (Toggle) -->
-                        <ToggleButton x:Name="toggleButton" Grid.Column="1"
-                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                      Background="{TemplateBinding Background}"
-                                      BorderBrush="{TemplateBinding BorderBrush}"
-                                      BorderThickness="0,1,1,1"
-                                      Width="30">
+                        <ToggleButton x:Name="toggleButton" Grid.Column="1" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,1,1,1" Width="30" Cursor="Hand">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="ToggleButtonBorder" 
-                                            CornerRadius="0,8,8,0"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}">
-                                        <Path HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Data="M 0 0 L 4 4 L 8 0"
-                                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="2"/>
+                                    <Border x:Name="ToggleButtonBorder" CornerRadius="0,8,8,0" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                        <Path HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="2"/>
                                     </Border>
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
 
                         <!-- Popup des résultats -->
-                        <Popup x:Name="PART_Popup" AllowsTransparency="True" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                               Placement="Bottom" StaysOpen="False" PopupAnimation="Slide">
+                        <Popup x:Name="PART_Popup" AllowsTransparency="True" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Bottom" StaysOpen="False" PopupAnimation="Slide">
                             <Border Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderMediumBrush}" BorderThickness="1" CornerRadius="8" Margin="0,5,0,0" MinWidth="{Binding ActualWidth, ElementName=PART_EditableTextBox}">
                                 <Border.Effect>
                                     <DropShadowEffect ShadowDepth="2" BlurRadius="5" Color="{DynamicResource CardShadowColor}" Opacity="0.4"/>
@@ -170,7 +137,7 @@
                             </Border>
                         </Popup>
                     </Grid>
-                    
+
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="PART_EditableTextBox" Property="BorderBrush" Value="{DynamicResource BorderMediumBrush}"/>

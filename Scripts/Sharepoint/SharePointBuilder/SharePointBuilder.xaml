@@ -727,8 +727,8 @@
 
                                 <!-- Ligne 1 : Résultat Textuel -->
                                 <TextBlock Grid.Row="1" Text="Résultat généré :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,15,20,0"/>
-                                <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="6" Padding="12,8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Margin="0,15,0,0" HorizontalAlignment="Left">
-                                    <TextBlock x:Name="FormResultPreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
+                                <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="6" Padding="12,8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Margin="0,15,0,0">
+                                    <TextBlock x:Name="FormResultPreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" TextWrapping="Wrap"/>
                                 </Border>
                             </Grid>
 
