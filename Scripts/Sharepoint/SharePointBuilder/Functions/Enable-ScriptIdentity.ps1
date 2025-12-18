@@ -1,11 +1,19 @@
-# Scripts/Designer/DefaultUI/Functions/Enable-ScriptIdentity.ps1
-
 <#
 .SYNOPSIS
     Active et gère le module d'identité dans l'interface du script.
+
 .DESCRIPTION
     Gère l'affichage (Nom/Macaron), la restauration du contexte (si lancé par le Launcher)
     et les actions de connexion/déconnexion (si mode autonome).
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+
+.PARAMETER LauncherPID
+    Le PID du process Launcher (optionnel, pour détecter le mode hébergé).
+
+.PARAMETER AuthContext
+    Le contexte d'authentification encodé (optionnel).
 #>
 function Enable-ScriptIdentity {
     [CmdletBinding()]
@@ -26,10 +34,12 @@ function Enable-ScriptIdentity {
             $json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AuthContext))
             $Global:AppAzureAuth = $json | ConvertFrom-Json
             Write-Verbose "[Identity] Contexte restauré : $($Global:AppAzureAuth.UserAuth.DisplayName)"
-        } catch {
+        }
+        catch {
             Write-Warning "[Identity] Erreur de décodage du contexte : $($_.Exception.Message)"
         }
-    } else {
+    }
+    else {
         Write-Verbose "[Identity] Aucun contexte d'auth reçu (Mode Autonome ou Invité)."
     }
 
@@ -53,7 +63,8 @@ function Enable-ScriptIdentity {
             
             $authTxt.Content = $user.DisplayName
             $authTxt.ToolTip = "Cliquez pour gérer la connexion"
-        } else {
+        }
+        else {
             # DÉCONNECTÉ
             $iconContent = New-Object System.Windows.Controls.TextBlock
             $iconContent.Text = '👤'
@@ -89,7 +100,8 @@ function Enable-ScriptIdentity {
                 $Global:AppAzureAuth.UserAuth = @{ Connected = $false }
                 & $updateAuthUI
             }
-        } else {
+        }
+        else {
             # Tentative de connexion
             $appId = $Global:AppConfig.azure.authentication.userAuth.appId
             $tenantId = $Global:AppConfig.azure.tenantId

@@ -1,5 +1,25 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Get-PreviewLogic.ps1
 
+<#
+.SYNOPSIS
+    Génère le bloc de logique de prévisualisation et de validation.
+
+.DESCRIPTION
+    Retourne un ScriptBlock qui encapsule la logique de mise à jour de l'interface :
+    - Calcul du nom final du dossier basé sur le formulaire dynamique.
+    - Mise à jour du texte de prévisualisation.
+    - Rafraîchissement de l'arbre visuel (TreeView) si un template est sélectionné.
+    - Validation stricte des entrées pour activer/désactiver le bouton "Déployer".
+
+.PARAMETER Ctrl
+    La Hashtable des contrôles UI.
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+
+.OUTPUTS
+    [ScriptBlock] Le bloc de code à exécuter lors des changements d'entrée.
+#>
 function Get-PreviewLogic {
     param(
         $Ctrl,

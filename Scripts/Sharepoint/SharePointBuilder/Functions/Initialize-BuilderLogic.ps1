@@ -1,3 +1,14 @@
+<#
+.SYNOPSIS
+    Initialise la logique métier du constructeur SharePoint.
+
+.DESCRIPTION
+    Charge les sous-fonctions logiques, récupère les contrôles UI, initialise l'état par défaut (désactivé),
+    instancie la logique de validation et enregistre tous les événements (Sites, Templates, Deploy, Editor).
+
+.PARAMETER Context
+    Hashtable contenant le contexte d'exécution (Window, ScriptRoot, etc.).
+#>
 function Initialize-BuilderLogic {
     param($Context)
 

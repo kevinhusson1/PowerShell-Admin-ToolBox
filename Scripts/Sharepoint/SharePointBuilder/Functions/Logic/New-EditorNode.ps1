@@ -1,5 +1,19 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/New-EditorNode.ps1
 
+<#
+.SYNOPSIS
+    Crée un nouvel élément visuel (Node) pour l'arbre d'édition.
+
+.DESCRIPTION
+    Génère un TreeViewItem stylisé contenant un dossier, un libellé, et des badges invisibles par défaut.
+    Initialise également l'objet Tag avec des listes vides pour les Permissions, Tags et Liens.
+
+.PARAMETER Name
+    Le nom par défaut du dossier.
+
+.OUTPUTS
+    [TreeViewItem] L'élément prêt à être ajouté au TreeView.
+#>
 function Global:New-EditorNode {
     param(
         [string]$Name = "Nouveau dossier"
@@ -50,6 +64,18 @@ function Global:New-EditorNode {
     return $item
 }
 
+<#
+.SYNOPSIS
+    Met à jour les indicateurs visuels (Badges) d'un noeud.
+
+.DESCRIPTION
+    Analyse les métadonnées (Permissions, Tags, Links) stockées dans la propriété Tag de l'item,
+    et met à jour les icônes et compteurs affichés à côté du nom du dossier.
+    Gère également le rafraîchissement des sous-éléments de métadonnées dans l'arbre.
+
+.PARAMETER TreeItem
+    Le TreeViewItem à mettre à jour.
+#>
 function Global:Update-EditorBadges {
     param([System.Windows.Controls.TreeViewItem]$TreeItem)
 

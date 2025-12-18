@@ -1,5 +1,20 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Get-BuilderControls.ps1
 
+<#
+.SYNOPSIS
+    Récupère et indexe tous les contrôles WPF de l'interface SharePoint Builder.
+
+.DESCRIPTION
+    Parcourt l'arbre visuel de la fenêtre pour trouver et stocker les références aux contrôles clés
+    (ComboBox, Boutons, Panels) dans une Hashtable pour un accès facile dans tout le script.
+    Utilise une recherche récursive robuste pour gérer les NameScopes complexes.
+
+.PARAMETER Window
+    L'objet Window WPF parent à analyser.
+
+.OUTPUTS
+    [Hashtable] Une map conteneur/contrôle nommée $Ctrl.
+#>
 function Get-BuilderControls {
     param([System.Windows.Window]$Window)
 
@@ -47,7 +62,10 @@ function Get-BuilderControls {
         # --- OPTIONS AVANCÉES ---
         ChkOverwrite         = $Window.FindName("OverwritePermissionsCheckBox")
         BtnReset             = $Window.FindName("ResetUIButton")
-        BtnExport            = $Window.FindName("ExportConfigButton")
+        BtnSaveConfig        = $Window.FindName("SaveConfigButton")
+        CbDeployConfigs      = $Window.FindName("DeployConfigComboBox")
+        BtnLoadConfig        = $Window.FindName("LoadConfigButton")
+        BtnDeleteConfig      = $Window.FindName("DeleteConfigButton")
 
         # --- ACTIONS ---
         BtnDeploy            = $Window.FindName("DeployButton")

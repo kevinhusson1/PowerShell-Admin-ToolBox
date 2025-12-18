@@ -1,5 +1,26 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Register-SiteEvents.ps1
 
+<#
+.SYNOPSIS
+    Gère le chargement et la sélection des Sites et Bibliothèques SharePoint.
+
+.DESCRIPTION
+    Pilote la récupération asynchrone (via Start-Job) de la liste des sites disponibles.
+    Gère le mode Autopilot (sélection automatique si contexte fourni) et le mode Manuel (liste déroulante).
+    Au changement de site, déclenche le chargement asynchrone des bibliothèques associées.
+
+.PARAMETER Ctrl
+    La Hashtable des contrôles UI.
+
+.PARAMETER PreviewLogic
+    ScriptBlock de validation pour mettre à jour l'état du formulaire.
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+
+.PARAMETER Context
+    Hashtable contextuel (Autopilot, etc.).
+#>
 function Register-SiteEvents {
     param(
         [hashtable]$Ctrl,
@@ -49,7 +70,8 @@ function Register-SiteEvents {
                     }
                 }
                 return [PSCustomObject]@{ Site = $siteObj; Lib = $libObj }
-            } catch { throw $_ }
+            }
+            catch { throw $_ }
         } -ArgumentList $autoArgs
 
         $autoJobId = $jobAuto.Id
@@ -88,7 +110,8 @@ function Register-SiteEvents {
                         $safeCbLibs.SelectedItem = $lib
                         $libUrl = "$($site.Url)$($lib.RootFolder.ServerRelativeUrl)"
                         Write-AppLog -Message "Bibliothèque validée : '$($lib.Title)'" -Level Success -RichTextBox $safeLog
-                    } else {
+                    }
+                    else {
                         Write-AppLog -Message "Bibliothèque introuvable : $($Context.AutoLibraryName)" -Level Warning -RichTextBox $safeLog
                     }
 
@@ -128,7 +151,8 @@ function Register-SiteEvents {
                 Write-Output "JOB_LOG: Commande terminée. $count sites trouvés."
                 
                 return $result
-            } catch {
+            }
+            catch {
                 # LOG 3 : Erreur fatale dans le Job
                 Write-Output "JOB_ERROR: $($_.Exception.Message)"
                 throw $_
@@ -160,7 +184,7 @@ function Register-SiteEvents {
                 
                 # Séparation Logs vs Données
                 $debugLogs = $rawResults | Where-Object { $_ -is [string] -and ($_ -like "JOB_*") }
-                $realData  = $rawResults | Where-Object { $_ -isnot [string] -or ($_ -notlike "JOB_*") }
+                $realData = $rawResults | Where-Object { $_ -isnot [string] -or ($_ -notlike "JOB_*") }
 
                 # Affichage des logs internes du Job dans la console Verbose
                 foreach ($line in $debugLogs) { 
@@ -175,7 +199,8 @@ function Register-SiteEvents {
                     $err = $j.ChildJobs[0].Error
                     $safeCb.ItemsSource = @("Erreur de chargement")
                     Write-AppLog -Message "JOB FAILED : $err" -Level Error -RichTextBox $safeLog
-                } else {
+                }
+                else {
                     $sitesArray = @($realData)
                     $Global:AllSharePointSites = $sitesArray
                     
@@ -184,7 +209,16 @@ function Register-SiteEvents {
                         $safeCb.DisplayMemberPath = "Title"
                         $safeCb.IsEnabled = $true
                         Write-AppLog -Message "$($sitesArray.Count) sites chargés." -Level Success -RichTextBox $safeLog
-                    } else {
+                        
+                        # UPDATE ETAT BOUTON LOAD CONFIG
+                        # Si une config était déjà sélectionnée pendant le chargement, on active le bouton maintenant
+                        $btnLoad = $Window.FindName("LoadConfigButton")
+                        $cbConfig = $Window.FindName("DeployConfigComboBox")
+                        if ($btnLoad -and $cbConfig -and $cbConfig.SelectedItem) {
+                            $btnLoad.IsEnabled = $true
+                        }
+                    }
+                    else {
                         $safeCb.ItemsSource = @("Aucun site trouvé")
                         Write-AppLog -Message "Résultat vide (0 sites)." -Level Warning -RichTextBox $safeLog
                     }
@@ -200,112 +234,116 @@ function Register-SiteEvents {
         
         # B. FILTRAGE
         $Ctrl.CbSites.Add_KeyUp({
-            param($sender, $e)
-            if ($e.Key -in 'Up','Down','Enter','Tab') { return }
-            $filterText = $sender.Text
-            if ($Global:AllSharePointSites) {
-                if ([string]::IsNullOrWhiteSpace($filterText)) {
-                    $sender.ItemsSource = $Global:AllSharePointSites
-                } else {
-                    $filtered = $Global:AllSharePointSites | Where-Object { $_.Title -like "*$filterText*" }
-                    $sender.ItemsSource = @($filtered)
+                param($sender, $e)
+                if ($e.Key -in 'Up', 'Down', 'Enter', 'Tab') { return }
+                $filterText = $sender.Text
+                if ($Global:AllSharePointSites) {
+                    if ([string]::IsNullOrWhiteSpace($filterText)) {
+                        $sender.ItemsSource = $Global:AllSharePointSites
+                    }
+                    else {
+                        $filtered = $Global:AllSharePointSites | Where-Object { $_.Title -like "*$filterText*" }
+                        $sender.ItemsSource = @($filtered)
+                    }
+                    $sender.IsDropDownOpen = $true
                 }
-                $sender.IsDropDownOpen = $true
-            }
-        }.GetNewClosure())
+            }.GetNewClosure())
 
         # --- C. SÉLECTION SITE -> CHARGEMENT LIBS ---
         $Ctrl.CbSites.Add_SelectionChanged({
-            $site = $this.SelectedItem
-            if ($site -is [System.Management.Automation.PSCustomObject]) {
+                $site = $this.SelectedItem
+                if ($site -is [System.Management.Automation.PSCustomObject]) {
                 
-                $uiLog = $Window.FindName("LogRichTextBox")
-                if ($uiLog) {
-                    Write-AppLog -Message "Site sélectionné : '$($site.Title)'" -Level Info -RichTextBox $uiLog
-                    Write-AppLog -Message "URL : $($site.Url)" -Level Info -RichTextBox $uiLog
-                }
-
-                $safeLibCb = $Window.FindName("LibraryComboBox")
-                if ($safeLibCb) {
-                    $safeLibCb.ItemsSource = @("Chargement...")
-                    $safeLibCb.IsEnabled = $false
-                }
-
-                # CLONAGE ARGUMENTS
-                $libArgs = $baseArgs.Clone()
-                $libArgs.SiteUrl = $site.Url
-
-                $jobLibs = Start-Job -ScriptBlock {
-                    param($ArgsMap)
-                    Import-Module $ArgsMap.ModPath -Force
-                    try {
-                        $conn = Connect-AppSharePoint -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -TenantName $ArgsMap.Tenant -SiteUrl $ArgsMap.SiteUrl
-                        return Get-AppSPLibraries -Connection $conn
-                    } catch { throw $_ }
-                } -ArgumentList $libArgs
-
-                $libJobId = $jobLibs.Id
-
-                $timerLibs = New-Object System.Windows.Threading.DispatcherTimer
-                $timerLibs.Interval = [TimeSpan]::FromMilliseconds(200)
-                
-                $timerLibsBlock = {
-                    $j = Get-Job -Id $libJobId -ErrorAction SilentlyContinue
-
-                    if ($j -and $j.State -ne 'Running') {
-                        $timerLibs.Stop()
-                        
-                        $finalLibCb = $Window.FindName("LibraryComboBox")
-                        $finalLog = $Window.FindName("LogRichTextBox")
-                        if ($null -eq $finalLibCb) { return }
-
-                        $libs = Receive-Job $j -Wait -AutoRemoveJob
-                        
-                        if ($j.State -eq 'Failed') {
-                            $errLib = $j.ChildJobs[0].Error
-                            $finalLibCb.ItemsSource = @("Erreur")
-                            if ($finalLog) { Write-AppLog -Message "Erreur Libs : $errLib" -Level Error -RichTextBox $finalLog }
-                        }
-                        elseif ($libs) {
-                            $libArray = @($libs)
-                            $finalLibCb.ItemsSource = $libArray
-                            $finalLibCb.DisplayMemberPath = "Title"
-                            $finalLibCb.IsEnabled = $true
-                            if ($finalLog) { Write-AppLog -Message "Bibliothèques chargées." -Level Success -RichTextBox $finalLog }
-                        } else {
-                            $finalLibCb.ItemsSource = @("Aucune bibliothèque")
-                            if ($finalLog) { Write-AppLog -Message "Aucune bibliothèque trouvée." -Level Warning -RichTextBox $finalLog }
-                        }
-                        
-                        if ($null -ne $PreviewLogic) { & $PreviewLogic } 
+                    $uiLog = $Window.FindName("LogRichTextBox")
+                    if ($uiLog) {
+                        Write-AppLog -Message "Site sélectionné : '$($site.Title)'" -Level Info -RichTextBox $uiLog
+                        Write-AppLog -Message "URL : $($site.Url)" -Level Info -RichTextBox $uiLog
                     }
-                }.GetNewClosure()
 
-                $timerLibs.Add_Tick($timerLibsBlock)
-                $timerLibs.Start()
-            }
-        }.GetNewClosure())
+                    $safeLibCb = $Window.FindName("LibraryComboBox")
+                    if ($safeLibCb) {
+                        $safeLibCb.ItemsSource = @("Chargement...")
+                        $safeLibCb.IsEnabled = $false
+                    }
+
+                    # CLONAGE ARGUMENTS
+                    $libArgs = $baseArgs.Clone()
+                    $libArgs.SiteUrl = $site.Url
+
+                    $jobLibs = Start-Job -ScriptBlock {
+                        param($ArgsMap)
+                        Import-Module $ArgsMap.ModPath -Force
+                        try {
+                            $conn = Connect-AppSharePoint -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -TenantName $ArgsMap.Tenant -SiteUrl $ArgsMap.SiteUrl
+                            return Get-AppSPLibraries -Connection $conn
+                        }
+                        catch { throw $_ }
+                    } -ArgumentList $libArgs
+
+                    $libJobId = $jobLibs.Id
+
+                    $timerLibs = New-Object System.Windows.Threading.DispatcherTimer
+                    $timerLibs.Interval = [TimeSpan]::FromMilliseconds(200)
+                
+                    $timerLibsBlock = {
+                        $j = Get-Job -Id $libJobId -ErrorAction SilentlyContinue
+
+                        if ($j -and $j.State -ne 'Running') {
+                            $timerLibs.Stop()
+                        
+                            $finalLibCb = $Window.FindName("LibraryComboBox")
+                            $finalLog = $Window.FindName("LogRichTextBox")
+                            if ($null -eq $finalLibCb) { return }
+
+                            $libs = Receive-Job $j -Wait -AutoRemoveJob
+                        
+                            if ($j.State -eq 'Failed') {
+                                $errLib = $j.ChildJobs[0].Error
+                                $finalLibCb.ItemsSource = @("Erreur")
+                                if ($finalLog) { Write-AppLog -Message "Erreur Libs : $errLib" -Level Error -RichTextBox $finalLog }
+                            }
+                            elseif ($libs) {
+                                $libArray = @($libs)
+                                $finalLibCb.ItemsSource = $libArray
+                                $finalLibCb.DisplayMemberPath = "Title"
+                                $finalLibCb.IsEnabled = $true
+                                if ($finalLog) { Write-AppLog -Message "Bibliothèques chargées." -Level Success -RichTextBox $finalLog }
+                            }
+                            else {
+                                $finalLibCb.ItemsSource = @("Aucune bibliothèque")
+                                if ($finalLog) { Write-AppLog -Message "Aucune bibliothèque trouvée." -Level Warning -RichTextBox $finalLog }
+                            }
+                        
+                            if ($null -ne $PreviewLogic) { & $PreviewLogic } 
+                        }
+                    }.GetNewClosure()
+
+                    $timerLibs.Add_Tick($timerLibsBlock)
+                    $timerLibs.Start()
+                }
+            }.GetNewClosure())
     }
 
     # --- D. EVENT COMMUN ---
     $Ctrl.CbLibs.Add_SelectionChanged({
-        $lib = $this.SelectedItem
-        if ($lib -is [System.Management.Automation.PSCustomObject]) {
-            $safeLog = $Window.FindName("LogRichTextBox")
-            $safeSiteCb = $Window.FindName("SiteComboBox")
+            $lib = $this.SelectedItem
+            if ($lib -is [System.Management.Automation.PSCustomObject]) {
+                $safeLog = $Window.FindName("LogRichTextBox")
+                $safeSiteCb = $Window.FindName("SiteComboBox")
 
-            if ($safeLog -and $safeSiteCb.SelectedItem) {
-                try {
-                    $siteUri = [System.Uri]$safeSiteCb.SelectedItem.Url
-                    $rootUrl = "$($siteUri.Scheme)://$($siteUri.Host)"
-                    $fullLibUrl = "$rootUrl$($lib.RootFolder.ServerRelativeUrl)"
-                    if (-not $Context.AutoLibraryName) {
-                        Write-AppLog -Message "Bibliothèque : $($lib.Title)" -Level Info -RichTextBox $safeLog
-                        Write-AppLog -Message "URL : $fullLibUrl" -Level Info -RichTextBox $safeLog
+                if ($safeLog -and $safeSiteCb.SelectedItem) {
+                    try {
+                        $siteUri = [System.Uri]$safeSiteCb.SelectedItem.Url
+                        $rootUrl = "$($siteUri.Scheme)://$($siteUri.Host)"
+                        $fullLibUrl = "$rootUrl$($lib.RootFolder.ServerRelativeUrl)"
+                        if (-not $Context.AutoLibraryName) {
+                            Write-AppLog -Message "Bibliothèque : $($lib.Title)" -Level Info -RichTextBox $safeLog
+                            Write-AppLog -Message "URL : $fullLibUrl" -Level Info -RichTextBox $safeLog
+                        }
                     }
-                } catch {}
+                    catch {}
+                }
             }
-        }
-        if ($null -ne $PreviewLogic) { & $PreviewLogic } 
-    }.GetNewClosure())
+            if ($null -ne $PreviewLogic) { & $PreviewLogic } 
+        }.GetNewClosure())
 }

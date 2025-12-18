@@ -1,5 +1,27 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Register-TemplateEvents.ps1
 
+<#
+.SYNOPSIS
+    Gère le chargement et la sélection des Templates (Modèle d'Architecture et Règle de Nommage).
+
+.DESCRIPTION
+    - Charge la liste des templates JSON depuis la base de données.
+    - Charge la liste des règles de nommage depuis la base de données.
+    - Gère la génération dynamique du formulaire (champs de saisie) lorsqu'une règle est sélectionnée.
+    - Gère l'activation/désactivation de l'option "Créer un dossier racine".
+
+.PARAMETER Ctrl
+    La Hashtable des contrôles UI.
+
+.PARAMETER PreviewLogic
+    ScriptBlock de validation pour mettre à jour l'état du formulaire.
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+
+.PARAMETER Context
+    Hashtable contextuel (Autopilot, etc.).
+#>
 function Register-TemplateEvents {
     param(
         [hashtable]$Ctrl,
@@ -11,19 +33,19 @@ function Register-TemplateEvents {
     # 1. CHARGEMENT DES DONNÉES (Au démarrage)
     try {
         # A. Templates Architecture
-        $templates = @(Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query "SELECT * FROM sp_templates ORDER BY DisplayName")
+        $templates = @(Get-AppSPTemplates)
         $Ctrl.CbTemplates.ItemsSource = $templates
         $Ctrl.CbTemplates.DisplayMemberPath = "DisplayName"
 
         # B. Règles de Nommage (Modèles de dossier)
         # On charge TOUJOURS, peu importe si la case est cochée ou non
-        $rules = @(Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query "SELECT * FROM sp_naming_rules")
+        $rules = @(Get-AppNamingRules)
         if ($Ctrl.CbFolderTemplates) {
             $Ctrl.CbFolderTemplates.ItemsSource = $rules
             $Ctrl.CbFolderTemplates.DisplayMemberPath = "RuleId"
             
             # Sélection par défaut (la première règle)
-            if ($rules.Count -gt 0) { $Ctrl.CbFolderTemplates.SelectedIndex = 0 }
+            # if ($rules.Count -gt 0) { $Ctrl.CbFolderTemplates.SelectedIndex = 0 }
         }
 
         # C. Autopilot

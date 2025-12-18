@@ -7,7 +7,6 @@
             <!-- 0: En-tête + Menu -->
             <RowDefinition Height="*"/>
             <!-- 1: Contenu -->
-
         </Grid.RowDefinitions>
 
         <!-- =============================================================== -->
@@ -78,7 +77,7 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="600" MinWidth="400"/>
+                                <ColumnDefinition Width="850" MinWidth="600"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
@@ -183,8 +182,23 @@
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="11" Margin="0,0,10,0"/>
-                                                    <Button x:Name="ExportConfigButton" Content="↗ Exporter" Style="{DynamicResource PrimaryButtonStyle}" Height="32" FontSize="11"/>
+                                                    <Button x:Name="SaveConfigButton" Content="💾 Sauvegarder la configuration" Style="{DynamicResource PrimaryButtonStyle}" Height="32" FontSize="11" ToolTip="Enregistrer la configuration actuelle de déploiement (Site, Biblio, Options)"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- GESTION DES CONFIGURATIONS -->
+                                            <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="Charger :" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    <ComboBox x:Name="DeployConfigComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32" FontSize="11"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <Button x:Name="LoadConfigButton" Content="📂 Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="11" Margin="0,0,5,0" ToolTip="Charger la configuration sélectionnée"/>
+                                                    <Button x:Name="DeleteConfigButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer la configuration actuelle" IsEnabled="False"/>
                                                 </StackPanel>
                                             </Grid>
                                         </StackPanel>
@@ -286,6 +300,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" x:Name="ProgressStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="11" Margin="0,0,20,0"/>
                                             <StackPanel x:Name="PostDeployActionsPanel" Orientation="Horizontal" Visibility="Visible">
                                                 <Button x:Name="CopyUrlButton" Content="📋 Copier URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
                                                 <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
@@ -326,10 +341,10 @@
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
                                         <TextBlock Text="Modèle existant" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                        <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
+                                        <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32" ToolTip="Sélectionner un modèle existant"/>
                                     </StackPanel>
-                                    <Button x:Name="EditorLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom"/>
-                                    <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
+                                    <Button x:Name="EditorLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom" ToolTip="Charger ce modèle dans l'éditeur"/>
+                                    <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" Padding="0" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -355,7 +370,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Header Arbre -->
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="15,15,0,0">
                                         <Grid>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="📂" Margin="0,0,10,0"/>
@@ -368,11 +383,11 @@
                                     <TreeView x:Name="EditorTreeView" Grid.Row="1" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Margin="5"/>
 
                                     <!-- Toolbar Arbre -->
-                                    <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10">
+                                    <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10" CornerRadius="0,0,15,15">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button x:Name="EditorAddRootButton" Content="+ Racine" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
-                                            <Button x:Name="EditorAddChildButton" Content="+ Dossier" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0"/>
-                                            <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Foreground="{DynamicResource DangerBrush}"/>
+                                            <Button x:Name="EditorAddRootButton" Content="+ Racine" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un dossier à la racine"/>
+                                            <Button x:Name="EditorAddChildButton" Content="+ Dossier" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un sous-dossier"/>
+                                            <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer l'élément sélectionné"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -387,7 +402,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Header Inspecteur -->
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="15,15,15,15">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="🛠️" Margin="0,0,10,0"/>
                                             <TextBlock Text="Propriétés du dossier sélectionné" FontWeight="SemiBold"/>
@@ -403,7 +418,7 @@
 
                                                 <!-- 1. Identification -->
                                                 <TextBlock Text="Nom du dossier" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                                <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du dossier dans SharePoint"/>
 
                                                 <!-- 2. Permissions -->
                                                 <Grid Margin="0,0,0,10">
@@ -499,10 +514,10 @@
                                                 </Border>
 
                                                 <TextBlock Text="Utilisateur ou Groupe (Email)" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPermIdentityBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                                <TextBox x:Name="EdPermIdentityBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Email de l'utilisateur ou nom du groupe SP"/>
 
                                                 <TextBlock Text="Niveau d'accès" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20"/>
+                                                <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" ToolTip="Niveau d'autorisation (Read, Contribute, Full Control)"/>
 
                                                 <Button x:Name="EdPermDeleteButton" Content="Supprimer cette permission" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
@@ -517,10 +532,10 @@
                                                 </Border>
 
                                                 <TextBlock Text="Nom de la colonne" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdTagNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                                <TextBox x:Name="EdTagNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom interne de la colonne SharePoint"/>
 
                                                 <TextBlock Text="Valeur (Terme)" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                                <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Valeur par défaut ou Terme de taxonomie"/>
 
                                                 <Button x:Name="EdTagDeleteButton" Content="Supprimer ce tag" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
@@ -535,10 +550,10 @@
                                                 </Border>
 
                                                 <TextBlock Text="Nom affiché" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                                <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
 
                                                 <TextBlock Text="URL Cible" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                                <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Adresse URL de destination"/>
 
                                                 <Button x:Name="EdLinkDeleteButton" Content="Supprimer ce lien" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
@@ -577,12 +592,12 @@
                                                 <TextBlock Text="Contexte de validation" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
                                                 <TextBlock x:Name="EditorContextStatusText" Text="Aucun site cible défini" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
                                             </StackPanel>
-                                            <Button x:Name="EditorDefineTargetButton" Content="Définir" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}"/>
+                                            <Button x:Name="EditorDefineTargetButton" Content="Définir" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}" ToolTip="Choisir un site SharePoint pour valider les colonnes"/>
                                         </StackPanel>
                                     </Border>
 
-                                    <Button x:Name="EditorNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
-                                    <Button x:Name="EditorSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                    <Button x:Name="EditorNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0" ToolTip="Créer un nouveau modèle vierge"/>
+                                    <Button x:Name="EditorSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36" ToolTip="Enregistrer les modifications dans la base de données"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -613,7 +628,6 @@
                                     <!-- Espace -->
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Gestion BDD -->
                                 <!-- Gestion BDD -->
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <StackPanel VerticalAlignment="Bottom" Margin="0,0,10,0">
@@ -647,7 +661,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Header -->
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="abc" FontFamily="Consolas" Margin="0,0,10,0" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                             <TextBlock Text="Structure du nommage" FontWeight="SemiBold"/>
@@ -712,7 +726,7 @@
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="⚙️" Margin="0,0,10,0"/>
                                             <TextBlock Text="Configuration du champ" FontWeight="SemiBold"/>
@@ -818,8 +832,5 @@
                 </TabItem>
             </TabControl>
         </Grid>
-
-
-
     </Grid>
 </Window>

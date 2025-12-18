@@ -1,5 +1,23 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Update-TreePreview.ps1
 
+<#
+.SYNOPSIS
+    Génère une prévisualisation en lecture seule de la structure de dossiers.
+
+.DESCRIPTION
+    Utilisé dans l'onglet principal pour montrer à l'utilisateur ce qui sera déployé.
+    Remplace dynamiquement les variables (ex: {ProjectCode}) par les valeurs saisies dans le formulaire.
+    Affiche également les badges de permissions/tags/liens.
+
+.PARAMETER TreeView
+    Le TreeView de prévisualisation (lecture seule).
+
+.PARAMETER JsonStructure
+    Le JSON du template sélectionné.
+
+.PARAMETER FormPanel
+    Le panneau contenant les contrôles du formulaire dynamique (pour récupérer les valeurs).
+#>
 function Global:Update-TreePreview {
     param(
         [System.Windows.Controls.TreeView]$TreeView,

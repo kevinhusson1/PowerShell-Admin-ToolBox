@@ -1,5 +1,23 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Register-EditorLogic.ps1
 
+<#
+.SYNOPSIS
+    Gère toute la logique de l'éditeur graphique de modèles (onglet "Éditeur de Modèles").
+
+.DESCRIPTION
+    Contrôle l'interaction avec le TreeView d'édition :
+    - Création, suppression, modification de dossiers.
+    - Gestion des panneaux de propriétés contextuels (Dossier vs Métadonnée).
+    - Ajout/Suppression de Permissions, Tags et Liens.
+    - Chargement et Sauvegarde des templates JSON depuis/vers la base de données SQLite.
+    - Mise à jour visuelle des badges.
+
+.PARAMETER Ctrl
+    La Hashtable des contrôles UI.
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+#>
 function Register-EditorLogic {
     param(
         [hashtable]$Ctrl,
@@ -142,9 +160,6 @@ function Register-EditorLogic {
         $Ctrl.EdTree.Add_SelectedItemChanged({
                 $selectedItem = $Ctrl.EdTree.SelectedItem
                 $Script:IsPopulating = $true
-                
-                # --- DEBUG ---
-                Write-Host "[UI] Processing Selection: $($selectedItem.Header)" -ForegroundColor Cyan
                 
                 if ($null -eq $selectedItem) {
                     # HIDE ALL + SHOW NO SEL
@@ -520,7 +535,7 @@ function Register-EditorLogic {
 
         $LoadTemplateList = {
             try {
-                $tpls = @(Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query "SELECT * FROM sp_templates ORDER BY DisplayName")
+                $tpls = @(Get-AppSPTemplates)
                 $Ctrl.EdLoadCb.ItemsSource = $tpls
                 $Ctrl.EdLoadCb.DisplayMemberPath = "DisplayName"
             }

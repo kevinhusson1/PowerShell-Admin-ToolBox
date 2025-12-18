@@ -1,5 +1,22 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Register-FormEditorLogic.ps1
 
+<#
+.SYNOPSIS
+    Gère toute la logique de l'éditeur de formulaires (onglet "Éditeur de Formulaire").
+
+.DESCRIPTION
+    Permet à l'utilisateur de construire dynamiquement un formulaire de saisie pour les règles de nommage de dossiers.
+    - Ajout de champs (Labels, TextBox, ComboBox).
+    - Modification des propriétés des champs (Nom, Valeur par défaut, Largeur, Options).
+    - Prévisualisation en temps réel du résultat.
+    - Sauvegarde et chargement des définitions JSON.
+
+.PARAMETER Ctrl
+    La Hashtable des contrôles UI.
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+#>
 function Register-FormEditorLogic {
     param(
         [hashtable]$Ctrl,

@@ -1,6 +1,21 @@
 # Scripts/SharePoint/SharePointBuilder/Functions/Logic/Serialization-Editor.ps1
 
 # 1. TREEVIEW -> JSON (Sauvegarde)
+<#
+.SYNOPSIS
+    Sérialise le contenu du TreeView d'édition en JSON.
+
+.DESCRIPTION
+    Parcourt l'arbre visuel, extrait les objets de données (Tag) de chaque noeud (Dossier, Permissions, etc.)
+    et construit une structure hiérarchique propre compatible avec le schéma de base de données.
+    Ignore les éléments purement visuels (MetaItems).
+
+.PARAMETER TreeView
+    Le contrôle TreeView source.
+
+.OUTPUTS
+    [string] La représentation JSON de la structure.
+#>
 function Global:Convert-EditorTreeToJson {
     param([System.Windows.Controls.TreeView]$TreeView)
 
@@ -42,6 +57,20 @@ function Global:Convert-EditorTreeToJson {
 }
 
 # 2. JSON -> TREEVIEW (Chargement)
+<#
+.SYNOPSIS
+    Reconstruit l'arbre visuel d'édition à partir d'un JSON.
+
+.DESCRIPTION
+    Désérialise le JSON et récrée récursivement les noeuds du TreeView (Nodes, Badges, Metadata)
+    en utilisant les fonctions New-EditorNode et Update-EditorBadges.
+
+.PARAMETER Json
+    La chaîne JSON source.
+
+.PARAMETER TreeView
+    Le contrôle TreeView cible (sera vidé avant le chargement).
+#>
 function Global:Convert-JsonToEditorTree {
     param(
         [string]$Json, 

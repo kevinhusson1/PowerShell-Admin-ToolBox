@@ -31,7 +31,7 @@ function Initialize-AppDatabase {
     try {
         # --- DÉFINITION DU SCHÉMA ATTENDU ---
         $schema = @{
-            'active_sessions' = @"
+            'active_sessions'     = @"
                 CREATE TABLE active_sessions (
                     RunID       INTEGER PRIMARY KEY AUTOINCREMENT,
                     ScriptName  TEXT NOT NULL,
@@ -40,14 +40,14 @@ function Initialize-AppDatabase {
                     StartTime   TEXT
                 );
 "@
-            'settings' = @"
+            'settings'            = @"
                 CREATE TABLE settings (
                     Key     TEXT PRIMARY KEY NOT NULL,
                     Value   TEXT,
                     Type    TEXT NOT NULL CHECK(Type IN ('string', 'integer', 'boolean'))
                 );
 "@
-            'script_progress' = @"
+            'script_progress'     = @"
                 CREATE TABLE script_progress (
                     OwnerPID            INTEGER PRIMARY KEY NOT NULL,
                     ProgressPercentage  INTEGER,
@@ -68,7 +68,7 @@ function Initialize-AppDatabase {
                 );
 "@
             # --- Table des paramètres propres aux scripts ---
-            'script_settings' = @"
+            'script_settings'     = @"
                 CREATE TABLE script_settings (
                     ScriptId            TEXT PRIMARY KEY NOT NULL,
                     IsEnabled           INTEGER DEFAULT 1, -- 1 = True, 0 = False
@@ -76,7 +76,7 @@ function Initialize-AppDatabase {
                 );
 "@
             # Table de liaison Script <-> Groupes AD
-            'script_security' = @"
+            'script_security'     = @"
                 CREATE TABLE script_security (
                     ScriptId    TEXT NOT NULL,
                     ADGroup     TEXT NOT NULL,
@@ -84,14 +84,14 @@ function Initialize-AppDatabase {
                 );
 "@
             # --- Table des groupes connus (Bibliothèque) ---
-            'known_groups' = @"
+            'known_groups'        = @"
                 CREATE TABLE known_groups (
                     GroupName TEXT PRIMARY KEY NOT NULL,
                     Description TEXT
                 );
 "@
             # --- Table des Modèles d'arborescence (JSON) ---
-            'sp_templates' = @"
+            'sp_templates'        = @"
                 CREATE TABLE sp_templates (
                     TemplateId      TEXT PRIMARY KEY,
                     DisplayName     TEXT NOT NULL,
@@ -104,14 +104,14 @@ function Initialize-AppDatabase {
                 );
 "@
             # --- Table des Règles de Nommage (Formulaire Dynamique) ---
-            'sp_naming_rules' = @"
+            'sp_naming_rules'     = @"
                 CREATE TABLE sp_naming_rules (
                     RuleId          TEXT PRIMARY KEY,
                     DefinitionJson  TEXT NOT NULL  -- La structure du formulaire (Labels, Inputs)
                 );
 "@
             # --- Table des Logs de Déploiement ---
-            'sp_deploy_logs' = @"
+            'sp_deploy_logs'      = @"
                 CREATE TABLE sp_deploy_logs (
                     LogId           INTEGER PRIMARY KEY AUTOINCREMENT,
                     Date            TEXT,
@@ -120,6 +120,18 @@ function Initialize-AppDatabase {
                     TemplateId      TEXT,
                     Status          TEXT,
                     Details         TEXT
+                );
+"@
+            # --- Table des Configurations de Déploiement ---
+            'sp_deploy_configs'   = @"
+                CREATE TABLE sp_deploy_configs (
+                    ConfigName          TEXT PRIMARY KEY,
+                    SiteUrl             TEXT,
+                    LibraryName         TEXT,
+                    TargetFolder        TEXT,
+                    OverwritePermissions INTEGER, -- 0 or 1
+                    TemplateId          TEXT,
+                    DateModified        TEXT
                 );
 "@
         }
@@ -161,7 +173,8 @@ function Initialize-AppDatabase {
         }
         Write-Verbose (Get-AppText 'modules.database.schema_check_done')
 
-    } catch {
+    }
+    catch {
         $errorMsg = Get-AppText -Key 'modules.database.schema_error'
         throw "$errorMsg : $($_.Exception.Message)"
     }
