@@ -71,246 +71,285 @@
                 <!-- ONGLET DÉPLOIEMENT -->
                 <TabItem Header="🚀 Déploiement" IsSelected="True">
                     <Grid Background="{DynamicResource WhiteBrush}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="150"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- LIGNE 1 : CIBLE ET MODÈLE -->
+                        <Grid Grid.Row="0" Margin="15,15,15,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="850" MinWidth="600"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="25,25,8,25">
-                                <!-- COLONNE GAUCHE (CONFIG) -->
-                                <StackPanel>
-                                    <!-- CARTE 1 : CIBLE -->
-                                    <Border Style="{DynamicResource CardBorderStyle}">
-                                        <StackPanel>
-                                            <Grid Margin="0,0,0,15">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Border Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource InfoBackgroundBrush}">
-                                                    <TextBlock Text="1" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <TextBlock Text="Cible du Déploiement" Style="{DynamicResource StepHeaderTextStyle}" Grid.Column="1"/>
-                                            </Grid>
 
-                                            <TextBlock Text="Site SharePoint" Style="{DynamicResource H4Style}"/>
-                                            <ComboBox x:Name="SiteComboBox" Style="{DynamicResource StandardEditableComboBoxStyle}" Margin="0,5,0,15"/>
-
-                                            <TextBlock Text="Bibliothèque de Documents" Style="{DynamicResource H4Style}"/>
-                                            <ComboBox x:Name="LibraryComboBox" Style="{DynamicResource StandardComboBoxStyle}"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- CARTE 3 : CONFIGURATION DOSSIER -->
-                                    <Border Style="{DynamicResource CardBorderStyle}">
-                                        <StackPanel>
-                                            <Grid Margin="0,0,0,15">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Border Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource WarningBackgroundBrush}">
-                                                        <TextBlock Text="3" Foreground="{DynamicResource WarningBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <TextBlock Text="Création de la Destination" Style="{DynamicResource StepHeaderTextStyle}"/>
-                                                </StackPanel>
-                                                <Border Grid.Column="2" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Margin="0,0,0,15">
-                                                    <TextBlock Text="Optionnel" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                </Border>
-                                            </Grid>
-
-                                            <!-- Toggle + Choix Modèle Dossier -->
-                                            <Grid Margin="0,0,0,20">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <CheckBox Grid.Column="0" x:Name="CreateFolderCheckBox" Style="{DynamicResource ToggleSwitchStyle}"/>
-                                                <TextBlock Grid.Column="1" Text="Créer un dossier de destination" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="SemiBold"/>
-                                                <ComboBox Grid.Column="2" x:Name="FolderTemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" IsEnabled="{Binding IsChecked, ElementName=CreateFolderCheckBox}"/>
-                                            </Grid>
-
-                                            <!-- Formulaire Dynamique -->
-                                            <StackPanel x:Name="DynamicFormPanel" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,15"/>
-
-                                            <!-- Preview Résultat -->
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Résultat :  →" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
-                                                <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="6" Padding="12,8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
-                                                    <TextBlock x:Name="FolderNamePreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"/>
-                                                </Border>
-                                            </Grid>
-                                            <TextBlock Text="Format standard défini par la règle de nommage." FontSize="10" FontStyle="Italic" Foreground="{DynamicResource TextDisabledBrush}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- CARTE OPTIONS -->
-                                    <Border Style="{DynamicResource CardBorderStyle}">
-                                        <StackPanel>
-                                            <Grid Margin="0,0,0,10">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Border Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
-                                                    <TextBlock Text="⚙" Foreground="{DynamicResource SecondaryBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
-                                                </Border>
-                                                <TextBlock Text="Options Avancées" Style="{DynamicResource StepHeaderTextStyle}" Grid.Column="1"/>
-                                            </Grid>
-
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <CheckBox x:Name="OverwritePermissionsCheckBox" Style="{DynamicResource ToggleSwitchStyle}"/>
-                                                    <TextBlock Text="Écraser les permissions existantes" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button x:Name="SaveConfigButton" Content="💾 Sauvegarder la configuration" Style="{DynamicResource PrimaryButtonStyle}" Height="32" FontSize="11" ToolTip="Enregistrer la configuration actuelle de déploiement (Site, Biblio, Options)"/>
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- GESTION DES CONFIGURATIONS -->
-                                            <Grid Margin="0,10,0,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="Charger :" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                    <ComboBox x:Name="DeployConfigComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32" FontSize="11"/>
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button x:Name="LoadConfigButton" Content="📂 Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="11" Margin="0,0,5,0" ToolTip="Charger la configuration sélectionnée"/>
-                                                    <Button x:Name="DeleteConfigButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer la configuration actuelle" IsEnabled="False"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </ScrollViewer>
-
-                            <GridSplitter Style="{DynamicResource ModernGridSplitterStyle}" Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" ResizeBehavior="PreviousAndNext"/>
-
-                            <Grid Grid.Column="2" Margin="8,25,25,25">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="250"/>
-                                </Grid.RowDefinitions>
-                                <!-- CARTE 2 : ARBORESCENCE -->
-                                <Border Grid.Row="0" Style="{DynamicResource CardBorderStyle}">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header Interne -->
-                                        <Border Grid.Row="0">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <!-- Icone -->
-                                                    <ColumnDefinition Width="*"/>
-                                                    <!-- Titre -->
-                                                    <ColumnDefinition Width="*"/>
-                                                    <!-- ComboBox -->
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <!-- Info -->
-                                                </Grid.ColumnDefinitions>
-
-                                                <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
-                                                    <TextBlock Text="2" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <TextBlock Grid.Column="1" Text="Modèle à Appliquer" Style="{DynamicResource StepHeaderTextStyle}"/>
-
-                                                <ComboBox Grid.Column="2" x:Name="TemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
-
-                                                <TextBlock Grid.Column="3" x:Name="TemplateDescText" Text="ℹ️" ToolTip="Sélectionnez un modèle pour voir sa description" Margin="10,0,0,0" VerticalAlignment="Center" Cursor="Help"/>
-                                            </Grid>
-                                        </Border>
+                            <!-- COLONNE 1 : CIBLE ET EXPLORATEUR -->
+                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <!-- Header Selecteurs -->
+                                        <RowDefinition Height="*"/>
                                         <!-- TreeView -->
-                                        <Border Grid.Row="1" Margin="15" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Background="{DynamicResource WhiteBrush}">
-                                            <TreeView x:Name="PreviewTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0"/>
-                                        </Border>
+                                    </Grid.RowDefinitions>
 
-                                    </Grid>
-                                </Border>
+                                    <!-- 1.1 Header Selecteurs (Site / Lib) -->
+                                    <StackPanel Grid.Row="0" Margin="15">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource InfoBackgroundBrush}">
+                                                <TextBlock Text="1" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Etape 1 : Cible du Déploiement" Style="{DynamicResource StepHeaderTextStyle}" Grid.Column="1"/>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="10"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Site" Style="{DynamicResource H4Style}"/>
+                                                <ComboBox x:Name="SiteComboBox" Style="{DynamicResource StandardEditableComboBoxStyle}" Margin="0,5,0,10"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Bibliothèque" Style="{DynamicResource H4Style}"/>
+                                                <ComboBox x:Name="LibraryComboBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
 
-                                <!-- CARTE LOGS -->
-                                <Border Grid.Row="1" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
+                                    <!-- 1.2 Target Explorer (TreeView) -->
+                                    <Border Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0">
+                                        <StackPanel>
+                                            <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
+                                                <!-- Sera rempli dynamiquement -->
+                                                <TreeViewItem Header="Veuillez sélectionner une bibliothèque..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
+                                            </TreeView>
 
-                                        <!-- Header Logs -->
-                                        <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,8">
-                                            <Grid>
-                                                <TextBlock Text="Journal des Opérations" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                    <TextBlock Text="Niveau :" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                    <ComboBox x:Name="LogLevelComboBox" Width="80" Height="24" FontSize="11" SelectedIndex="1" Margin="0,0,10,0">
-                                                        <ComboBoxItem Content="Light" Tag="Light"/>
-                                                        <ComboBoxItem Content="Normal" Tag="Normal"/>
-                                                        <ComboBoxItem Content="Expert" Tag="Hard"/>
-                                                    </ComboBox>
-                                                    <Ellipse Width="10" Height="10" Fill="#FF5F56" Margin="0,0,6,0"/>
-                                                    <Ellipse Width="10" Height="10" Fill="#FFBD2E" Margin="0,0,6,0"/>
-                                                    <Ellipse Width="10" Height="10" Fill="#27C93F"/>
+                                            <Grid x:Name="ExplorerLoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed">
+                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock Text="⏳" FontSize="24" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Chargement..." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 </StackPanel>
                                             </Grid>
-                                        </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
 
-                                        <RichTextBox Grid.Row="1" x:Name="LogRichTextBox" Style="{DynamicResource StandardRichTextBoxStyle}" BorderThickness="0" Background="{DynamicResource WhiteBrush}" FontFamily="Consolas" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    </Grid>
-                                </Border>
-                            </Grid>
-                            <!-- Footer Déploiement -->
-                            <Grid Grid.Row="1" Grid.ColumnSpan="3">
+                            <!-- COLONNE 2 : MODÈLE ET PREVIEW -->
+                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <!-- Header Selecteurs -->
+                                        <RowDefinition Height="*"/>
+                                        <!-- TreeView -->
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Margin="15">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
+                                                <TextBlock Text="2" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Etape 2 : Modèle à Appliquer" Style="{DynamicResource StepHeaderTextStyle}"/>
+
+                                            <TextBlock Grid.Column="2" x:Name="TemplateDescText" Text="ℹ️" ToolTip="Voir description" VerticalAlignment="Center" Cursor="Help"/>
+                                        </Grid>
+
+                                        <ComboBox x:Name="TemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
+                                    </StackPanel>
+                                    <Border Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="0,0,0,6">
+                                        <TreeView x:Name="PreviewTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5"/>
+                                    </Border>
+                                </Grid>
+
+                            </Border>
+                        </Grid>
+
+                        <!-- LIGNE 2 : DESTINATION ET OPTIONS -->
+                        <Grid Grid.Row="1" Margin="15,0,15,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- COLONNE 1 : DESTINATION -->
+                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Margin="15">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource WarningBackgroundBrush}">
+                                                <TextBlock Text="3" Foreground="{DynamicResource WarningBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Création Destination" Style="{DynamicResource StepHeaderTextStyle}"/>
+                                            <Border Grid.Column="2" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                                <TextBlock Text="Optionnel" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Toggle + Choix -->
+                                        <Grid Grid.Row="1" Margin="0,0,15,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0" x:Name="CreateFolderCheckBox" Style="{DynamicResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="Créer un dossier racine" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="SemiBold"/>
+                                            <ComboBox Grid.Column="2" x:Name="FolderTemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" IsEnabled="{Binding IsChecked, ElementName=CreateFolderCheckBox}" ToolTip="Règle de nommage du dossier racine"/>
+                                        </Grid>
+
+
+                                        <!-- Formulaire Dynamique -->
+                                        <StackPanel Grid.Row="2" x:Name="DynamicFormPanel" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+
+                                        <!-- Résultat Nom -->
+                                        <Grid Grid.Row="3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Nom :" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                                            <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" Padding="8,4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                                <TextBlock x:Name="FolderNamePreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- COLONNE 2 : OPTIONS DÉPLOIEMENT -->
+                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Margin="15">
+                                        <Grid Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
+                                                <TextBlock Text="⚙" Foreground="{DynamicResource SecondaryBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Déploiement" Style="{DynamicResource StepHeaderTextStyle}"/>
+                                        </Grid>
+                                        <StackPanel Grid.Row="1">
+                                            <CheckBox x:Name="OverwritePermissionsCheckBox" Content="Écraser permissions existantes" Margin="0,0,0,15" Style="{DynamicResource CheckBoxStyle}"/>
+                                        </StackPanel>
+                                        <Grid Grid.Row="2" Margin="0,0,0,15">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <ComboBox Grid.Column="0" x:Name="DeployConfigComboBox" Style="{DynamicResource StandardComboBoxStyle}" Height="32" Margin="0,0,5,0" ToolTip="Configurations sauvegardées"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <Button x:Name="LoadConfigButton" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Margin="0,0,5,0" ToolTip="Charger">
+                                                    <TextBlock Text="📂" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Button>
+                                                <Button x:Name="SaveConfigButton" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Margin="0,0,5,0" ToolTip="Sauvegarder">
+                                                    <TextBlock Text="💾" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Button>
+                                                <Button x:Name="DeleteConfigButton" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer">
+                                                    <TextBlock Text="🗑️" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        <!-- SPLITTER -->
+                        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="Transparent" ResizeBehavior="PreviousAndNext"/>
+
+                        <!-- ZONE LOGS (Row 3) -->
+                        <Border Grid.Row="3" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="0" ClipToBounds="True">
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <!-- Barre de progression -->
-                                <ProgressBar Grid.Row="0" x:Name="MainProgressBar" Height="4" BorderThickness="0" Background="{DynamicResource BorderLightBrush}" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Top"/>
-                                <!-- Contenu -->
-                                <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" Padding="25,15" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0">
+
+                                <!-- Progress (Logs) -->
+                                <ProgressBar Grid.Row="0" x:Name="LogsProgressBar" Height="4" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Bottom"/>
+
+                                <!-- Header Logs -->
+                                <Border Grid.Row="1" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,8">
                                     <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" x:Name="ProgressStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="11" Margin="0,0,20,0"/>
-                                            <StackPanel x:Name="PostDeployActionsPanel" Orientation="Horizontal" Visibility="Visible">
-                                                <Button x:Name="CopyUrlButton" Content="📋 Copier URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
-                                                <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" FontSize="12" Margin="0,0,10,0" IsEnabled="False"/>
-                                                <Button x:Name="DeployButton" Content="🚀 Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" Width="240" Height="40" FontSize="14" FontWeight="Bold"/>
-                                            </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="📝 Journal d'opérations" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0,20,0"/>
+                                            <TextBlock x:Name="LogsStatusText" Text="En attente..." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <TextBlock Text="Niveau :" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <ComboBox x:Name="LogLevelComboBox" Width="80" Height="24" FontSize="11" SelectedIndex="1" Margin="0,0,15,0">
+                                                <ComboBoxItem Content="Light" Tag="Light"/>
+                                                <ComboBoxItem Content="Normal" Tag="Normal"/>
+                                                <ComboBoxItem Content="Expert" Tag="Hard"/>
+                                            </ComboBox>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
+
+                                <RichTextBox Grid.Row="2" x:Name="LogRichTextBox" Style="{DynamicResource StandardRichTextBoxStyle}" BorderThickness="0" Background="{DynamicResource WhiteBrush}" FontFamily="Consolas" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             </Grid>
-                        </Grid>
+                        </Border>
+
+                        <!-- ACTION BAR / STATUS BAR (Row 4 - Tout en bas) -->
+                        <Border Grid.Row="4" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="15,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Status Text Left -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="ProgressStatusText" Text="Prêt." FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <ProgressBar x:Name="MainProgressBar" Width="150" Height="10" Margin="15,0,0,0" Visibility="Hidden" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Action Buttons Right -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0"/>
+                                    <Button x:Name="CopyUrlButton" Content="📋 URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False"/>
+                                    <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" IsEnabled="False"/>
+                                    <Button x:Name="DeployButton" Content="🚀 Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" Width="200" Height="36" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </TabItem>
 
