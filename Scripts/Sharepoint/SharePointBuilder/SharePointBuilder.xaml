@@ -128,19 +128,21 @@
 
                                     <!-- 1.2 Target Explorer (TreeView) -->
                                     <Border Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0">
-                                        <StackPanel>
-                                            <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
-                                                <!-- Sera rempli dynamiquement -->
-                                                <TreeViewItem Header="Veuillez sélectionner une bibliothèque..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
-                                            </TreeView>
+                                        <Grid>
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0">
+                                                <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
+                                                    <!-- Sera rempli dynamiquement -->
+                                                    <TreeViewItem Header="Veuillez sélectionner une bibliothèque..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
+                                                </TreeView>
+                                            </ScrollViewer>
 
-                                            <Grid x:Name="ExplorerLoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed">
+                                            <Grid x:Name="ExplorerLoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed" IsHitTestVisible="True">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <TextBlock Text="⏳" FontSize="24" HorizontalAlignment="Center"/>
                                                     <TextBlock Text="Chargement..." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 </StackPanel>
                                             </Grid>
-                                        </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </Grid>
                             </Border>
@@ -273,14 +275,14 @@
                                             </Grid.ColumnDefinitions>
                                             <ComboBox Grid.Column="0" x:Name="DeployConfigComboBox" Style="{DynamicResource StandardComboBoxStyle}" Height="32" Margin="0,0,5,0" ToolTip="Configurations sauvegardées"/>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                <Button x:Name="LoadConfigButton" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Margin="0,0,5,0" ToolTip="Charger">
-                                                    <TextBlock Text="📂" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Button x:Name="LoadConfigButton" Style="{DynamicResource PrimaryButtonStyle}" Width="32" Height="32" Margin="0,0,5,0" ToolTip="Charger" Padding="0">
+                                                    <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Button>
-                                                <Button x:Name="SaveConfigButton" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Margin="0,0,5,0" ToolTip="Sauvegarder">
-                                                    <TextBlock Text="💾" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Button x:Name="SaveConfigButton" Style="{DynamicResource GreenButtonStyle}" Width="32" Height="32" Margin="0,0,5,0" ToolTip="Sauvegarder" Padding="0">
+                                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Button>
-                                                <Button x:Name="DeleteConfigButton" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer">
-                                                    <TextBlock Text="🗑️" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Button x:Name="DeleteConfigButton" Style="{DynamicResource RedButtonStyle}" Width="32" Height="32" ToolTip="Supprimer" Padding="0">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
@@ -343,7 +345,7 @@
 
                                 <!-- Action Buttons Right -->
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0"/>
+                                    <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource RedButtonStyle}" Height="32" Margin="0,0,15,0"/>
                                     <Button x:Name="CopyUrlButton" Content="📋 URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False"/>
                                     <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" IsEnabled="False"/>
                                     <Button x:Name="DeployButton" Content="🚀 Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" Width="200" Height="36" FontWeight="Bold"/>

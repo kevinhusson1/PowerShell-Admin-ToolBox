@@ -324,26 +324,288 @@ function Register-SiteEvents {
             }.GetNewClosure())
     }
 
-    # --- D. EVENT COMMUN ---
-    $Ctrl.CbLibs.Add_SelectionChanged({
-            $lib = $this.SelectedItem
-            if ($lib -is [System.Management.Automation.PSCustomObject]) {
-                $safeLog = $Window.FindName("LogRichTextBox")
-                $safeSiteCb = $Window.FindName("SiteComboBox")
+    # --- D. LOGIQUE EXPLORATEUR (Version Simplifiée & Sécurisée) ---
+    
+    # 1. Helper pour peupler un noeud du TreeView
+    # Défini comme ScriptBlock local pour capture propre des variables
+    $PopulateNodeBlock = {
+        param($ParentNode, $FolderRelativeUrl, $SiteUrl)
+        
+        Write-Host "DEBUG: [PopulateNode] Demande reçue. URL Dossier='$FolderRelativeUrl' | Site='$SiteUrl'"
+        
+        # UI Feedback
+        $overlay = $Window.FindName("ExplorerLoadingOverlay")
+        if ($overlay) { $overlay.Visibility = "Visible" }
 
-                if ($safeLog -and $safeSiteCb.SelectedItem) {
-                    try {
-                        $siteUri = [System.Uri]$safeSiteCb.SelectedItem.Url
-                        $rootUrl = "$($siteUri.Scheme)://$($siteUri.Host)"
-                        $fullLibUrl = "$rootUrl$($lib.RootFolder.ServerRelativeUrl)"
-                        if (-not $Context.AutoLibraryName) {
-                            Write-AppLog -Message "Bibliothèque : $($lib.Title)" -Level Info -RichTextBox $safeLog
-                            Write-AppLog -Message "URL : $fullLibUrl" -Level Info -RichTextBox $safeLog
+        # Paramètres pour le Job
+        $expArgs = $baseArgs.Clone()
+        $expArgs.StartUrl = $SiteUrl
+        $expArgs.FolderUrl = $FolderRelativeUrl
+        
+        # JOB PnP
+        $jobExp = Start-Job -ScriptBlock {
+            param($M)
+            # Log interne au Job (sera reçu dans $results si non séparé, ou via Output)
+            Write-Output "DEBUG_JOB: Démarrage Job. ModulePath='$($M.ModPath)'"
+            
+            try {
+                if (Test-Path $M.ModPath) {
+                    Import-Module $M.ModPath -Force
+                }
+                else {
+                    throw "Module introuvable au chemin : $($M.ModPath)"
+                }
+                
+                $c = Connect-AppSharePoint -ClientId $M.ClientId -Thumbprint $M.Thumb -TenantName $M.Tenant -SiteUrl $M.StartUrl
+                if (-not $c) { throw "Connexion PnP échouée (Connect-AppSharePoint a renvoyé null)" }
+                
+                # Correction URL Relative : Get-PnPFolderItem attend une URL relative au SITE, pas au Serveur.
+                # On calcule la différence.
+                $web = Get-PnPWeb -Connection $c
+                $webUrl = $web.ServerRelativeUrl
+                $inputUrl = $M.FolderUrl
+                
+                $siteRelativeUrl = $inputUrl
+                if ($inputUrl.StartsWith($webUrl, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+                    $siteRelativeUrl = $inputUrl.Substring($webUrl.Length)
+                }
+                
+                # Gérer le cas racine (si vide ou just /)
+                if ([string]::IsNullOrWhiteSpace($siteRelativeUrl)) { $siteRelativeUrl = "/" }
+
+                Write-Output "DEBUG_JOB: Transformation URL. Input='$inputUrl' | Web='$webUrl' => SiteRelative='$siteRelativeUrl'"
+                Write-Output "DEBUG_JOB: Connexion OK. Récupération dossiers..."
+                
+                $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $siteRelativeUrl -ItemType Folder -Connection $c -ErrorAction Stop
+                Write-Output "DEBUG_JOB: Objets trouvés : $($folders.Count)"
+                
+                $res = @()
+                foreach ($f in $folders) {
+                    $res += [PSCustomObject]@{
+                        Name              = $f.Name
+                        ServerRelativeUrl = $f.ServerRelativeUrl
+                        ItemCount         = $f.ItemCount
+                        Type              = "FolderData" # Marqueur pour filtrer les logs
+                    }
+                }
+                return $res
+            }
+            catch { 
+                Write-Output "DEBUG_JOB_ERROR: $_"
+                throw $_ 
+            }
+        } -ArgumentList $expArgs
+
+        $jId = $jobExp.Id
+        Write-Host "DEBUG: [PopulateNode] Job lancé (ID=$jId). Attente..."
+        
+        # TIMER UI
+        $tim = New-Object System.Windows.Threading.DispatcherTimer
+        $tim.Interval = [TimeSpan]::FromMilliseconds(200)
+        
+        # Action du Timer encapsulée dans un Try/Catch global pour éviter le crash ShowDialog
+        $timAction = {
+            try {
+                $j = Get-Job -Id $jId -ErrorAction SilentlyContinue
+                if ($j -and $j.State -ne 'Running') {
+                    $tim.Stop()
+                    $safeOverlay = $Window.FindName("ExplorerLoadingOverlay")
+                    if ($safeOverlay) { $safeOverlay.Visibility = "Collapsed" }
+                    
+                    Write-Host "DEBUG: [Timer] Job terminé (State=$($j.State)). Récupération resultats..."
+                    $results = Receive-Job $j -Wait -AutoRemoveJob
+                    
+                    # Traitement des erreurs fatales du Job
+                    if ($j.State -eq 'Failed') {
+                        $err = $j.ChildJobs[0].Error
+                        Write-Host "DEBUG: [Timer] ERROR JOB: $err"
+                        $safeLog = $Window.FindName("LogRichTextBox")
+                        if ($safeLog) { Write-AppLog -Message "Erreur Explorateur : $err" -Level Error -RichTextBox $safeLog }
+                    } 
+                    else {
+                        # Filtrer les logs vs les données
+                        $realFolders = @()
+                        foreach ($item in $results) {
+                            if ($item -is [string]) {
+                                Write-Host "   >> JOB LOG: $item"
+                            }
+                            elseif ($item.Type -eq "FolderData") {
+                                $realFolders += $item
+                            }
+                            else {
+                                # Cas d'objets non marqués (au cas où)
+                                if ($item.Name -and $item.ServerRelativeUrl) {
+                                    $realFolders += $item
+                                }
+                            }
+                        }
+                        
+                        Write-Host "DEBUG: [Timer] Dossiers valides extraits : $($realFolders.Count)"
+
+                        # UPDATE UI
+                        if ($ParentNode) {
+                            $ParentNode.Items.Clear() # Nettoyage du Dummy
+                            
+                            foreach ($folder in $realFolders) {
+                                if ($folder.Name -eq "Forms") { continue } # Masquer dossier système
+
+                                Write-Host "   -> Ajout TreeView: $($folder.Name) ($($folder.ServerRelativeUrl))"
+
+                                $newItem = New-Object System.Windows.Controls.TreeViewItem
+                                
+                                # Header (Style Modifié : Goldenrod)
+                                $stack = New-Object System.Windows.Controls.StackPanel
+                                $stack.Orientation = "Horizontal"
+                                $txtIcon = New-Object System.Windows.Controls.TextBlock
+                                $txtIcon.Text = "📁"
+                                $txtIcon.Margin = "0,0,5,0"
+                                $txtIcon.Foreground = [System.Windows.Media.Brushes]::Goldenrod # UPDATE STYLE
+                                
+                                $txt = New-Object System.Windows.Controls.TextBlock
+                                $txt.Text = $folder.Name
+                                $stack.Children.Add($txtIcon)
+                                $stack.Children.Add($txt)
+                                
+                                $newItem.Header = $stack
+                                $newItem.Tag = $folder 
+                                
+                                # Dummy pour Lazy Loading (Style amélioré)
+                                $dummy = New-Object System.Windows.Controls.TreeViewItem
+                                $dummy.Header = "Chargement..."
+                                $dummy.FontStyle = "Italic"
+                                $dummy.Foreground = [System.Windows.Media.Brushes]::Gray
+                                $dummy.IsEnabled = $false
+                                $dummy.Tag = "DUMMY_TAG" # Marqueur technique
+                                
+                                $newItem.Items.Add($dummy)
+                                
+                                $ParentNode.Items.Add($newItem)
+                            }
+                        }
+                        else {
+                            Write-Host "DEBUG: [Timer] ERREUR : ParentNode est null !"
                         }
                     }
-                    catch {}
                 }
             }
-            if ($null -ne $PreviewLogic) { & $PreviewLogic } 
+            catch {
+                Write-Host "CRITICAL TIMER ERROR: $_"
+                # On évite de propager l'erreur pour ne pas tuer ShowDialog
+            }
+        }.GetNewClosure() 
+        
+        $tim.Add_Tick($timAction)
+        $tim.Start()
+    }.GetNewClosure()
+
+    # 2. Event : Sélection Bibliothèque (Init Racine)
+    
+    # Capture explite du ScriptBlock pour le Closure
+    $LocalPopulateBlock = $PopulateNodeBlock
+
+    $Ctrl.CbLibs.Add_SelectionChanged({
+            try {
+                $lib = $this.SelectedItem
+                $safeLog = $Window.FindName("LogRichTextBox")
+                $safeSiteCb = $Window.FindName("SiteComboBox")
+                $tv = $Window.FindName("TargetExplorerTreeView")
+
+                if ($lib -is [System.Management.Automation.PSCustomObject] -and $safeSiteCb.SelectedItem) {
+                    if ($safeLog) {
+                        try {
+                            if (-not $Context.AutoLibraryName) {
+                                Write-AppLog -Message "Bibliothèque : '$($lib.Title)'" -Level Info -RichTextBox $safeLog
+                            }
+                        }
+                        catch {}
+                    }
+
+                    if ($tv) {
+                        $tv.Items.Clear()
+                        
+                        $st = $Window.FindName("TargetFolderStatusText")
+                        if ($st) { $st.Text = "/" }
+                        
+                        $Global:SelectedTargetFolder = [PSCustomObject]@{ 
+                            Name              = "Racine"
+                            ServerRelativeUrl = $lib.RootFolder.ServerRelativeUrl 
+                        }
+
+                        # Appel du Helper si disponible
+                        if ($LocalPopulateBlock) {
+                            & $LocalPopulateBlock -ParentNode $tv -FolderRelativeUrl $lib.RootFolder.ServerRelativeUrl -SiteUrl $safeSiteCb.SelectedItem.Url
+                        }
+                        else {
+                            Write-Host "Erreur CRITIQUE : PopulateNodeBlock est null dans SelectionChanged."
+                        }
+                    }
+                }
+                if ($null -ne $PreviewLogic) { & $PreviewLogic } 
+            }
+            catch { Write-Host "Erreur SelectionChanged: $_" }
         }.GetNewClosure())
+
+    # 3. Event GLOBAL : Expansion d'un noeud (Lazy Loading)
+    # On attache l'événement au TreeView principal (Bubble Event) pour éviter la récursion complexe
+    $exTV = $Window.FindName("TargetExplorerTreeView")
+    if ($exTV) {
+        
+        # ScriptBlock pour l'expansion - Doit être converti en RoutedEventHandler pour AddHandler
+        # En PowerShell, un ScriptBlock simple peut often être casté, mais pour RoutedEventHandler c'est specifique.
+        
+        $GlobalExpandHandler = { } # Placeholder pour garder la structure logique si nécessaire, mais on utilise ActionExpand direct.
+
+        # On a besoin que le Handler accède à $PopulateNodeBlock.
+        # Le moyen le plus sûr est de redéfinir le bloc d'expansion APRES avoir défini $PopulateNodeBlock et d'utiliser GetNewClosure().
+        
+        $ActionExpand = {
+            param($sender, $e)
+            try {
+                $item = $e.OriginalSource 
+                if ($item -is [System.Windows.Controls.TreeViewItem]) {
+                    # Vérifier si c'est un noeud "Dummy" non chargé via Tag
+                    $firstChild = $item.Items[0]
+                    $isDummy = $false
+                    
+                    if ($firstChild -is [System.Windows.Controls.TreeViewItem]) {
+                        if ($firstChild.Tag -eq "DUMMY_TAG") { $isDummy = $true }
+                    }
+                    # Fallback old check
+                    elseif ($firstChild.Header -eq "DUMMY") { $isDummy = $true }
+
+                    if ($isDummy) {
+                        $folderData = $item.Tag
+                        $safeSiteCb = $Window.FindName("SiteComboBox")
+                        
+                        # Utilisation de la variable capturée
+                        if ($folderData -and $safeSiteCb.SelectedItem -and $LocalPopulateBlock) {
+                            & $LocalPopulateBlock -ParentNode $item -FolderRelativeUrl $folderData.ServerRelativeUrl -SiteUrl $safeSiteCb.SelectedItem.Url
+                        }
+                    }
+                }
+            }
+            catch { Write-Host "Erreur OnExpanded interne : $_" }
+        }.GetNewClosure()
+
+        # Attachement CORRECT de l'événement Bubbled
+        try {
+            # On doit utiliser AddHandler car l'événement est défini sur TreeViewItem, pas TreeView
+            $exTV.AddHandler([System.Windows.Controls.TreeViewItem]::ExpandedEvent, [System.Windows.RoutedEventHandler]$ActionExpand)
+        }
+        catch {
+            Write-Host "Warning: Echec AddHandler Expanded: $_"
+        }
+
+        # 4. Event : Sélection Dossier
+        $exTV.Add_SelectedItemChanged({
+                param($sender, $e)
+                $item = $sender.SelectedItem
+                if ($item -and $item.Tag) {
+                    $folderData = $item.Tag
+                    $Global:SelectedTargetFolder = $folderData
+                    $st = $Window.FindName("TargetFolderStatusText")
+                    if ($st) { $st.Text = $folderData.ServerRelativeUrl }
+                }
+            }.GetNewClosure())
+    }
 }
