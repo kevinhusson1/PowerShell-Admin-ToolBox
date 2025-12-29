@@ -509,9 +509,6 @@ function Register-EditorLogic {
         # ==========================================================================
         # 5. PERSISTANCE (LOAD / SAVE / NEW / DELETE)
         # ==========================================================================
-        # (Copiez ici le bloc persistance existant s'il n'est pas déjà présent dans votre version locale)
-        # Je ne le répète pas pour éviter la surcharge, mais il doit être présent à la fin du fichier.
-    
         # ... BLOC PERSISTANCE ...
     
         $ResetUI = {
