@@ -23,6 +23,35 @@
         </Setter>
     </Style>
 
+    <!-- Icone Style (Gestion couleur sélection) -->
+    <Style x:Key="TreeItemIconStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="#FFC107"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True">
+                <Setter Property="Foreground" Value="White"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Variantes Icones -->
+    <Style x:Key="PermIconStyle" TargetType="TextBlock" BasedOn="{StaticResource TreeItemIconStyle}">
+        <Setter Property="Foreground" Value="#1976D2"/>
+        <Setter Property="Text" Value="&#x1F464;"/>
+        <!-- Icone User -->
+    </Style>
+    <Style x:Key="TagIconStyle" TargetType="TextBlock" BasedOn="{StaticResource TreeItemIconStyle}">
+        <Setter Property="Foreground" Value="#689F38"/>
+        <Setter Property="Text" Value="&#x1F3F7;"/>
+        <!-- Icone Tag -->
+    </Style>
+    <Style x:Key="LinkIconStyle" TargetType="TextBlock" BasedOn="{StaticResource TreeItemIconStyle}">
+        <Setter Property="Foreground" Value="#F57C00"/>
+        <Setter Property="Text" Value="&#x1F517;"/>
+        <!-- Icone Link -->
+    </Style>
+
     <!-- TreeViewItem (L'élément) -->
     <Style x:Key="ModernTreeViewItemStyle" TargetType="TreeViewItem">
         <Setter Property="Background" Value="Transparent"/>
@@ -67,7 +96,7 @@
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BackgroundHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="true">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBackgroundBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
@@ -83,7 +112,10 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="5"/>
-        <Setter Property="ItemContainerStyle" Value="{StaticResource ModernTreeViewItemStyle}"/>
+        <!-- Style Implicite pour forcer l'héritage sur tous les items (générés ou manuels) -->
+        <Style.Resources>
+            <Style TargetType="TreeViewItem" BasedOn="{StaticResource ModernTreeViewItemStyle}"/>
+        </Style.Resources>
     </Style>
 
 </ResourceDictionary>

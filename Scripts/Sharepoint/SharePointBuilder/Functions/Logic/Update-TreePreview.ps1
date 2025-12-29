@@ -78,9 +78,12 @@ function Global:Update-TreePreview {
             }
 
             $item = New-Object System.Windows.Controls.TreeViewItem
+            $item.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
             
             $stack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
-            $icon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "📁"; Margin = "0,0,5,0"; Foreground = "#FFC107"; FontSize = 14 }
+            $icon = New-Object System.Windows.Controls.TextBlock 
+            $icon.Text = "📁"
+            $icon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TreeItemIconStyle")
             $text = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $finalName; VerticalAlignment = "Center" }
             
             $stack.Children.Add($icon) | Out-Null
@@ -119,8 +122,10 @@ function Global:Update-TreePreview {
             if ($Node.Permissions) {
                 foreach ($perm in $Node.Permissions) {
                     $pItem = New-Object System.Windows.Controls.TreeViewItem
+                    $pItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
                     $pStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
-                    $pIcon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "👤"; Margin = "0,0,5,0"; Foreground = "#1976D2"; FontSize = 12 }
+                    $pIcon = New-Object System.Windows.Controls.TextBlock
+                    $pIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "PermIconStyle")
                     
                     # Logique d'affichage : "Groupe (Niveau)"
                     $pName = ""
@@ -149,8 +154,10 @@ function Global:Update-TreePreview {
             if ($Node.Tags) {
                 foreach ($tag in $Node.Tags) {
                     $tItem = New-Object System.Windows.Controls.TreeViewItem
+                    $tItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
                     $tStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
-                    $tIcon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "🏷️"; Margin = "0,0,5,0"; Foreground = "#689F38"; FontSize = 12 }
+                    $tIcon = New-Object System.Windows.Controls.TextBlock
+                    $tIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TagIconStyle")
                     
                     # Logique d'affichage : "Colonne : Valeur"
                     $tagName = ""
@@ -178,8 +185,10 @@ function Global:Update-TreePreview {
             if ($Node.Links) {
                 foreach ($link in $Node.Links) {
                     $lItem = New-Object System.Windows.Controls.TreeViewItem
+                    $lItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
                     $lStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
-                    $lIcon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "🔗"; Margin = "0,0,5,0"; Foreground = "#F57C00"; FontSize = 12 }
+                    $lIcon = New-Object System.Windows.Controls.TextBlock
+                    $lIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "LinkIconStyle")
                     
                     $lName = if ($link.Name) { [string]$link.Name } else { [string]$link.Url }
                     $lText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $lName; FontStyle = "Italic"; FontSize = 11; VerticalAlignment = "Center" }

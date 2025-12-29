@@ -171,6 +171,17 @@ function Initialize-AppDatabase {
                 Write-Verbose $logMsg
             }
         }
+
+        # --- MIGRATIONS SPÉCIFIQUES ---
+        # Migration v1.X : Ajout de TargetFolderPath dans sp_deploy_configs
+        if ('sp_deploy_configs' -in $existingTables) {
+            $cols = (Invoke-SqliteQuery -DataSource $dbPath -Query "PRAGMA table_info(sp_deploy_configs)").name
+            if ('TargetFolderPath' -notin $cols) {
+                Write-Verbose "Migration Schéma : Ajout de 'TargetFolderPath' à 'sp_deploy_configs'"
+                Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_deploy_configs ADD COLUMN TargetFolderPath TEXT;"
+            }
+        }
+
         Write-Verbose (Get-AppText 'modules.database.schema_check_done')
 
     }

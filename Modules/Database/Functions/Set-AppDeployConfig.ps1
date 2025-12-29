@@ -8,7 +8,8 @@ function Set-AppDeployConfig {
         [string]$LibraryName,
         [string]$TargetFolder,
         [bool]$OverwritePermissions,
-        [string]$TemplateId
+        [string]$TemplateId,
+        [string]$TargetFolderPath
     )
 
     try {
@@ -19,13 +20,14 @@ function Set-AppDeployConfig {
         $safeFolder = $TargetFolder.Replace("'", "''")
         $safeOverride = if ($OverwritePermissions) { 1 } else { 0 }
         $safeTpl = $TemplateId.Replace("'", "''")
+        $safeFolderPath = if ($TargetFolderPath) { $TargetFolderPath.Replace("'", "''") } else { "" }
         $date = (Get-Date -Format 'o')
 
         $query = @"
             INSERT OR REPLACE INTO sp_deploy_configs 
-            (ConfigName, SiteUrl, LibraryName, TargetFolder, OverwritePermissions, TemplateId, DateModified) 
+            (ConfigName, SiteUrl, LibraryName, TargetFolder, OverwritePermissions, TemplateId, DateModified, TargetFolderPath) 
             VALUES 
-            ('$safeName', '$safeUrl', '$safeLib', '$safeFolder', $safeOverride, '$safeTpl', '$date');
+            ('$safeName', '$safeUrl', '$safeLib', '$safeFolder', $safeOverride, '$safeTpl', '$date', '$safeFolderPath');
 "@
         
         Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop

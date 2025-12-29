@@ -32,8 +32,8 @@
 
                 <!-- Textes -->
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="HeaderTitleText" Text="##loc:scripts.DefaultUI.name##" Foreground="{DynamicResource WhiteBrush}" FontSize="24" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="HeaderSubtitleText" Text="##loc:scripts.DefaultUI.description##" Foreground="{DynamicResource WhiteBrush}" Opacity="0.8" FontSize="14"/>
+                    <TextBlock x:Name="HeaderTitleText" Text="##loc:scripts.sharepoint_builder.name##" Foreground="{DynamicResource WhiteBrush}" FontSize="24" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="HeaderSubtitleText" Text="##loc:scripts.sharepoint_builder.description##" Foreground="{DynamicResource WhiteBrush}" Opacity="0.8" FontSize="14"/>
                 </StackPanel>
 
                 <!-- Auth -->
@@ -129,12 +129,10 @@
                                     <!-- 1.2 Target Explorer (TreeView) -->
                                     <Border Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0">
                                         <Grid>
-                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0">
-                                                <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
-                                                    <!-- Sera rempli dynamiquement -->
-                                                    <TreeViewItem Header="Veuillez sélectionner une bibliothèque..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
-                                                </TreeView>
-                                            </ScrollViewer>
+                                            <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
+                                                <!-- Sera rempli dynamiquement -->
+                                                <TreeViewItem Header="Veuillez sélectionner une bibliothèque..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
+                                            </TreeView>
 
                                             <Grid x:Name="ExplorerLoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed" IsHitTestVisible="True">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -228,8 +226,10 @@
                                         </Grid>
 
 
-                                        <!-- Formulaire Dynamique -->
-                                        <StackPanel Grid.Row="2" x:Name="DynamicFormPanel" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+                                        <!-- Formulaire Dynamique (Scrollable) -->
+                                        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,15" Padding="0,0,0,5">
+                                            <StackPanel x:Name="DynamicFormPanel" Orientation="Horizontal" HorizontalAlignment="Left"/>
+                                        </ScrollViewer>
 
                                         <!-- Résultat Nom -->
                                         <Grid Grid.Row="3">
@@ -238,8 +238,10 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Nom :" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
-                                            <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" Padding="8,4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
-                                                <TextBlock x:Name="FolderNamePreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12"/>
+                                            <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="8,4" BorderThickness="0">
+                                                    <TextBlock x:Name="FolderNamePreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                                                </ScrollViewer>
                                             </Border>
                                         </Grid>
                                     </StackPanel>
@@ -265,10 +267,15 @@
                                             </Border>
                                             <TextBlock Grid.Column="1" Text="Déploiement" Style="{DynamicResource StepHeaderTextStyle}"/>
                                         </Grid>
-                                        <StackPanel Grid.Row="1">
-                                            <CheckBox x:Name="OverwritePermissionsCheckBox" Content="Écraser permissions existantes" Margin="0,0,0,15" Style="{DynamicResource CheckBoxStyle}"/>
-                                        </StackPanel>
-                                        <Grid Grid.Row="2" Margin="0,0,0,15">
+                                        <Grid Grid.Row="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox x:Name="OverwritePermissionsCheckBox" Grid.Column="0" Margin="0,0,15,0" Style="{DynamicResource ToggleSwitchStyle}"/>
+                                            <TextBlock Grid.Column="1" Text="Écraser les permissions existantes" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        </Grid>
+                                        <Grid Grid.Row="2" Margin="0,15,0,15">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -314,14 +321,7 @@
                                             <TextBlock x:Name="LogsStatusText" Text="En attente..." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                         </StackPanel>
 
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                            <TextBlock Text="Niveau :" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            <ComboBox x:Name="LogLevelComboBox" Width="80" Height="24" FontSize="11" SelectedIndex="1" Margin="0,0,15,0">
-                                                <ComboBoxItem Content="Light" Tag="Light"/>
-                                                <ComboBoxItem Content="Normal" Tag="Normal"/>
-                                                <ComboBoxItem Content="Expert" Tag="Hard"/>
-                                            </ComboBox>
-                                        </StackPanel>
+
                                     </Grid>
                                 </Border>
 

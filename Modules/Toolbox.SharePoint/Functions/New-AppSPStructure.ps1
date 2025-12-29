@@ -8,13 +8,14 @@ function New-AppSPStructure {
         [Parameter(Mandatory)] [string]$StructureJson,
         [Parameter(Mandatory)] [string]$ClientId,
         [Parameter(Mandatory)] [string]$Thumbprint,
-        [Parameter(Mandatory)] [string]$TenantName
+        [Parameter(Mandatory)] [string]$TenantName,
+        [Parameter(Mandatory = $false)] [string]$TargetFolderUrl
     )
 
     $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new() }
 
-    function Log { param($m, $l = "INFO") $result.Logs.Add("$l|$m"); Write-Verbose "[$l] $m" }
-    function Err { param($m) $result.Errors.Add($m); $result.Success = $false; Log $m "ERROR"; Write-Error $m }
+    function Log { param($m, $l = "INFO") $s = "$l|$m"; $result.Logs.Add($s); Write-Verbose "[$l] $m"; Write-Output $s }
+    function Err { param($m) $s = "ERROR|$m"; $result.Errors.Add($m); $result.Success = $false; $result.Logs.Add($s); Write-Error $m; Write-Output $s }
 
     try {
         Log "Initialisation..." "DEBUG"
@@ -27,8 +28,15 @@ function New-AppSPStructure {
         $targetLib = Get-PnPList -Identity $TargetLibraryName -Includes RootFolder -Connection $conn -ErrorAction Stop
         if (-not $targetLib) { throw "Bibliothèque introuvable." }
         
-        $libUrl = $targetLib.RootFolder.ServerRelativeUrl.TrimEnd('/')
-        Log "Racine détectée : $libUrl" "DEBUG"
+        # DEFINITION CIBLE (Correction)
+        if (-not [string]::IsNullOrWhiteSpace($TargetFolderUrl)) {
+            $libUrl = $TargetFolderUrl.TrimEnd('/')
+            Log "Cible définie : $libUrl" "DEBUG"
+        }
+        else {
+            $libUrl = $targetLib.RootFolder.ServerRelativeUrl.TrimEnd('/')
+            Log "Racine détectée (Auto) : $libUrl" "DEBUG"
+        }
         
         $structure = $StructureJson | ConvertFrom-Json
         

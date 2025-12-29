@@ -11,7 +11,10 @@
     "auth_pnp_status": "Connexion SharePoint (PnP) :",
     "status_connected": "Connecté",
     "status_disconnected": "Déconnecté",
-    "waiting_for_auth": "En attente d'identification..."
+    "waiting_for_auth": "En attente d'identification...",
+    "log_template_selected": "ℹ️ Modèle sélectionné : '{0}'",
+    "log_rule_selected": "ℹ️ Règle sélectionnée : '{0}'",
+    "log_folder_selected": "ℹ️ Cible définie : '{0}'"
   },
   "form_editor": {
     "load_tooltip": "Charger la règle sélectionnée",

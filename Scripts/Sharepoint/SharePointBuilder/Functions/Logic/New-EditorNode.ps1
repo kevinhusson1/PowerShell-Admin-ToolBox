@@ -20,12 +20,25 @@ function Global:New-EditorNode {
     )
 
     $item = New-Object System.Windows.Controls.TreeViewItem
+    $item.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+    # Note : Le Style "ModernTreeViewItemStyle" est désormais appliqué via le Style Implicite XAML
     
     # Conteneur Horizontal
     $stack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
     
     # 1. Icône Dossier
-    $icon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "📁"; Margin = "0,0,5,0"; Foreground = "#FFC107"; FontSize = 14 }
+    $icon = New-Object System.Windows.Controls.TextBlock
+    $icon.Text = "📁"
+    
+    # Style Icône
+    $styleFound = $false
+    if ($app) {
+        $s = $app.TryFindResource("TreeItemIconStyle")
+        if ($s) { $icon.Style = $s; $styleFound = $true }
+    }
+    if (-not $styleFound) {
+        $icon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TreeItemIconStyle")
+    }
     
     # 2. Nom du Dossier
     $text = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Name; VerticalAlignment = "Center"; Margin = "0,0,10,0" }
@@ -185,22 +198,35 @@ function Global:Update-EditorBadges {
 
     # Helper pour la création d'items
     $fnAddMeta = {
-        param($Icon, $Text, $Color, $Data)
+        param($StyleKey, $Text, $Data, $Italic = $false)
         $mItem = New-Object System.Windows.Controls.TreeViewItem
+        $mItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
         $mItem.Name = "MetaItem"
         $mItem.Tag = $Data
         
+        # Note : Le Style "ModernTreeViewItemStyle" est désormais appliqué via le Style Implicite XAML
+        
         $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
-        $mIcon = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Icon; Margin = "0,0,5,0"; Foreground = $Color; FontSize = 12 }
+        
+        # Icône typée via Style
+        $mIcon = New-Object System.Windows.Controls.TextBlock 
+        
+        $styleFound = $false
+        if ($app) {
+            $s = $app.TryFindResource($StyleKey)
+            if ($s) { $mIcon.Style = $s; $styleFound = $true }
+        }
+        if (-not $styleFound) {
+            $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, $StyleKey)
+        }
+
         $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Text; FontSize = 11; VerticalAlignment = "Center" }
+        if ($Italic) { $mText.FontStyle = "Italic" }
         
         $mStack.Children.Add($mIcon) | Out-Null
         $mStack.Children.Add($mText) | Out-Null
         $mItem.Header = $mStack
         
-        # Insertion au début (index 0, puis 1, etc.)
-        # Mais comme on insert, l'ordre s'inverse si on insert toujours à 0.
-        # On va les collecter et les insérer dans le bon ordre à la fin, ou insérer à l'index approprié.
         return $mItem
     }
 
@@ -212,9 +238,10 @@ function Global:Update-EditorBadges {
             $pName = ""
             if ($p.PSObject.Properties['Identity']) { $pName = "$($p.Identity) ($($p.Level))" }
             elseif ($p.PSObject.Properties['User']) { $pName = "$($p.User) ($($p.Level))" }
+            elseif ($p.PSObject.Properties['Email']) { $pName = "$($p.Email) ($($p.Level))" }
             else { $pName = [string]$p } # Fallback
 
-            $newItem = & $fnAddMeta -Icon "👤" -Text $pName -Color "#1976D2" -Data $p
+            $newItem = & $fnAddMeta -StyleKey "PermIconStyle" -Text $pName -Data $p
             $TreeItem.Items.Insert($idx, $newItem)
             $idx++
         }
@@ -228,7 +255,7 @@ function Global:Update-EditorBadges {
             elseif ($t.PSObject.Properties['Column'] -and $t.PSObject.Properties['Term']) { $tName = "$($t.Column) : $($t.Term)" }
             else { $tName = [string]$t }
 
-            $newItem = & $fnAddMeta -Icon "🏷️" -Text $tName -Color "#689F38" -Data $t
+            $newItem = & $fnAddMeta -StyleKey "TagIconStyle" -Text $tName -Data $t
             $TreeItem.Items.Insert($idx, $newItem)
             $idx++
         }
@@ -238,10 +265,7 @@ function Global:Update-EditorBadges {
     if ($data.Links) {
         foreach ($l in $data.Links) {
             $lName = if ($l.PSObject.Properties['Name']) { $l.Name } else { $l.Url }
-            $newItem = & $fnAddMeta -Icon "🔗" -Text $lName -Color "#F57C00" -Data $l
-            
-            # Style italique pour le lien
-            $newItem.Header.Children[1].FontStyle = "Italic"
+            $newItem = & $fnAddMeta -StyleKey "LinkIconStyle" -Text $lName -Data $l -Italic $true
 
             $TreeItem.Items.Insert($idx, $newItem)
             $idx++

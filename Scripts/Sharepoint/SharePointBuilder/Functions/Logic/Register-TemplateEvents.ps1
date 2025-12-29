@@ -30,6 +30,9 @@ function Register-TemplateEvents {
         [hashtable]$Context
     )
 
+    # Capture Locale Robuste
+    $GetLoc = Get-Command Get-AppLocalizedString -ErrorAction SilentlyContinue
+
     # 1. CHARGEMENT DES DONNÉES (Au démarrage)
     try {
         # A. Templates Architecture
@@ -62,12 +65,41 @@ function Register-TemplateEvents {
         Write-AppLog -Message "Erreur chargement données : $_" -Level Error -RichTextBox $Ctrl.LogBox
     }
 
-    # 2. ÉVÉNEMENT : SÉLECTION MODÈLE ARCHITECTURE
+    # 2. AUTO-REFRESH : Mise à jour de la liste à l'ouverture (DropDownOpened)
+    $Ctrl.CbTemplates.Add_DropDownOpened({
+            try {
+                $current = $this.SelectedItem
+                $freshTemplates = @(Get-AppSPTemplates)
+                
+                # Mise à jour de la source
+                $this.ItemsSource = $freshTemplates
+                $this.DisplayMemberPath = "DisplayName"
+
+                # Restauration de la sélection
+                if ($current) {
+                    $match = $freshTemplates | Where-Object { $_.TemplateId -eq $current.TemplateId } | Select-Object -First 1
+                    if ($match) { $this.SelectedItem = $match }
+                }
+            }
+            catch {
+                Write-Host "Erreur Refresh Templates : $_" 
+            }
+        }.GetNewClosure())
+
+    # 3. ÉVÉNEMENT : SÉLECTION MODÈLE ARCHITECTURE
     $Ctrl.CbTemplates.Add_SelectionChanged({
             $tpl = $this.SelectedItem
             if (-not $tpl) { return }
         
             $Ctrl.TxtDesc.Text = $tpl.Description
+            
+            # LOG USER
+            if ($GetLoc) {
+                $fmt = & $GetLoc "sp_builder.log_template_selected"
+                $msg = $fmt -f $tpl.DisplayName
+                Write-AppLog -Message $msg -Level Info -RichTextBox $Ctrl.LogBox
+            }
+
             # Mise à jour arbre visuel
             if ($null -ne $PreviewLogic) { & $PreviewLogic }
         }.GetNewClosure())
@@ -76,11 +108,35 @@ function Register-TemplateEvents {
     # Génère le formulaire quand on change la sélection dans la ComboBox "Modèle de dossier"
     # OU quand elle est initialisée
     if ($Ctrl.CbFolderTemplates) {
+        # AUTO-REFRESH : Mise à jour des règles à l'ouverture
+        $Ctrl.CbFolderTemplates.Add_DropDownOpened({
+                try {
+                    $current = $this.SelectedItem
+                    $freshRules = @(Get-AppNamingRules)
+                
+                    $this.ItemsSource = $freshRules
+                    $this.DisplayMemberPath = "RuleId"
+
+                    if ($current) {
+                        $match = $freshRules | Where-Object { $_.RuleId -eq $current.RuleId } | Select-Object -First 1
+                        if ($match) { $this.SelectedItem = $match }
+                    }
+                }
+                catch { Write-Host "Erreur Refresh Rules : $_" }
+            }.GetNewClosure())
+
         $Ctrl.CbFolderTemplates.Add_SelectionChanged({
                 $rule = $this.SelectedItem
                 if (-not $rule) { return }
             
                 $Ctrl.PanelForm.Children.Clear()
+
+                # LOG USER
+                if ($GetLoc) {
+                    $fmt = & $GetLoc "sp_builder.log_rule_selected"
+                    $msg = $fmt -f $rule.RuleId
+                    Write-AppLog -Message $msg -Level Info -RichTextBox $Ctrl.LogBox
+                }
 
                 try {
                     $layout = ($rule.DefinitionJson | ConvertFrom-Json).Layout

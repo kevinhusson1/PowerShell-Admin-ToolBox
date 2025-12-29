@@ -28,13 +28,8 @@ function Register-DeployEvents {
             $Ctrl.BtnDeploy.IsEnabled = $false
             $Ctrl.ProgressBar.IsIndeterminate = $true
             $Ctrl.TxtStatus.Text = "Déploiement en cours..."
-            $Ctrl.LogBox.Document.Blocks.Clear()
         
-            $cbLevel = $Window.FindName("LogLevelComboBox")
-            $logLevel = "Normal"
-            if ($cbLevel.SelectedItem) { $logLevel = $cbLevel.SelectedItem.Tag }
-        
-            Write-AppLog -Message "Démarrage déploiement (Niveau: $logLevel)..." -Level Info -RichTextBox $Ctrl.LogBox
+            Write-AppLog -Message "Démarrage déploiement..." -Level Info -RichTextBox $Ctrl.LogBox
 
             # --- LOGIQUE CRITIQUE ---
             # Si on ne crée pas de dossier, on passe une chaîne vide pour le nom du dossier
@@ -47,7 +42,7 @@ function Register-DeployEvents {
                 Tenant        = $Global:AppConfig.azure.tenantName
                 TargetUrl     = $Ctrl.CbSites.SelectedItem.Url
                 LibName       = $Ctrl.CbLibs.SelectedItem.Title
-                LibRelUrl     = $Ctrl.CbLibs.SelectedItem.RootFolder.ServerRelativeUrl
+                LibRelUrl     = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { $Ctrl.CbLibs.SelectedItem.RootFolder.ServerRelativeUrl }
                 FolderName    = $folderNameParam 
                 StructureJson = ($Ctrl.CbTemplates.SelectedItem.StructureJson)
             }
@@ -63,27 +58,54 @@ function Register-DeployEvents {
                         -StructureJson $ArgsMap.StructureJson `
                         -ClientId $ArgsMap.ClientId `
                         -Thumbprint $ArgsMap.Thumb `
-                        -TenantName $ArgsMap.Tenant
+                        -TenantName $ArgsMap.Tenant `
+                        -TargetFolderUrl $ArgsMap.LibRelUrl
                 }
                 catch { throw $_ }
             } -ArgumentList $jobArgs
         
             $timer = New-Object System.Windows.Threading.DispatcherTimer
             $timer.Interval = [TimeSpan]::FromMilliseconds(500)
-        
+            
+            # État partagé pour capturer le résultat final à travers les ticks
+            $SharedState = @{ FinalResult = $null }
+
             $timerBlock = {
+                # 1. UI References
+                $fLog = $Window.FindName("LogRichTextBox")
+                $fProg = $Window.FindName("MainProgressBar")
+                $fStat = $Window.FindName("ProgressStatusText")
+                $fBtn = $Window.FindName("DeployButton")
+                $fCopy = $Window.FindName("CopyUrlButton")
+                $fOpen = $Window.FindName("OpenUrlButton")
+
+                # 2. Consommation en temps réel (Streaming)
+                $newItems = Receive-Job -Job $job
+                
+                foreach ($item in $newItems) {
+                    if ($item -is [string]) {
+                        # Format attendu : "LEVEL|Message"
+                        $parts = $item -split '\|', 2
+                        $lvl = if ($parts.Count -eq 2) { $parts[0] } else { "INFO" }
+                        $msg = if ($parts.Count -eq 2) { $parts[1] } else { $item }
+
+                        # PROTECTION CRASH : Ignorer message vide
+                        if (-not [string]::IsNullOrWhiteSpace($msg)) {
+                            $color = switch ($lvl) { "DEBUG" { "Debug" } "INFO" { "Info" } "WARNING" { "Warning" } "ERROR" { "Error" } "SUCCESS" { "Success" } Default { "Info" } }
+                            if ($fLog) { Write-AppLog -Message $msg -Level $color -RichTextBox $fLog }
+                        }
+                    }
+                    elseif ($item -is [System.Collections.IDictionary] -or $item -is [PSCustomObject]) {
+                        # C'est le résultat final structuré
+                        $SharedState.FinalResult = $item
+                    }
+                }
+
+                # 3. Fin du Job
                 if ($job.State -ne 'Running') {
                     $timer.Stop()
-                
-                    $fLog = $Window.FindName("LogRichTextBox")
-                    $fProg = $Window.FindName("MainProgressBar")
-                    $fStat = $Window.FindName("ProgressStatusText")
-                    $fBtn = $Window.FindName("DeployButton")
-                    $fCopy = $Window.FindName("CopyUrlButton")
-                    $fOpen = $Window.FindName("OpenUrlButton")
+                    $finalRes = $SharedState.FinalResult
 
-                    $result = Receive-Job $job -Wait -AutoRemoveJob
-                
                     if ($fProg) { $fProg.IsIndeterminate = $false; $fProg.Value = 100 }
 
                     if ($job.State -eq 'Failed') {
@@ -93,15 +115,18 @@ function Register-DeployEvents {
                         if ($fBtn) { $fBtn.IsEnabled = $true }
                     } 
                     else {
-                        if ($result.Success) {
+                        # Succès ou Echec Logique
+                        $success = $false
+                        if ($finalRes -and $finalRes.Success) { $success = $true }
+
+                        if ($success) {
                             if ($fStat) { $fStat.Text = "Déploiement réussi !" }
-                            if ($fLog) { Write-AppLog -Message "Terminé avec succès." -Level Success -RichTextBox $fLog }
-                        
+                            
                             # URL Finale
                             $uriSite = [Uri]$jobArgs.TargetUrl
                             $rootHost = "$($uriSite.Scheme)://$($uriSite.Host)"
-                            # Si dossier vide, URL = Lib, sinon URL = Lib/Dossier
                             $pathSuffix = if ($jobArgs.FolderName) { "/$($jobArgs.FolderName)" } else { "" }
+                            # Attention : LibRelUrl commence déjà par /
                             $finalUrl = "$rootHost$($jobArgs.LibRelUrl)$pathSuffix"
                         
                             if ($fCopy) { 
@@ -114,26 +139,6 @@ function Register-DeployEvents {
                         else {
                             if ($fStat) { $fStat.Text = "Terminé avec erreurs." }
                             if ($fBtn) { $fBtn.IsEnabled = $true }
-                        }
-
-                        if ($result.Logs) {
-                            foreach ($line in $result.Logs) {
-                                $parts = $line -split '\|', 2
-                                $lvl = if ($parts.Count -eq 2) { $parts[0] } else { "INFO" }
-                                $msg = if ($parts.Count -eq 2) { $parts[1] } else { $line }
-
-                                $show = $false
-                                switch ($logLevel) {
-                                    "Light" { if ($lvl -in "SUCCESS", "ERROR", "WARNING") { $show = $true } }
-                                    "Normal" { if ($lvl -in "SUCCESS", "ERROR", "WARNING", "INFO") { $show = $true } }
-                                    "Hard" { $show = $true }
-                                }
-
-                                if ($show -and $fLog) {
-                                    $color = switch ($lvl) { "DEBUG" { "Debug" } "INFO" { "Info" } "WARNING" { "Warning" } "ERROR" { "Error" } "SUCCESS" { "Success" } Default { "Info" } }
-                                    Write-AppLog -Message $msg -Level $color -RichTextBox $fLog
-                                }
-                            }
                         }
                     }
                 }
@@ -182,8 +187,26 @@ function Register-DeployEvents {
                 # 5. Deselection Config si active
                 if ($Ctrl.CbDeployConfigs) { $Ctrl.CbDeployConfigs.SelectedIndex = -1 }
                 
-                # 6. Vider le TreeView et la Description
+                # 6. Vider le TreeView (Preview) et la Description
                 if ($Ctrl.TreeView) { $Ctrl.TreeView.Items.Clear() }
+                
+                # 7. Vider l'Explorer TreeView (Etape 1) et Reset Selection
+                $safeExpTv = $Window.FindName("TargetExplorerTreeView")
+                if ($safeExpTv) { 
+                    $safeExpTv.Items.Clear() 
+                    # Restaurer le placeholder
+                    $ph = New-Object System.Windows.Controls.TreeViewItem
+                    $ph.Header = "Veuillez sélectionner une bibliothèque..."
+                    $ph.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "TextDisabledBrush")
+                    $ph.FontStyle = 'Italic'
+                    $ph.IsEnabled = $false
+                    $ph.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+                    $safeExpTv.Items.Add($ph)
+                }
+                $Global:SelectedTargetFolder = $null
+                $st = $Window.FindName("TargetFolderStatusText")
+                if ($st) { $st.Text = "" }
+
                 if ($Ctrl.TxtDesc) { $Ctrl.TxtDesc.Text = "" }
                 if ($Ctrl.TxtPreview) { $Ctrl.TxtPreview.Text = "Aperçu du nom..." }
                 
@@ -201,6 +224,92 @@ function Register-DeployEvents {
     # GESTION DES CONFIGURATIONS
     # ==========================================================================
         
+
+    # ==========================================================================
+    # LOGIQUE DISCRÈTE D'AUTO-EXPANSION (RESTAURATION ARBRE)
+    # ==========================================================================
+    $AutoExpandState = [PSCustomObject]@{
+        Timer       = $null
+        TargetUrl   = ""
+        CurrentItem = $null # Null = Racine du TreeView
+    }
+
+    $AutoExpandLogic = {
+        # Sécurité : Si l'interface est fermée ou vide
+        $tv = $Window.FindName("TargetExplorerTreeView")
+        if (-not $tv) { 
+            if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+            return 
+        }
+
+        # Déterminer la collection à scanner
+        $itemsToCheck = if ($AutoExpandState.CurrentItem) { $AutoExpandState.CurrentItem.Items } else { $tv.Items }
+
+        # 1. Vérifier si vide ou chargement
+        if ($itemsToCheck.Count -eq 0) { return } # Attendre
+        
+        $firstChild = $itemsToCheck[0]
+        $isDummy = ($firstChild.Tag -eq "DUMMY_TAG" -or $firstChild.Header -eq "Chargement...")
+        
+        if ($isDummy) { return } # Attendre fin du chargement
+
+        # 2. Chercher la correspondance
+        $foundNext = $false
+        $target = $AutoExpandState.TargetUrl
+
+        foreach ($item in $itemsToCheck) {
+            $data = $item.Tag
+            if ($data -and $data.ServerRelativeUrl) {
+                $url = $data.ServerRelativeUrl
+                
+                # A. C'est la cible exacte !
+                if ($url -eq $target) {
+                    $item.IsSelected = $true
+                    $item.BringIntoView()
+                    $item.Focus()
+                    if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+                    # & $Log "Arborescence restaurée." "Success"
+                    return
+                }
+
+                # B. C'est un parent du chemin cible
+                # On ajoute '/' pour éviter les faux amis (ex: /Site/Gen vs /Site/General)
+                if ($target.StartsWith("$url/")) {
+                    $item.IsExpanded = $true # Déclenche le Lazy Load
+                    $AutoExpandState.CurrentItem = $item # On descend d'un niveau
+                    $foundNext = $true
+                    break # On sort du foreach, on attendra le chargement au prochain tick
+                }
+            }
+        }
+
+        # 3. Si on avait commencé à chercher (CurrentItem n'est pas null) mais qu'on ne trouve rien...
+        # C'est que le chemin n'existe plus. On arrête.
+        if (-not $foundNext -and $AutoExpandState.CurrentItem) {
+            if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+            # & $Log "Impossible de restaurer tout le chemin." "Warning"
+        }
+    }.GetNewClosure()
+
+    $StartAutoExpand = {
+        param($Url)
+        if ([string]::IsNullOrWhiteSpace($Url)) { return }
+
+        # Stop existant
+        if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+
+        # Init
+        $AutoExpandState.TargetUrl = $Url
+        $AutoExpandState.CurrentItem = $null
+
+        # Timer
+        $AutoExpandState.Timer = New-Object System.Windows.Threading.DispatcherTimer
+        $AutoExpandState.Timer.Interval = [TimeSpan]::FromMilliseconds(500)
+        $AutoExpandState.Timer.Add_Tick($AutoExpandLogic)
+        $AutoExpandState.Timer.Start()
+    }.GetNewClosure()
+
+
     # 1. Helper : Charger la liste des configs
     $LoadDeployConfigs = {
         try {
@@ -276,7 +385,10 @@ function Register-DeployEvents {
                 if ([string]::IsNullOrWhiteSpace($confName)) { return }
 
                 try {
-                    Set-AppDeployConfig -ConfigName $confName -SiteUrl $siteUrl -LibraryName $libName -TargetFolder $targetFolder -OverwritePermissions $overwrite -TemplateId $tplId
+                    # Capture du dossier cible sélectionné (Step 1)
+                    $selPath = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { "" }
+
+                    Set-AppDeployConfig -ConfigName $confName -SiteUrl $siteUrl -LibraryName $libName -TargetFolder $targetFolder -OverwritePermissions $overwrite -TemplateId $tplId -TargetFolderPath $selPath
                 
                     & $Log "Configuration '$confName' sauvegardée." "Success"
                     [System.Windows.MessageBox]::Show("Configuration sauvegardée.", "Succès", "OK", "Information")
@@ -374,6 +486,29 @@ function Register-DeployEvents {
                     }
                     else {
                         $Ctrl.ChkCreateFolder.IsChecked = $false
+                    }
+
+                    # F. Restauration Dossier Cible (Step 1)
+                    # On vérifie la propriété dynamiquement au cas où la colonne manque (vieux cache ?)
+                    if ($cfg.PSObject.Properties['TargetFolderPath'] -and -not [string]::IsNullOrWhiteSpace($cfg.TargetFolderPath)) {
+                        $path = $cfg.TargetFolderPath
+                        # On simule l'objet dossier pour le déploiement
+                        $Global:SelectedTargetFolder = [PSCustomObject]@{ ServerRelativeUrl = $path }
+                         
+                        # Mise à jour visuelle (Status Text seulement, car TreeView est async)
+                        $st = $Window.FindName("TargetFolderStatusText")
+                        if ($st) { $st.Text = $path }
+                         
+                        & $Log "Cible restaurée : $path" "Info"
+
+                        # Lancement Autopilot Visuel
+                        if ($StartAutoExpand) { & $StartAutoExpand $path }
+                    }
+                    else {
+                        # Reset si pas de cible sauvegardée
+                        $Global:SelectedTargetFolder = $null
+                        $st = $Window.FindName("TargetFolderStatusText")
+                        if ($st) { $st.Text = "" }
                     }
 
                     & $Log "Configuration chargée." "Success"

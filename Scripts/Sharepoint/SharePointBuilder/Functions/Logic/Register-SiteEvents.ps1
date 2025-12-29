@@ -29,6 +29,85 @@ function Register-SiteEvents {
         [hashtable]$Context
     )
 
+    # Capture Locale pour Closure (Correction)
+    $GetLoc = Get-Command Get-AppLocalizedString -ErrorAction SilentlyContinue
+
+    # Helper Pagination : Rendu par lot
+    $RenderBatchBlock = {
+        param($ParentNode)
+        
+        $tag = $ParentNode.Tag
+        # Vérification si le Tag a les propriétés de cache (via PSObject member check)
+        if (-not $tag.PSObject.Properties['CachedChildren']) { return }
+
+        $children = $tag.CachedChildren
+        $count = $children.Count
+        $offset = $tag.RenderedCount 
+        $pageSize = 10
+        
+        # Calculer la fin du lot
+        $endIndex = [Math]::Min($offset + $pageSize, $count)
+        
+        # 1. Retirer le bouton "Load More" s'il existe (c'est toujours le dernier visuellement)
+        if ($ParentNode.Items.Count -gt 0) {
+            $last = $ParentNode.Items[$ParentNode.Items.Count - 1]
+            if ($last -is [System.Windows.Controls.TreeViewItem] -and $last.Tag -eq "ACTION_LOAD_MORE") {
+                $ParentNode.Items.Remove($last)
+            }
+        }
+
+        # 2. Rendu des items
+        for ($i = $offset; $i -lt $endIndex; $i++) {
+            $folder = $children[$i]
+            if ($folder.Name -eq "Forms") { continue } # Filtre système
+
+            $newItem = New-Object System.Windows.Controls.TreeViewItem
+            $newItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+            
+            # Header
+            $stack = New-Object System.Windows.Controls.StackPanel
+            $stack.Orientation = "Horizontal"
+            
+            $txtIcon = New-Object System.Windows.Controls.TextBlock
+            $txtIcon.Text = "📁"
+            $txtIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TreeItemIconStyle") 
+            $stack.Children.Add($txtIcon)
+
+            $txt = New-Object System.Windows.Controls.TextBlock
+            $txt.Text = $folder.Name
+            $stack.Children.Add($txt)
+            
+            $newItem.Header = $stack
+            $newItem.Tag = $folder # Data brute
+            
+            # Dummy pour Lazy Loading
+            $dummy = New-Object System.Windows.Controls.TreeViewItem
+            $dummy.Header = "Chargement..."
+            $dummy.FontStyle = "Italic"
+            $dummy.Foreground = [System.Windows.Media.Brushes]::Gray
+            $dummy.IsEnabled = $false
+            $dummy.Tag = "DUMMY_TAG"
+            $newItem.Items.Add($dummy)
+            
+            $ParentNode.Items.Add($newItem)
+        }
+
+        # 3. Mise à jour Offset
+        $tag.RenderedCount = $endIndex
+
+        # 4. Ajouter "Load More" si reste
+        if ($endIndex -lt $count) {
+            $remaining = $count - $endIndex
+            $moreItem = New-Object System.Windows.Controls.TreeViewItem
+            $moreItem.Header = "Charger la suite (+ $remaining) ..."
+            $moreItem.Tag = "ACTION_LOAD_MORE"
+            $moreItem.Foreground = [System.Windows.Media.Brushes]::DodgerBlue
+            $moreItem.FontWeight = "SemiBold"
+            $moreItem.Cursor = "Hand"
+            $ParentNode.Items.Add($moreItem)
+        }
+    }.GetNewClosure()
+
     $Global:AllSharePointSites = @()
     
     # Paramètres de base pour traverser la frontière du Job
@@ -266,6 +345,23 @@ function Register-SiteEvents {
                         $safeLibCb.IsEnabled = $false
                     }
 
+                    # RESET TREEVIEW & SELECTION
+                    $safeTv = $Window.FindName("TargetExplorerTreeView")
+                    if ($safeTv) {
+                        $safeTv.Items.Clear()
+                        # Restauration Placeholder
+                        $ph = New-Object System.Windows.Controls.TreeViewItem
+                        $ph.Header = "Veuillez sélectionner une bibliothèque..."
+                        $ph.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "TextDisabledBrush")
+                        $ph.FontStyle = "Italic"
+                        $ph.IsEnabled = $false
+                        $ph.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle") # Cohérence
+                        $safeTv.Items.Add($ph)
+                    }
+                    $Global:SelectedTargetFolder = $null
+                    $st = $Window.FindName("TargetFolderStatusText")
+                    if ($st) { $st.Text = "" }
+
                     # CLONAGE ARGUMENTS
                     $libArgs = $baseArgs.Clone()
                     $libArgs.SiteUrl = $site.Url
@@ -399,6 +495,9 @@ function Register-SiteEvents {
         $jId = $jobExp.Id
         Write-Host "DEBUG: [PopulateNode] Job lancé (ID=$jId). Attente..."
         
+        # Capture explicite pour le Timer
+        $capturedBatch = $RenderBatchBlock
+
         # TIMER UI
         $tim = New-Object System.Windows.Threading.DispatcherTimer
         $tim.Interval = [TimeSpan]::FromMilliseconds(200)
@@ -442,44 +541,31 @@ function Register-SiteEvents {
                         
                         Write-Host "DEBUG: [Timer] Dossiers valides extraits : $($realFolders.Count)"
 
-                        # UPDATE UI
+                        # UPDATE UI (Avec Pagination via Helper)
                         if ($ParentNode) {
                             $ParentNode.Items.Clear() # Nettoyage du Dummy
                             
-                            foreach ($folder in $realFolders) {
-                                if ($folder.Name -eq "Forms") { continue } # Masquer dossier système
+                            # Initialisation du Cache sur le tag
+                            # On enrichit l'objet Tag existant (FolderData) sans le casser
+                            if ($ParentNode.Tag -is [System.Management.Automation.PSCustomObject]) {
+                                $ParentNode.Tag | Add-Member -NotePropertyName CachedChildren -NotePropertyValue $realFolders -Force
+                                $ParentNode.Tag | Add-Member -NotePropertyName RenderedCount -NotePropertyValue 0 -Force
+                            }
+                            # Cas racine (parfois Tag est null ou different)
+                            elseif ($ParentNode -is [System.Windows.Controls.TreeView]) {
+                                # TreeView n'a pas de Tag FolderData, on lui en crée un
+                                $ParentNode.Tag = [PSCustomObject]@{
+                                    CachedChildren = $realFolders
+                                    RenderedCount  = 0
+                                }
+                            }
 
-                                Write-Host "   -> Ajout TreeView: $($folder.Name) ($($folder.ServerRelativeUrl))"
-
-                                $newItem = New-Object System.Windows.Controls.TreeViewItem
-                                
-                                # Header (Style Modifié : Goldenrod)
-                                $stack = New-Object System.Windows.Controls.StackPanel
-                                $stack.Orientation = "Horizontal"
-                                $txtIcon = New-Object System.Windows.Controls.TextBlock
-                                $txtIcon.Text = "📁"
-                                $txtIcon.Margin = "0,0,5,0"
-                                $txtIcon.Foreground = [System.Windows.Media.Brushes]::Goldenrod # UPDATE STYLE
-                                
-                                $txt = New-Object System.Windows.Controls.TextBlock
-                                $txt.Text = $folder.Name
-                                $stack.Children.Add($txtIcon)
-                                $stack.Children.Add($txt)
-                                
-                                $newItem.Header = $stack
-                                $newItem.Tag = $folder 
-                                
-                                # Dummy pour Lazy Loading (Style amélioré)
-                                $dummy = New-Object System.Windows.Controls.TreeViewItem
-                                $dummy.Header = "Chargement..."
-                                $dummy.FontStyle = "Italic"
-                                $dummy.Foreground = [System.Windows.Media.Brushes]::Gray
-                                $dummy.IsEnabled = $false
-                                $dummy.Tag = "DUMMY_TAG" # Marqueur technique
-                                
-                                $newItem.Items.Add($dummy)
-                                
-                                $ParentNode.Items.Add($newItem)
+                            # Appel du premier batch
+                            if ($capturedBatch) {
+                                & $capturedBatch $ParentNode
+                            }
+                            else {
+                                Write-Host "Erreur : RenderBatchBlock toujours introuvable."
                             }
                         }
                         else {
@@ -600,11 +686,36 @@ function Register-SiteEvents {
         $exTV.Add_SelectedItemChanged({
                 param($sender, $e)
                 $item = $sender.SelectedItem
-                if ($item -and $item.Tag) {
-                    $folderData = $item.Tag
-                    $Global:SelectedTargetFolder = $folderData
-                    $st = $Window.FindName("TargetFolderStatusText")
-                    if ($st) { $st.Text = $folderData.ServerRelativeUrl }
+                
+                if ($item) {
+                    # A. Gestion "Load More"
+                    if ($item.Tag -eq "ACTION_LOAD_MORE") {
+                        # On retrouve le parent pour ajouter les items
+                        $container = $item.Parent
+                        if ($container -and $RenderBatchBlock) {
+                            & $RenderBatchBlock $container
+                        }
+                        return
+                    }
+
+                    # B. Gestion Sélection Dossier
+                    if ($item.Tag -and $item.Tag.ServerRelativeUrl) {
+                        $folderData = $item.Tag
+                        $Global:SelectedTargetFolder = $folderData
+                        $st = $Window.FindName("TargetFolderStatusText")
+                        if ($st) { $st.Text = $folderData.ServerRelativeUrl }
+
+                        # LOG USER
+                        $safeLog = $Window.FindName("LogRichTextBox")
+                        if ($safeLog -and $GetLoc) {
+                            try {
+                                $fmt = & $GetLoc "sp_builder.log_folder_selected"
+                                $msg = $fmt -f $folderData.ServerRelativeUrl
+                                Write-AppLog -Message $msg -Level Info -RichTextBox $safeLog
+                            }
+                            catch {}
+                        }
+                    }
                 }
             }.GetNewClosure())
     }
