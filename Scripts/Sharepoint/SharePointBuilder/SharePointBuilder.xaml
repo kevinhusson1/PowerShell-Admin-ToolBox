@@ -40,7 +40,7 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 
                     <!-- Nom / État (Texte) -->
-                    <Button x:Name="ScriptAuthTextButton" Content="Non connecté" Margin="0,0,10,0" VerticalAlignment="Center" Cursor="Arrow" FontSize="13" FontWeight="SemiBold">
+                    <Button x:Name="ScriptAuthTextButton" Content="##loc:sp_builder.auth_not_connected##" Margin="0,0,10,0" VerticalAlignment="Center" Cursor="Arrow" FontSize="13" FontWeight="SemiBold">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Background" Value="Transparent"/>
@@ -69,7 +69,7 @@
         <Grid Grid.Row="1" Background="{DynamicResource PrimaryBrush}">
             <TabControl x:Name="MainTabControl" Style="{DynamicResource NavTabControlStyle}">
                 <!-- ONGLET DÉPLOIEMENT -->
-                <TabItem Header="🚀 Déploiement" IsSelected="True">
+                <TabItem Header="##loc:sp_builder.tab_deploy##" IsSelected="True">
                     <Grid Background="{DynamicResource WhiteBrush}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
@@ -105,9 +105,9 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource InfoBackgroundBrush}">
-                                                <TextBlock Text="1" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Text="##loc:sp_builder.step_1_id##" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Text="Etape 1 : Cible du Déploiement" Style="{DynamicResource StepHeaderTextStyle}" Grid.Column="1"/>
+                                            <TextBlock Text="##loc:sp_builder.step_1_title##" Style="{DynamicResource StepHeaderTextStyle}" Grid.Column="1"/>
                                         </Grid>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -116,11 +116,11 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Site" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_site##" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="SiteComboBox" Style="{DynamicResource StandardEditableComboBoxStyle}" Margin="0,5,0,10"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2">
-                                                <TextBlock Text="Bibliothèque" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_library##" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="LibraryComboBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,0"/>
                                             </StackPanel>
                                         </Grid>
@@ -131,13 +131,13 @@
                                         <Grid>
                                             <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
                                                 <!-- Sera rempli dynamiquement -->
-                                                <TreeViewItem Header="Veuillez sélectionner une bibliothèque..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
+                                                <TreeViewItem Header="##loc:sp_builder.msg_select_library##" Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
                                             </TreeView>
 
                                             <Grid x:Name="ExplorerLoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed" IsHitTestVisible="True">
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <TextBlock Text="⏳" FontSize="24" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Chargement..." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="##loc:sp_builder.msg_loading##" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                 </StackPanel>
                                             </Grid>
                                         </Grid>
@@ -163,9 +163,9 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
-                                                <TextBlock Text="2" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Text="##loc:sp_builder.step_2_id##" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Grid.Column="1" Text="Etape 2 : Modèle à Appliquer" Style="{DynamicResource StepHeaderTextStyle}"/>
+                                            <TextBlock Grid.Column="1" Text="##loc:sp_builder.step_2_title##" Style="{DynamicResource StepHeaderTextStyle}"/>
 
                                             <TextBlock Grid.Column="2" x:Name="TemplateDescText" Text="ℹ️" ToolTip="Voir description" VerticalAlignment="Center" Cursor="Help"/>
                                         </Grid>
@@ -205,11 +205,11 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource WarningBackgroundBrush}">
-                                                <TextBlock Text="3" Foreground="{DynamicResource WarningBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Text="##loc:sp_builder.step_3_id##" Foreground="{DynamicResource WarningBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Grid.Column="1" Text="Création Destination" Style="{DynamicResource StepHeaderTextStyle}"/>
+                                            <TextBlock Grid.Column="1" Text="##loc:sp_builder.step_3_title##" Style="{DynamicResource StepHeaderTextStyle}"/>
                                             <Border Grid.Column="2" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                <TextBlock Text="Optionnel" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_optional##" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                             </Border>
                                         </Grid>
 
@@ -221,7 +221,7 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <CheckBox Grid.Column="0" x:Name="CreateFolderCheckBox" Style="{DynamicResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1" Text="Créer un dossier racine" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock Grid.Column="1" Text="##loc:sp_builder.label_create_root_folder##" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="SemiBold"/>
                                             <ComboBox Grid.Column="2" x:Name="FolderTemplateComboBox" Style="{DynamicResource StandardComboBoxStyle}" IsEnabled="{Binding IsChecked, ElementName=CreateFolderCheckBox}" ToolTip="Règle de nommage du dossier racine"/>
                                         </Grid>
 
@@ -237,7 +237,7 @@
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="Nom :" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                                            <TextBlock Text="##loc:sp_builder.label_name##" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
                                             <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
                                                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="8,4" BorderThickness="0">
                                                     <TextBlock x:Name="FolderNamePreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center"/>
@@ -265,7 +265,7 @@
                                             <Border Grid.Column="0" Style="{DynamicResource StepIconBorderStyle}" Background="{DynamicResource SecondaryBackgroundBrush}">
                                                 <TextBlock Text="⚙" Foreground="{DynamicResource SecondaryBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
                                             </Border>
-                                            <TextBlock Grid.Column="1" Text="Déploiement" Style="{DynamicResource StepHeaderTextStyle}"/>
+                                            <TextBlock Grid.Column="1" Text="##loc:sp_builder.label_deployment##" Style="{DynamicResource StepHeaderTextStyle}"/>
                                         </Grid>
                                         <Grid Grid.Row="1">
                                             <Grid.ColumnDefinitions>
@@ -273,7 +273,7 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <CheckBox x:Name="OverwritePermissionsCheckBox" Grid.Column="0" Margin="0,0,15,0" Style="{DynamicResource ToggleSwitchStyle}"/>
-                                            <TextBlock Grid.Column="1" Text="Écraser les permissions existantes" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                            <TextBlock Grid.Column="1" Text="##loc:sp_builder.label_overwrite_permissions##" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                         </Grid>
                                         <Grid Grid.Row="2" Margin="0,15,0,15">
                                             <Grid.ColumnDefinitions>
@@ -317,8 +317,8 @@
                                 <Border Grid.Row="1" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,8">
                                     <Grid>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="📝 Journal d'opérations" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0,20,0"/>
-                                            <TextBlock x:Name="LogsStatusText" Text="En attente..." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="##loc:sp_builder.label_logs##" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0,20,0"/>
+                                            <TextBlock x:Name="LogsStatusText" Text="##loc:sp_builder.msg_waiting##" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                         </StackPanel>
 
 
@@ -339,16 +339,16 @@
 
                                 <!-- Status Text Left -->
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock x:Name="ProgressStatusText" Text="Prêt." FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="ProgressStatusText" Text="##loc:sp_builder.msg_ready##" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <ProgressBar x:Name="MainProgressBar" Width="150" Height="10" Margin="15,0,0,0" Visibility="Hidden" VerticalAlignment="Center"/>
                                 </StackPanel>
 
                                 <!-- Action Buttons Right -->
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="ResetUIButton" Content="↺ Réinitialiser" Style="{DynamicResource RedButtonStyle}" Height="32" Margin="0,0,15,0"/>
-                                    <Button x:Name="CopyUrlButton" Content="📋 URL" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False"/>
-                                    <Button x:Name="OpenUrlButton" Content="↗ Ouvrir" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" IsEnabled="False"/>
-                                    <Button x:Name="DeployButton" Content="🚀 Lancer le Déploiement" Style="{DynamicResource GreenButtonStyle}" Width="200" Height="36" FontWeight="Bold"/>
+                                    <Button x:Name="ResetUIButton" Content="##loc:sp_builder.btn_reset##" Style="{DynamicResource RedButtonStyle}" Height="32" Margin="0,0,15,0"/>
+                                    <Button x:Name="CopyUrlButton" Content="##loc:sp_builder.btn_copy_url##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False"/>
+                                    <Button x:Name="OpenUrlButton" Content="##loc:sp_builder.btn_open##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" IsEnabled="False"/>
+                                    <Button x:Name="DeployButton" Content="##loc:sp_builder.btn_deploy##" Style="{DynamicResource GreenButtonStyle}" Width="200" Height="36" FontWeight="Bold"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -357,7 +357,7 @@
 
                 <!-- PLACEHOLDERS -->
                 <!-- ONGLET 2 : ÉDITEUR DE MODÈLE -->
-                <TabItem Header="✏️ Éditeur de Modèle">
+                <TabItem Header="##loc:sp_builder.tab_editor_template##">
                     <Grid Background="{DynamicResource BackgroundLightBrush}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -381,10 +381,10 @@
                                 <!-- Gestion BDD -->
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="Modèle existant" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="##loc:sp_builder.label_existing_template##" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                         <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32" ToolTip="Sélectionner un modèle existant"/>
                                     </StackPanel>
-                                    <Button x:Name="EditorLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom" ToolTip="Charger ce modèle dans l'éditeur"/>
+                                    <Button x:Name="EditorLoadButton" Content="##loc:sp_builder.btn_load##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom" ToolTip="Charger ce modèle dans l'éditeur"/>
                                     <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" Padding="0" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
                                 </StackPanel>
                             </Grid>
@@ -415,7 +415,7 @@
                                         <Grid>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="📂" Margin="0,0,10,0"/>
-                                                <TextBlock Text="Structure du modèle" FontWeight="SemiBold"/>
+                                                <TextBlock Text="##loc:sp_builder.label_template_structure##" FontWeight="SemiBold"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>
@@ -426,8 +426,8 @@
                                     <!-- Toolbar Arbre -->
                                     <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10" CornerRadius="0,0,15,15">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button x:Name="EditorAddRootButton" Content="+ Racine" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un dossier à la racine"/>
-                                            <Button x:Name="EditorAddChildButton" Content="+ Dossier" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un sous-dossier"/>
+                                            <Button x:Name="EditorAddRootButton" Content="##loc:sp_builder.btn_add_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un dossier à la racine"/>
+                                            <Button x:Name="EditorAddChildButton" Content="##loc:sp_builder.btn_add_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un sous-dossier"/>
                                             <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer l'élément sélectionné"/>
                                         </StackPanel>
                                     </Border>
@@ -446,7 +446,7 @@
                                     <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="15,15,15,15">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="🛠️" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Propriétés du dossier sélectionné" FontWeight="SemiBold"/>
+                                            <TextBlock Text="##loc:sp_builder.label_folder_properties##" FontWeight="SemiBold"/>
                                         </StackPanel>
                                     </Border>
 
@@ -458,12 +458,12 @@
                                             <StackPanel x:Name="EdPanelFolder">
 
                                                 <!-- 1. Identification -->
-                                                <TextBlock Text="Nom du dossier" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_folder_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du dossier dans SharePoint"/>
 
                                                 <!-- 2. Permissions -->
                                                 <Grid Margin="0,0,0,10">
-                                                    <TextBlock Text="Permissions" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="##loc:sp_builder.label_permissions##" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
                                                     <Button x:Name="EditorAddPermButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter une permission"/>
                                                 </Grid>
 
@@ -490,9 +490,9 @@
                                                 <!-- 3. Métadonnées -->
                                                 <Grid Margin="0,0,0,10">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="Métadonnées / Tags" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="##loc:sp_builder.label_metadata_tags##" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
                                                         <Border x:Name="EditorMetadataBadge" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" Visibility="Collapsed">
-                                                            <TextBlock Text="Schéma lié" FontSize="9" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold"/>
+                                                            <TextBlock Text="##loc:sp_builder.badge_schema_linked##" FontSize="9" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold"/>
                                                         </Border>
                                                     </StackPanel>
                                                     <Button x:Name="EditorAddTagButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un tag"/>
@@ -520,7 +520,7 @@
                                                 <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
                                                 <Grid Margin="0,0,0,10">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="Liens / Raccourcis" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="##loc:sp_builder.label_links_shortcuts##" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                     <Button x:Name="EditorAddLinkButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un lien"/>
                                                 </Grid>
@@ -550,17 +550,17 @@
                                                 <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="👤" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Édition de permission" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                                        <TextBlock Text="##loc:sp_builder.title_edit_permission##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <TextBlock Text="Utilisateur ou Groupe (Email)" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_user_group_email##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdPermIdentityBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Email de l'utilisateur ou nom du groupe SP"/>
 
-                                                <TextBlock Text="Niveau d'accès" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_access_level##" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" ToolTip="Niveau d'autorisation (Read, Contribute, Full Control)"/>
 
-                                                <Button x:Name="EdPermDeleteButton" Content="Supprimer cette permission" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                                <Button x:Name="EdPermDeleteButton" Content="##loc:sp_builder.btn_delete_permission##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
 
                                             <!-- C. MODE TAG -->
@@ -568,17 +568,17 @@
                                                 <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="🏷️" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Édition de Tag" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                                        <TextBlock Text="##loc:sp_builder.title_edit_tag##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <TextBlock Text="Nom de la colonne" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_column_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdTagNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom interne de la colonne SharePoint"/>
 
-                                                <TextBlock Text="Valeur (Terme)" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_value_term##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Valeur par défaut ou Terme de taxonomie"/>
 
-                                                <Button x:Name="EdTagDeleteButton" Content="Supprimer ce tag" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                                <Button x:Name="EdTagDeleteButton" Content="##loc:sp_builder.btn_delete_tag##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
 
                                             <!-- D. MODE LINK -->
@@ -586,17 +586,17 @@
                                                 <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="🔗" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Édition de Lien" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                                        <TextBlock Text="##loc:sp_builder.title_edit_link##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <TextBlock Text="Nom affiché" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
 
-                                                <TextBlock Text="URL Cible" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_target_url##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Adresse URL de destination"/>
 
-                                                <Button x:Name="EdLinkDeleteButton" Content="Supprimer ce lien" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                                <Button x:Name="EdLinkDeleteButton" Content="##loc:sp_builder.btn_delete_link##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
 
                                         </Grid>
@@ -606,7 +606,7 @@
                                     <Grid Grid.Row="1" x:Name="EdPanelNoSel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
                                             <TextBlock Text="👆" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Sélectionnez un dossier dans l'arbre" FontSize="14"/>
+                                            <TextBlock Text="##loc:sp_builder.msg_select_folder_tree##" FontSize="14"/>
                                         </StackPanel>
                                     </Grid>
                                 </Grid>
@@ -621,7 +621,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Status Text -->
-                                <TextBlock Grid.Column="0" x:Name="EditorStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <TextBlock Grid.Column="0" x:Name="EditorStatusText" Text="##loc:sp_builder.msg_ready##" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
                                 <!-- Actions Globales -->
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -630,15 +630,15 @@
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="🎯" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Contexte de validation" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
-                                                <TextBlock x:Name="EditorContextStatusText" Text="Aucun site cible défini" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_validation_context##" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
+                                                <TextBlock x:Name="EditorContextStatusText" Text="##loc:sp_builder.msg_no_target_site##" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
                                             </StackPanel>
-                                            <Button x:Name="EditorDefineTargetButton" Content="Définir" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}" ToolTip="Choisir un site SharePoint pour valider les colonnes"/>
+                                            <Button x:Name="EditorDefineTargetButton" Content="##loc:sp_builder.btn_define##" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}" ToolTip="Choisir un site SharePoint pour valider les colonnes"/>
                                         </StackPanel>
                                     </Border>
 
-                                    <Button x:Name="EditorNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0" ToolTip="Créer un nouveau modèle vierge"/>
-                                    <Button x:Name="EditorSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36" ToolTip="Enregistrer les modifications dans la base de données"/>
+                                    <Button x:Name="EditorNewButton" Content="##loc:sp_builder.btn_new##" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0" ToolTip="Créer un nouveau modèle vierge"/>
+                                    <Button x:Name="EditorSaveButton" Content="##loc:sp_builder.btn_save##" Style="{DynamicResource PrimaryButtonStyle}" Height="36" ToolTip="Enregistrer les modifications dans la base de données"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -646,7 +646,7 @@
                 </TabItem>
 
                 <!-- ONGLET 3 : FORMULAIRE DESTINATION -->
-                <TabItem Header="📋 Formulaire Destination">
+                <TabItem Header="##loc:sp_builder.tab_form_destination##">
                     <Grid Background="{DynamicResource BackgroundLightBrush}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -672,10 +672,10 @@
                                 <!-- Gestion BDD -->
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <StackPanel VerticalAlignment="Bottom" Margin="0,0,10,0">
-                                        <TextBlock Text="Règle existante" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="##loc:sp_builder.label_existing_rule##" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                         <ComboBox x:Name="FormLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32"/>
                                     </StackPanel>
-                                    <Button x:Name="FormLoadButton" Content="Charger" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom" ToolTip="##loc:form_editor.load_tooltip##"/>
+                                    <Button x:Name="FormLoadButton" Content="##loc:sp_builder.btn_load##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" VerticalAlignment="Bottom" ToolTip="##loc:form_editor.load_tooltip##"/>
                                     <Button x:Name="FormDeleteButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Width="40" Padding="0" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="##loc:form_editor.delete_tooltip##"/>
                                 </StackPanel>
                             </Grid>
@@ -705,7 +705,7 @@
                                     <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="abc" FontFamily="Consolas" Margin="0,0,10,0" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            <TextBlock Text="Structure du nommage" FontWeight="SemiBold"/>
+                                            <TextBlock Text="##loc:sp_builder.label_naming_structure##" FontWeight="SemiBold"/>
                                         </StackPanel>
                                     </Border>
 
@@ -745,9 +745,9 @@
                                     <!-- Toolbar Bas -->
                                     <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button x:Name="FormAddLabelBtn" Content="+ Texte Fixe" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:form_editor.add_label_tooltip##"/>
-                                            <Button x:Name="FormAddTextBtn" Content="+ Champ Saisie" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:form_editor.add_text_tooltip##"/>
-                                            <Button x:Name="FormAddComboBtn" Content="+ Liste Choix" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,15,0" ToolTip="##loc:form_editor.add_combo_tooltip##"/>
+                                            <Button x:Name="FormAddLabelBtn" Content="##loc:sp_builder.btn_add_label##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:form_editor.add_label_tooltip##"/>
+                                            <Button x:Name="FormAddTextBtn" Content="##loc:sp_builder.btn_add_text##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:form_editor.add_text_tooltip##"/>
+                                            <Button x:Name="FormAddComboBtn" Content="##loc:sp_builder.btn_add_combo##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,15,0" ToolTip="##loc:form_editor.add_combo_tooltip##"/>
 
                                             <!-- Correction Icônes -->
                                             <Button x:Name="FormMoveUpBtn" Content="⬆️" Style="{DynamicResource SecondaryButtonStyle}" Width="34" Height="30" Padding="0" Margin="0,0,5,0" ToolTip="##loc:form_editor.move_up_tooltip##"/>
@@ -770,7 +770,7 @@
                                     <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="⚙️" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Configuration du champ" FontWeight="SemiBold"/>
+                                            <TextBlock Text="##loc:sp_builder.label_field_config##" FontWeight="SemiBold"/>
                                         </StackPanel>
                                     </Border>
 
@@ -779,39 +779,39 @@
 
                                             <!-- 1. Nom Interne (ENCAPSULÉ) -->
                                             <StackPanel x:Name="PanelPropName">
-                                                <TextBlock Text="Nom de la variable (Interne)" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_variable_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="PropNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15"/>
-                                                <TextBlock Text="Utilisé pour l'autopilot. Ex: 'CodeChantier'" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,-10,0,20"/>
+                                                <TextBlock Text="##loc:sp_builder.help_variable_name##" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,-10,0,20"/>
                                             </StackPanel>
 
                                             <!-- 2. Contenu (Label) -->
                                             <StackPanel x:Name="PanelPropContent">
-                                                <TextBlock Text="Texte affiché" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_displayed_text##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="PropContentBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
                                             </StackPanel>
 
                                             <!-- 3. Valeur par défaut -->
                                             <StackPanel x:Name="PanelPropDefault">
-                                                <TextBlock Text="Valeur par défaut" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_default_value##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="PropDefaultBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
                                             </StackPanel>
 
                                             <!-- 4. Options -->
                                             <StackPanel x:Name="PanelPropOptions">
-                                                <TextBlock Text="Options (séparées par virgule)" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_options_list##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="PropOptionsBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
                                             </StackPanel>
 
                                             <!-- 5. Largeur (ENCAPSULÉ) -->
                                             <StackPanel x:Name="PanelPropWidth">
-                                                <TextBlock Text="Largeur visuelle (px)" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_visual_width##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="PropWidthBox" Style="{DynamicResource StandardTextBoxStyle}" Width="80" HorizontalAlignment="Left" Margin="0,5,0,20"/>
                                             </StackPanel>
 
                                             <!-- 6. Majuscules -->
                                             <StackPanel x:Name="PanelPropForceUpper" Orientation="Horizontal" Margin="0,0,0,20">
                                                 <CheckBox x:Name="PropForceUpperCheck" Style="{DynamicResource ToggleSwitchStyle}"/>
-                                                <TextBlock Text="Forcer majuscules" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                <TextBlock Text="##loc:sp_builder.label_force_upper##" VerticalAlignment="Center" Margin="10,0,0,0"/>
                                             </StackPanel>
 
                                         </StackPanel>
@@ -821,7 +821,7 @@
                                     <Grid Grid.Row="1" x:Name="FormNoSelectionPanel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
                                             <TextBlock Text="👈" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Sélectionnez un champ à gauche" FontSize="14"/>
+                                            <TextBlock Text="##loc:sp_builder.msg_select_field##" FontSize="14"/>
                                         </StackPanel>
                                     </Grid>
                                 </Grid>
@@ -841,11 +841,11 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Ligne 0 : Visuel -->
-                                <TextBlock Grid.Row="0" Text="Aperçu en temps réel :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <TextBlock Grid.Row="0" Text="##loc:sp_builder.label_live_preview##" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
                                 <StackPanel Grid.Row="0" Grid.Column="1" x:Name="FormLivePreviewPanel" Orientation="Horizontal"/>
 
                                 <!-- Ligne 1 : Résultat Textuel -->
-                                <TextBlock Grid.Row="1" Text="Résultat généré :" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,15,20,0"/>
+                                <TextBlock Grid.Row="1" Text="##loc:sp_builder.label_generated_result##" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,15,20,0"/>
                                 <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="6" Padding="12,8" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" Margin="0,15,0,0">
                                     <TextBlock x:Name="FormResultPreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" TextWrapping="Wrap"/>
                                 </Border>
@@ -861,11 +861,11 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Status Text -->
-                                <TextBlock Grid.Column="0" x:Name="FormStatusText" Text="Prêt." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <TextBlock Grid.Column="0" x:Name="FormStatusText" Text="##loc:sp_builder.msg_ready##" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                    <Button x:Name="FormNewButton" Content="✨ Nouveau" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
-                                    <Button x:Name="FormSaveButton" Content="💾 Sauvegarder" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
+                                    <Button x:Name="FormNewButton" Content="##loc:sp_builder.btn_new##" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
+                                    <Button x:Name="FormSaveButton" Content="##loc:sp_builder.btn_save##" Style="{DynamicResource PrimaryButtonStyle}" Height="36"/>
                                 </StackPanel>
                             </Grid>
                         </Border>

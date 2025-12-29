@@ -44,13 +44,28 @@ function Write-AppLog {
 
         [System.Windows.Controls.RichTextBox]$RichTextBox,
 
-        [switch]$LogToUI
+        [switch]$LogToUI,
+
+        # Ajout pour supporter la capture dans une liste (Job Logs)
+        [Parameter(Mandatory = $false)]
+        [System.Collections.Generic.List[string]]$Collection,
+
+        # Ajout pour retourner l'objet log (Job Stream)
+        [switch]$PassThru
     )
 
     $timestamp = Get-Date -Format "HH:mm:ss"
     $formattedMessage = "[$timestamp] [$Level] $Message"
+    
+    # 1. Écriture Verbose (Toujours)
     Write-Verbose $formattedMessage
 
+    # 2. Ajout à la collection (si fournie)
+    if ($Collection) {
+        $Collection.Add($formattedMessage)
+    }
+
+    # 3. UI RichTextBox
     # Si on a une cible UI spécifique (fournie par un script enfant), on l'utilise.
     if ($null -ne $RichTextBox) {
         Update-AppRichTextBox -RichTextBox $RichTextBox -Message $Message -Level $Level -Timestamp $timestamp
@@ -58,5 +73,16 @@ function Write-AppLog {
     # Sinon, si on nous a demandé de logger dans l'UI par défaut (le lanceur).
     elseif ($LogToUI) {
         Update-AppRichTextBox -Message $Message -Level $Level -Timestamp $timestamp
+    }
+
+    # 4. PassThru (Retour objet structuré pour les Jobs)
+    if ($PassThru) {
+        return [PSCustomObject]@{
+            LogType   = "AppLog"
+            Timestamp = $timestamp
+            Level     = $Level
+            Message   = $Message
+            Formatted = $formattedMessage
+        }
     }
 }

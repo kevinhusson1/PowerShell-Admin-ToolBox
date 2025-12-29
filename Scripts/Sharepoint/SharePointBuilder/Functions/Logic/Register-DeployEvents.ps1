@@ -83,7 +83,13 @@ function Register-DeployEvents {
                 $newItems = Receive-Job -Job $job
                 
                 foreach ($item in $newItems) {
-                    if ($item -is [string]) {
+                    # A. LOG STRUCTURE (Write-AppLog -PassThru)
+                    # On détecte la propriété LogType = 'AppLog'
+                    if ($item.PSObject.Properties['LogType'] -and $item.LogType -eq 'AppLog') {
+                        if ($fLog) { Write-AppLog -Message $item.Message -Level $item.Level -RichTextBox $fLog }
+                    }
+                    # B. LOG STRING (Legacy "LEVEL|Message")
+                    elseif ($item -is [string]) {
                         # Format attendu : "LEVEL|Message"
                         $parts = $item -split '\|', 2
                         $lvl = if ($parts.Count -eq 2) { $parts[0] } else { "INFO" }
@@ -95,9 +101,12 @@ function Register-DeployEvents {
                             if ($fLog) { Write-AppLog -Message $msg -Level $color -RichTextBox $fLog }
                         }
                     }
+                    # C. RESULTAT FINAL (PSCustomObject / Hashtable)
                     elseif ($item -is [System.Collections.IDictionary] -or $item -is [PSCustomObject]) {
-                        # C'est le résultat final structuré
-                        $SharedState.FinalResult = $item
+                        # On s'assure que ce n'est PAS un log
+                        if (-not $item.PSObject.Properties['LogType']) {
+                            $SharedState.FinalResult = $item
+                        }
                     }
                 }
 

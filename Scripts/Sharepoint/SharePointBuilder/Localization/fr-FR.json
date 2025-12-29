@@ -11,10 +11,98 @@
     "auth_pnp_status": "Connexion SharePoint (PnP) :",
     "status_connected": "Connecté",
     "status_disconnected": "Déconnecté",
+    "auth_not_connected": "Non connecté",
     "waiting_for_auth": "En attente d'identification...",
     "log_template_selected": "ℹ️ Modèle sélectionné : '{0}'",
     "log_rule_selected": "ℹ️ Règle sélectionnée : '{0}'",
-    "log_folder_selected": "ℹ️ Cible définie : '{0}'"
+    "log_folder_selected": "ℹ️ Cible définie : '{0}'",
+    
+    "tab_deploy": "🚀 Déploiement",
+    "tab_editor_template": "✏️ Éditeur de Modèle",
+    "tab_form_destination": "📋 Formulaire Destination",
+
+    "step_1_id": "1",
+    "step_1_title": "Etape 1 : Cible du Déploiement",
+    "label_site": "Site",
+    "label_library": "Bibliothèque",
+    "msg_select_library": "Veuillez sélectionner une bibliothèque...",
+    "msg_loading": "Chargement...",
+
+    "step_2_id": "2",
+    "step_2_title": "Etape 2 : Modèle à Appliquer",
+
+    "step_3_id": "3",
+    "step_3_title": "Etape 3 : Création Destination",
+    "label_optional": "Optionnel",
+    "label_create_root_folder": "Créer un dossier racine",
+    "label_name": "Nom :",
+
+    "label_deployment": "Déploiement",
+    "label_overwrite_permissions": "Écraser les permissions existantes",
+    
+    "label_logs": "📝 Journal d'opérations",
+    "msg_waiting": "En attente...",
+    "msg_ready": "Prêt.",
+    
+    "btn_reset": "↺ Réinitialiser",
+    "btn_copy_url": "📋 URL",
+    "btn_open": "↗ Ouvrir",
+    "btn_deploy": "🚀 Lancer le Déploiement",
+
+    "label_existing_template": "Modèle existant",
+    "btn_load": "Charger",
+    "label_template_structure": "Structure du modèle",
+    "btn_add_root": "+ Racine",
+    "btn_add_child": "+ Dossier",
+    "label_folder_properties": "Propriétés du dossier sélectionné",
+
+    "label_folder_name": "Nom du dossier",
+    "label_permissions": "Permissions",
+    "label_metadata_tags": "Métadonnées / Tags",
+    "badge_schema_linked": "Schéma lié",
+    "label_links_shortcuts": "Liens / Raccourcis",
+
+    "title_edit_permission": "Édition de permission",
+    "label_user_group_email": "Utilisateur ou Groupe (Email)",
+    "label_access_level": "Niveau d'accès",
+    "btn_delete_permission": "Supprimer cette permission",
+
+    "title_edit_tag": "Édition de Tag",
+    "label_column_name": "Nom de la colonne",
+    "label_value_term": "Valeur (Terme)",
+    "btn_delete_tag": "Supprimer ce tag",
+
+    "title_edit_link": "Édition de Lien",
+    "label_display_name": "Nom affiché",
+    "label_target_url": "URL Cible",
+    "btn_delete_link": "Supprimer ce lien", 
+    "msg_select_folder_tree": "Sélectionnez un dossier dans l'arbre",
+
+    "label_validation_context": "Contexte de validation",
+    "msg_no_target_site": "Aucun site cible défini",
+    "btn_define": "Définir",
+    "btn_new": "✨ Nouveau",
+    "btn_save": "💾 Sauvegarder",
+
+    "label_existing_rule": "Règle existante",
+    "label_naming_structure": "Structure du nommage",
+    
+    "btn_add_label": "+ Texte Fixe",
+    "btn_add_text": "+ Champ Saisie",
+    "btn_add_combo": "+ Liste Choix",
+
+    "label_field_config": "Configuration du champ",
+    "label_variable_name": "Nom de la variable (Interne)",
+    "help_variable_name": "Utilisé pour l'autopilot. Ex: 'CodeChantier'",
+    "label_displayed_text": "Texte affiché",
+    "label_default_value": "Valeur par défaut",
+    "label_options_list": "Options (séparées par virgule)",
+    "label_visual_width": "Largeur visuelle (px)",
+    "label_force_upper": "Forcer majuscules",
+    
+    "msg_select_field": "Sélectionnez un champ à gauche",
+    "label_live_preview": "Aperçu en temps réel :",
+    "label_generated_result": "Résultat généré :"
   },
   "form_editor": {
     "load_tooltip": "Charger la règle sélectionnée",

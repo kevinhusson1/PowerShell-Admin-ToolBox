@@ -3,7 +3,6 @@ function New-AppSPStructure {
     param(
         [Parameter(Mandatory)] [string]$TargetSiteUrl,
         [Parameter(Mandatory)] [string]$TargetLibraryName,
-        # CORRECTION 1 : Ce paramètre n'est plus obligatoire pour permettre le déploiement racine
         [Parameter(Mandatory = $false)] [string]$RootFolderName, 
         [Parameter(Mandatory)] [string]$StructureJson,
         [Parameter(Mandatory)] [string]$ClientId,
@@ -14,8 +13,13 @@ function New-AppSPStructure {
 
     $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new() }
 
-    function Log { param($m, $l = "INFO") $s = "$l|$m"; $result.Logs.Add($s); Write-Verbose "[$l] $m"; Write-Output $s }
-    function Err { param($m) $s = "ERROR|$m"; $result.Errors.Add($m); $result.Success = $false; $result.Logs.Add($s); Write-Error $m; Write-Output $s }
+    function Log { param($m, $l = "Info") Write-AppLog -Message $m -Level $l -Collection $result.Logs -PassThru }
+    function Err {
+        param($m) 
+        $result.Success = $false; 
+        Write-AppLog -Message $m -Level Error -Collection $result.Errors; 
+        Write-AppLog -Message $m -Level Error -Collection $result.Logs -PassThru 
+    }
 
     try {
         Log "Initialisation..." "DEBUG"
