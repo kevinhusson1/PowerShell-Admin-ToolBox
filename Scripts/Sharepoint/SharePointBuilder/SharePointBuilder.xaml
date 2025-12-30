@@ -402,7 +402,7 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- COLONNE GAUCHE : STRUCTURE -->
-                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -411,7 +411,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Header Arbre -->
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="15,15,0,0">
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
                                         <Grid>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="📂" Margin="0,0,10,0"/>
@@ -435,19 +435,20 @@
                             </Border>
 
                             <!-- COLONNE DROITE : INSPECTEUR -->
-                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- Header Inspecteur -->
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="15,15,15,15">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🛠️" Margin="0,0,10,0"/>
-                                            <TextBlock Text="##loc:sp_builder.label_folder_properties##" FontWeight="SemiBold"/>
-                                        </StackPanel>
+                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🛠️" Margin="0,0,10,0"/>
+                                                <TextBlock Text="##loc:sp_builder.label_folder_properties##" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
 
                                     <!-- Formulaire Propriétés -->
@@ -693,7 +694,7 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- GAUCHE : LISTE DES CHAMPS -->
-                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -760,7 +761,7 @@
                             </Border>
 
                             <!-- DROITE : PROPRIÉTÉS -->
-                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0" ClipToBounds="True">
+                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -818,7 +819,7 @@
                                     </ScrollViewer>
 
                                     <!-- Overlay Vide -->
-                                    <Grid Grid.Row="1" x:Name="FormNoSelectionPanel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
+                                    <Grid x:Name="FormNoSelectionPanel" Grid.Row="1" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
                                             <TextBlock Text="👈" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                             <TextBlock Text="##loc:sp_builder.msg_select_field##" FontSize="14"/>

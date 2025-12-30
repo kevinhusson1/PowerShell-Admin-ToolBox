@@ -28,12 +28,13 @@ $Global:ProjectRoot = $projectRoot
 $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSModulePath)"
 
 # 2. MODULES
-function Send-Progress { param([int]$Percent, [string]$Msg) if($LauncherPID){ Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage $Percent -StatusMessage $Msg } }
+function Send-Progress { param([int]$Percent, [string]$Msg) if ($LauncherPID) { Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage $Percent -StatusMessage $Msg } }
 
 Send-Progress 10 "Initialisation des modules..."
 try {
     Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure", "Toolbox.SharePoint" -Force
-} catch {
+}
+catch {
     [System.Windows.MessageBox]::Show("Erreur modules : $($_.Exception.Message)", "Fatal", "OK", "Error"); exit 1
 }
 
@@ -57,9 +58,10 @@ try {
     
     # Chargement Loc Locale
     $localLang = "$scriptRoot\Localization\$($Global:AppConfig.defaultLanguage).json"
-    if(Test-Path $localLang){ Add-AppLocalizationSource -FilePath $localLang }
+    if (Test-Path $localLang) { Add-AppLocalizationSource -FilePath $localLang }
 
-} catch {
+}
+catch {
     [System.Windows.MessageBox]::Show("Erreur init : $($_.Exception.Message)", "Fatal", "OK", "Error"); exit 1
 }
 
@@ -85,12 +87,12 @@ try {
         . $builderLogicPath
         # ... (Configuration du contexte Autopilot inchangée) ...
         $context = @{ 
-            Window = $window;
-            ScriptRoot = $scriptRoot;
-            AutoSiteUrl = $AutoSiteUrl;
+            Window          = $window;
+            ScriptRoot      = $scriptRoot;
+            AutoSiteUrl     = $AutoSiteUrl;
             AutoLibraryName = $AutoLibraryName;
-            AutoTemplateId = $AutoTemplateId;
-            AutoFormData = $AutoFormData;
+            AutoTemplateId  = $AutoTemplateId;
+            AutoFormData    = $AutoFormData;
         }
         Initialize-BuilderLogic -Context $context
     }
@@ -108,7 +110,8 @@ try {
         Enable-ScriptIdentity -Window $window -LauncherPID $LauncherPID -AuthContext $AuthContext
     }
 
-} catch {
+}
+catch {
     [System.Windows.MessageBox]::Show("Erreur UI : $($_.Exception.Message)", "Fatal", "OK", "Error")
     Unlock-AppScriptLock -OwnerPID $PID
     exit 1
@@ -118,6 +121,7 @@ try {
 Send-Progress 100 "Prêt."
 try {
     $window.ShowDialog() | Out-Null
-} finally {
+}
+finally {
     Unlock-AppScriptLock -OwnerPID $PID
 }

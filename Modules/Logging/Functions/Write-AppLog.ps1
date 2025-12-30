@@ -42,7 +42,8 @@ function Write-AppLog {
         [ValidateSet('Debug', 'Info', 'Success', 'Warning', 'Error')]
         [string]$Level = 'Info',
 
-        [System.Windows.Controls.RichTextBox]$RichTextBox,
+        [Parameter(Mandatory = $false)]
+        [object]$RichTextBox,
 
         [switch]$LogToUI,
 
