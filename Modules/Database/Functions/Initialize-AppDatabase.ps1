@@ -131,7 +131,8 @@ function Initialize-AppDatabase {
                     TargetFolder        TEXT,
                     OverwritePermissions INTEGER, -- 0 or 1
                     TemplateId          TEXT,
-                    DateModified        TEXT
+                    DateModified        TEXT,
+                    AuthorizedRoles     TEXT  -- Comma separated roles (e.g. "ADMIN,DP")
                 );
 "@
         }
@@ -179,6 +180,10 @@ function Initialize-AppDatabase {
             if ('TargetFolderPath' -notin $cols) {
                 Write-Verbose "Migration Schéma : Ajout de 'TargetFolderPath' à 'sp_deploy_configs'"
                 Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_deploy_configs ADD COLUMN TargetFolderPath TEXT;"
+            }
+            if ('AuthorizedRoles' -notin $cols) {
+                Write-Verbose "Migration Schéma : Ajout de 'AuthorizedRoles' à 'sp_deploy_configs'"
+                Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_deploy_configs ADD COLUMN AuthorizedRoles TEXT;"
             }
         }
 

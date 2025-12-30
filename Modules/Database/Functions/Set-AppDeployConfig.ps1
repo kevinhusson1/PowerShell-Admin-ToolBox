@@ -9,7 +9,8 @@ function Set-AppDeployConfig {
         [string]$TargetFolder,
         [bool]$OverwritePermissions,
         [string]$TemplateId,
-        [string]$TargetFolderPath
+        [string]$TargetFolderPath,
+        [string]$AuthorizedRoles
     )
 
     try {
@@ -21,13 +22,14 @@ function Set-AppDeployConfig {
         $safeOverride = if ($OverwritePermissions) { 1 } else { 0 }
         $safeTpl = $TemplateId.Replace("'", "''")
         $safeFolderPath = if ($TargetFolderPath) { $TargetFolderPath.Replace("'", "''") } else { "" }
+        $safeRoles = if ($AuthorizedRoles) { $AuthorizedRoles.Replace("'", "''") } else { "" }
         $date = (Get-Date -Format 'o')
 
         $query = @"
             INSERT OR REPLACE INTO sp_deploy_configs 
-            (ConfigName, SiteUrl, LibraryName, TargetFolder, OverwritePermissions, TemplateId, DateModified, TargetFolderPath) 
+            (ConfigName, SiteUrl, LibraryName, TargetFolder, OverwritePermissions, TemplateId, DateModified, TargetFolderPath, AuthorizedRoles) 
             VALUES 
-            ('$safeName', '$safeUrl', '$safeLib', '$safeFolder', $safeOverride, '$safeTpl', '$date', '$safeFolderPath');
+            ('$safeName', '$safeUrl', '$safeLib', '$safeFolder', $safeOverride, '$safeTpl', '$date', '$safeFolderPath', '$safeRoles');
 "@
         
         Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop

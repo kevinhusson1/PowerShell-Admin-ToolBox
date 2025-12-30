@@ -388,16 +388,200 @@ function Register-DeployEvents {
                     }
                 }
 
-                # C. NOM
-                Add-Type -AssemblyName Microsoft.VisualBasic
-                $confName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom de la configuration :", "Sauvegarder", "Deploy-$($Ctrl.CbSites.SelectedItem.SiteName)-$libName")
-                if ([string]::IsNullOrWhiteSpace($confName)) { return }
-
+                # C. NOM & SECURITE (Nouveau Dialogue XAML)
+                $dialogPath = Join-Path $Global:ProjectRoot "Templates\Dialogs\SaveConfigDialog.xaml"
+                
+                # Chargement sécurisé
                 try {
-                    # Capture du dossier cible sélectionné (Step 1)
-                    $selPath = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { "" }
+                    [xml]$xamlContent = Get-Content $dialogPath
+                    $xamlReader = New-Object System.Xml.XmlNodeReader $xamlContent
+                    $dialogWin = [System.Windows.Markup.XamlReader]::Load($xamlReader)
 
-                    Set-AppDeployConfig -ConfigName $confName -SiteUrl $siteUrl -LibraryName $libName -TargetFolder $targetFolder -OverwritePermissions $overwrite -TemplateId $tplId -TargetFolderPath $selPath
+                    # INJECTION DES STYLES GLOBAUX (Couleurs, Boutons, Typography...)
+                    # Cela permet d'utiliser {DynamicResource PrimaryButtonStyle} dans le dialogue isolé
+                    if (Get-Command "Initialize-AppUIComponents" -ErrorAction SilentlyContinue) {
+                        Initialize-AppUIComponents -Window $dialogWin -ProjectRoot $Global:ProjectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'Typography', 'Colors'
+                    }
+                }
+                catch {
+                    [System.Windows.MessageBox]::Show("Impossible de charger le dialogue de sauvegarde.`n$($_.Exception.Message)", "Erreur interne", "OK", "Error")
+                    return
+                }
+
+                # Références contrôles
+                $tName = $dialogWin.FindName("ConfigNameBox")
+                $container = $dialogWin.FindName("GroupsContainer")
+                $bSave = $dialogWin.FindName("BtnSave")
+                
+                # Config par défaut
+                $defaultName = "Deploy-$($Ctrl.CbSites.SelectedItem.SiteName)-$libName"
+                
+                # Si on est en train d'éditer une config existante (déjà sélectionnée), on pré-remplit
+                if ($Ctrl.CbDeployConfigs.SelectedItem) {
+                    $defaultName = $Ctrl.CbDeployConfigs.SelectedItem.ConfigName
+                }
+                $tName.Text = $defaultName
+
+                # --- CHARGEMENT DYNAMIQUE DES GROUPES ---
+                # On récupère les groupes connus en BDD
+                $knownGroups = @(Get-AppKnownGroups)
+                
+                # Si aucun groupe en base, on en met par défaut pour ne pas avoir une UI vide
+                if ($knownGroups.Count -eq 0) {
+                    $knownGroups = @(
+                        [PSCustomObject]@{ GroupName = "M365_APPS_SCRIPTS_ADMIN" },
+                        [PSCustomObject]@{ GroupName = "M365_APPS_SCRIPTS_DP" },
+                        [PSCustomObject]@{ GroupName = "M365_APPS_SCRIPTS_USER" }
+                    )
+                }
+
+                # On garde une référence aux CheckBoxes générées
+                $checkBoxes = @()
+
+                foreach ($grp in $knownGroups) {
+                    # Structure : Border > Grid > (Column 0: CheckBox, Column 1: StackPanel(Texts))
+                    
+                    # 1. BORDER CONTAINER
+                    $border = New-Object System.Windows.Controls.Border
+                    $border.BorderThickness = [System.Windows.Thickness]::new(1)
+                    $border.CornerRadius = [System.Windows.CornerRadius]::new(6)
+                    $border.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
+                    $border.Padding = [System.Windows.Thickness]::new(10)
+                    
+                    # Styles - Fallback manuel si ressource introuvable
+                    if ($dialogWin.Resources.Contains("BackgroundLightBrush")) {
+                        $border.Background = $dialogWin.Resources["BackgroundLightBrush"]
+                    }
+                    else {
+                        $border.Background = [System.Windows.Media.Brushes]::GhostWhite
+                    }
+                    if ($dialogWin.Resources.Contains("BorderLightBrush")) {
+                        $border.BorderBrush = $dialogWin.Resources["BorderLightBrush"]
+                    }
+                    else {
+                        $border.BorderBrush = [System.Windows.Media.Brushes]::LightGray
+                    }
+
+                    # 2. GRID layout
+                    $grid = New-Object System.Windows.Controls.Grid
+                    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::Auto })) # CheckBox
+                    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) })) # Texte
+
+                    # 3. CHECKBOX (Toggle Switch)
+                    $chk = New-Object System.Windows.Controls.CheckBox
+                    $chk.Tag = $grp.GroupName  # Stockage de la donnée ici
+                    # $chk.Content = $grp.GroupName # Optionnel si le style ne l'affiche pas
+                    $chk.IsChecked = $true 
+                    $chk.Margin = [System.Windows.Thickness]::new(0, 0, 15, 0)
+                    $chk.VerticalAlignment = "Center"
+                    
+                    # Application du Style Global (Switch)
+                    if ($dialogWin.Resources.Contains("ToggleSwitchStyle")) {
+                        $chk.Style = $dialogWin.Resources["ToggleSwitchStyle"]
+                    }
+
+                    [System.Windows.Controls.Grid]::SetColumn($chk, 0)
+                    $grid.Children.Add($chk)
+
+                    # 4. TEXTES (Layout type Launcher)
+                    $stackText = New-Object System.Windows.Controls.StackPanel
+                    $stackText.VerticalAlignment = "Center"
+                    [System.Windows.Controls.Grid]::SetColumn($stackText, 1)
+
+                    # Titre (Nom du groupe)
+                    $txtName = New-Object System.Windows.Controls.TextBlock
+                    $txtName.Text = $grp.GroupName
+                    $txtName.FontWeight = "SemiBold"
+                    $txtName.FontSize = 12
+                    if ($dialogWin.Resources.Contains("TextPrimaryBrush")) { $txtName.Foreground = $dialogWin.Resources["TextPrimaryBrush"] }
+
+                    # Sous-titre
+                    $txtSub = New-Object System.Windows.Controls.TextBlock
+                    $txtSub.Text = "Groupe Azure AD" 
+                    $txtSub.FontSize = 10
+                    if ($dialogWin.Resources.Contains("TextSecondaryBrush")) { $txtSub.Foreground = $dialogWin.Resources["TextSecondaryBrush"] }
+
+                    $stackText.Children.Add($txtName)
+                    $stackText.Children.Add($txtSub)
+                    $grid.Children.Add($stackText)
+
+                    # Assemblage
+                    $border.Child = $grid
+                    $container.Children.Add($border)
+                    
+                    # Ajout à la liste pour récupération ultérieure
+                    $checkBoxes += $chk
+                }
+
+                # --- LOGIQUE DIALOGUE ---
+                $dialogWin.Owner = $Window
+                $dialogWin.SizeToContent = "Height" # Auto-adjust height
+                
+                # Event Save
+                $bSave.Add_Click({
+                        $finalName = $tName.Text
+
+                        # 1. Validation Nom
+                        if ([string]::IsNullOrWhiteSpace($finalName)) {
+                            [System.Windows.MessageBox]::Show("Le nom est obligatoire.", "Validation", "OK", "Warning")
+                            return
+                        }
+
+                        # 2. Check Overwrite (Sauf si c'est le même nom qu'avant pour une update)
+                        if (Get-Command "Test-AppDeployConfigExists" -ErrorAction SilentlyContinue) {
+                            if (Test-AppDeployConfigExists -ConfigName $finalName) {
+                                # Si c'est le même nom que la config courante, on suppose que c'est une MAJ normale sans warning
+                                $isSame = ($Ctrl.CbDeployConfigs.SelectedItem -and $Ctrl.CbDeployConfigs.SelectedItem.ConfigName -eq $finalName)
+                                
+                                if (-not $isSame) {
+                                    $res = [System.Windows.MessageBox]::Show("La configuration '$finalName' existe déjà.`nVoulez-vous l'écraser ?", "Confirmation", "YesNo", "Warning")
+                                    if ($res -ne "Yes") { return }
+                                }
+                            }
+                        }
+
+                        $dialogWin.DialogResult = $true
+                        $dialogWin.Close()
+                    })
+
+                # Affichage Modal
+                if ($dialogWin.ShowDialog() -eq $true) {
+                    $confName = $tName.Text
+
+                    # Récupération DYNAMIQUE des Rôles cochés
+                    $roles = @()
+                    foreach ($c in $checkBoxes) {
+                        if ($c.IsChecked) { $roles += $c.Tag } # Utilisation du Tag au lieu du Content
+                    }
+                    $rolesString = $roles -join ","
+
+                    try {
+                        # Capture du dossier cible sélectionné (Step 1)
+                        $selPath = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { "" }
+                        
+                        Set-AppDeployConfig -ConfigName $confName `
+                            -SiteUrl $siteUrl `
+                            -LibraryName $libName `
+                            -TargetFolder $targetFolder `
+                            -OverwritePermissions $overwrite `
+                            -TemplateId $tplId `
+                            -TargetFolderPath $selPath `
+                            -AuthorizedRoles $rolesString
+                        
+                        # Refresh UI
+                        & $LoadDeployConfigs
+                        [System.Windows.MessageBox]::Show("Configuration '$confName' sauvegardée avec succès.", "Succès", "OK", "Information")
+                    }
+                    catch {
+                        [System.Windows.MessageBox]::Show("Erreur sauvegarde : $($_.Exception.Message)", "Erreur", "OK", "Error")
+                    }
+                }
+                # Si Cancel, on ne fait rien.
+                return
+                
+                # Ancien Code (Ignoré)
+                # $confName = [Microsoft.VisualBasic.Interaction]::InputBox...
+                if ($false) {
                 
                     & $Log "Configuration '$confName' sauvegardée." "Success"
                     [System.Windows.MessageBox]::Show("Configuration sauvegardée.", "Succès", "OK", "Information")
