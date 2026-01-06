@@ -1,0 +1,15 @@
+{
+  "id": "SharePointDeployer-v1",
+  "scriptFile": "SharePointDeployer.ps1",
+  "lockFile": "SharePointDeployer.lock",
+  "name": "scripts.sharepoint_deployer.name",
+  "description": "scripts.sharepoint_deployer.description",
+  "version": "1.0.0",
+  "category": "SharePoint",
+  "author": "Service IT",
+  "icon": {
+    "type": "png",
+    "value": "deployment.png",
+    "backgroundColor": "#FF9800"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "scripts": {
+    "sharepoint_deployer": {
+      "name": "SharePoint Deployer",
+      "description": "Usine de déploiement d'architectures documentaires."
+    }
+  },
+  "default_ui": {
+    "window_title": "Déploiement SharePoint"
+  },
+  "sp_deploy": {
+    "auth_required_title": "Connexion requise",
+    "auth_required_message": "Veuillez vous connecter pour accéder aux configurations.",
+    "auth_connect_button": "Se connecter",
+    "configs_title": "Configurations Disponibles",
+    "opt_folder": "Dossier Parent (Optionnel) :",
+    "preview_label": "Nom :",
+    "placeholder_select": "Sélectionnez une configuration",
+    "placeholder_msg": "Veuillez choisir un item dans la liste à gauche.",
+    "btn_deploy": "Lancer le déploiement",
+    "status_disconnected": "Déconnecté. Veuillez vous connecter pour voir les configurations.",
+    "status_ready": "Prêt.",
+    "log_title": "Journal d'exécution :",
+    "label_site": "Site :",
+    "label_library": "Biblio :",
+    "label_template": "Modèle :",
+    "warning_overwrite": "Attention : Cette configuration écrase les permissions existantes.",
+    "log_target": "Cible : {0} / {1} / {2}",
+    "log_deploy_prep": "Préparation du déploiement...",
+    "log_error": "Erreur : {0}",
+    "log_success": "Succès : Structure créée."
+  }
+}

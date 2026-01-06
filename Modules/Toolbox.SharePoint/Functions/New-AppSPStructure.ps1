@@ -157,7 +157,20 @@ function New-AppSPStructure {
         if (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
             Log "Création racine : $RootFolderName" "INFO"
             try {
-                $rootFolder = Add-PnPFolder -Name $RootFolderName -Folder $libUrl -Connection $conn -ErrorAction Stop
+                # Support Path Nesting (Parent/Child) via Resolve-PnPFolder
+                $fullRootPath = "$libUrl/$RootFolderName"
+                
+                # Conversion en SiteRelative pour éviter AccessDenied sur certains contextes PnP
+                $siteUri = [Uri]$TargetSiteUrl
+                $sitePath = $siteUri.AbsolutePath.TrimEnd('/')
+                $pnpPath = $fullRootPath
+                if ($pnpPath.StartsWith($sitePath, [System.StringComparison]::InvariantCultureIgnoreCase)) { 
+                    $pnpPath = $pnpPath.Substring($sitePath.Length).TrimStart('/') 
+                }
+                
+                Log "Path converti (PnP) : '$pnpPath'" "DEBUG"
+                $rootFolder = Resolve-PnPFolder -SiteRelativePath $pnpPath -Connection $conn -ErrorAction Stop
+                
                 $startPath = $rootFolder.ServerRelativeUrl
                 Log "Racine OK : $startPath" "SUCCESS"
             }
