@@ -2,20 +2,20 @@
 
 @{
     # Version du module
-    ModuleVersion = '1.0.0'
+    ModuleVersion     = '1.0.0'
 
     # ID unique
-    GUID = 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
+    GUID              = 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
 
     # Auteur
-    Author = 'Service IT'
-    Copyright = "(c) 2025. Tous droits réservés."
+    Author            = 'Service IT'
+    Copyright         = "(c) 2025. Tous droits réservés."
 
     # Description
-    Description = 'Module central pour toutes les interactions avec SharePoint Online (via PnP).'
+    Description       = 'Module central pour toutes les interactions avec SharePoint Online (via PnP).'
 
     # Script principal
-    RootModule = 'Toolbox.SharePoint.psm1'
+    RootModule        = 'Toolbox.SharePoint.psm1'
 
     # Fonctions à exporter
     FunctionsToExport = @(
@@ -23,6 +23,8 @@
         'Get-AppSPSites',
         'Get-AppSPLibraries',
         'New-AppSPFolder',
+        'New-AppSPLink',
+        'Test-AppSPModel',
         'Set-AppSPPermission',
         'Set-AppSPMetadata',
         'Add-AppSPFile',

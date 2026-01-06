@@ -102,6 +102,43 @@ function Global:New-EditorLinkNode {
     return $mItem
 }
 
+function Global:New-EditorPubNode {
+    param(
+        [string]$Name = "Nouvelle publication"
+    )
+    
+    $mItem = New-Object System.Windows.Controls.TreeViewItem
+    $mItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+    
+    # Tag Typé Publication
+    $mItem.Tag = [PSCustomObject]@{ 
+        Type             = "Publication"
+        Name             = $Name
+        TargetSiteMode   = "Auto"       # Auto (=Current) or Url
+        TargetSiteUrl    = ""
+        TargetFolderPath = "/Partage"
+        UseModelName     = $true
+        GrantUser        = ""
+        GrantLevel       = "Read"
+    }
+    
+    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
+    
+    # Icône Fusée (Emoji ou Style si dispo)
+    $mIcon = New-Object System.Windows.Controls.TextBlock 
+    $mIcon.Text = "🚀"
+    $mIcon.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+    $mIcon.Margin = "0,0,5,0"
+    
+    $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Name; FontSize = 12; VerticalAlignment = "Center"; FontStyle = "Normal"; FontWeight = "SemiBold" }
+    
+    $mStack.Children.Add($mIcon) | Out-Null
+    $mStack.Children.Add($mText) | Out-Null
+    $mItem.Header = $mStack
+    
+    return $mItem
+}
+
 
 <#
 .SYNOPSIS
@@ -130,6 +167,12 @@ function Global:Update-EditorBadges {
     # Compter les éléments
     $cntP = if ($data.Permissions) { $data.Permissions.Count } else { 0 }
     $cntT = if ($data.Tags) { $data.Tags.Count } else { 0 }
+    
+    # Compter les Publications (Enfants de type 'Publication')
+    $cntPub = 0
+    foreach ($child in $TreeItem.Items) {
+        if ($child.Tag -and $child.Tag.Type -eq "Publication") { $cntPub++ }
+    }
     
     # ⭐ MÉTHODE ROBUSTE : Supprimer tous les badges existants (indices 2+)
     $toRemove = @()
@@ -168,6 +211,20 @@ function Global:Update-EditorBadges {
         $txtTag = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "🏷️ $cntT"; FontSize = 10; Foreground = "#689F38" }
         $bdgTag.Child = $txtTag
         $header.Children.Add($bdgTag) | Out-Null
+    }
+    
+    # Badge Publications (NEW)
+    if ($cntPub -gt 0) {
+        $bdgPub = New-Object System.Windows.Controls.Border -Property @{
+            Background        = "#FFF3E0"
+            CornerRadius      = 3
+            Padding           = "4,2"
+            Margin            = "5,0,0,0"
+            VerticalAlignment = "Center"
+        }
+        $txtPub = New-Object System.Windows.Controls.TextBlock -Property @{ Text = "🚀 $cntPub"; FontSize = 10; Foreground = "#E65100" }
+        $bdgPub.Child = $txtPub
+        $header.Children.Add($bdgPub) | Out-Null
     }
     
     # ==========================================================================

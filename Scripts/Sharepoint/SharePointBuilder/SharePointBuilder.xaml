@@ -1,5 +1,5 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="##loc:sp_builder.window_title##" TextOptions.TextFormattingMode="Display" Height="980" Width="1500" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="##loc:sp_builder.window_title##" TextOptions.TextFormattingMode="Display" Height="1000" Width="1500" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -348,6 +348,7 @@
                                     <Button x:Name="ResetUIButton" Content="##loc:sp_builder.btn_reset##" Style="{DynamicResource RedButtonStyle}" Height="32" Margin="0,0,15,0"/>
                                     <Button x:Name="CopyUrlButton" Content="##loc:sp_builder.btn_copy_url##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False"/>
                                     <Button x:Name="OpenUrlButton" Content="##loc:sp_builder.btn_open##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" IsEnabled="False"/>
+                                    <Button x:Name="ValidateModelButton" Content="##loc:sp_builder.btn_validate##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" ToolTip="Vérifier le modèle avant déploiement"/>
                                     <Button x:Name="DeployButton" Content="##loc:sp_builder.btn_deploy##" Style="{DynamicResource GreenButtonStyle}" Width="200" Height="36" FontWeight="Bold"/>
                                 </StackPanel>
                             </Grid>
@@ -430,6 +431,7 @@
                                             <Button x:Name="EditorAddRootLinkButton" Content="##loc:sp_builder.btn_add_link_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un lien à la racine"/>
                                             <Button x:Name="EditorAddChildButton" Content="##loc:sp_builder.btn_add_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un sous-dossier"/>
                                             <Button x:Name="EditorAddChildLinkButton" Content="+ Lien (Enfant)" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un lien dans ce dossier"/>
+                                            <Button x:Name="EditorAddPubButton" Content="🚀 + Public." Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un nœud de publication (Lien de partage)" Background="#FFF3E0" Foreground="#E65100"/>
                                             <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer l'élément sélectionné"/>
                                         </StackPanel>
                                     </Border>
@@ -577,6 +579,42 @@
                                                 <Button x:Name="EdLinkDeleteButton" Content="##loc:sp_builder.btn_delete_link##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
 
+                                            <!-- E. MODE PUBLICATION (NEW) -->
+                                            <StackPanel x:Name="EdPanelPub" Visibility="Collapsed">
+                                                <Border Background="#FFF3E0" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🚀" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Publication (Partage)" FontWeight="SemiBold" Foreground="#E65100"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <TextBlock Text="Nom de la publication :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10"/>
+
+                                                <TextBlock Text="Site Cible :" Style="{DynamicResource H4Style}"/>
+                                                <ComboBox x:Name="EdPubSiteModeBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,5">
+                                                    <ComboBoxItem Content="Site Courant (Auto)"/>
+                                                    <ComboBoxItem Content="Autre Site (URL)"/>
+                                                </ComboBox>
+                                                <TextBox x:Name="EdPubSiteUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,0,10" Visibility="Collapsed" Text="https://..."/>
+
+                                                <TextBlock Text="Chemin Cible (Bibliothèque/Dossier) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdPubPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,5" ToolTip="Ex: /Documents Partages/Public"/>
+
+                                                <CheckBox x:Name="EdPubUseModelNameChk" Content="Ajouter le nom du dossier racine déployé ?" Margin="0,0,0,15" IsChecked="True"/>
+
+                                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,15"/>
+                                                <TextBlock Text="Droits Source requis (Grant Access) :" Style="{DynamicResource H4Style}" Foreground="{DynamicResource InfoBrush}"/>
+
+                                                <TextBlock Text="Email Groupe / Utilisateur :" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                <TextBox x:Name="EdPubGrantUserBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,2,0,5"/>
+
+                                                <TextBlock Text="Niveau d'accès :" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                <ComboBox x:Name="EdPubGrantLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,2,0,20"/>
+
+                                                <Button x:Name="EdPubDeleteButton" Content="Supprimer la publication" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,10,0,0"/>
+                                            </StackPanel>
+
                                         </Grid>
                                     </ScrollViewer>
 
@@ -603,17 +641,7 @@
 
                                 <!-- Actions Globales -->
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <!-- Contexte de Validation -->
-                                    <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="8" Padding="10,5" BorderBrush="{DynamicResource InfoBrush}" BorderThickness="1" Margin="0,0,10,0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🎯" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="##loc:sp_builder.label_validation_context##" FontSize="9" Foreground="{DynamicResource InfoHoverBrush}" FontWeight="Bold"/>
-                                                <TextBlock x:Name="EditorContextStatusText" Text="##loc:sp_builder.msg_no_target_site##" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource InfoHoverBrush}"/>
-                                            </StackPanel>
-                                            <Button x:Name="EditorDefineTargetButton" Content="##loc:sp_builder.btn_define##" Style="{DynamicResource SecondaryButtonStyle}" Height="24" FontSize="10" Padding="8,0" Margin="10,0,0,0" Background="{DynamicResource WhiteBrush}" ToolTip="Choisir un site SharePoint pour valider les colonnes"/>
-                                        </StackPanel>
-                                    </Border>
+
 
                                     <Button x:Name="EditorNewButton" Content="##loc:sp_builder.btn_new##" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0" ToolTip="Créer un nouveau modèle vierge"/>
                                     <Button x:Name="EditorSaveButton" Content="##loc:sp_builder.btn_save##" Style="{DynamicResource PrimaryButtonStyle}" Height="36" ToolTip="Enregistrer les modifications dans la base de données"/>

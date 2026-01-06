@@ -24,6 +24,154 @@ function Register-DeployEvents {
     # Helper de log interne pour cette fonction
     $Log = { param($msg, $lvl = "Info") Write-AppLog -Message $msg -Level $lvl -RichTextBox $Ctrl.LogBox }.GetNewClosure()
 
+    # --- ÉTAT DE VALIDATION ---
+    $ValidationState = @{ IsValid = $false }
+
+    $UpdateSaveState = {
+        $hasSite = ($null -ne $Ctrl.CbSites.SelectedItem -and $Ctrl.CbSites.SelectedItem -isnot [string])
+        $hasLib = ($null -ne $Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string] -and $Ctrl.CbLibs.SelectedItem -ne "Chargement...")
+        $hasTpl = ($null -ne $Ctrl.CbTemplates.SelectedItem) # Wait, si ItemsSource vide, SelectedItem est null ?
+        
+        # Le bouton Sauvegarder nécessite que tout soit sélectionné ET validé
+        $Ctrl.BtnSaveConfig.IsEnabled = ($hasSite -and $hasLib -and $hasTpl -and $ValidationState.IsValid)
+    }.GetNewClosure()
+
+    # Invalidation : Si on change quoi que ce soit, on doit re-valider
+    $InvalidateState = {
+        $ValidationState.IsValid = $false
+        $Ctrl.BtnDeploy.IsEnabled = $false
+        & $UpdateSaveState # Met à jour BtnSaveConfig
+        
+        # Feedback visuel optionnel (Log ?)
+        # if ($Ctrl.BtnValidate) { $Ctrl.BtnValidate.Content = "⚠️ Vérifier" } # Reset texte ?
+    }.GetNewClosure()
+
+    # Initialisation : Désactivé par défaut
+    $Ctrl.BtnDeploy.IsEnabled = $false
+    $Ctrl.BtnSaveConfig.IsEnabled = $false
+
+    # On attache l'invalidation aux changements de sélection
+    if ($Ctrl.CbSites) { $Ctrl.CbSites.Add_SelectionChanged($InvalidateState) }
+    if ($Ctrl.CbLibs) { $Ctrl.CbLibs.Add_SelectionChanged($InvalidateState) }
+    if ($Ctrl.CbTemplates) { $Ctrl.CbTemplates.Add_SelectionChanged($InvalidateState) }
+    
+    # --- VALIDATION ---
+    if ($Ctrl.BtnValidate) {
+        $Ctrl.BtnValidate.Add_Click({
+                Write-AppLog -Message "🔍 Démarrage de la vérification du modèle (Niveau 1)..." -Level Info -RichTextBox $Ctrl.LogBox
+            
+                # Reset avant check
+                $Ctrl.BtnDeploy.IsEnabled = $false
+                $ValidationState.IsValid = $false
+                & $UpdateSaveState
+                
+                $selTemplate = $Ctrl.CbTemplates.SelectedItem
+                if (-not $selTemplate) {
+                    Write-AppLog -Message "⚠️ Aucun modèle sélectionné." -Level Warning -RichTextBox $Ctrl.LogBox
+                 
+                    # Tentative de reload de la dernière chance
+                    try {
+                        $templates = @(Get-AppSPTemplates)
+                        if ($templates.Count -gt 0) {
+                            $Ctrl.CbTemplates.ItemsSource = $templates
+                            $Ctrl.CbTemplates.DisplayMemberPath = "DisplayName"
+                            $Ctrl.CbTemplates.SelectedIndex = 0
+                            $selTemplate = $templates[0]
+                            Write-AppLog -Message "✅ Modèles rechargés. Utilisation de '$($selTemplate.DisplayName)'." -Level Success -RichTextBox $Ctrl.LogBox
+                        }
+                    }
+                    catch {}
+
+                    if (-not $selTemplate) { return }
+                }
+
+                try {
+                    $structure = $selTemplate.StructureJson | ConvertFrom-Json
+                
+                    # S'assurer que la fonction est dispo
+                    if (-not (Get-Command "Test-AppSPModel" -ErrorAction SilentlyContinue)) {
+                        Import-Module (Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint") -Force
+                    }
+
+                    # --- PRÉPARATION VALIDATION ---
+                    $params = @{ StructureData = $structure }
+                
+                    # Récupération Connexion (Niveau 2)
+                    $conn = $Global:AppSharePointConnection
+                
+                    # Si pas de connexion active, tentative de connexion à la volée sur le SITE CIBLE
+                    if (-not $conn -or $conn.Url -ne $Ctrl.CbSites.SelectedItem.Url) {
+                        $tgtSite = $Ctrl.CbSites.SelectedItem
+                        if ($tgtSite -and $tgtSite.Url) {
+                            try {
+                                Write-AppLog -Message "🌍 Connexion PnP au site cible ($($tgtSite.Url))..." -Level Info -RichTextBox $Ctrl.LogBox
+                            
+                                $clientId = $Global:AppConfig.azure.authentication.userAuth.appId
+                                $thumb = $Global:AppConfig.azure.certThumbprint
+                                $tenant = $Global:AppConfig.azure.tenantName
+                            
+                                # Connexion directe au site
+                                $conn = Connect-PnPOnline -Url $tgtSite.Url -ClientId $clientId -Thumbprint $thumb -Tenant $tenant -ReturnConnection -ErrorAction Stop
+                                $Global:AppSharePointConnection = $conn
+                            }
+                            catch {
+                                Write-AppLog -Message "⚠️ Echec de connexion PnP : $($_.Exception.Message). Repli sur validation statique." -Level Warning -RichTextBox $Ctrl.LogBox
+                            }
+                        }
+                    }
+
+                    # Niveau 2 : Si connecté
+                    if ($conn) {
+                        Write-AppLog -Message "🌍 Connexion active : Activation validation Niveau 2 (Utilisateurs & Bibliothèque)." -Level Info -RichTextBox $Ctrl.LogBox
+                        $params.Connection = $conn
+                    
+                        if ($Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string]) {
+                            $params.TargetLibraryName = $Ctrl.CbLibs.SelectedItem.Title
+                        }
+                    }
+                    else {
+                        Write-AppLog -Message "☁️ Pas de connexion active : Validation Statique (Niveau 1) uniquement." -Level Info -RichTextBox $Ctrl.LogBox
+                    }    
+
+                    $issues = Test-AppSPModel @params
+                
+                    if ($issues.Count -eq 0) {
+                        Write-AppLog -Message "✅ Validation Réussie : Aucune erreur détectée." -Level Success -RichTextBox $Ctrl.LogBox
+                        
+                        # SUCCESS : Activation des boutons
+                        $ValidationState.IsValid = $true
+                        $Ctrl.BtnDeploy.IsEnabled = $true
+                        & $UpdateSaveState # Active BtnSaveConfig si tout est OK
+                    }
+                    else {
+                        $errCount = ($issues | Where-Object { $_.Status -eq 'Error' }).Count
+                        if ($errCount -gt 0) {
+                            Write-AppLog -Message "❌ Validation Échouée ($errCount erreurs) :" -Level Error -RichTextBox $Ctrl.LogBox
+                        }
+                        else {
+                            Write-AppLog -Message "⚠️ Validation Terminée avec Avertissements :" -Level Warning -RichTextBox $Ctrl.LogBox
+                            # WARNING : On autorise quand même le déploiement ? 
+                            # Politique habituelle : Warning OK, Error KO.
+                            $ValidationState.IsValid = $true
+                            $Ctrl.BtnDeploy.IsEnabled = $true
+                            & $UpdateSaveState
+                        }
+
+                        foreach ($issue in $issues) {
+                            $icon = switch ($issue.Status) { "Error" { "❌" } "Warning" { "⚠️" } Default { "ℹ️" } }
+                            # Mapping niveau de log
+                            $logLvl = switch ($issue.Status) { "Error" { "Error" } "Warning" { "Warning" } Default { "Info" } }
+                            Write-AppLog -Message "   $icon [$($issue.NodeName)] : $($issue.Message)" -Level $logLvl -RichTextBox $Ctrl.LogBox
+                        }
+                    }
+
+                }
+                catch {
+                    Write-AppLog -Message "💥 Erreur technique lors de la validation : $($_.Exception.Message)" -Level Error -RichTextBox $Ctrl.LogBox
+                }
+            }.GetNewClosure())
+    }
+
     $Ctrl.BtnDeploy.Add_Click({
             $Ctrl.BtnDeploy.IsEnabled = $false
             $Ctrl.ProgressBar.IsIndeterminate = $true
@@ -343,26 +491,7 @@ function Register-DeployEvents {
             & $LoadDeployConfigs
         }.GetNewClosure())
 
-    # --- GESTION ETAT BOUTON SAUVEGARDER ---
-    # Le bouton ne doit être actif que si l'étape 1 (Site/Lib) et 2 (Modèle) sont OK.
-    
-    $UpdateSaveState = {
-        $hasSite = ($null -ne $Ctrl.CbSites.SelectedItem -and $Ctrl.CbSites.SelectedItem -isnot [string])
-        $hasLib = ($null -ne $Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string] -and $Ctrl.CbLibs.SelectedItem -ne "Chargement...")
-        $hasTpl = ($null -ne $Ctrl.CbTemplates.SelectedItem)
-        
-        $Ctrl.BtnSaveConfig.IsEnabled = ($hasSite -and $hasLib -and $hasTpl)
-    }.GetNewClosure()
 
-    # Initialisation : Désactivé par défaut
-    $Ctrl.BtnSaveConfig.IsEnabled = $false
-
-    # On attache la vérification aux changements de sélection
-    # Note : On utilise 'Add_SelectionChanged' ici. Si d'autres handlers existent ailleurs (Register-SiteEvents), 
-    # c'est OK car WPF supporte le multicast délégué (plusieurs abonnés).
-    if ($Ctrl.CbSites) { $Ctrl.CbSites.Add_SelectionChanged($UpdateSaveState) }
-    if ($Ctrl.CbLibs) { $Ctrl.CbLibs.Add_SelectionChanged($UpdateSaveState) }
-    if ($Ctrl.CbTemplates) { $Ctrl.CbTemplates.Add_SelectionChanged($UpdateSaveState) }
 
 
     # --- SAVE CONFIGURATION ---

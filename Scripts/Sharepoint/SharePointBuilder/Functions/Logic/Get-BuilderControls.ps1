@@ -61,6 +61,7 @@ function Get-BuilderControls {
         
         # --- OPTIONS AVANCÉES ---
         ChkOverwrite         = $Window.FindName("OverwritePermissionsCheckBox")
+        BtnValidate          = $Window.FindName("ValidateModelButton")
         BtnReset             = $Window.FindName("ResetUIButton")
         BtnSaveConfig        = $Window.FindName("SaveConfigButton")
         CbDeployConfigs      = $Window.FindName("DeployConfigComboBox")
@@ -95,6 +96,7 @@ function Get-BuilderControls {
         EdBtnRootLink        = $Window.FindName("EditorAddRootLinkButton")
         EdBtnChild           = $Window.FindName("EditorAddChildButton")
         EdBtnChildLink       = $Window.FindName("EditorAddChildLinkButton")
+        EdBtnAddPub          = $Window.FindName("EditorAddPubButton") # NEW
         EdBtnDel             = $Window.FindName("EditorDeleteNodeButton")
 
         # --- EDITEUR (Props) ---
@@ -104,6 +106,7 @@ function Get-BuilderControls {
         EdPropPanelPerm      = & $Find "EdPanelPerm"   # Renamed from EditorPermissionPanel
         EdPropPanelTag       = & $Find "EdPanelTag"    # Renamed from EditorTagPanel
         EdPropPanelLink      = & $Find "EdPanelLink"   # Renamed from EditorLinkPanel
+        EdPropPanelPub       = & $Find "EdPanelPub"    # NEW
 
         EdNoSelPanel         = & $Find "EdPanelNoSel"  # Renamed from EditorNoSelectionPanel
         
@@ -126,6 +129,16 @@ function Get-BuilderControls {
         EdLinkNameBox        = $Window.FindName("EdLinkNameBox")
         EdLinkUrlBox         = $Window.FindName("EdLinkUrlBox")
         EdLinkDeleteButton   = $Window.FindName("EdLinkDeleteButton")
+
+        # Publication Inputs (NEW)
+        EdPubNameBox         = $Window.FindName("EdPubNameBox")
+        EdPubSiteModeBox     = $Window.FindName("EdPubSiteModeBox")
+        EdPubSiteUrlBox      = $Window.FindName("EdPubSiteUrlBox")
+        EdPubPathBox         = $Window.FindName("EdPubPathBox")
+        EdPubUseModelNameChk = $Window.FindName("EdPubUseModelNameChk")
+        EdPubGrantUserBox    = $Window.FindName("EdPubGrantUserBox")
+        EdPubGrantLevelBox   = $Window.FindName("EdPubGrantLevelBox")
+        EdPubDeleteButton    = $Window.FindName("EdPubDeleteButton")
 
         EdStatusText         = $Window.FindName("EditorStatusText")
         

@@ -75,19 +75,35 @@ function Global:Update-TreePreview {
                 }
             }
 
-            # B. Distinction TYPE (Lien vs Dossier)
+            # B. Distinction TYPE (Lien vs Publication vs Dossier)
             if ($Node.Type -eq "Link") {
                 # --- NOEUD LIEN ---
                 $rawUrl = if ($Node.Url) { $Node.Url } else { "" }
-                # On peut aussi vouloir remplacer des variables dans l'URL
                 $finalUrl = $rawUrl
                 foreach ($key in $replacements.Keys) {
                     if ($finalUrl -match "\{$key\}") {
                         $finalUrl = $finalUrl -replace "\{$key\}", $replacements[$key]
                     }
                 }
-
                 $item = New-EditorLinkNode -Name $finalName -Url $finalUrl
+                return $item
+            }
+            elseif ($Node.Type -eq "Publication") {
+                # --- NOEUD PUBLICATION ---
+                
+                # Note: On peut aussi vouloir remplacer des vars dans TargetFolderPath
+                $item = New-EditorPubNode -Name $finalName
+                
+                # Hydratation simple pour la visualisation (Le Tag est utilisé par Update-EditorBadges sur le parent si nécessaire ?)
+                # En fait Update-EditorBadges regarde le Type dans le Tag de l'enfant. Donc il faut bien setter le Type.
+                $item.Tag.Type = "Publication"
+                $item.Tag.TargetSiteMode = $Node.TargetSiteMode
+                $item.Tag.TargetSiteUrl = $Node.TargetSiteUrl
+                $item.Tag.TargetFolderPath = $Node.TargetFolderPath
+                $item.Tag.UseModelName = $Node.UseModelName
+                $item.Tag.GrantUser = $Node.GrantUser
+                $item.Tag.GrantLevel = $Node.GrantLevel
+                
                 return $item
             }
             else {
@@ -116,16 +132,16 @@ function Global:Update-TreePreview {
                     }
                 }
 
-                # Mise à jour Badges & Metadonnées
-                Update-EditorBadges -TreeItem $item
-
-                # Récursion Enfants
+                # Récursion Enfants (AVANT Update-EditorBadges pour que le compteur Public fonctionne)
                 if ($Node.Folders) {
                     foreach ($subNode in $Node.Folders) {
                         $subItem = New-VisuItem -Node $subNode
                         $item.Items.Add($subItem) | Out-Null
                     }
                 }
+
+                # Mise à jour Badges & Metadonnées
+                Update-EditorBadges -TreeItem $item
                 
                 return $item
             }

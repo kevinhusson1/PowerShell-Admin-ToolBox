@@ -123,6 +123,9 @@ function Register-EditorLogic {
     # ==========================================================================
     
     $Script:IsPopulating = $false
+    
+    # INIT STATIC SOURCES
+    if ($Ctrl.EdPubGrantLevelBox) { $Ctrl.EdPubGrantLevelBox.ItemsSource = @("Read", "Contribute"); $Ctrl.EdPubGrantLevelBox.SelectedIndex = 0 }
 
     if ($Ctrl.EdTree) {
         $Ctrl.EdTree.Add_SelectedItemChanged({
@@ -147,6 +150,7 @@ function Register-EditorLogic {
                     if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                     if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
                     if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                    if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
 
                     $data = $selectedItem.Tag
 
@@ -174,7 +178,7 @@ function Register-EditorLogic {
                     }
                 }
                 else {
-                    # C'EST UN NOEUD (Dossier ou Lien)
+                    # C'EST UN NOEUD (Dossier, Lien, ou Publication)
                     $data = $selectedItem.Tag
                     
                     if ($data.Type -eq "Link") {
@@ -183,12 +187,42 @@ function Register-EditorLogic {
                         if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
 
                         if ($Ctrl.EdPropPanelLink) {
                             $Ctrl.EdPropPanelLink.Visibility = "Visible"
                             $Ctrl.EdPropPanelLink.DataContext = $selectedItem
                             if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = $data.Name }
                             if ($Ctrl.EdLinkUrlBox) { $Ctrl.EdLinkUrlBox.Text = $data.Url }
+                        }
+                    }
+                    elseif ($data.Type -eq "Publication") {
+                        # MODE PUBLICATION (NEW)
+                        if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+
+                        if ($Ctrl.EdPropPanelPub) {
+                            $Ctrl.EdPropPanelPub.Visibility = "Visible"
+                            $Ctrl.EdPropPanelPub.DataContext = $selectedItem
+                            
+                            # Binding Fields
+                            if ($Ctrl.EdPubNameBox) { $Ctrl.EdPubNameBox.Text = $data.Name }
+                            if ($Ctrl.EdPubSiteModeBox) { $Ctrl.EdPubSiteModeBox.SelectedIndex = if ($data.TargetSiteMode -eq "Auto") { 0 } else { 1 } }
+                            # Trigger visibility logic for Url box
+                            if ($Ctrl.EdPubSiteUrlBox) { 
+                                $Ctrl.EdPubSiteUrlBox.Text = $data.TargetSiteUrl 
+                                $Ctrl.EdPubSiteUrlBox.Visibility = if ($data.TargetSiteMode -eq "Url") { "Visible" } else { "Collapsed" }
+                            }
+                            if ($Ctrl.EdPubPathBox) { $Ctrl.EdPubPathBox.Text = $data.TargetFolderPath }
+                            if ($Ctrl.EdPubUseModelNameChk) { $Ctrl.EdPubUseModelNameChk.IsChecked = $data.UseModelName }
+                            
+                            if ($Ctrl.EdPubGrantUserBox) { $Ctrl.EdPubGrantUserBox.Text = $data.GrantUser }
+                            if ($Ctrl.EdPubGrantLevelBox) { 
+                                $Ctrl.EdPubGrantLevelBox.SelectedItem = $data.GrantLevel 
+                            }
                         }
                     }
                     else {
@@ -198,6 +232,7 @@ function Register-EditorLogic {
                         if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
                         
                         # Show Folder Panel
                         if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Visible" }
@@ -224,6 +259,14 @@ function Register-EditorLogic {
                     }
                 }
                 
+                # --- GESTION ETAT DES BOUTONS ---
+                # On ne peut ajouter des enfants QUE si c'est un Dossier
+                $canAddChild = ($selectedItem -and $selectedItem.Tag -and $selectedItem.Tag.Type -ne "Link" -and $selectedItem.Tag.Type -ne "Publication" -and $selectedItem.Name -ne "MetaItem")
+                
+                if ($Ctrl.EdBtnChild) { $Ctrl.EdBtnChild.IsEnabled = $canAddChild }
+                if ($Ctrl.EdBtnChildLink) { $Ctrl.EdBtnChildLink.IsEnabled = $canAddChild }
+                if ($Ctrl.EdBtnAddPub) { $Ctrl.EdBtnAddPub.IsEnabled = $canAddChild }
+
                 $Script:IsPopulating = $false
             }.GetNewClosure())
     }
@@ -237,9 +280,11 @@ function Register-EditorLogic {
                     if (-not $sel.Tag.PSObject.Properties['Identity']) {
                         $sel.Tag | Add-Member -MemberType NoteProperty -Name "Identity" -Value $this.Text -Force
                     }
-                    else {
-                        $sel.Tag.Identity = $this.Text
-                    }
+                    else { $sel.Tag.Identity = $this.Text }
+
+                    # SYNC EMAIL/USER PROPERTIES FOR PERSISTENCE
+                    if (-not $sel.Tag.PSObject.Properties['Email']) { $sel.Tag | Add-Member -MemberType NoteProperty -Name "Email" -Value $this.Text -Force } else { $sel.Tag.Email = $this.Text }
+                    if (-not $sel.Tag.PSObject.Properties['User']) { $sel.Tag | Add-Member -MemberType NoteProperty -Name "User" -Value $this.Text -Force } else { $sel.Tag.User = $this.Text }
                     $lvl = if ($sel.Tag.PSObject.Properties['Level']) { $sel.Tag.Level } else { "" }
                     $pName = "$($this.Text) ($lvl)"
                     if ($sel.Header -is [System.Windows.Controls.StackPanel]) { $sel.Header.Children[1].Text = $pName }
@@ -278,6 +323,7 @@ function Register-EditorLogic {
                         if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
                         if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                     }
                 }
@@ -325,6 +371,7 @@ function Register-EditorLogic {
                         if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
                         if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
                         if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                     }
                 }
@@ -378,6 +425,7 @@ function Register-EditorLogic {
                     if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                     if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
                     if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                    if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
                     if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                 }
             }.GetNewClosure())
@@ -394,7 +442,7 @@ function Register-EditorLogic {
             }.GetNewClosure())
     }
 
-    # HANDLERS POUR LIENS (Name & URL)
+    # HANDLERS POUR LIENS (Name & URL) & PUBLIC
     if ($Ctrl.EdLinkNameBox) {
         $Ctrl.EdLinkNameBox.Add_TextChanged({
                 $sel = $Ctrl.EdTree.SelectedItem
@@ -416,10 +464,103 @@ function Register-EditorLogic {
                 if ($sel -and $sel.Tag -and $sel.Tag.Type -eq "Link") {
                     $newUrl = $Ctrl.EdLinkUrlBox.Text
                     $sel.Tag.Url = $newUrl
-                    # Pas de changement visuel direct sur l'arbre pour l'URL, mais le Tag est à jour
                 }
             }.GetNewClosure())
     }
+    
+    # 🆕 HANDLERS POUR PUBLICATION
+    # ----------------------------------------------------------------------
+    if ($Ctrl.EdPubNameBox) {
+        $Ctrl.EdPubNameBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $sel.Tag.Name = $this.Text
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel]) { $sel.Header.Children[1].Text = $this.Text }
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubSiteModeBox) {
+        $Ctrl.EdPubSiteModeBox.Add_SelectionChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $mode = if ($this.SelectedIndex -eq 0) { "Auto" } else { "Url" }
+                    $sel.Tag.TargetSiteMode = $mode
+                
+                    # Show/Hide Url Box
+                    if ($Ctrl.EdPubSiteUrlBox) {
+                        $Ctrl.EdPubSiteUrlBox.Visibility = if ($mode -eq "Url") { "Visible" } else { "Collapsed" }
+                    }
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubSiteUrlBox) {
+        $Ctrl.EdPubSiteUrlBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $sel.Tag.TargetSiteUrl = $this.Text
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubPathBox) {
+        $Ctrl.EdPubPathBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $sel.Tag.TargetFolderPath = $this.Text
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubUseModelNameChk) {
+        $Ctrl.EdPubUseModelNameChk.Add_Click({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $sel.Tag.UseModelName = [bool]$this.IsChecked
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubGrantUserBox) {
+        $Ctrl.EdPubGrantUserBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $sel.Tag.GrantUser = $this.Text
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubGrantLevelBox) {
+        $Ctrl.EdPubGrantLevelBox.Add_SelectionChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $sel.Tag.GrantLevel = $this.SelectedItem
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubDeleteButton) {
+        $Ctrl.EdPubDeleteButton.Add_Click({
+                $i = $Ctrl.EdTree.SelectedItem; if ($null -eq $i) { return }
+                if ($i.Tag.Type -ne "Publication") { return }
+            
+                if ([System.Windows.MessageBox]::Show("Supprimer cette publication ?", "Confirmation", "YesNo", "Question") -eq 'No') { return }
+            
+                $p = $i.Parent
+                if ($p -is [System.Windows.Controls.TreeViewItem]) { 
+                    $p.Items.Remove($i) 
+                    Update-EditorBadges -TreeItem $p
+                }
+                elseif ($p -is [System.Windows.Controls.TreeView]) { $p.Items.Remove($i) }
+            
+                # Reset UI
+                if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
+                if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+            
+            }.GetNewClosure())
+    }
+
 
     # ==========================================================================
     # 3. ACTIONS ARBRE
@@ -462,11 +603,25 @@ function Register-EditorLogic {
         $Ctrl.EdBtnChildLink.Add_Click({
                 $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
                 if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
-                # Verif si c'est un dossier (pas un lien)
                 if ($p.Tag.Type -eq "Link") { [System.Windows.MessageBox]::Show("Impossible d'ajouter un lien dans un lien.", "Info", "OK", "Warning"); return }
+                if ($p.Tag.Type -eq "Publication") { [System.Windows.MessageBox]::Show("Impossible d'ajouter quoi que ce soit dans un nœud de publication.", "Info", "OK", "Warning"); return }
                 
                 $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
                 $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
+            }.GetNewClosure())
+    }
+    
+    # NEW Add Pub
+    if ($Ctrl.EdBtnAddPub) {
+        $Ctrl.EdBtnAddPub.Add_Click({
+                $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
+                if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier parent.", "Info", "OK", "Information"); return }
+                if ($p.Tag.Type -eq "Link") { [System.Windows.MessageBox]::Show("Impossible d'ajouter une publication dans un lien.", "Info", "OK", "Warning"); return }
+                if ($p.Tag.Type -eq "Publication") { [System.Windows.MessageBox]::Show("Impossible d'imbriquer des publications.", "Info", "OK", "Warning"); return }
+            
+                $n = New-EditorPubNode -Name "Vers Site..."
+                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
+                Update-EditorBadges -TreeItem $p
             }.GetNewClosure())
     }
 
@@ -523,6 +678,7 @@ function Register-EditorLogic {
         if ($Ctrl.EdPermIdentityBox) { $Ctrl.EdPermIdentityBox.Text = "" }
         if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = "" }
         if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = "" }
+        if ($Ctrl.EdPubNameBox) { $Ctrl.EdPubNameBox.Text = "" }
         
         # Hide all panels
         $Ctrl.EdNoSelPanel.Visibility = "Visible"
@@ -530,6 +686,7 @@ function Register-EditorLogic {
         if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
         if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
         if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+        if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
         
         $Ctrl.EdLoadCb.Tag = $null; $Ctrl.EdLoadCb.SelectedIndex = -1
         & $SetStatus -Msg "Interface réinitialisée."
@@ -543,6 +700,7 @@ function Register-EditorLogic {
         }
         catch { }
     }.GetNewClosure()
+
     & $LoadTemplateList
 
     $Ctrl.EdBtnNew.Add_Click({
@@ -567,6 +725,7 @@ function Register-EditorLogic {
             if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+            if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
                 
             if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                 

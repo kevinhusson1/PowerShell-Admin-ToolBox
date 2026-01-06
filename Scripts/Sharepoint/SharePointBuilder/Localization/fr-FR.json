@@ -48,6 +48,7 @@
     "btn_copy_url": "📋 URL",
     "btn_open": "↗ Ouvrir",
     "btn_deploy": "🚀 Lancer le Déploiement",
+    "btn_validate": "✅ Vérifier",
 
     "label_existing_template": "Modèle existant",
     "btn_load": "Charger",

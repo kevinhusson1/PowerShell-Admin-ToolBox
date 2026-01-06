@@ -33,8 +33,22 @@ function Global:Convert-EditorTreeToJson {
                 Url  = $data.Url
             }
         }
+        
+        # 2. CAS PUBLICATION
+        if ($data.Type -eq "Publication") {
+            return @{
+                Type             = "Publication"
+                Name             = $data.Name
+                TargetSiteMode   = $data.TargetSiteMode
+                TargetSiteUrl    = $data.TargetSiteUrl
+                TargetFolderPath = $data.TargetFolderPath
+                UseModelName     = $data.UseModelName
+                GrantUser        = $data.GrantUser
+                GrantLevel       = $data.GrantLevel
+            }
+        }
 
-        # 2. CAS DOSSIER
+        # 3. CAS DOSSIER
         # On construit une Hashtable propre pour le JSON
         $nodeHash = @{
             Name        = $data.Name
@@ -55,19 +69,8 @@ function Global:Convert-EditorTreeToJson {
     }
 
     $rootList = @()
-    $rootList = @()
     foreach ($rootItem in $TreeView.Items) {
-        # Support pour les Liens à la racine (Type = Link)
-        if ($rootItem.Name -eq "MetaItem" -and $rootItem.Tag -and $rootItem.Tag.PSObject.Properties['Url']) {
-            $rootList += @{
-                Type = "Link"
-                Name = $rootItem.Tag.Name
-                Url  = $rootItem.Tag.Url
-            }
-        }
-        else {
-            $rootList += Get-NodeData -Item $rootItem
-        }
+        $rootList += Get-NodeData -Item $rootItem
     }
 
     # On encapsule dans une structure standard
@@ -131,14 +134,22 @@ function Global:Convert-JsonToEditorTree {
                 }
             }
             
-            # Mise à jour des badges
-            Update-EditorBadges -TreeItem $newItem
-
             # Récursion Enfants
             if ($Data.Folders) {
                 foreach ($sub in $Data.Folders) {
                     if ($sub.Type -eq "Link") {
                         $subItem = New-EditorLinkNode -Name $sub.Name -Url $sub.Url
+                    }
+                    elseif ($sub.Type -eq "Publication") {
+                        $subItem = New-EditorPubNode -Name $sub.Name
+                        # Hydratation Pub Data
+                        $subItem.Tag.Name = $sub.Name
+                        $subItem.Tag.TargetSiteMode = $sub.TargetSiteMode
+                        $subItem.Tag.TargetSiteUrl = $sub.TargetSiteUrl
+                        $subItem.Tag.TargetFolderPath = $sub.TargetFolderPath
+                        $subItem.Tag.UseModelName = $sub.UseModelName
+                        $subItem.Tag.GrantUser = $sub.GrantUser
+                        $subItem.Tag.GrantLevel = $sub.GrantLevel
                     }
                     else {
                         $subItem = Build-Node -Data $sub
@@ -147,12 +158,26 @@ function Global:Convert-JsonToEditorTree {
                 }
             }
 
+            # Mise à jour des badges
+            Update-EditorBadges -TreeItem $newItem
+
             return $newItem
         }
 
         foreach ($f in $folders) {
             if ($f.Type -eq "Link") {
                 $rootNode = New-EditorLinkNode -Name $f.Name -Url $f.Url
+            }
+            # Note: Publications at Root are possible theoretically but rare
+            elseif ($f.Type -eq "Publication") {
+                $rootNode = New-EditorPubNode -Name $f.Name
+                $rootNode.Tag.Name = $f.Name
+                $rootNode.Tag.TargetSiteMode = $f.TargetSiteMode
+                $rootNode.Tag.TargetSiteUrl = $f.TargetSiteUrl
+                $rootNode.Tag.TargetFolderPath = $f.TargetFolderPath
+                $rootNode.Tag.UseModelName = $f.UseModelName
+                $rootNode.Tag.GrantUser = $f.GrantUser
+                $rootNode.Tag.GrantLevel = $f.GrantLevel
             }
             else {
                 $rootNode = Build-Node -Data $f
