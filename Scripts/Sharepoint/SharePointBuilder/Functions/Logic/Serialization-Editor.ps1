@@ -25,12 +25,21 @@ function Global:Convert-EditorTreeToJson {
         # On récupère les données brutes de l'objet
         $data = $Item.Tag
         
+        # 1. CAS LIEN
+        if ($data.Type -eq "Link") {
+            return @{
+                Type = "Link"
+                Name = $data.Name
+                Url  = $data.Url
+            }
+        }
+
+        # 2. CAS DOSSIER
         # On construit une Hashtable propre pour le JSON
         $nodeHash = @{
             Name        = $data.Name
             Permissions = $data.Permissions
             Tags        = $data.Tags
-            Links       = $data.Links
             Folders     = @()
         }
 
@@ -46,8 +55,19 @@ function Global:Convert-EditorTreeToJson {
     }
 
     $rootList = @()
+    $rootList = @()
     foreach ($rootItem in $TreeView.Items) {
-        $rootList += Get-NodeData -Item $rootItem
+        # Support pour les Liens à la racine (Type = Link)
+        if ($rootItem.Name -eq "MetaItem" -and $rootItem.Tag -and $rootItem.Tag.PSObject.Properties['Url']) {
+            $rootList += @{
+                Type = "Link"
+                Name = $rootItem.Tag.Name
+                Url  = $rootItem.Tag.Url
+            }
+        }
+        else {
+            $rootList += Get-NodeData -Item $rootItem
+        }
     }
 
     # On encapsule dans une structure standard
@@ -111,21 +131,18 @@ function Global:Convert-JsonToEditorTree {
                 }
             }
             
-            # Links
-            if ($Data.Links) {
-                $newItem.Tag.Links = [System.Collections.Generic.List[psobject]]::new()
-                foreach ($l in $Data.Links) { 
-                    $newItem.Tag.Links.Add([PSCustomObject]@{ Name = $l.Name; Url = $l.Url }) 
-                }
-            }
-
             # Mise à jour des badges
             Update-EditorBadges -TreeItem $newItem
 
             # Récursion Enfants
             if ($Data.Folders) {
                 foreach ($sub in $Data.Folders) {
-                    $subItem = Build-Node -Data $sub
+                    if ($sub.Type -eq "Link") {
+                        $subItem = New-EditorLinkNode -Name $sub.Name -Url $sub.Url
+                    }
+                    else {
+                        $subItem = Build-Node -Data $sub
+                    }
                     $newItem.Items.Add($subItem) | Out-Null
                 }
             }
@@ -134,10 +151,14 @@ function Global:Convert-JsonToEditorTree {
         }
 
         foreach ($f in $folders) {
-            $rootNode = Build-Node -Data $f
+            if ($f.Type -eq "Link") {
+                $rootNode = New-EditorLinkNode -Name $f.Name -Url $f.Url
+            }
+            else {
+                $rootNode = Build-Node -Data $f
+            }
             $TreeView.Items.Add($rootNode) | Out-Null
         }
-
     }
     catch {
         Write-Warning "Erreur déserialisation JSON : $_"

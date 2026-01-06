@@ -47,6 +47,22 @@ function New-AppSPStructure {
         function Process-Folder {
             param($CurrentPath, $FolderObj)
 
+            # 0. GESTION TYPE = LINK (Nouveau Mode)
+            if ($FolderObj.Type -eq "Link") {
+                $linkName = $FolderObj.Name
+                $linkUrl = $FolderObj.Url
+                Log "Création lien (Noeud) : $linkName ($linkUrl)" "INFO"
+                try {
+                    $tempFile = [System.IO.Path]::GetTempFileName() + ".url"
+                    "[InternetShortcut]`r`nURL=$linkUrl" | Set-Content -Path $tempFile
+                    Add-PnPFile -Path $tempFile -Folder $CurrentPath -NewFileName "$linkName.url" -Connection $conn -ErrorAction Stop | Out-Null
+                    Remove-Item $tempFile -Force
+                    Log "Lien créé avec succès." "DEBUG"
+                }
+                catch { Err "Erreur création lien '$linkName' : $($_.Exception.Message)" }
+                return # Stop ici pour un lien
+            }
+
             $folderName = $FolderObj.Name
             $fullPath = "$CurrentPath/$folderName"
             

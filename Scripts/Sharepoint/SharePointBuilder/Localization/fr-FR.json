@@ -53,6 +53,7 @@
     "btn_load": "Charger",
     "label_template_structure": "Structure du modèle",
     "btn_add_root": "+ Racine",
+    "btn_add_link_root": "+ Lien",
     "btn_add_child": "+ Dossier",
     "label_folder_properties": "Propriétés du dossier sélectionné",
 

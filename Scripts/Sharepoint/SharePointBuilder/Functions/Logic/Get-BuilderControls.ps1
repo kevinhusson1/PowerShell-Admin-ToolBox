@@ -92,7 +92,9 @@ function Get-BuilderControls {
         # --- EDITEUR (Tree) ---
         EdTree               = $Window.FindName("EditorTreeView")
         EdBtnRoot            = $Window.FindName("EditorAddRootButton")
+        EdBtnRootLink        = $Window.FindName("EditorAddRootLinkButton")
         EdBtnChild           = $Window.FindName("EditorAddChildButton")
+        EdBtnChildLink       = $Window.FindName("EditorAddChildLinkButton")
         EdBtnDel             = $Window.FindName("EditorDeleteNodeButton")
 
         # --- EDITEUR (Props) ---
@@ -131,9 +133,7 @@ function Get-BuilderControls {
         EdTagsListBox        = $Window.FindName("EditorTagsListBox")
         EdBtnAddTag          = $Window.FindName("EditorAddTagButton")
 
-        # Liens (NOUVEAU)
-        EdLinksListBox       = $Window.FindName("EditorLinksListBox")
-        EdBtnAddLink         = $Window.FindName("EditorAddLinkButton")
+
 
         # --- FORMULAIRE EDITOR (Toolbar) ---
         FormLoadCb           = $Window.FindName("FormLoadComboBox")

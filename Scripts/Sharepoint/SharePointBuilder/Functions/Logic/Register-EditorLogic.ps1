@@ -116,39 +116,7 @@ function Register-EditorLogic {
         $ParentList.Items.Add($row) | Out-Null
     }
 
-    # --- C. LIENS ---
-    $RenderLinkRow = {
-        param($LinkData, $ParentList, $CurrentTreeItem)
-        if ($null -eq $ParentList) { return }
-        
-        $row = New-Object System.Windows.Controls.Grid; $row.Margin = "0,0,0,5"
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "1*" }))
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "2*" }))
-        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{Width = "Auto" }))
 
-        $tName = New-Object System.Windows.Controls.TextBox -Property @{Text = $LinkData.Name; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $tName.Add_TextChanged({ $LinkData.Name = $this.Text }.GetNewClosure())
-        $tUrl = New-Object System.Windows.Controls.TextBox -Property @{Text = $LinkData.Url; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }; $tUrl.Add_TextChanged({ $LinkData.Url = $this.Text }.GetNewClosure())
-
-        # SUPPRESSION
-        $b1 = New-Object System.Windows.Controls.Button -Property @{Content = "🗑️"; Style = $Window.FindResource("IconButtonStyle"); Width = 34; Height = 34; Foreground = $Window.FindResource("DangerBrush") }
-        $b1.Add_Click({
-                $sel = $CurrentTreeItem # Capture
-            
-                if ($sel -and $sel.Tag.Links) { 
-                    if ($sel.Tag.Links -is [System.Array]) {
-                        $sel.Tag.Links = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Links)
-                    }
-                    $sel.Tag.Links.Remove($LinkData)
-                    Update-EditorBadges -TreeItem $sel
-                }
-                $ParentList.Items.Remove($row)
-            }.GetNewClosure())
-
-        [System.Windows.Controls.Grid]::SetColumn($tName, 0); $row.Children.Add($tName) | Out-Null
-        [System.Windows.Controls.Grid]::SetColumn($tUrl, 1); $row.Children.Add($tUrl) | Out-Null
-        [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
-        $ParentList.Items.Add($row) | Out-Null
-    }
 
     # ==========================================================================
     # 2. GESTION SÉLECTION & MODIFICATION
@@ -170,7 +138,7 @@ function Register-EditorLogic {
                     if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                 }
                 elseif ($selectedItem.Name -eq "MetaItem") {
-                    # C'EST UN ATTRIBUT
+                    # C'EST UN ATTRIBUT (Permission ou Tag)
                     
                     # 1. Hide Main Panels first
                     if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Collapsed" }
@@ -181,18 +149,9 @@ function Register-EditorLogic {
                     if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
 
                     $data = $selectedItem.Tag
-                    
-                    # 1. LINK
-                    if ($data.PSObject.Properties['Url']) {
-                        if ($Ctrl.EdPropPanelLink) {
-                            $Ctrl.EdPropPanelLink.Visibility = "Visible"
-                            $Ctrl.EdPropPanelLink.DataContext = $selectedItem
-                            if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = $data.Name }
-                            if ($Ctrl.EdLinkUrlBox) { $Ctrl.EdLinkUrlBox.Text = $data.Url }
-                        }
-                    }
-                    # 2. PERMISSION
-                    elseif ($data.PSObject.Properties['Email'] -or $data.PSObject.Properties['Identity']) {
+
+                    # PERMISSION
+                    if ($data.PSObject.Properties['Email'] -or $data.PSObject.Properties['Identity']) {
                         if ($Ctrl.EdPropPanelPerm) { 
                             $Ctrl.EdPropPanelPerm.Visibility = "Visible" 
                             $Ctrl.EdPropPanelPerm.DataContext = $selectedItem 
@@ -204,7 +163,7 @@ function Register-EditorLogic {
                             }
                         }
                     }
-                    # 3. TAG
+                    # TAG
                     else {
                         if ($Ctrl.EdPropPanelTag) {
                             $Ctrl.EdPropPanelTag.Visibility = "Visible"
@@ -215,42 +174,51 @@ function Register-EditorLogic {
                     }
                 }
                 else {
-                    # C'EST UN DOSSIER
-                    # Hide others
-                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Collapsed" }
-                    if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
-                    if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
-                    if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
-                    
-                    # Show Folder Panel
-                    if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Visible" }
-                    
+                    # C'EST UN NOEUD (Dossier ou Lien)
                     $data = $selectedItem.Tag
-                    if ($data -and $Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = $data.Name }
                     
-                    if ($Ctrl.EdPermissionsListBox) { 
-                        $Ctrl.EdPermissionsListBox.Items.Clear() 
-                        if ($data.Permissions) { 
-                            foreach ($p in $data.Permissions) {
-                                & $RenderPermissionRow -PermData $p -ParentList $Ctrl.EdPermissionsListBox -CurrentTreeItem $selectedItem
-                            }
+                    if ($data.Type -eq "Link") {
+                        # MODE LIEN
+                        if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+
+                        if ($Ctrl.EdPropPanelLink) {
+                            $Ctrl.EdPropPanelLink.Visibility = "Visible"
+                            $Ctrl.EdPropPanelLink.DataContext = $selectedItem
+                            if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = $data.Name }
+                            if ($Ctrl.EdLinkUrlBox) { $Ctrl.EdLinkUrlBox.Text = $data.Url }
                         }
                     }
-                    
-                    if ($Ctrl.EdTagsListBox) { 
-                        $Ctrl.EdTagsListBox.Items.Clear() 
-                        if ($data.Tags) { 
-                            foreach ($t in $data.Tags) {
-                                & $RenderTagRow -TagData $t -ParentList $Ctrl.EdTagsListBox -CurrentTreeItem $selectedItem
+                    else {
+                        # MODE DOSSIER
+                        # Hide others
+                        if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                        if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                        
+                        # Show Folder Panel
+                        if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Visible" }
+                        
+                        if ($data -and $Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = $data.Name }
+                        
+                        if ($Ctrl.EdPermissionsListBox) { 
+                            $Ctrl.EdPermissionsListBox.Items.Clear() 
+                            if ($data.Permissions) { 
+                                foreach ($p in $data.Permissions) {
+                                    & $RenderPermissionRow -PermData $p -ParentList $Ctrl.EdPermissionsListBox -CurrentTreeItem $selectedItem
+                                }
                             }
                         }
-                    }
-                    
-                    if ($Ctrl.EdLinksListBox) { 
-                        $Ctrl.EdLinksListBox.Items.Clear() 
-                        if ($data.Links) { 
-                            foreach ($l in $data.Links) {
-                                & $RenderLinkRow -LinkData $l -ParentList $Ctrl.EdLinksListBox -CurrentTreeItem $selectedItem
+                        
+                        if ($Ctrl.EdTagsListBox) { 
+                            $Ctrl.EdTagsListBox.Items.Clear() 
+                            if ($data.Tags) { 
+                                foreach ($t in $data.Tags) {
+                                    & $RenderTagRow -TagData $t -ParentList $Ctrl.EdTagsListBox -CurrentTreeItem $selectedItem
+                                }
                             }
                         }
                     }
@@ -390,6 +358,8 @@ function Register-EditorLogic {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Name -eq "MetaItem") {
                     $parent = $sel.Parent
+                    
+                    # Cas 1 : Lien dans un dossier
                     if ($parent -is [System.Windows.Controls.TreeViewItem]) {
                         # Remove Data
                         $parent.Tag.Links.Remove($sel.Tag)
@@ -397,13 +367,18 @@ function Register-EditorLogic {
                         $parent.Items.Remove($sel)
                         # Update Badges on Parent
                         Update-EditorBadges -TreeItem $parent
-                        # Hide Panel
-                        if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
-                        if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
-                        if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
-                        if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
-                        if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                     }
+                    # Cas 2 : Lien à la racine
+                    elseif ($parent -is [System.Windows.Controls.TreeView]) {
+                        $parent.Items.Remove($sel)
+                    }
+
+                    # Hide Panel (Commun)
+                    if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
+                    if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
+                    if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                    if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                 }
             }.GetNewClosure())
     }
@@ -419,6 +394,33 @@ function Register-EditorLogic {
             }.GetNewClosure())
     }
 
+    # HANDLERS POUR LIENS (Name & URL)
+    if ($Ctrl.EdLinkNameBox) {
+        $Ctrl.EdLinkNameBox.Add_TextChanged({
+                $sel = $Ctrl.EdTree.SelectedItem
+                # Vérif si c'est un Noeud Lien (Type="Link")
+                if ($sel -and $sel.Tag -and $sel.Tag.Type -eq "Link") {
+                    $newName = $Ctrl.EdLinkNameBox.Text
+                    $sel.Tag.Name = $newName
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel]) { 
+                        # Texte est au Children[1]
+                        $sel.Header.Children[1].Text = if ([string]::IsNullOrWhiteSpace($newName)) { "(Sans nom)" } else { $newName } 
+                    }
+                }
+            }.GetNewClosure())
+    }
+
+    if ($Ctrl.EdLinkUrlBox) {
+        $Ctrl.EdLinkUrlBox.Add_TextChanged({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag -and $sel.Tag.Type -eq "Link") {
+                    $newUrl = $Ctrl.EdLinkUrlBox.Text
+                    $sel.Tag.Url = $newUrl
+                    # Pas de changement visuel direct sur l'arbre pour l'URL, mais le Tag est à jour
+                }
+            }.GetNewClosure())
+    }
+
     # ==========================================================================
     # 3. ACTIONS ARBRE
     # ==========================================================================
@@ -428,10 +430,8 @@ function Register-EditorLogic {
                     if ([System.Windows.MessageBox]::Show("Tout effacer ?", "Confirmation", "YesNo", "Warning") -eq 'No') { return }
                 }
                 if ($Ctrl.EdTree) { $Ctrl.EdTree.Items.Clear() }
-                if ($Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = "" }
                 if ($Ctrl.EdPermissionsListBox) { $Ctrl.EdPermissionsListBox.Items.Clear() }
                 if ($Ctrl.EdTagsListBox) { $Ctrl.EdTagsListBox.Items.Clear() }
-                if ($Ctrl.EdLinksListBox) { $Ctrl.EdLinksListBox.Items.Clear() }
                 & $SetStatus -Msg "Nouvel espace de travail vierge prêt."
             }.GetNewClosure())
     }
@@ -443,201 +443,205 @@ function Register-EditorLogic {
             }.GetNewClosure())
     }
 
+    if ($Ctrl.EdBtnRootLink) {
+        $Ctrl.EdBtnRootLink.Add_Click({
+                $newItem = New-EditorLinkNode -Name "Nouveau Lien" -Url "https://pnp.github.io/"
+                if ($Ctrl.EdTree) { $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true }
+            }.GetNewClosure())
+    }
+
     if ($Ctrl.EdBtnChild) {
         $Ctrl.EdBtnChild.Add_Click({
                 $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
                 if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
                 $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
             }.GetNewClosure())
+    }
 
-        $Ctrl.EdBtnDel.Add_Click({
-                $i = $Ctrl.EdTree.SelectedItem; if ($null -eq $i) { return }
-                if ([System.Windows.MessageBox]::Show("Supprimer '$($i.Tag.Name)' ?", "Confirmation", "YesNo", "Question") -eq 'No') { return }
-                $FnDel = { param($C, $I) if ($C.Contains($I)) { $C.Remove($I); return $true } foreach ($s in $C) { if (& $FnDel -C $s.Items -I $I) { return $true } } return $false }
-                & $FnDel -C $Ctrl.EdTree.Items -I $i
+    if ($Ctrl.EdBtnChildLink) {
+        $Ctrl.EdBtnChildLink.Add_Click({
+                $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
+                if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
+                # Verif si c'est un dossier (pas un lien)
+                if ($p.Tag.Type -eq "Link") { [System.Windows.MessageBox]::Show("Impossible d'ajouter un lien dans un lien.", "Info", "OK", "Warning"); return }
+                
+                $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
+                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
             }.GetNewClosure())
+    }
 
-        # ==========================================================================
-        # 4. ACTIONS PROPRIÉTÉS (AJOUT)
-        # ==========================================================================
+    $Ctrl.EdBtnDel.Add_Click({
+            $i = $Ctrl.EdTree.SelectedItem; if ($null -eq $i) { return }
+            if ([System.Windows.MessageBox]::Show("Supprimer '$($i.Tag.Name)' ?", "Confirmation", "YesNo", "Question") -eq 'No') { return }
+            $FnDel = { param($C, $I) if ($C.Contains($I)) { $C.Remove($I); return $true } foreach ($s in $C) { if (& $FnDel -C $s.Items -I $I) { return $true } } return $false }
+            & $FnDel -C $Ctrl.EdTree.Items -I $i
+        }.GetNewClosure())
+
+    # ==========================================================================
+    # 4. ACTIONS PROPRIÉTÉS (AJOUT)
+    # ==========================================================================
     
-        if ($Ctrl.EdBtnAddPerm) {
-            $Ctrl.EdBtnAddPerm.Add_Click({
-                    $sel = $Ctrl.EdTree.SelectedItem; if (-not $sel) { return }
-                    $obj = [PSCustomObject]@{ Email = "user@domaine.com"; Level = "Read" }
-                    if ($null -eq $sel.Tag.Permissions) { $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new() }
-                    elseif ($sel.Tag.Permissions -is [System.Array]) { $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Permissions) }
-                    $sel.Tag.Permissions.Add($obj)
+    if ($Ctrl.EdBtnAddPerm) {
+        $Ctrl.EdBtnAddPerm.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem; if (-not $sel) { return }
+                $obj = [PSCustomObject]@{ Email = "user@domaine.com"; Level = "Read" }
+                if ($null -eq $sel.Tag.Permissions) { $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new() }
+                elseif ($sel.Tag.Permissions -is [System.Array]) { $sel.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Permissions) }
+                $sel.Tag.Permissions.Add($obj)
             
-                    # PASSAGE DE $sel ICI
-                    if ($Ctrl.EdPermissionsListBox) { & $RenderPermissionRow -PermData $obj -ParentList $Ctrl.EdPermissionsListBox -CurrentTreeItem $sel }
+                # PASSAGE DE $sel ICI
+                if ($Ctrl.EdPermissionsListBox) { & $RenderPermissionRow -PermData $obj -ParentList $Ctrl.EdPermissionsListBox -CurrentTreeItem $sel }
             
-                    Update-EditorBadges -TreeItem $sel
-                }.GetNewClosure())
-        }
+                Update-EditorBadges -TreeItem $sel
+            }.GetNewClosure())
+    }
 
-        if ($Ctrl.EdBtnAddTag) {
-            $Ctrl.EdBtnAddTag.Add_Click({
-                    $sel = $Ctrl.EdTree.SelectedItem; if (-not $sel) { return }
-                    $obj = [PSCustomObject]@{ Name = "NomColonne"; Value = "Valeur" }
-                    if ($null -eq $sel.Tag.Tags) { $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new() }
-                    elseif ($sel.Tag.Tags -is [System.Array]) { $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Tags) }
-                    $sel.Tag.Tags.Add($obj)
+    if ($Ctrl.EdBtnAddTag) {
+        $Ctrl.EdBtnAddTag.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem; if (-not $sel) { return }
+                $obj = [PSCustomObject]@{ Name = "NomColonne"; Value = "Valeur" }
+                if ($null -eq $sel.Tag.Tags) { $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new() }
+                elseif ($sel.Tag.Tags -is [System.Array]) { $sel.Tag.Tags = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Tags) }
+                $sel.Tag.Tags.Add($obj)
             
-                    # PASSAGE DE $sel ICI
-                    if ($Ctrl.EdTagsListBox) { & $RenderTagRow -TagData $obj -ParentList $Ctrl.EdTagsListBox -CurrentTreeItem $sel }
+                # PASSAGE DE $sel ICI
+                if ($Ctrl.EdTagsListBox) { & $RenderTagRow -TagData $obj -ParentList $Ctrl.EdTagsListBox -CurrentTreeItem $sel }
             
-                    Update-EditorBadges -TreeItem $sel
-                }.GetNewClosure())
-        }
+                Update-EditorBadges -TreeItem $sel
+            }.GetNewClosure())
+    }
 
-        if ($Ctrl.EdBtnAddLink) {
-            $Ctrl.EdBtnAddLink.Add_Click({
-                    $sel = $Ctrl.EdTree.SelectedItem; if (-not $sel) { return }
-                    $obj = [PSCustomObject]@{ Name = "Google"; Url = "https://google.com" }
-                    if ($null -eq $sel.Tag.Links) { $sel.Tag.Links = [System.Collections.Generic.List[psobject]]::new() }
-                    elseif ($sel.Tag.Links -is [System.Array]) { $sel.Tag.Links = [System.Collections.Generic.List[psobject]]::new($sel.Tag.Links) }
-                    $sel.Tag.Links.Add($obj)
-            
-                    # PASSAGE DE $sel ICI
-                    if ($Ctrl.EdLinksListBox) { & $RenderLinkRow -LinkData $obj -ParentList $Ctrl.EdLinksListBox -CurrentTreeItem $sel }
-            
-                    Update-EditorBadges -TreeItem $sel
-                }.GetNewClosure())
-        }
-
-        # ==========================================================================
-        # 5. PERSISTANCE (LOAD / SAVE / NEW / DELETE)
-        # ==========================================================================
-        # ... BLOC PERSISTANCE ...
+    # ==========================================================================
+    # 5. PERSISTANCE (LOAD / SAVE / NEW / DELETE)
+    # ==========================================================================
+    # ... BLOC PERSISTANCE ...
     
-        $ResetUI = {
-            $Ctrl.EdTree.Items.Clear()
-            $Ctrl.EdNameBox.Text = ""
-            # Reset new inputs
-            if ($Ctrl.EdPermIdentityBox) { $Ctrl.EdPermIdentityBox.Text = "" }
-            if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = "" }
-            if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = "" }
+    $ResetUI = {
+        $Ctrl.EdTree.Items.Clear()
+        $Ctrl.EdNameBox.Text = ""
+        # Reset new inputs
+        if ($Ctrl.EdPermIdentityBox) { $Ctrl.EdPermIdentityBox.Text = "" }
+        if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = "" }
+        if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = "" }
         
-            # Hide all panels
-            $Ctrl.EdNoSelPanel.Visibility = "Visible"
-            $Ctrl.EdPropPanel.Visibility = "Collapsed"
+        # Hide all panels
+        $Ctrl.EdNoSelPanel.Visibility = "Visible"
+        $Ctrl.EdPropPanel.Visibility = "Collapsed"
+        if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
+        if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+        if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+        
+        $Ctrl.EdLoadCb.Tag = $null; $Ctrl.EdLoadCb.SelectedIndex = -1
+        & $SetStatus -Msg "Interface réinitialisée."
+    }.GetNewClosure()
+
+    $LoadTemplateList = {
+        try {
+            $tpls = @(Get-AppSPTemplates)
+            $Ctrl.EdLoadCb.ItemsSource = $tpls
+            $Ctrl.EdLoadCb.DisplayMemberPath = "DisplayName"
+        }
+        catch { }
+    }.GetNewClosure()
+    & $LoadTemplateList
+
+    $Ctrl.EdBtnNew.Add_Click({
+            if ($Ctrl.EdTree.Items.Count -gt 0) {
+                if ([System.Windows.MessageBox]::Show("Tout effacer et créer un nouveau modèle ?", "Confirmation", "YesNo", "Warning") -eq 'No') { return }
+            }
+            & $ResetUI
+            & $SetStatus -Msg "Nouveau modèle vierge prêt."
+        }.GetNewClosure())
+
+    $Ctrl.EdBtnLoad.Add_Click({
+            $selectedTpl = $Ctrl.EdLoadCb.SelectedItem
+            if (-not $selectedTpl) { & $SetStatus -Msg "Aucun modèle sélectionné." -Type "Warning"; return }
+            
+            if ($Ctrl.EdTree.Items.Count -gt 0) { if ([System.Windows.MessageBox]::Show("Charger va écraser le modèle actuel. Continuer ?", "Attention", "YesNo", "Warning") -ne 'Yes') { return } }
+            
+            if ($Ctrl.EdTree) { Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree }
+                
+            # Use Helper to hide all -> avoid null ref on missing panels
+            # Use Helper to hide all -> avoid null ref on missing panels
+            if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                
+            if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                
+            $Ctrl.EdLoadCb.Tag = $selectedTpl.TemplateId
+            
+            & $SetStatus -Msg "Modèle '$($selectedTpl.DisplayName)' chargé." -Type "Success"
+        }.GetNewClosure())
+
+    $Ctrl.EdBtnSave.Add_Click({
+            if ($Ctrl.EdTree.Items.Count -eq 0) { [System.Windows.MessageBox]::Show("L'arbre est vide.", "Erreur", "OK", "Warning"); return }
+
+            $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree
+            # Note : Plus besoin de faire le .Replace("'", "''") ici, c'est géré par le module Database
         
-            $Ctrl.EdLoadCb.Tag = $null; $Ctrl.EdLoadCb.SelectedIndex = -1
-            & $SetStatus -Msg "Interface réinitialisée."
-        }.GetNewClosure()
+            $currentId = $Ctrl.EdLoadCb.Tag
+            $currentName = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "" }
 
-        $LoadTemplateList = {
-            try {
-                $tpls = @(Get-AppSPTemplates)
-                $Ctrl.EdLoadCb.ItemsSource = $tpls
-                $Ctrl.EdLoadCb.DisplayMemberPath = "DisplayName"
-            }
-            catch { }
-        }.GetNewClosure()
-        & $LoadTemplateList
-
-        $Ctrl.EdBtnNew.Add_Click({
-                if ($Ctrl.EdTree.Items.Count -gt 0) {
-                    if ([System.Windows.MessageBox]::Show("Tout effacer et créer un nouveau modèle ?", "Confirmation", "YesNo", "Warning") -eq 'No') { return }
-                }
-                & $ResetUI
-                & $SetStatus -Msg "Nouveau modèle vierge prêt."
-            }.GetNewClosure())
-
-        $Ctrl.EdBtnLoad.Add_Click({
-                $selectedTpl = $Ctrl.EdLoadCb.SelectedItem
-                if (-not $selectedTpl) { & $SetStatus -Msg "Aucun modèle sélectionné." -Type "Warning"; return }
-            
-                if ($Ctrl.EdTree.Items.Count -gt 0) { if ([System.Windows.MessageBox]::Show("Charger va écraser le modèle actuel. Continuer ?", "Attention", "YesNo", "Warning") -ne 'Yes') { return } }
-            
-                if ($Ctrl.EdTree) { Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree }
-                
-                # Use Helper to hide all -> avoid null ref on missing panels
-                # Use Helper to hide all -> avoid null ref on missing panels
-                if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
-                if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
-                if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
-                if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
-                
-                if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
-                
-                $Ctrl.EdLoadCb.Tag = $selectedTpl.TemplateId
-            
-                & $SetStatus -Msg "Modèle '$($selectedTpl.DisplayName)' chargé." -Type "Success"
-            }.GetNewClosure())
-
-        $Ctrl.EdBtnSave.Add_Click({
-                if ($Ctrl.EdTree.Items.Count -eq 0) { [System.Windows.MessageBox]::Show("L'arbre est vide.", "Erreur", "OK", "Warning"); return }
-
-                $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree
-                # Note : Plus besoin de faire le .Replace("'", "''") ici, c'est géré par le module Database
-        
-                $currentId = $Ctrl.EdLoadCb.Tag
-                $currentName = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "" }
-
-                if ($currentId) {
-                    $msg = "Le modèle '$currentName' est actuellement chargé.`n`nVoulez-vous écraser les modifications ?`n`nOUI : Écraser l'existant`nNON : Créer une copie (Enregistrer sous)`nANNULER : Ne rien faire"
-                    $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
-                    switch ($choice) {
-                        'Cancel' { return }
-                        'No' {
-                            $currentId = $null
-                            Add-Type -AssemblyName Microsoft.VisualBasic
-                            $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom du nouveau modèle :", "Enregistrer une copie", "$currentName - Copie")
-                            if ([string]::IsNullOrWhiteSpace($newName)) { return }
-                            $currentName = $newName
-                        }
-                    }
-                }
-
-                if (-not $currentId) {
-                    if ([string]::IsNullOrWhiteSpace($currentName)) {
+            if ($currentId) {
+                $msg = "Le modèle '$currentName' est actuellement chargé.`n`nVoulez-vous écraser les modifications ?`n`nOUI : Écraser l'existant`nNON : Créer une copie (Enregistrer sous)`nANNULER : Ne rien faire"
+                $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
+                switch ($choice) {
+                    'Cancel' { return }
+                    'No' {
+                        $currentId = $null
                         Add-Type -AssemblyName Microsoft.VisualBasic
-                        $currentName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom du nouveau modèle :", "Sauvegarder", "Mon Nouveau Modèle")
+                        $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom du nouveau modèle :", "Enregistrer une copie", "$currentName - Copie")
+                        if ([string]::IsNullOrWhiteSpace($newName)) { return }
+                        $currentName = $newName
                     }
-                    if ([string]::IsNullOrWhiteSpace($currentName)) { return }
-                    $currentId = [Guid]::NewGuid().ToString()
                 }
+            }
 
-                try {
-                    # APPEL PROPRE AU MODULE DATABASE
-                    Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description "Modèle personnalisé" -StructureJson $json
-            
-                    # [System.Windows.MessageBox]::Show("Modèle '$currentName' sauvegardé !", "Succès", "OK", "Information")
-                    & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
-            
-                    & $LoadTemplateList
-                    $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1
-                    if ($newItem) { $Ctrl.EdLoadCb.SelectedItem = $newItem; $Ctrl.EdLoadCb.Tag = $currentId }
-
+            if (-not $currentId) {
+                if ([string]::IsNullOrWhiteSpace($currentName)) {
+                    Add-Type -AssemblyName Microsoft.VisualBasic
+                    $currentName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom du nouveau modèle :", "Sauvegarder", "Mon Nouveau Modèle")
                 }
-                catch { & $SetStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
+                if ([string]::IsNullOrWhiteSpace($currentName)) { return }
+                $currentId = [Guid]::NewGuid().ToString()
+            }
 
-            }.GetNewClosure())
+            try {
+                # APPEL PROPRE AU MODULE DATABASE
+                Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description "Modèle personnalisé" -StructureJson $json
+            
+                # [System.Windows.MessageBox]::Show("Modèle '$currentName' sauvegardé !", "Succès", "OK", "Information")
+                & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
+            
+                & $LoadTemplateList
+                $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1
+                if ($newItem) { $Ctrl.EdLoadCb.SelectedItem = $newItem; $Ctrl.EdLoadCb.Tag = $currentId }
 
-        if ($Ctrl.EdBtnDeleteTpl) {
-            $Ctrl.EdBtnDeleteTpl.Add_Click({
-                    $currentId = $Ctrl.EdLoadCb.Tag
-                    if (-not $currentId -and $Ctrl.EdLoadCb.SelectedItem) { $currentId = $Ctrl.EdLoadCb.SelectedItem.TemplateId }
-                    if (-not $currentId) { [System.Windows.MessageBox]::Show("Aucun modèle sélectionné.", "Info", "OK", "Information"); return }
+            }
+            catch { & $SetStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
+
+        }.GetNewClosure())
+
+    if ($Ctrl.EdBtnDeleteTpl) {
+        $Ctrl.EdBtnDeleteTpl.Add_Click({
+                $currentId = $Ctrl.EdLoadCb.Tag
+                if (-not $currentId -and $Ctrl.EdLoadCb.SelectedItem) { $currentId = $Ctrl.EdLoadCb.SelectedItem.TemplateId }
+                if (-not $currentId) { [System.Windows.MessageBox]::Show("Aucun modèle sélectionné.", "Info", "OK", "Information"); return }
             
-                    $nom = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "ce modèle" }
+                $nom = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "ce modèle" }
             
-                    if ([System.Windows.MessageBox]::Show("Supprimer définitivement '$nom' ?", "Suppression", "YesNo", "Error") -eq 'Yes') {
-                        try {
-                            # APPEL PROPRE AU MODULE DATABASE
-                            Remove-AppSPTemplate -TemplateId $currentId
+                if ([System.Windows.MessageBox]::Show("Supprimer définitivement '$nom' ?", "Suppression", "YesNo", "Error") -eq 'Yes') {
+                    try {
+                        # APPEL PROPRE AU MODULE DATABASE
+                        Remove-AppSPTemplate -TemplateId $currentId
                     
-                            & $SetStatus -Msg "Modèle '$nom' supprimé." -Type "Normal"
-                            & $LoadTemplateList; & $ResetUI
-                        }
-                        catch { & $SetStatus -Msg "Erreur suppression : $($_.Exception.Message)" -Type "Error" }
+                        & $SetStatus -Msg "Modèle '$nom' supprimé." -Type "Normal"
+                        & $LoadTemplateList; & $ResetUI
                     }
-                }.GetNewClosure())
-        }
+                    catch { & $SetStatus -Msg "Erreur suppression : $($_.Exception.Message)" -Type "Error" }
+                }
+            }.GetNewClosure())
     }
 }

@@ -427,7 +427,9 @@
                                     <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10" CornerRadius="0,0,15,15">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <Button x:Name="EditorAddRootButton" Content="##loc:sp_builder.btn_add_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un dossier à la racine"/>
+                                            <Button x:Name="EditorAddRootLinkButton" Content="##loc:sp_builder.btn_add_link_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un lien à la racine"/>
                                             <Button x:Name="EditorAddChildButton" Content="##loc:sp_builder.btn_add_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un sous-dossier"/>
+                                            <Button x:Name="EditorAddChildLinkButton" Content="+ Lien (Enfant)" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un lien dans ce dossier"/>
                                             <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer l'élément sélectionné"/>
                                         </StackPanel>
                                     </Border>
@@ -517,32 +519,7 @@
                                                     </ListBox.ItemContainerStyle>
                                                 </ListBox>
 
-                                                <!-- 4. Liens  -->
-                                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
-                                                <Grid Margin="0,0,0,10">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="##loc:sp_builder.label_links_shortcuts##" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                    <Button x:Name="EditorAddLinkButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un lien"/>
-                                                </Grid>
 
-                                                <!-- Liste Liens -->
-                                                <ListBox x:Name="EditorLinksListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
-                                                    <ListBox.ItemContainerStyle>
-                                                        <Style TargetType="ListBoxItem">
-                                                            <Setter Property="Padding" Value="0"/>
-                                                            <Setter Property="Margin" Value="0,0,0,5"/>
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="ListBoxItem">
-                                                                        <ContentPresenter/>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                        </Style>
-                                                    </ListBox.ItemContainerStyle>
-                                                </ListBox>
 
                                             </StackPanel>
 
