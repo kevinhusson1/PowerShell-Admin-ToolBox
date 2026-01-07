@@ -427,12 +427,12 @@
                                     <!-- Toolbar Arbre -->
                                     <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10" CornerRadius="0,0,15,15">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button x:Name="EditorAddRootButton" Content="##loc:sp_builder.btn_add_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un dossier à la racine"/>
-                                            <Button x:Name="EditorAddRootLinkButton" Content="##loc:sp_builder.btn_add_link_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un lien à la racine"/>
-                                            <Button x:Name="EditorAddChildButton" Content="##loc:sp_builder.btn_add_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un sous-dossier"/>
-                                            <Button x:Name="EditorAddChildLinkButton" Content="+ Lien (Enfant)" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un lien dans ce dossier"/>
-                                            <Button x:Name="EditorAddPubButton" Content="🚀 + Public." Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="Ajouter un nœud de publication (Lien de partage)" Background="#FFF3E0" Foreground="#E65100"/>
-                                            <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer l'élément sélectionné"/>
+                                            <Button x:Name="EditorAddRootButton" Content="##loc:sp_builder.btn_add_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_root##"/>
+                                            <Button x:Name="EditorAddRootLinkButton" Content="##loc:sp_builder.btn_add_link_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_link_root##"/>
+                                            <Button x:Name="EditorAddChildButton" Content="##loc:sp_builder.btn_add_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_child##"/>
+                                            <Button x:Name="EditorAddChildLinkButton" Content="##loc:sp_builder.btn_add_link_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_link_child##"/>
+                                            <Button x:Name="EditorAddPubButton" Content="##loc:sp_builder.btn_add_publication##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_publication##" Background="#FFF3E0" Foreground="#E65100"/>
+                                            <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="##loc:form_editor.delete_tooltip##"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -584,17 +584,17 @@
                                                 <Border Background="#FFF3E0" CornerRadius="4" Padding="10" Margin="0,0,0,20">
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="🚀" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Publication (Partage)" FontWeight="SemiBold" Foreground="#E65100"/>
+                                                        <TextBlock Text="##loc:sp_builder.title_edit_pub##" FontWeight="SemiBold" Foreground="#E65100"/>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <TextBlock Text="Nom de la publication :" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_pub_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10"/>
 
-                                                <TextBlock Text="Site Cible :" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="##loc:sp_builder.label_pub_target_site##" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="EdPubSiteModeBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,5">
-                                                    <ComboBoxItem Content="Site Courant (Auto)"/>
-                                                    <ComboBoxItem Content="Autre Site (URL)"/>
+                                                    <ComboBoxItem Content="##loc:sp_builder.opt_site_current##"/>
+                                                    <ComboBoxItem Content="##loc:sp_builder.opt_site_other##"/>
                                                 </ComboBox>
                                                 <TextBox x:Name="EdPubSiteUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,0,10" Visibility="Collapsed" Text="https://..."/>
 

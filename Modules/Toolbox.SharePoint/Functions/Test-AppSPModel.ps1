@@ -13,6 +13,17 @@ function Test-AppSPModel {
     # + Leading/Trailing dots or spaces (géré souvent par PnP mais à éviter)
     $forbiddenChars = '[~"#%&*:<>?/\\{|}]'
     
+    # Helper Localisation Safe
+    function Loc($key, $fArgs) {
+        if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
+            $s = Get-AppLocalizedString -Key ("sp_builder." + $key)
+            if ($s.StartsWith("MISSING:")) { return $key } # Pas trouvé
+            if ($null -ne $fArgs) { return $s -f $fArgs }
+            return $s
+        }
+        return $key # Fallback simple
+    }
+
     # --- LEVEL 2 : Validation Connectée ---
     if ($Connection) {
         Write-Verbose "Mode Connecté activé"
@@ -28,10 +39,30 @@ function Test-AppSPModel {
                         NodeName = "Racine"
                         Path     = "/"
                         Status   = "Error"
-                        Message  = "La bibliothèque cible '$TargetLibraryName' est introuvable sur le site."
+                        Message  = (Loc "validation_err_lib_not_found" $TargetLibraryName)
                         Level    = "Connected"
                     })
             }
+        }
+    }
+
+    # --- LEVEL 3 : Validation Métadonnées (Cache) ---
+    $knownFields = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    
+    if ($Connection -and -not [string]::IsNullOrWhiteSpace($TargetLibraryName)) {
+        try {
+            Write-Verbose "Niveau 3 : Chargement des colonnes de la bibliothèque..."
+            $fields = Get-PnPField -List $TargetLibraryName -Connection $Connection -ErrorAction Stop
+            if ($fields) {
+                foreach ($f in $fields) {
+                    $knownFields.Add($f.InternalName) | Out-Null
+                    $knownFields.Add($f.Title) | Out-Null
+                    $knownFields.Add($f.StaticName) | Out-Null
+                }
+            }
+        }
+        catch {
+            Write-Verbose "Impossible de charger les colonnes : $_"
         }
     }
 
@@ -46,7 +77,7 @@ function Test-AppSPModel {
                         NodeName = $node.Name
                         Path     = $path
                         Status   = "Error"
-                        Message  = "Le nom contient des caractères interdits par SharePoint (~ # % & * : < > ? / \ { | })."
+                        Message  = (Loc "validation_err_forbidden_chars" $null)
                         Level    = "Static"
                     })
             }
@@ -56,7 +87,7 @@ function Test-AppSPModel {
                         NodeName = $node.Name
                         Path     = $path
                         Status   = "Warning"
-                        Message  = "Le nom est très long (>128 chars), risque de dépassement de limite URL."
+                        Message  = (Loc "validation_err_name_length" $null)
                         Level    = "Static"
                     })
             }
@@ -67,7 +98,7 @@ function Test-AppSPModel {
                     NodeName = "???"
                     Path     = $path
                     Status   = "Error"
-                    Message  = "Le nom du dossier est vide."
+                    Message  = (Loc "validation_err_empty_name" $null)
                     Level    = "Static"
                 })
         }
@@ -81,7 +112,7 @@ function Test-AppSPModel {
                             NodeName = $node.Name
                             Path     = $path
                             Status   = "Error"
-                            Message  = "L'URL du site cible est invalide."
+                            Message  = (Loc "validation_err_invalid_url" $null)
                             Level    = "Static"
                         })
                 }
@@ -92,7 +123,7 @@ function Test-AppSPModel {
                         NodeName = $node.Name
                         Path     = $path
                         Status   = "Warning"
-                        Message  = "Aucun utilisateur défini pour les droits source."
+                        Message  = (Loc "validation_err_no_grant_user" $null)
                         Level    = "Static"
                     })
             }
@@ -107,7 +138,7 @@ function Test-AppSPModel {
                             NodeName = $node.Name
                             Path     = $path
                             Status   = "Error"
-                            Message  = "Utilisateur source '$($node.GrantUser)' introuvable dans l'annuaire."
+                            Message  = (Loc "validation_err_user_not_found" $node.GrantUser)
                             Level    = "Connected"
                         })
                 }
@@ -123,7 +154,7 @@ function Test-AppSPModel {
                             NodeName = $node.Name
                             Path     = $path
                             Status   = "Error"
-                            Message  = "Permission sans email configurée."
+                            Message  = (Loc "validation_err_perm_no_email" $null)
                             Level    = "Static"
                         })
                 }
@@ -139,8 +170,40 @@ function Test-AppSPModel {
                                 NodeName = $node.Name
                                 Path     = $path
                                 Status   = "Error"
-                                Message  = "Utilisateur/Groupe '$($perm.Email)' introuvable ou invalide."
+                                Message  = (Loc "validation_err_perm_user_not_found" $perm.Email)
                                 Level    = "Connected"
+                            })
+                    }
+                }
+            }
+        }
+        
+        # 4. Validation Métadonnées (LEVEL 3)
+        if ($node.Tags) {
+            foreach ($tag in $node.Tags) {
+                # Check Static
+                if ([string]::IsNullOrWhiteSpace($tag.Name)) {
+                    $results.Add([PSCustomObject]@{
+                            Id       = $node.Id
+                            NodeName = $node.Name
+                            Path     = $path
+                            Status   = "Error"
+                            Message  = (Loc "validation_err_tag_no_name" $null)
+                            Level    = "Static"
+                        })
+                    continue
+                }
+
+                # Check Connected
+                if ($Connection -and $knownFields.Count -gt 0) {
+                    if (-not $knownFields.Contains($tag.Name)) {
+                        $results.Add([PSCustomObject]@{
+                                Id       = $node.Id
+                                NodeName = $node.Name
+                                Path     = $path
+                                Status   = "Error"
+                                Message  = (Loc "validation_err_col_not_found" $tag.Name)
+                                Level    = "Metadata"
                             })
                     }
                 }

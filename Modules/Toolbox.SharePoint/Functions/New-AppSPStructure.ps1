@@ -21,25 +21,35 @@ function New-AppSPStructure {
         Write-AppLog -Message $m -Level Error -Collection $result.Logs -PassThru 
     }
 
+    function Loc($key, $fArgs) {
+        if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
+            $s = Get-AppLocalizedString -Key ("sp_builder." + $key)
+            if ($s.StartsWith("MISSING:")) { return $key }
+            if ($null -ne $fArgs) { return $s -f $fArgs }
+            return $s
+        }
+        return $key 
+    }
+
     try {
-        Log "Initialisation..." "DEBUG"
+        Log (Loc "log_deploy_init") "DEBUG"
         $cleanTenant = $TenantName -replace "\.onmicrosoft\.com$", "" -replace "\.sharepoint\.com$", ""
         
         $conn = Connect-PnPOnline -Url $TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
-        Log "Connexion établie sur $TargetSiteUrl" "INFO"
+        Log (Loc "log_deploy_connected" $TargetSiteUrl) "INFO"
 
-        Log "Vérification de la bibliothèque '$TargetLibraryName'..." "DEBUG"
+        Log (Loc "log_deploy_check_lib" $TargetLibraryName) "DEBUG"
         $targetLib = Get-PnPList -Identity $TargetLibraryName -Includes RootFolder -Connection $conn -ErrorAction Stop
         if (-not $targetLib) { throw "Bibliothèque introuvable." }
         
         # DEFINITION CIBLE (Correction)
         if (-not [string]::IsNullOrWhiteSpace($TargetFolderUrl)) {
             $libUrl = $TargetFolderUrl.TrimEnd('/')
-            Log "Cible définie : $libUrl" "DEBUG"
+            Log (Loc "log_deploy_target_def" $libUrl) "DEBUG"
         }
         else {
             $libUrl = $targetLib.RootFolder.ServerRelativeUrl.TrimEnd('/')
-            Log "Racine détectée (Auto) : $libUrl" "DEBUG"
+            Log (Loc "log_deploy_target_def" $libUrl) "DEBUG" # Réutilisation target_def pour simplifier
         }
         
         $structure = $StructureJson | ConvertFrom-Json
@@ -51,10 +61,9 @@ function New-AppSPStructure {
             if ($FolderObj.Type -eq "Link") {
                 $linkName = $FolderObj.Name
                 $linkUrl = $FolderObj.Url
-                Log "Création lien (Noeud) : $linkName ($linkUrl)" "INFO"
-                Log "Création lien (Noeud) : $linkName ($linkUrl)" "INFO"
+                Log (Loc "log_deploy_create_link" @($linkName, $linkUrl)) "INFO"
                 $resLink = New-AppSPLink -Name $linkName -TargetUrl $linkUrl -Folder $CurrentPath -Connection $conn
-                if ($resLink.Success) { Log "Lien créé avec succès." "DEBUG" }
+                if ($resLink.Success) { Log (Loc "log_deploy_link_ok") "DEBUG" }
                 else { Err "Erreur création lien '$linkName' : $($resLink.Message)" }
                 return # Stop ici pour un lien
             }
@@ -62,12 +71,12 @@ function New-AppSPStructure {
             $folderName = $FolderObj.Name
             $fullPath = "$CurrentPath/$folderName"
             
-            Log "Traitement du dossier : $fullPath" "INFO"
+            Log (Loc "log_deploy_folder_proc" $fullPath) "INFO"
             
-            # 1. CRÉATION DOSSIER
+            # 1. CRÉATION DOSSIER (Optimisé)
             try {
                 $folder = Add-PnPFolder -Name $folderName -Folder $CurrentPath -Connection $conn -ErrorAction Stop
-                Log "Dossier validé : $($folder.Name)" "DEBUG"
+                Log (Loc "log_deploy_folder_ok" $folder.Name) "DEBUG"
             }
             catch {
                 try {
@@ -114,7 +123,7 @@ function New-AppSPStructure {
                                 try {
                                     New-PnPUser -LoginName $email -Connection $conn -ErrorAction SilentlyContinue | Out-Null
                                     Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $email -AddRole $spRole -Connection $conn -ErrorAction Stop
-                                    Log "Permission ajoutée (après résolution) : $email" "INFO"
+                                    Log (Loc "log_deploy_perm_added" @($email, $spRole)) "INFO"
                                 }
                                 catch {
                                     Log "Erreur permission pour $email : $($_.Exception.Message)" "WARNING"
@@ -127,13 +136,13 @@ function New-AppSPStructure {
 
                 # 4. TAGS
                 if ($FolderObj.Tags) {
-                    Log "Application des tags..." "DEBUG"
+                    Log (Loc "log_deploy_apply_tags") "DEBUG"
                     $valuesHash = @{}
                     foreach ($tag in $FolderObj.Tags) { $valuesHash[$tag.Name] = $tag.Value }
                     if ($valuesHash.Count -gt 0) {
                         try {
                             Set-PnPListItem -List $TargetLibraryName -Identity $folderItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
-                            Log "Tags appliqués." "INFO"
+                            Log (Loc "log_deploy_tags_applied") "INFO"
                         }
                         catch { Err "Erreur Tags : $($_.Exception.Message)" }
                     }
@@ -143,9 +152,9 @@ function New-AppSPStructure {
             # 5. LIENS (INTERNES)
             if ($FolderObj.Links) {
                 foreach ($link in $FolderObj.Links) {
-                    Log "Création raccourci : $($link.Name)" "DEBUG"
+                    Log (Loc "log_deploy_create_link" @($link.Name, $link.Url)) "DEBUG"
                     $resLink = New-AppSPLink -Name $link.Name -TargetUrl $link.Url -Folder $folder.ServerRelativeUrl -Connection $conn
-                    if ($resLink.Success) { Log "Raccourci créé." "INFO" }
+                    if ($resLink.Success) { Log (Loc "log_deploy_link_ok") "INFO" }
                     else { Err "Erreur Lien : $($resLink.Message)" }
                 }
             }
@@ -156,20 +165,20 @@ function New-AppSPStructure {
             if ($FolderObj.Folders) {
                 $pubs = $FolderObj.Folders | Where-Object { $_.Type -eq "Publication" }
                 foreach ($pub in $pubs) {
-                    Log "🚀 Traitement Publication : $($pub.Name)" "INFO"
+                    Log (Loc "log_deploy_pub_proc" $pub.Name) "INFO"
                     
                     try {
                         # A. RÉCUPÉRATION URL SOURCE
                         $uri = New-Object Uri($TargetSiteUrl)
                         $baseHost = "$($uri.Scheme)://$($uri.Host)"
                         $sourceFullUrl = "$baseHost$($folder.ServerRelativeUrl)"
-                        Log "  > Source : $sourceFullUrl" "DEBUG"
+                        Log (Loc "log_deploy_pub_source" $sourceFullUrl) "DEBUG"
 
                         # B. DÉTERMINATION SITE CIBLE
                         $targetCtx = $conn 
                         
                         if ($pub.TargetSiteMode -eq "Url" -and -not [string]::IsNullOrWhiteSpace($pub.TargetSiteUrl)) {
-                            Log "  > Connexion cible distante : $($pub.TargetSiteUrl)" "DEBUG"
+                            Log (Loc "log_deploy_pub_remote_conn" $pub.TargetSiteUrl) "DEBUG"
                             try {
                                 $targetCtx = Connect-PnPOnline -Url $pub.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
                             }
@@ -188,67 +197,30 @@ function New-AppSPStructure {
                             $rawDestPath = "$rawDestPath/$RootFolderName"
                         }
                         
-                        try {
-                            $targetWeb = Get-PnPWeb -Connection $targetCtx
-                            $targetWebUrl = $targetWeb.ServerRelativeUrl
-                            
-                            $finalDestPath = $rawDestPath
-                            if (-not $finalDestPath.StartsWith("/")) { $finalDestPath = "/$finalDestPath" }
-                            
-                            # Nettoyage intelligent du path
-                            # Pour éviter de doubler /sites/X si l'input était relatif au serveur et pas au site
-                            if (-not $finalDestPath.StartsWith($targetWebUrl, [System.StringComparison]::InvariantCultureIgnoreCase)) {
-                                if ($targetWebUrl -ne "/") {
-                                    $finalDestPath = "$targetWebUrl$finalDestPath"
-                                }
-                            }
-                            
-                            # Conversion en Site Relative Path pour Resolve-PnPFolder
-                            $siteRelativeDestPath = $finalDestPath
-                            if ($siteRelativeDestPath.StartsWith($targetWebUrl, [System.StringComparison]::InvariantCultureIgnoreCase)) {
-                                $siteRelativeDestPath = $siteRelativeDestPath.Substring($targetWebUrl.Length)
-                            }
-                            $siteRelativeDestPath = $siteRelativeDestPath.TrimStart('/')
-                            
-                            Log "  > Chemin Cible (SiteRelative) : $siteRelativeDestPath" "DEBUG"
-                            
-                            # On tente de résoudre ou créer
-                            # Note: Resolve-PnPFolder nécessite un chemin relatif au site
-                            $targetFolder = Resolve-PnPFolder -SiteRelativePath $siteRelativeDestPath -Connection $targetCtx -ErrorAction SilentlyContinue
-                            
-                            $targetFolder = Resolve-PnPFolder -SiteRelativePath $siteRelativeDestPath -Connection $targetCtx -ErrorAction SilentlyContinue
-                            
-                            if (-not $targetFolder) {
-                                throw "Le dossier cible '$finalDestPath' n'existe pas (ou accès refusé)." 
-                            }
-                            
-                            # CRÉATION FICHIER VIA FONCTION CENTRALISÉE
-                            $resLink = New-AppSPLink -Name $linkName -TargetUrl $sourceFullUrl -Folder $finalDestPath -Connection $targetCtx
-                            
-                            if ($resLink.Success) {
-                                Log "  > Raccourci créé dans la cible : $finalDestPath/$linkName" "SUCCESS"
-                            }
-                            else {
-                                Log "  ⚠️ Erreur création raccourci : $($resLink.Message)" "WARNING"
-                            }
+                        Log (Loc "log_deploy_pub_target_path" $rawDestPath) "DEBUG"
+
+                        $resShortcut = New-AppSPLink -Name $linkName -TargetUrl $sourceFullUrl -Folder $rawDestPath -Connection $targetCtx
+                        if ($resShortcut.Success) {
+                            Log (Loc "log_deploy_pub_shortcut_ok" $resShortcut.ServerRelativeUrl) "SUCCESS"
                         }
-                        catch {
-                            Log "  ⚠️ Erreur cible : $($_.Exception.Message)" "WARNING"
+                        else {
+                            throw "Echec création raccourci : $($resShortcut.Message)"
                         }
 
-                        # D. ATTRIBUTION DES DROITS SOURCE
-                        if (-not [string]::IsNullOrWhiteSpace($pub.GrantUser)) {
-                            Log "  > Attribution droits source à : $($pub.GrantUser) ($($pub.GrantLevel))" "DEBUG"
+                        # D. ATTRIBUTION DROITS SOURCE (GRANT)
+                        if ($pub.GrantUser) {
+                            $spRole = switch ($pub.GrantLevel) { "Contribute" { "Contribute" } Default { "Read" } }
+                            Log (Loc "log_deploy_pub_grant" @($pub.GrantUser, $spRole)) "DEBUG"
                             try {
-                                $spRole = switch ($pub.GrantLevel) { "Contribute" { "Contribute" } Default { "Read" } }
                                 Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $pub.GrantUser -AddRole $spRole -Connection $conn -ErrorAction Stop
-                                Log "  > Droits appliqués OK." "INFO"
+                                Log (Loc "log_deploy_pub_rights_ok") "INFO"
                             }
                             catch {
+                                # Retry User
                                 try {
                                     New-PnPUser -LoginName $pub.GrantUser -Connection $conn -ErrorAction SilentlyContinue | Out-Null
                                     Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $pub.GrantUser -AddRole $spRole -Connection $conn -ErrorAction Stop
-                                    Log "  > Droits OK (après ajout user)." "INFO"
+                                    Log (Loc "log_deploy_pub_rights_ok") "INFO"
                                 }
                                 catch {
                                     Log "  ⚠️ Erreur droits : $($_.Exception.Message)" "WARNING"
@@ -261,7 +233,7 @@ function New-AppSPStructure {
                         Log "  ❌ Erreur traitement publication : $($_.Exception.Message)" "ERROR"
                     }
                 }
-            }
+            } # Fin Bloc Publication
 
             # 7. RÉCUPÉRATION RECURSIVE (Classique)
             if ($FolderObj.Folders) {
@@ -279,7 +251,7 @@ function New-AppSPStructure {
         $startPath = $libUrl
 
         if (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
-            Log "Création racine : $RootFolderName" "INFO"
+            Log (Loc "log_deploy_create_root" $RootFolderName) "INFO"
             try {
                 # Support Path Nesting (Parent/Child) via Resolve-PnPFolder
                 $fullRootPath = "$libUrl/$RootFolderName"
@@ -292,11 +264,11 @@ function New-AppSPStructure {
                     $pnpPath = $pnpPath.Substring($sitePath.Length).TrimStart('/') 
                 }
                 
-                Log "Path converti (PnP) : '$pnpPath'" "DEBUG"
+                Log (Loc "log_deploy_path_conv" $pnpPath) "DEBUG"
                 $rootFolder = Resolve-PnPFolder -SiteRelativePath $pnpPath -Connection $conn -ErrorAction Stop
                 
                 $startPath = $rootFolder.ServerRelativeUrl
-                Log "Racine OK : $startPath" "SUCCESS"
+                Log (Loc "log_deploy_root_ok" $startPath) "SUCCESS"
             }
             catch {
                 Err "Erreur racine : $($_.Exception.Message)"
@@ -317,7 +289,7 @@ function New-AppSPStructure {
             Process-Folder -CurrentPath $startPath -FolderObj $structure
         }
 
-        Log "Déploiement terminé." "SUCCESS"
+        Log (Loc "log_deploy_finished") "SUCCESS"
 
     }
     catch {

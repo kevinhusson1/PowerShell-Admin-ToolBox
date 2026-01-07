@@ -40,15 +40,23 @@ function Register-DeployEvents {
     $InvalidateState = {
         $ValidationState.IsValid = $false
         $Ctrl.BtnDeploy.IsEnabled = $false
-        & $UpdateSaveState # Met à jour BtnSaveConfig
         
-        # Feedback visuel optionnel (Log ?)
-        # if ($Ctrl.BtnValidate) { $Ctrl.BtnValidate.Content = "⚠️ Vérifier" } # Reset texte ?
+        # Check des pré-requis pour activer le bouton Vérifier
+        $hasSite = ($null -ne $Ctrl.CbSites.SelectedItem -and $Ctrl.CbSites.SelectedItem -isnot [string])
+        $hasLib = ($null -ne $Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string] -and $Ctrl.CbLibs.SelectedItem -ne "Chargement...")
+        $hasTpl = ($null -ne $Ctrl.CbTemplates.SelectedItem)
+
+        if ($Ctrl.BtnValidate) {
+            $Ctrl.BtnValidate.IsEnabled = ($hasSite -and $hasLib -and $hasTpl)
+        }
+
+        & $UpdateSaveState # Met à jour BtnSaveConfig
     }.GetNewClosure()
 
     # Initialisation : Désactivé par défaut
     $Ctrl.BtnDeploy.IsEnabled = $false
     $Ctrl.BtnSaveConfig.IsEnabled = $false
+    if ($Ctrl.BtnValidate) { $Ctrl.BtnValidate.IsEnabled = $false }
 
     # On attache l'invalidation aux changements de sélection
     if ($Ctrl.CbSites) { $Ctrl.CbSites.Add_SelectionChanged($InvalidateState) }
@@ -58,116 +66,140 @@ function Register-DeployEvents {
     # --- VALIDATION ---
     if ($Ctrl.BtnValidate) {
         $Ctrl.BtnValidate.Add_Click({
-                Write-AppLog -Message "🔍 Démarrage de la vérification du modèle (Niveau 1)..." -Level Info -RichTextBox $Ctrl.LogBox
+                # 1. UI LOCK & FEEDBACK
+                $Ctrl.BtnValidate.IsEnabled = $false
+                $oldCursor = [System.Windows.Input.Mouse]::OverrideCursor
+                [System.Windows.Input.Mouse]::OverrideCursor = [System.Windows.Input.Cursors]::Wait
             
-                # Reset avant check
-                $Ctrl.BtnDeploy.IsEnabled = $false
-                $ValidationState.IsValid = $false
-                & $UpdateSaveState
-                
-                $selTemplate = $Ctrl.CbTemplates.SelectedItem
-                if (-not $selTemplate) {
-                    Write-AppLog -Message "⚠️ Aucun modèle sélectionné." -Level Warning -RichTextBox $Ctrl.LogBox
-                 
-                    # Tentative de reload de la dernière chance
-                    try {
-                        $templates = @(Get-AppSPTemplates)
-                        if ($templates.Count -gt 0) {
-                            $Ctrl.CbTemplates.ItemsSource = $templates
-                            $Ctrl.CbTemplates.DisplayMemberPath = "DisplayName"
-                            $Ctrl.CbTemplates.SelectedIndex = 0
-                            $selTemplate = $templates[0]
-                            Write-AppLog -Message "✅ Modèles rechargés. Utilisation de '$($selTemplate.DisplayName)'." -Level Success -RichTextBox $Ctrl.LogBox
-                        }
-                    }
-                    catch {}
-
-                    if (-not $selTemplate) { return }
-                }
-
                 try {
-                    $structure = $selTemplate.StructureJson | ConvertFrom-Json
+                    Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_validation_start") -Level Info -RichTextBox $Ctrl.LogBox
                 
-                    # S'assurer que la fonction est dispo
-                    if (-not (Get-Command "Test-AppSPModel" -ErrorAction SilentlyContinue)) {
-                        Import-Module (Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint") -Force
-                    }
-
-                    # --- PRÉPARATION VALIDATION ---
-                    $params = @{ StructureData = $structure }
+                    # FORCE UI REFRESH (Permet d'afficher le log avant le freeze du traitemnt)
+                    $Ctrl.LogBox.Dispatcher.Invoke([Action] {}, [System.Windows.Threading.DispatcherPriority]::Background)
                 
-                    # Récupération Connexion (Niveau 2)
-                    $conn = $Global:AppSharePointConnection
+                    # Reset avant check
+                    $Ctrl.BtnDeploy.IsEnabled = $false
+                    $ValidationState.IsValid = $false
+                    & $UpdateSaveState
                 
-                    # Si pas de connexion active, tentative de connexion à la volée sur le SITE CIBLE
-                    if (-not $conn -or $conn.Url -ne $Ctrl.CbSites.SelectedItem.Url) {
-                        $tgtSite = $Ctrl.CbSites.SelectedItem
-                        if ($tgtSite -and $tgtSite.Url) {
-                            try {
-                                Write-AppLog -Message "🌍 Connexion PnP au site cible ($($tgtSite.Url))..." -Level Info -RichTextBox $Ctrl.LogBox
-                            
-                                $clientId = $Global:AppConfig.azure.authentication.userAuth.appId
-                                $thumb = $Global:AppConfig.azure.certThumbprint
-                                $tenant = $Global:AppConfig.azure.tenantName
-                            
-                                # Connexion directe au site
-                                $conn = Connect-PnPOnline -Url $tgtSite.Url -ClientId $clientId -Thumbprint $thumb -Tenant $tenant -ReturnConnection -ErrorAction Stop
-                                $Global:AppSharePointConnection = $conn
-                            }
-                            catch {
-                                Write-AppLog -Message "⚠️ Echec de connexion PnP : $($_.Exception.Message). Repli sur validation statique." -Level Warning -RichTextBox $Ctrl.LogBox
+                    $selTemplate = $Ctrl.CbTemplates.SelectedItem
+                    if (-not $selTemplate) {
+                        Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_no_template") -Level Warning -RichTextBox $Ctrl.LogBox
+                     
+                        # Tentative de reload de la dernière chance
+                        try {
+                            $templates = @(Get-AppSPTemplates)
+                            if ($templates.Count -gt 0) {
+                                $Ctrl.CbTemplates.ItemsSource = $templates
+                                $Ctrl.CbTemplates.DisplayMemberPath = "DisplayName"
+                                $Ctrl.CbTemplates.SelectedIndex = 0
+                                $selTemplate = $templates[0]
+                                $msgTemplate = (Get-AppLocalizedString -Key "sp_builder.log_template_reloaded") -f $selTemplate.DisplayName
+                                Write-AppLog -Message $msgTemplate -Level Success -RichTextBox $Ctrl.LogBox
                             }
                         }
+                        catch {}
+    
+                        if (-not $selTemplate) { return }
                     }
-
-                    # Niveau 2 : Si connecté
-                    if ($conn) {
-                        Write-AppLog -Message "🌍 Connexion active : Activation validation Niveau 2 (Utilisateurs & Bibliothèque)." -Level Info -RichTextBox $Ctrl.LogBox
-                        $params.Connection = $conn
+    
+                    try {
+                        $structure = $selTemplate.StructureJson | ConvertFrom-Json
                     
-                        if ($Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string]) {
-                            $params.TargetLibraryName = $Ctrl.CbLibs.SelectedItem.Title
+                        # S'assurer que la fonction est dispo
+                        if (-not (Get-Command "Test-AppSPModel" -ErrorAction SilentlyContinue)) {
+                            Import-Module (Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint") -Force
                         }
-                    }
-                    else {
-                        Write-AppLog -Message "☁️ Pas de connexion active : Validation Statique (Niveau 1) uniquement." -Level Info -RichTextBox $Ctrl.LogBox
-                    }    
-
-                    $issues = Test-AppSPModel @params
-                
-                    if ($issues.Count -eq 0) {
-                        Write-AppLog -Message "✅ Validation Réussie : Aucune erreur détectée." -Level Success -RichTextBox $Ctrl.LogBox
-                        
-                        # SUCCESS : Activation des boutons
-                        $ValidationState.IsValid = $true
-                        $Ctrl.BtnDeploy.IsEnabled = $true
-                        & $UpdateSaveState # Active BtnSaveConfig si tout est OK
-                    }
-                    else {
-                        $errCount = ($issues | Where-Object { $_.Status -eq 'Error' }).Count
-                        if ($errCount -gt 0) {
-                            Write-AppLog -Message "❌ Validation Échouée ($errCount erreurs) :" -Level Error -RichTextBox $Ctrl.LogBox
+    
+                        # --- PRÉPARATION VALIDATION ---
+                        $params = @{ StructureData = $structure }
+                    
+                        # Récupération Connexion (Niveau 2)
+                        $conn = $Global:AppSharePointConnection
+                    
+                        # Si pas de connexion active, tentative de connexion à la volée sur le SITE CIBLE
+                        if (-not $conn -or $conn.Url -ne $Ctrl.CbSites.SelectedItem.Url) {
+                            $tgtSite = $Ctrl.CbSites.SelectedItem
+                            if ($tgtSite -and $tgtSite.Url) {
+                                try {
+                                    $msgConn = (Get-AppLocalizedString -Key "sp_builder.log_validation_conn_target") -f $tgtSite.Url
+                                    Write-AppLog -Message $msgConn -Level Info -RichTextBox $Ctrl.LogBox
+                                    $Ctrl.LogBox.Dispatcher.Invoke([Action] {}, [System.Windows.Threading.DispatcherPriority]::Background)
+                                
+                                    $clientId = $Global:AppConfig.azure.authentication.userAuth.appId
+                                    $thumb = $Global:AppConfig.azure.certThumbprint
+                                    $tenant = $Global:AppConfig.azure.tenantName
+                                
+                                    # Connexion directe au site
+                                    $conn = Connect-PnPOnline -Url $tgtSite.Url -ClientId $clientId -Thumbprint $thumb -Tenant $tenant -ReturnConnection -ErrorAction Stop
+                                    $Global:AppSharePointConnection = $conn
+                                }
+                                catch {
+                                    $msgErr = (Get-AppLocalizedString -Key "sp_builder.log_validation_conn_failed") -f $_.Exception.Message
+                                    Write-AppLog -Message $msgErr -Level Warning -RichTextBox $Ctrl.LogBox
+                                }
+                            }
+                        }
+    
+                        # Niveau 2 : Si connecté
+                        if ($conn) {
+                            Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_validation_conn_active") -Level Info -RichTextBox $Ctrl.LogBox
+                            $params.Connection = $conn
+                    
+                            if ($Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string]) {
+                                $params.TargetLibraryName = $Ctrl.CbLibs.SelectedItem.Title
+                            }
                         }
                         else {
-                            Write-AppLog -Message "⚠️ Validation Terminée avec Avertissements :" -Level Warning -RichTextBox $Ctrl.LogBox
-                            # WARNING : On autorise quand même le déploiement ? 
-                            # Politique habituelle : Warning OK, Error KO.
+                            Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_validation_no_conn") -Level Info -RichTextBox $Ctrl.LogBox
+                        }
+                
+                        # FORCE REFRESH AVANT LE GROS CALCUL
+                        $Ctrl.LogBox.Dispatcher.Invoke([Action] {}, [System.Windows.Threading.DispatcherPriority]::Background)
+
+                        $issues = Test-AppSPModel @params
+                
+                        if ($issues.Count -eq 0) {
+                            Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_validation_success") -Level Success -RichTextBox $Ctrl.LogBox
+                        
+                            # SUCCESS : Activation des boutons
                             $ValidationState.IsValid = $true
                             $Ctrl.BtnDeploy.IsEnabled = $true
-                            & $UpdateSaveState
+                            & $UpdateSaveState # Active BtnSaveConfig si tout est OK
+                        }
+                        else {
+                            $errCount = ($issues | Where-Object { $_.Status -eq 'Error' }).Count
+                            if ($errCount -gt 0) {
+                                $msgFailed = (Get-AppLocalizedString -Key "sp_builder.log_validation_failed") -f $errCount
+                                Write-AppLog -Message $msgFailed -Level Error -RichTextBox $Ctrl.LogBox
+                            }
+                            else {
+                                Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_validation_warning") -Level Warning -RichTextBox $Ctrl.LogBox
+                                # WARNING : On autorise quand même le déploiement ? 
+                                # Politique habituelle : Warning OK, Error KO.
+                                $ValidationState.IsValid = $true
+                                $Ctrl.BtnDeploy.IsEnabled = $true
+                                & $UpdateSaveState
+                            }
+
+                            foreach ($issue in $issues) {
+                                $icon = switch ($issue.Status) { "Error" { "❌" } "Warning" { "⚠️" } Default { "ℹ️" } }
+                                # Mapping niveau de log
+                                $logLvl = switch ($issue.Status) { "Error" { "Error" } "Warning" { "Warning" } Default { "Info" } }
+                                Write-AppLog -Message "   $icon [$($issue.NodeName)] : $($issue.Message)" -Level $logLvl -RichTextBox $Ctrl.LogBox
+                            }
                         }
 
-                        foreach ($issue in $issues) {
-                            $icon = switch ($issue.Status) { "Error" { "❌" } "Warning" { "⚠️" } Default { "ℹ️" } }
-                            # Mapping niveau de log
-                            $logLvl = switch ($issue.Status) { "Error" { "Error" } "Warning" { "Warning" } Default { "Info" } }
-                            Write-AppLog -Message "   $icon [$($issue.NodeName)] : $($issue.Message)" -Level $logLvl -RichTextBox $Ctrl.LogBox
-                        }
                     }
-
+                    catch {
+                        $msgTech = (Get-AppLocalizedString -Key "sp_builder.log_validation_tech_error") -f $_.Exception.Message
+                        Write-AppLog -Message $msgTech -Level Error -RichTextBox $Ctrl.LogBox
+                    }
                 }
-                catch {
-                    Write-AppLog -Message "💥 Erreur technique lors de la validation : $($_.Exception.Message)" -Level Error -RichTextBox $Ctrl.LogBox
+                finally {
+                    # RESTORE UI
+                    $Ctrl.BtnValidate.IsEnabled = $true
+                    [System.Windows.Input.Mouse]::OverrideCursor = $oldCursor
                 }
             }.GetNewClosure())
     }
@@ -520,9 +552,24 @@ function Register-DeployEvents {
                 # C. NOM & SECURITE (Nouveau Dialogue XAML)
                 $dialogPath = Join-Path $Global:ProjectRoot "Templates\Dialogs\SaveConfigDialog.xaml"
                 
-                # Chargement sécurisé
+                # Chargement sécurisé avec Localisation
                 try {
-                    [xml]$xamlContent = Get-Content $dialogPath
+                    $rawXaml = Get-Content $dialogPath -Raw -Encoding UTF8
+                    
+                    # 1. Remplacement des tokens de localisation
+                    if ($rawXaml -match "##loc:(.+?)##") {
+                        $rawXaml = [System.Text.RegularExpressions.Regex]::Replace($rawXaml, "##loc:(.+?)##", {
+                                param($m) 
+                                $k = $m.Groups[1].Value
+                                # Utilisation commande locale ou fallback
+                                if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
+                                    return (Get-AppLocalizedString -Key $k)
+                                }
+                                return $k
+                            })
+                    }
+
+                    [xml]$xamlContent = $rawXaml
                     $xamlReader = New-Object System.Xml.XmlNodeReader $xamlContent
                     $dialogWin = [System.Windows.Markup.XamlReader]::Load($xamlReader)
 
