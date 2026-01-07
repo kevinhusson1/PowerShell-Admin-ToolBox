@@ -27,6 +27,7 @@
         'Get-AppUserAzureGroups',
         'Test-AppAzureCertConnection',
         'Test-AppAzureUserConnection',
-        'Connect-AppChildSession'
+        'Connect-AppChildSession',
+        'Get-AppCertificateStatus'
     )
 }

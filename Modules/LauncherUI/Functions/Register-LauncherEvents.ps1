@@ -1276,7 +1276,15 @@ function Register-LauncherEvents {
                     $result = Test-AppAzureCertConnection -TenantId $tenantId -ClientId $clientId -Thumbprint $thumb
                 
                     if ($result.Success) {
-                        [System.Windows.MessageBox]::Show("Connexion RÉUSSIE (Graph API) !`n`nLe certificat est valide pour l'application Azure.", "Succès", "OK", "Information")
+                        # Enrichissement du message
+                        $extraMsg = ""
+                        if (Get-Command Get-AppCertificateStatus -ErrorAction SilentlyContinue) {
+                            $st = Get-AppCertificateStatus -Thumbprint $thumb
+                            if ($st.Found) {
+                                $extraMsg = "`n`n[Etat Local]`nExpiration : $($st.ExpirationDate)`nJours restants : $($st.DaysRemaining)`nEmplacement : $($st.Location)"
+                            }
+                        }
+                        [System.Windows.MessageBox]::Show("Connexion RÉUSSIE (Graph API) !$extraMsg", "Succès", "OK", "Information")
                     }
                     else {
                         [System.Windows.MessageBox]::Show("Échec de la connexion :`n$($result.Message)", "Échec", "OK", "Error")

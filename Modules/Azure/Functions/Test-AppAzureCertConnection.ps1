@@ -22,6 +22,18 @@ function Test-AppAzureCertConnection {
         [Parameter(Mandatory)] [string]$Thumbprint
     )
 
+    # 1. Vérification locale préliminaire (Diagnostic Smart)
+    if (Get-Command Get-AppCertificateStatus -ErrorAction SilentlyContinue) {
+        $certStatus = Get-AppCertificateStatus -Thumbprint $Thumbprint
+        if (-not $certStatus.Found) {
+            return [PSCustomObject]@{ Success = $false; Message = "Le certificat (Thumbprint: $Thumbprint) est INTROUVABLE dans le magasin personnel ou machine local." }
+        }
+        if ($certStatus.IsExpired) {
+            return [PSCustomObject]@{ Success = $false; Message = "Le certificat est présent mais EXPIRÉ le $($certStatus.ExpirationDate)." }
+        }
+    }
+
+    # 2. Test Live
     # On utilise un Job pour isoler le contexte de connexion (App-Only) du contexte utilisateur du Launcher
     $job = Start-Job -ScriptBlock {
         param($t, $c, $th)
@@ -34,7 +46,8 @@ function Test-AppAzureCertConnection {
             $context = Get-MgContext
             if ($context) { return $true }
             return $false
-        } catch {
+        }
+        catch {
             throw $_.Exception.Message
         }
     } -ArgumentList $TenantId, $ClientId, $Thumbprint
@@ -62,7 +75,8 @@ function Test-AppAzureCertConnection {
 
     if ($output -eq $true) {
         return [PSCustomObject]@{ Success = $true; Message = "Connexion Certificat (Graph) réussie." }
-    } else {
+    }
+    else {
         return [PSCustomObject]@{ Success = $false; Message = "Échec de connexion : $errorMsg" }
     }
 }
