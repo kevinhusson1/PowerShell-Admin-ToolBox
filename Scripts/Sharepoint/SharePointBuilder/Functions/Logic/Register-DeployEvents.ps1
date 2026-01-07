@@ -530,7 +530,6 @@ function Register-DeployEvents {
     if ($Ctrl.BtnSaveConfig) {
         $Ctrl.BtnSaveConfig.Add_Click({
                 # A. VALIDATION STRICTE
-                # A. VALIDATION STRICTE
                 if (-not $Ctrl.BtnSaveConfig.IsEnabled) { return }
             
                 # B. RECUP DONNEES
@@ -754,19 +753,6 @@ function Register-DeployEvents {
                 }
                 # Si Cancel, on ne fait rien.
                 return
-                
-                # Ancien Code (Ignoré)
-                # $confName = [Microsoft.VisualBasic.Interaction]::InputBox...
-                if ($false) {
-                
-                    & $Log "Configuration '$confName' sauvegardée." "Success"
-                    [System.Windows.MessageBox]::Show("Configuration sauvegardée.", "Succès", "OK", "Information")
-                
-                    & $LoadDeployConfigs
-                }
-                catch {
-                    [System.Windows.MessageBox]::Show("Erreur sauvegarde : $($_.Exception.Message)", "Erreur", "OK", "Error")
-                }
             }.GetNewClosure())
     }
     

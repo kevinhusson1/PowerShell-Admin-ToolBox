@@ -31,14 +31,8 @@ function Global:New-EditorNode {
     $icon.Text = "📁"
     
     # Style Icône
-    $styleFound = $false
-    if ($app) {
-        $s = $app.TryFindResource("TreeItemIconStyle")
-        if ($s) { $icon.Style = $s; $styleFound = $true }
-    }
-    if (-not $styleFound) {
-        $icon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TreeItemIconStyle")
-    }
+    # Style Icône
+    $icon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TreeItemIconStyle")
     
     # 2. Nom du Dossier
     $text = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Name; VerticalAlignment = "Center"; Margin = "0,0,10,0" }
@@ -251,14 +245,7 @@ function Global:Update-EditorBadges {
         # Icône typée via Style
         $mIcon = New-Object System.Windows.Controls.TextBlock 
         
-        $styleFound = $false
-        if ($app) {
-            $s = $app.TryFindResource($StyleKey)
-            if ($s) { $mIcon.Style = $s; $styleFound = $true }
-        }
-        if (-not $styleFound) {
-            $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, $StyleKey)
-        }
+        $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, $StyleKey)
 
         $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Text; FontSize = 11; VerticalAlignment = "Center" }
         

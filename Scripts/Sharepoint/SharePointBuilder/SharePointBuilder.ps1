@@ -53,7 +53,6 @@ try {
     $Global:AppConfig = Get-AppConfiguration
     $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
 
-    $Global:AppConfig = Get-AppConfiguration
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage
     
     # Chargement Loc Locale
@@ -85,7 +84,6 @@ try {
     $builderLogicPath = Join-Path $scriptRoot "Functions\Initialize-BuilderLogic.ps1"
     if (Test-Path $builderLogicPath) {
         . $builderLogicPath
-        # ... (Configuration du contexte Autopilot inchangée) ...
         $context = @{ 
             Window          = $window;
             ScriptRoot      = $scriptRoot;

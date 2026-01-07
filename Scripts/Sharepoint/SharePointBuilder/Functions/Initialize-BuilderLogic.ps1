@@ -34,7 +34,6 @@ function Initialize-BuilderLogic {
     $Ctrl.BtnDeploy.IsEnabled = $false
 
     # 4. Récupération de la logique de Validation (EXTERNALISÉE)
-    # C'est ici la correction : on appelle la fonction au lieu d'écrire le code en dur
     $PreviewLogic = Get-PreviewLogic -Ctrl $Ctrl -Window $Window
 
     # 5. Câblage avec passage du CONTEXTE

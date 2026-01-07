@@ -51,7 +51,7 @@ function Get-BuilderControls {
         CbTemplates          = $Window.FindName("TemplateComboBox")
         
         # --- CONFIG DOSSIER ---
-        ChkCreateFolder      = $Window.FindName("CreateFolderCheckBox") # <--- CRITIQUE
+        ChkCreateFolder      = $Window.FindName("CreateFolderCheckBox")
         CbFolderTemplates    = $Window.FindName("FolderTemplateComboBox")
         
         # --- FORMULAIRE ---
@@ -96,19 +96,19 @@ function Get-BuilderControls {
         EdBtnRootLink        = $Window.FindName("EditorAddRootLinkButton")
         EdBtnChild           = $Window.FindName("EditorAddChildButton")
         EdBtnChildLink       = $Window.FindName("EditorAddChildLinkButton")
-        EdBtnAddPub          = $Window.FindName("EditorAddPubButton") # NEW
+        EdBtnAddPub          = $Window.FindName("EditorAddPubButton")
         EdBtnDel             = $Window.FindName("EditorDeleteNodeButton")
 
         # --- EDITEUR (Props) ---
         # --- EDITEUR (Props Panels) ---
         # USE ROBUST FIND
-        EdPropPanel          = & $Find "EdPanelFolder" # Renamed from EditorPropertiesPanel
-        EdPropPanelPerm      = & $Find "EdPanelPerm"   # Renamed from EditorPermissionPanel
-        EdPropPanelTag       = & $Find "EdPanelTag"    # Renamed from EditorTagPanel
-        EdPropPanelLink      = & $Find "EdPanelLink"   # Renamed from EditorLinkPanel
-        EdPropPanelPub       = & $Find "EdPanelPub"    # NEW
+        EdPropPanel          = & $Find "EdPanelFolder"
+        EdPropPanelPerm      = & $Find "EdPanelPerm"
+        EdPropPanelTag       = & $Find "EdPanelTag"
+        EdPropPanelLink      = & $Find "EdPanelLink"
+        EdPropPanelPub       = & $Find "EdPanelPub"
 
-        EdNoSelPanel         = & $Find "EdPanelNoSel"  # Renamed from EditorNoSelectionPanel
+        EdNoSelPanel         = & $Find "EdPanelNoSel"
         
         # Folder Inputs
         EdNameBox            = $Window.FindName("EditorFolderNameTextBox")
@@ -154,7 +154,7 @@ function Get-BuilderControls {
         FormBtnNew           = $Window.FindName("FormNewButton")
         FormBtnSave          = $Window.FindName("FormSaveButton")
         FormBtnDelTpl        = $Window.FindName("FormDeleteButton")
-        FormStatusText       = $Window.FindName("FormStatusText") # <--- AJOUT
+        FormStatusText       = $Window.FindName("FormStatusText")
 
         # --- FORMULAIRE EDITOR (List & Actions) ---
         FormList             = $Window.FindName("FormFieldsListBox")
@@ -175,7 +175,7 @@ function Get-BuilderControls {
         PropOptions          = $Window.FindName("PropOptionsBox")
         PropWidth            = $Window.FindName("PropWidthBox")
         
-        PanelName            = $Window.FindName("PanelPropName")     # <--- AJOUT
+        PanelName            = $Window.FindName("PanelPropName")
         PanelContent         = $Window.FindName("PanelPropContent")
         PanelDefault         = $Window.FindName("PanelPropDefault")
         PanelOptions         = $Window.FindName("PanelPropOptions")
@@ -186,7 +186,7 @@ function Get-BuilderControls {
 
         # --- FORMULAIRE EDITOR (Preview) ---
         FormLivePreview      = $Window.FindName("FormLivePreviewPanel")
-        FormResultText       = $Window.FindName("FormResultPreviewText") # <--- AJOUT
+        FormResultText       = $Window.FindName("FormResultPreviewText")
     }
 
     if (-not $Ctrl.CbSites -or -not $Ctrl.BtnDeploy) { return $null }

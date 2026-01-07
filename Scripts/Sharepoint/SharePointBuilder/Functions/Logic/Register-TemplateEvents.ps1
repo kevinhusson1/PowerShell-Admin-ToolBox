@@ -82,7 +82,7 @@ function Register-TemplateEvents {
                 }
             }
             catch {
-                Write-Host "Erreur Refresh Templates : $_" 
+                Write-AppLog -Message "Erreur Refresh Templates : $_" -Level Error -RichTextBox $Ctrl.LogBox
             }
         }.GetNewClosure())
 
@@ -122,7 +122,7 @@ function Register-TemplateEvents {
                         if ($match) { $this.SelectedItem = $match }
                     }
                 }
-                catch { Write-Host "Erreur Refresh Rules : $_" }
+                catch { Write-AppLog -Message "Erreur Refresh Rules : $_" -Level Error -RichTextBox $Ctrl.LogBox }
             }.GetNewClosure())
 
         $Ctrl.CbFolderTemplates.Add_SelectionChanged({
