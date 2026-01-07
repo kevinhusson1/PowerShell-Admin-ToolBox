@@ -215,8 +215,12 @@ function Register-DeployEvents {
             # Si on ne crée pas de dossier, on passe une chaîne vide pour le nom du dossier
             $folderNameParam = if ($Ctrl.ChkCreateFolder.IsChecked) { $Ctrl.TxtPreview.Text } else { "" }
 
+            # --- CONFIGURATION JOB (LOCALISATION) ---
+            $lang = if ($Global:AppConfig.defaultLanguage) { $Global:AppConfig.defaultLanguage } else { "fr-FR" }
+            $locFile = Join-Path $Global:ProjectRoot "Scripts\Sharepoint\SharePointBuilder\Localization\$lang.json"
+
             $jobArgs = @{
-                ModPath       = Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint"
+                ModPath       = Join-Path $Global:ProjectRoot "Modules" # Racine des modules
                 Thumb         = $Global:AppConfig.azure.certThumbprint
                 ClientId      = $Global:AppConfig.azure.authentication.userAuth.appId
                 Tenant        = $Global:AppConfig.azure.tenantName
@@ -225,11 +229,22 @@ function Register-DeployEvents {
                 LibRelUrl     = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { $Ctrl.CbLibs.SelectedItem.RootFolder.ServerRelativeUrl }
                 FolderName    = $folderNameParam 
                 StructureJson = ($Ctrl.CbTemplates.SelectedItem.StructureJson)
+                LocFilePath   = $locFile
             }
 
             $job = Start-Job -ScriptBlock {
                 param($ArgsMap)
-                Import-Module $ArgsMap.ModPath -Force
+                
+                # --- INITIALISATION ENVIRONNEMENT JOB ---
+                $env:PSModulePath = "$($ArgsMap.ModPath);$($env:PSModulePath)"
+                
+                Import-Module "Localization" -Force
+                Import-Module "Toolbox.SharePoint" -Force
+                
+                if ($ArgsMap.LocFilePath -and (Test-Path $ArgsMap.LocFilePath)) {
+                    Add-AppLocalizationSource -FilePath $ArgsMap.LocFilePath
+                }
+
                 try {
                     New-AppSPStructure `
                         -TargetSiteUrl $ArgsMap.TargetUrl `

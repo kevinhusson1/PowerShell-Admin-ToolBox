@@ -4,6 +4,9 @@
 param(
     [string]$LauncherPID,
     [string]$AuthContext,
+    [string]$AuthUPN,     # Nouvelle méthode (Secure)
+    [string]$TenantId,    # ID du Tenant pour l'auth
+    [string]$ClientId,    # ID de l'App (AppId)
 
     # Paramètres Autopilot
     [string]$AutoSiteUrl,       # URL du site cible
@@ -95,18 +98,70 @@ try {
         Initialize-BuilderLogic -Context $context
     }
 
-    # --- GESTION DE L'IDENTITÉ (Alignement sur DefaultUI) ---
-    $authFunctionPath = Join-Path $scriptRoot "Functions\Enable-ScriptIdentity.ps1"
+    # --- GESTION DE L'IDENTITÉ (Standard v3.0) ---
     
-    if (Test-Path $authFunctionPath) {
-        # 1. Chargement
-        . $authFunctionPath
-        
-        # 2. Exécution DIRECTE (Comme DefaultUI)
-        # On ne passe plus par Add_Loaded. La fonction s'exécute, initialise l'état,
-        # met à jour les boutons, et lance les process async (PnP) en interne.
-        Enable-ScriptIdentity -Window $window -LauncherPID $LauncherPID -AuthContext $AuthContext
+    # Récupération de la config globale si les paramètres ne sont pas passés (Robustesse)
+    if (-not $TenantId) { $TenantId = $Global:AppConfig.azure.tenantId }
+    if (-not $ClientId) { $ClientId = $Global:AppConfig.azure.authentication.userAuth.appId }
+    
+    # A. Initialisation de l'identité
+    $userIdentity = $null
+
+    # PRIORITÉ 1: Nouvelle méthode Secure (UPN via Token Cache)
+    if (-not [string]::IsNullOrWhiteSpace($AuthUPN)) {
+        Write-Verbose "[Builder] AuthUPN reçu : $AuthUPN. Tentative de reprise de session..."
+        try {
+            $userIdentity = Connect-AppChildSession -AuthUPN $AuthUPN -TenantId $TenantId -ClientId $ClientId
+            if (-not $userIdentity.Connected) {
+                Write-Warning "[Builder] Connect-AppChildSession a retourné Connected=$false (Erreur: $($userIdentity.Error))"
+            }
+        }
+        catch {
+            Write-Warning "[Builder] Exception Auth Secure: $_" 
+            $userIdentity = @{ Connected = $false }
+        }
+    } 
+    # PRIORITÉ 2: Ancienne méthode (Fallback Legacy)
+    elseif (-not [string]::IsNullOrWhiteSpace($AuthContext)) {
+        Write-Verbose "[Builder] AuthContext Legacy détecté."
+        try {
+            $json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AuthContext))
+            $rawObj = $json | ConvertFrom-Json
+            $userIdentity = $rawObj.UserAuth 
+        }
+        catch { 
+            Write-Warning "[Builder] Echec Auth Legacy: $_"
+            $userIdentity = @{ Connected = $false } 
+        }
     }
+    else {
+        # Aucune info -> Non connecté
+        Write-Verbose "[Builder] Aucun contexte d'authentification initial."
+        $userIdentity = @{ Connected = $false }
+    }
+
+    # Définition des actions pour le mode autonome
+    $OnConnect = {
+        # Chargement à la volée des configs si nécessaire (si non passé par Launcher)
+        if (-not $Global:AppConfig) { $Global:AppConfig = Get-AppConfiguration -ProjectRoot $ProjectRoot }
+        
+        $newIdentity = Connect-AppAzureWithUser -AppId $Global:AppConfig.azure.authentication.userAuth.appId -TenantId $Global:AppConfig.azure.tenantId
+        
+        # Mise à jour immédiate de l'UI après connexion réussie
+        Set-AppWindowIdentity -Window $window -UserSession $newIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
+    }
+
+    $OnDisconnect = {
+        Disconnect-AppAzureUser
+        $nullIdentity = @{ Connected = $false }
+        Set-AppWindowIdentity -Window $window -UserSession $nullIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
+    }
+
+    # Application Visuelle (Module UI)
+    Set-AppWindowIdentity -Window $window -UserSession $userIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
+
+    # SYNCHRONISATION LEGACY pour compatibilité modules internes
+    if ($userIdentity.Connected) { $Global:AppAzureAuth = @{ UserAuth = $userIdentity } }
 
 }
 catch {

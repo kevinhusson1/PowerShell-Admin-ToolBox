@@ -80,13 +80,36 @@ function Start-AppScript {
         $authContextEncoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($authJson))
 
         # 2. On LANCE le processus enfant.
-        $process = Start-Process pwsh.exe -ArgumentList @(
+        # 2. On LANCE le processus enfant.
+        $processArgs = @(
             "-NoProfile", 
             "-ExecutionPolicy", "Bypass", 
             "-File", $fullScriptPath, 
             "-LauncherPID", $PID,
-            "-AuthContext", $authContextEncoded # <-- Vérifiez que cette ligne est bien là
-        ) -PassThru -WindowStyle Hidden
+            "-AuthContext", $authContextEncoded
+        )
+
+        # [STANDARD V3.0]
+        # Injection systématique des paramètres d'identité sécurisés (Zero-Trust)
+        # Tous les scripts doivent accepter ces paramètres pour le SSO.
+        $processArgs += "-AuthUPN"
+        $processArgs += $Global:AppAzureAuth.UserAuth.UserPrincipalName
+        
+        $processArgs += "-TenantId"
+        $processArgs += $Global:AppConfig.azure.tenantId
+        
+        $processArgs += "-ClientId"
+        $processArgs += $Global:AppConfig.azure.authentication.userAuth.appId
+
+        # [DEBUGGING] Gestion de la visibilité et du verbose via la configuration
+        $windowStyle = 'Hidden'
+        # On convertit en string pour gérer à la fois le booléen $true et la chaîne "True" issue de SQLite
+        if ("$($Global:AppConfig.enableVerboseLogging)" -eq "True") {
+            $windowStyle = 'Normal'
+            $processArgs += "-Verbose"
+        }
+
+        $process = Start-Process pwsh.exe -ArgumentList $processArgs -PassThru -WindowStyle $windowStyle
         
         # 3. On ENREGISTRE le verrou avec le PID de l'enfant qu'on vient d'obtenir.
         # Add-AppScriptLock -Script $SelectedScript -OwnerPID $process.Id
@@ -108,7 +131,8 @@ function Start-AppScript {
         Write-LauncherLog -Message $logMessage -Level Info
 
         return $process
-    } catch {
+    }
+    catch {
         # Si une erreur se produit (ex: le script n'est pas trouvé) APRES que le processus a été créé,
         # on s'assure de ne pas laisser de verrou orphelin.
         if ($process) {

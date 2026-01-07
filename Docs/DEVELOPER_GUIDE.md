@@ -35,14 +35,51 @@ Ouvrez `MonNouveauScript.ps1`.
     *   Utilisez le dossier `Functions/` pour créer vos fonctions spécifiques (ex: `Functions/Process-User.ps1`).
     *   Chargez-les via "Dot-Sourcing" dans le script principal.
 
-## 5. Traduction (Localization)
+## 5. Gestion de l'Identité (Authentification)
+
+Depuis la version 3.0, l'authentification est gérée via un partage sécurisé du cache de token MSAL (SSO "Zero-Trust").
+
+### A. Paramètres Requis
+Votre script doit accepter les paramètres suivants pour recevoir l'identité depuis le Launcher :
+```powershell
+param(
+    [string]$LauncherPID,
+    [string]$AuthUPN,     # Requis pour le SSO
+    [string]$TenantId,
+    [string]$ClientId,
+    # ... autres params ...
+)
+```
+
+### B. Implémentation Standard (Logique)
+Utilisez la fonction **`Connect-AppChildSession`** (Module Azure) pour restaurer la session sans manipuler de secrets :
+```powershell
+$userIdentity = Connect-AppChildSession -AuthUPN $AuthUPN -TenantId $TenantId -ClientId $ClientId
+```
+
+### C. Interface Utilisateur (UI)
+Utilisez la fonction **`Set-AppWindowIdentity`** (Module UI) pour gérer le bouton d'identité (Initials, Nom, Déconnexion) :
+```powershell
+# Callbacks pour le mode autonome (Test/Dev)
+$OnConnect = { ... }
+$OnDisconnect = { ... }
+
+Set-AppWindowIdentity -Window $window `
+                      -UserSession $userIdentity `
+                      -LauncherPID $LauncherPID `
+                      -OnConnect $OnConnect `
+                      -OnDisconnect $OnDisconnect
+```
+*(Voir le script `DefaultUI.ps1` pour l'implémentation complète des callbacks.)*
+
+## 6. Traduction (Localization)
 
 1.  Ouvrez `Localization/fr-FR.json` dans votre dossier de script.
 2.  Changez la clé racine (ex: remplacez `default_ui` par `my_script`).
 3.  Ajoutez vos textes.
 4.  Dans le fichier XAML, utilisez les balises `##loc:my_script.ma_cle##`.
 
-## 6. Activation & Test
+## 7. Activation & Test
 
 1.  Lancez le **Launcher**.
 2.  Connectez-vous en tant qu'Administrateur.

@@ -36,6 +36,7 @@ function Get-PreviewLogic {
         $cChk = $Window.FindName("CreateFolderCheckBox")
         $cPreview = $Window.FindName("FolderNamePreviewText")
         $cBtn = $Window.FindName("DeployButton")
+        $cBtnValidate = $Window.FindName("ValidateModelButton")
         $cPanel = $Window.FindName("DynamicFormPanel")
         $cTree = $Window.FindName("PreviewTreeView")
 
@@ -88,7 +89,14 @@ function Get-PreviewLogic {
             $isValid = $hasSite -and $hasLib -and $hasTpl
         }
         
-        $cBtn.IsEnabled = $isValid
+        # FIX: Ne JAMIAS activer le bouton Déployer directement depuis le formulaire.
+        # Tout changement invalide la validation précédente et force une re-vérification.
+        if ($cBtn.IsEnabled) { $cBtn.IsEnabled = $false }
+
+        # On active le bouton de validation seulement si le formulaire est complet
+        if ($cBtnValidate) {
+            $cBtnValidate.IsEnabled = $isValid
+        }
 
     }.GetNewClosure()
 }

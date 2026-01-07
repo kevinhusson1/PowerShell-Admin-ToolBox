@@ -15,25 +15,30 @@ function Connect-AppAzureWithUser {
         if ($currentContext) {
             # On fait un appel léger pour vérifier qui est là
             try {
-                $me = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=userPrincipalName' -Method GET -ErrorAction Stop
+                $me = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=displayName,userPrincipalName' -Method GET -ErrorAction Stop
                 
                 # Si un Hint est fourni et que ça ne matche pas, on doit se déconnecter
                 if (-not [string]::IsNullOrWhiteSpace($HintUser) -and $me.userPrincipalName -ne $HintUser) {
                     Disconnect-MgGraph -ErrorAction SilentlyContinue
                     $currentContext = $null
-                } else {
+                }
+                else {
                     # C'est le bon user (ou on s'en fiche), on garde la session
-                    # On construit l'objet de retour directement
+                    
+                    # Fallback DisplayName & Initiales (Code dupliqué pour la robustesse)
+                    $displayName = if (-not [string]::IsNullOrWhiteSpace($me.DisplayName)) { $me.DisplayName } else { $me.userPrincipalName }
+                    $initials = (($displayName -split ' ' | Where-Object { $_ }) | ForEach-Object { $_.Substring(0, 1) }) -join ''
+
                     return [PSCustomObject]@{
                         Connected         = $true
                         Success           = $true
                         UserPrincipalName = $me.userPrincipalName
-                        # On ne peut pas récupérer le DisplayName facilement ici sans refaire un appel, mais ce n'est pas critique pour le check technique
-                        DisplayName       = $me.userPrincipalName 
-                        Initials          = "??" 
+                        DisplayName       = $displayName 
+                        Initials          = $initials
                     }
                 }
-            } catch {
+            }
+            catch {
                 # Token expiré ou invalide
                 $currentContext = $null
             }
@@ -44,10 +49,10 @@ function Connect-AppAzureWithUser {
             
             # Paramètres de connexion
             $connectParams = @{
-                Scopes = $Scopes
-                AppId = $AppId
-                TenantId = $TenantId
-                NoWelcome = $true
+                Scopes      = $Scopes
+                AppId       = $AppId
+                TenantId    = $TenantId
+                NoWelcome   = $true
                 ErrorAction = "Stop"
             }
 
@@ -60,20 +65,26 @@ function Connect-AppAzureWithUser {
 
         # 3. Récupération Infos Utilisateur (Confirmation finale)
         $user = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=displayName,userPrincipalName' -Method GET -ErrorAction Stop
-        
-        if (-not $user) { throw "Connexion établie mais impossible de lire le profil." }
 
-        $initials = (($user.DisplayName -split ' ' | Where-Object { $_ }) | ForEach-Object { $_.Substring(0,1) }) -join ''
+        if (-not $user) { throw "Connexion établie mais impossible de lire le profil." }
+        
+        Write-Verbose "[Auth] Données brutes reçues : $($user | ConvertTo-Json -Depth 1 -Compress)"
+
+        # Fallback de sécurité : Si le DisplayName est vide (compte technique), on prend l'UPN
+        $displayName = if (-not [string]::IsNullOrWhiteSpace($user.DisplayName)) { $user.DisplayName } else { $user.userPrincipalName }
+
+        $initials = (($displayName -split ' ' | Where-Object { $_ }) | ForEach-Object { $_.Substring(0, 1) }) -join ''
 
         return [PSCustomObject]@{
             Connected         = $true
             Success           = $true
             UserPrincipalName = $user.userPrincipalName
-            DisplayName       = $user.DisplayName
+            DisplayName       = $displayName
             Initials          = $initials
         }
 
-    } catch {
+    }
+    catch {
         return [PSCustomObject]@{ Success = $false; Connected = $false; ErrorMessage = $_.Exception.Message }
     }
 }

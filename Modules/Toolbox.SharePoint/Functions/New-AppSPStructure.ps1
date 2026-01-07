@@ -199,9 +199,20 @@ function New-AppSPStructure {
                         
                         Log (Loc "log_deploy_pub_target_path" $rawDestPath) "DEBUG"
 
+                        # FIX: Résolution du ServerRelativeUrl correct pour PnP
+                        # Add-PnPFile (via New-AppSPLink) exige un ServerRelativeUrl (/sites/...)
+                        try {
+                            $resolvedDest = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
+                            $rawDestPath = $resolvedDest.ServerRelativeUrl
+                        }
+                        catch {
+                            Log "  ⚠️ Erreur résolution dossier cible '$rawDestPath' : $($_.Exception.Message)" "WARNING"
+                            # On continue avec le path brut, qui échouera probablement, mais on aura tracé.
+                        }
+
                         $resShortcut = New-AppSPLink -Name $linkName -TargetUrl $sourceFullUrl -Folder $rawDestPath -Connection $targetCtx
                         if ($resShortcut.Success) {
-                            Log (Loc "log_deploy_pub_shortcut_ok" $resShortcut.ServerRelativeUrl) "SUCCESS"
+                            Log (Loc "log_deploy_pub_shortcut_ok" $resShortcut.File.ServerRelativeUrl) "SUCCESS"
                         }
                         else {
                             throw "Echec création raccourci : $($resShortcut.Message)"
@@ -238,9 +249,9 @@ function New-AppSPStructure {
             # 7. RÉCUPÉRATION RECURSIVE (Classique)
             if ($FolderObj.Folders) {
                 foreach ($sub in $FolderObj.Folders) {
-                    # On ignore les noeuds PUBLICATION ici car ils ne sont pas des dossiers physiques a créer EN DESSOUS
-                    # On ignore aussi les LIENS car traités au début (Loop 0)
-                    if ($sub.Type -ne "Publication" -and $sub.Type -ne "Link") {
+                    # On ignore les noeuds PUBLICATION ici car ils sont traités spécifiquement plus haut.
+                    # FIX: On laisse passer les LIENS (Type=Link) pour qu'ils soient traités par l'appel récursif (qui gère le cas unitaire).
+                    if ($sub.Type -ne "Publication") {
                         Process-Folder -CurrentPath $folder.ServerRelativeUrl -FolderObj $sub
                     }
                 }

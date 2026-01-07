@@ -12,10 +12,11 @@ Le script est organisé de manière modulaire pour séparer la vue (XAML) de la 
 
 - `SharePointBuilder.ps1` : **Point d'entrée**. Initialise l'environnement, charge les modules, connecte la base de données, gère l'authentification et lance l'interface graphique.
 - `SharePointBuilder.xaml` : Définition de l'interface utilisateur en **WPF**. Utilise un système de "tokens" (`##loc:key##`) pour la localisation.
-- `Functions/Logic/` : Contient les contrôleurs d'événements (Pattern Event-Driven) :
-  - `Register-SiteEvents.ps1` : Gère la navigation, l'arborescence SharePoint (Target Explorer), et la logique de pagination.
-  - `Register-DeployEvents.ps1` : Orchestre le lancement des déploiements, la gestion des Jobs asynchrones et la persistance des configurations.
-  - `Register-EditorLogic.ps1` : Logique de l'éditeur visuel de modèles JSON (CRUD sur l'arbre de structure).
+- `Functions/Logic/` : Contient les contrôleurs d'événements (Architecture V3 Modulaire) :
+  - `Register-SiteEvents.ps1` : Explorateur de cible (Target Explorer), navigation PnP et pagination.
+  - `Register-DeployEvents.ps1` : Moteur de déploiement (Jobs), validation (Test-AppSPModel) et persistance.
+  - `Register-EditorLogic.ps1` : Contrôleur de l'éditeur de modèles (TreeListView CRUD complet).
+  - `Register-FormEditorLogic.ps1` : Éditeur de règles de nommage (Dynamic Forms).
 - `Localization/fr-FR.json` : Fichier de ressources pour la traduction de l'interface.
 
 ### Base de Données (SQLite)
@@ -52,9 +53,9 @@ Permet de manipuler des structures JSON complexes sans éditer le texte manuelle
 
 - Gestion complète de l'arborescence (Ajout Racine/Enfant, Suppression).
 - Configuration détaillée des nœuds :
-  - **Permissions** : Ajout d'utilisateurs/groupes avec niveaux (Read, Contribute, FullControl).
+  - **Permissions** : Gestion fine des droits (Utilisateurs/Groupes Azure AD).
   - **Tags** : Métadonnées SharePoint (Taxonomie ou Champs Texte).
-  - **Liens** : Création de raccourcis `.url`.
+  - **Publications** : Création de liens transverses (`.url`) sécurisés vers d'autres sites.
 - Feedback visuel en temps réel et validation des données.
 
 ### 4. Authentification Hybride
@@ -69,6 +70,15 @@ L'application gère deux contextes d'authentification parallèles :
 - Module `Logging` avec la fonction `Write-AppLog`.
 - Supporte l'écriture multiple : Console (Verbose), Interface UI (RichTextBox), et Collection (Listes.
 - Format standardisé `[HH:mm:ss] [LEVEL] Message` garantissant une traçabilité uniforme entre le lanceur, l'application et les jobs enfants.
+
+### 6. Validation Avancée (Multi-Niveaux)
+
+Le Builder intègre un moteur de validation pré-déploiement (`Test-AppSPModel`) opérant en 3 passes :
+
+- **Niveau 1 (Statique)** : Analyse syntaxique, longueur des noms, caractères interdits.
+- **Niveau 2 (Connecté)** : Vérification de l'existence des users/groupes Azure AD et de la bibliothèque cible.
+- **Niveau 3 (Métadonnées)** : Validation des colonnes et termes taxonomiques sur le site cible.
+Les résultats sont présentés avec localisation précise des erreurs (Node Path).
 
 ---
 

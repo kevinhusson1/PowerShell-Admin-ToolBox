@@ -14,7 +14,7 @@
 # =====================================================================
 # ÉTAPE 0 : CONFIGURATION DE BASE
 # =====================================================================
-try {Add-Type -AssemblyName WindowsBase, PresentationCore, PresentationFramework} catch {}
+try { Add-Type -AssemblyName WindowsBase, PresentationCore, PresentationFramework } catch {}
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Global:ProjectRoot = $projectRoot
@@ -61,7 +61,8 @@ try {
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool IsIconic(IntPtr hWnd);
 "@
-} catch {
+}
+catch {
     Write-Warning "Impossible de charger les utilitaires d'API Win32 pour la gestion des fenêtres."
 }
 
@@ -128,7 +129,7 @@ try {
     $mainXamlPath = "$projectRoot\Templates\Layouts\MainLauncher.xaml"
     $mainWindow = Import-AppXamlTemplate -XamlPath $mainXamlPath
     $mainWindow.Title = "$(Get-AppText 'app.title') - $($Global:AppConfig.companyName)" 
-    $mainWindow.Width = 650
+    $mainWindow.Width = 560
     $mainWindow.Height = 750
     
     # ... (configuration de la fenêtre)
@@ -137,112 +138,112 @@ try {
     # --- 3. Peuplement de la hashtable de contrôles ---
     $Global:AppControls.Clear()
 
-    $Global:AppControls['mainWindow']                 = $mainWindow
-    $Global:AppControls['scriptsListBox']             = $mainWindow.FindName('ScriptsListBox')
-    $Global:AppControls['executeButton']              = $mainWindow.FindName('ExecuteButton')
-    $Global:AppControls['bringToFrontButton']         = $mainWindow.FindName('BringToFrontButton')
-    $Global:AppControls['statusTextBlock']            = $mainWindow.FindName('StatusTextBlock')
-    $Global:AppControls['globalCloseAppsButton']      = $mainWindow.FindName('GlobalCloseAppsButton')
-    $Global:AppControls['authStatusButton']           = $mainWindow.FindName('AuthStatusButton')
-    $Global:AppControls['AuthTextButton']             = $mainWindow.FindName('AuthTextButton')
+    $Global:AppControls['mainWindow'] = $mainWindow
+    $Global:AppControls['scriptsListBox'] = $mainWindow.FindName('ScriptsListBox')
+    $Global:AppControls['executeButton'] = $mainWindow.FindName('ExecuteButton')
+    $Global:AppControls['bringToFrontButton'] = $mainWindow.FindName('BringToFrontButton')
+    $Global:AppControls['statusTextBlock'] = $mainWindow.FindName('StatusTextBlock')
+    $Global:AppControls['globalCloseAppsButton'] = $mainWindow.FindName('GlobalCloseAppsButton')
+    $Global:AppControls['authStatusButton'] = $mainWindow.FindName('AuthStatusButton')
+    $Global:AppControls['AuthTextButton'] = $mainWindow.FindName('AuthTextButton')
 
-    $Global:AppControls['ConnectPromptPanel']         = $mainWindow.FindName('ConnectPromptPanel')
-    $Global:AppControls['descriptionTextBlock']       = $mainWindow.FindName('DescriptionTextBlock')
-    $Global:AppControls['versionTextBlock']           = $mainWindow.FindName('VersionTextBlock')
-    $Global:AppControls['defaultDetailText']          = $mainWindow.FindName('DefaultDetailText')
-    $Global:AppControls['scriptDetailPanel']          = $mainWindow.FindName('ScriptDetailPanel')
-    $Global:AppControls['DetailsPanelBorder']         = $mainWindow.FindName('DetailsPanelBorder')
-    $Global:AppControls['StatusBarBorder']            = $mainWindow.FindName('StatusBarBorder')
+    $Global:AppControls['ConnectPromptPanel'] = $mainWindow.FindName('ConnectPromptPanel')
+    $Global:AppControls['descriptionTextBlock'] = $mainWindow.FindName('DescriptionTextBlock')
+    $Global:AppControls['versionTextBlock'] = $mainWindow.FindName('VersionTextBlock')
+    $Global:AppControls['defaultDetailText'] = $mainWindow.FindName('DefaultDetailText')
+    $Global:AppControls['scriptDetailPanel'] = $mainWindow.FindName('ScriptDetailPanel')
+    $Global:AppControls['DetailsPanelBorder'] = $mainWindow.FindName('DetailsPanelBorder')
+    $Global:AppControls['StatusBarBorder'] = $mainWindow.FindName('StatusBarBorder')
 
-    $Global:AppControls['scriptLoadingPanel']         = $mainWindow.FindName('ScriptLoadingPanel')
-    $Global:AppControls['loadingScriptName']          = $mainWindow.FindName('LoadingScriptName')
-    $Global:AppControls['loadingStatusText']          = $mainWindow.FindName('LoadingStatusText')
-    $Global:AppControls['loadingStatusText']          = $mainWindow.FindName('LoadingStatusText')
-    $Global:AppControls['loadingProgressBar']         = $mainWindow.FindName('LoadingProgressBar')
-    $Global:AppControls['loadingProgressText']        = $mainWindow.FindName('LoadingProgressText')
+    $Global:AppControls['scriptLoadingPanel'] = $mainWindow.FindName('ScriptLoadingPanel')
+    $Global:AppControls['loadingScriptName'] = $mainWindow.FindName('LoadingScriptName')
+    $Global:AppControls['loadingStatusText'] = $mainWindow.FindName('LoadingStatusText')
+    $Global:AppControls['loadingStatusText'] = $mainWindow.FindName('LoadingStatusText')
+    $Global:AppControls['loadingProgressBar'] = $mainWindow.FindName('LoadingProgressBar')
+    $Global:AppControls['loadingProgressText'] = $mainWindow.FindName('LoadingProgressText')
 
     # --- CONTRÔLES DE L'ONGLET "ACCUEIL" ---
     $Global:AppControls['scriptsTabItem'] = $mainWindow.FindName('ScriptsTabItem')
 
     # --- CONTRÔLES DE L'ONGLET "GOUVERNANCE" ---
-    $Global:AppControls['GovernanceTabItem']         = $mainWindow.FindName('GovernanceTabItem')
+    $Global:AppControls['GovernanceTabItem'] = $mainWindow.FindName('GovernanceTabItem')
     $Global:AppControls['PermissionRequestsListBox'] = $mainWindow.FindName('PermissionRequestsListBox')
-    $Global:AppControls['NoRequestsText']            = $mainWindow.FindName('NoRequestsText')
-    $Global:AppControls['CurrentScopesListBox']      = $mainWindow.FindName('CurrentScopesListBox')
-    $Global:AppControls['AddPermissionButton']       = $mainWindow.FindName('AddPermissionButton')
-    $Global:AppControls['SyncAzureButton']           = $mainWindow.FindName('SyncAzureButton')
-    $Global:AppControls['GrantConsentButton']        = $mainWindow.FindName('GrantConsentButton')
-    $Global:AppControls['AdminMembersListBox']       = $mainWindow.FindName('AdminMembersListBox')
-    $Global:AppControls['UserMembersListBox']        = $mainWindow.FindName('UserMembersListBox')
+    $Global:AppControls['NoRequestsText'] = $mainWindow.FindName('NoRequestsText')
+    $Global:AppControls['CurrentScopesListBox'] = $mainWindow.FindName('CurrentScopesListBox')
+    $Global:AppControls['AddPermissionButton'] = $mainWindow.FindName('AddPermissionButton')
+    $Global:AppControls['SyncAzureButton'] = $mainWindow.FindName('SyncAzureButton')
+    $Global:AppControls['GrantConsentButton'] = $mainWindow.FindName('GrantConsentButton')
+    $Global:AppControls['AdminMembersListBox'] = $mainWindow.FindName('AdminMembersListBox')
+    $Global:AppControls['UserMembersListBox'] = $mainWindow.FindName('UserMembersListBox')
 
     # --- CONTRÔLES DE L'ONGLET "GESTION" ---
-    $Global:AppControls['ManagementTabItem']       = $mainWindow.FindName('ManagementTabItem')
-    $Global:AppControls['ManageScriptsListBox']    = $mainWindow.FindName('ManageScriptsListBox')
-    $Global:AppControls['ManageDetailPanel']       = $mainWindow.FindName('ManageDetailPanel')
-    $Global:AppControls['ManageSelectPrompt']      = $mainWindow.FindName('ManageSelectPrompt')
+    $Global:AppControls['ManagementTabItem'] = $mainWindow.FindName('ManagementTabItem')
+    $Global:AppControls['ManageScriptsListBox'] = $mainWindow.FindName('ManageScriptsListBox')
+    $Global:AppControls['ManageDetailPanel'] = $mainWindow.FindName('ManageDetailPanel')
+    $Global:AppControls['ManageSelectPrompt'] = $mainWindow.FindName('ManageSelectPrompt')
 
-    $Global:AppControls['LibraryNewGroupTextBox']  = $mainWindow.FindName('LibraryNewGroupTextBox')
-    $Global:AppControls['LibraryAddGroupButton']   = $mainWindow.FindName('LibraryAddGroupButton')
-    $Global:AppControls['LibraryGroupsComboBox']   = $mainWindow.FindName('LibraryGroupsComboBox')
-    $Global:AppControls['LibraryRemoveGroupButton']= $mainWindow.FindName('LibraryRemoveGroupButton')
+    $Global:AppControls['LibraryNewGroupTextBox'] = $mainWindow.FindName('LibraryNewGroupTextBox')
+    $Global:AppControls['LibraryAddGroupButton'] = $mainWindow.FindName('LibraryAddGroupButton')
+    $Global:AppControls['LibraryGroupsComboBox'] = $mainWindow.FindName('LibraryGroupsComboBox')
+    $Global:AppControls['LibraryRemoveGroupButton'] = $mainWindow.FindName('LibraryRemoveGroupButton')
     
     $Global:AppControls['ManageSecurityCheckList'] = $mainWindow.FindName('ManageSecurityCheckList')
-    $Global:AppControls['ManageEnabledSwitch']     = $mainWindow.FindName('ManageEnabledSwitch')
-    $Global:AppControls['ManageMaxRunsTextBox']    = $mainWindow.FindName('ManageMaxRunsTextBox')
-    $Global:AppControls['ManageNewGroupTextBox']   = $mainWindow.FindName('ManageNewGroupTextBox')
-    $Global:AppControls['ManageAddGroupButton']    = $mainWindow.FindName('ManageAddGroupButton')
-    $Global:AppControls['ManageGroupsListBox']     = $mainWindow.FindName('ManageGroupsListBox')
-    $Global:AppControls['ManageSaveButton']        = $mainWindow.FindName('ManageSaveButton')
+    $Global:AppControls['ManageEnabledSwitch'] = $mainWindow.FindName('ManageEnabledSwitch')
+    $Global:AppControls['ManageMaxRunsTextBox'] = $mainWindow.FindName('ManageMaxRunsTextBox')
+    $Global:AppControls['ManageNewGroupTextBox'] = $mainWindow.FindName('ManageNewGroupTextBox')
+    $Global:AppControls['ManageAddGroupButton'] = $mainWindow.FindName('ManageAddGroupButton')
+    $Global:AppControls['ManageGroupsListBox'] = $mainWindow.FindName('ManageGroupsListBox')
+    $Global:AppControls['ManageSaveButton'] = $mainWindow.FindName('ManageSaveButton')
 
     # --- CONTRÔLES DE L'ONGLET "LOG" ---
-    $Global:AppControls['launcherLogRichTextBox']     = $mainWindow.FindName('LauncherLogRichTextBox')
-    $Global:AppControls['clearLocksButton']           = $mainWindow.FindName('ClearLocksButton')
+    $Global:AppControls['launcherLogRichTextBox'] = $mainWindow.FindName('LauncherLogRichTextBox')
+    $Global:AppControls['clearLocksButton'] = $mainWindow.FindName('ClearLocksButton')
 
     # --- CONTRÔLES DE L'ONGLET "PARAMÈTRES" ---
     $Global:AppControls['settingsTabItem'] = $mainWindow.FindName('SettingsTabItem')
 
     # Section Générale & UI
-    $Global:AppControls['generalSettingsCard']            = $mainWindow.FindName('GeneralSettingsCard')
-    $Global:AppControls['settingsCompanyNameTextBox']     = $mainWindow.FindName('SettingsCompanyNameTextBox')
-    $Global:AppControls['settingsAppVersionTextBox']      = $mainWindow.FindName('SettingsAppVersionTextBox')
-    $Global:AppControls['settingsLanguageComboBox']       = $mainWindow.FindName('SettingsLanguageComboBox')
+    $Global:AppControls['generalSettingsCard'] = $mainWindow.FindName('GeneralSettingsCard')
+    $Global:AppControls['settingsCompanyNameTextBox'] = $mainWindow.FindName('SettingsCompanyNameTextBox')
+    $Global:AppControls['settingsAppVersionTextBox'] = $mainWindow.FindName('SettingsAppVersionTextBox')
+    $Global:AppControls['settingsLanguageComboBox'] = $mainWindow.FindName('SettingsLanguageComboBox')
     $Global:AppControls['settingsVerboseLoggingCheckBox'] = $mainWindow.FindName('SettingsVerboseLoggingCheckBox')
-    $Global:AppControls['settingsLauncherWidthTextBox']   = $mainWindow.FindName('SettingsLauncherWidthTextBox')
-    $Global:AppControls['settingsLauncherHeightTextBox']  = $mainWindow.FindName('SettingsLauncherHeightTextBox')
+    $Global:AppControls['settingsLauncherWidthTextBox'] = $mainWindow.FindName('SettingsLauncherWidthTextBox')
+    $Global:AppControls['settingsLauncherHeightTextBox'] = $mainWindow.FindName('SettingsLauncherHeightTextBox')
 
     # Section Azure
-    $Global:AppControls['azureSettingsCard']            = $mainWindow.FindName('AzureSettingsCard')
+    $Global:AppControls['azureSettingsCard'] = $mainWindow.FindName('AzureSettingsCard')
     
     # Global
-    $Global:AppControls['settingsTenantNameTextBox']    = $mainWindow.FindName('SettingsTenantNameTextBox')
-    $Global:AppControls['settingsTenantIdTextBox']      = $mainWindow.FindName('SettingsTenantIdTextBox')
+    $Global:AppControls['settingsTenantNameTextBox'] = $mainWindow.FindName('SettingsTenantNameTextBox')
+    $Global:AppControls['settingsTenantIdTextBox'] = $mainWindow.FindName('SettingsTenantIdTextBox')
     $Global:AppControls['settingsUserAuthAppIdTextBox'] = $mainWindow.FindName('SettingsUserAuthAppIdTextBox')
     
     # Identité
-    $Global:AppControls['settingsAdminGroupTextBox']        = $mainWindow.FindName('SettingsAdminGroupTextBox')
-    $Global:AppControls['settingsUserAuthScopesTextBox']    = $mainWindow.FindName('SettingsUserAuthScopesTextBox')
-    $Global:AppControls['SettingsUserAuthTestButton']       = $mainWindow.FindName('SettingsUserAuthTestButton')
+    $Global:AppControls['settingsAdminGroupTextBox'] = $mainWindow.FindName('SettingsAdminGroupTextBox')
+    $Global:AppControls['settingsUserAuthScopesTextBox'] = $mainWindow.FindName('SettingsUserAuthScopesTextBox')
+    $Global:AppControls['SettingsUserAuthTestButton'] = $mainWindow.FindName('SettingsUserAuthTestButton')
     
     # Automatisation (Certificat)
-    $Global:AppControls['SettingsCertThumbprintTextBox']    = $mainWindow.FindName('SettingsCertThumbprintTextBox')
-    $Global:AppControls['SettingsSelectCertButton']         = $mainWindow.FindName('SettingsSelectCertButton')
-    $Global:AppControls['SettingsTestCertButton']           = $mainWindow.FindName('SettingsTestCertButton')
+    $Global:AppControls['SettingsCertThumbprintTextBox'] = $mainWindow.FindName('SettingsCertThumbprintTextBox')
+    $Global:AppControls['SettingsSelectCertButton'] = $mainWindow.FindName('SettingsSelectCertButton')
+    $Global:AppControls['SettingsTestCertButton'] = $mainWindow.FindName('SettingsTestCertButton')
 
     # Section "ACTIVE DIRECTORY" ---
-    $Global:AppControls['activeDirectorySettingsCard']       = $mainWindow.FindName('ActiveDirectorySettingsCard')
-    $Global:AppControls['settingsADServiceUserTextBox']      = $mainWindow.FindName('SettingsADServiceUserTextBox')
-    $Global:AppControls['settingsADServicePasswordBox']      = $mainWindow.FindName('SettingsADServicePasswordBox')
-    $Global:AppControls['settingsTestADCredsButton']         = $mainWindow.FindName('SettingsTestADCredsButton')
-    $Global:AppControls['settingsADDomainNameTextBox']       = $mainWindow.FindName('SettingsADDomainNameTextBox')
-    $Global:AppControls['settingsADPDCNameTextBox']          = $mainWindow.FindName('SettingsADPDCNameTextBox')
-    $Global:AppControls['settingsADUserOUPathTextBox']       = $mainWindow.FindName('SettingsADUserOUPathTextBox')
-    $Global:AppControls['settingsADTempServerTextBox']       = $mainWindow.FindName('SettingsADTempServerTextBox')
-    $Global:AppControls['settingsADConnectServerTextBox']    = $mainWindow.FindName('SettingsADConnectServerTextBox')
-    $Global:AppControls['settingsADDomainUserGroupTextBox']  = $mainWindow.FindName('SettingsADDomainUserGroupTextBox')
-    $Global:AppControls['settingsADExcludedGroupsTextBox']   = $mainWindow.FindName('SettingsADExcludedGroupsTextBox')
-    $Global:AppControls['settingsTestInfraButton']           = $mainWindow.FindName('SettingsTestInfraButton')
-    $Global:AppControls['settingsTestADObjectsButton']       = $mainWindow.FindName('SettingsTestADObjectsButton')
-    $Global:AppControls['settingsSaveButton']                = $mainWindow.FindName('SettingsSaveButton')
+    $Global:AppControls['activeDirectorySettingsCard'] = $mainWindow.FindName('ActiveDirectorySettingsCard')
+    $Global:AppControls['settingsADServiceUserTextBox'] = $mainWindow.FindName('SettingsADServiceUserTextBox')
+    $Global:AppControls['settingsADServicePasswordBox'] = $mainWindow.FindName('SettingsADServicePasswordBox')
+    $Global:AppControls['settingsTestADCredsButton'] = $mainWindow.FindName('SettingsTestADCredsButton')
+    $Global:AppControls['settingsADDomainNameTextBox'] = $mainWindow.FindName('SettingsADDomainNameTextBox')
+    $Global:AppControls['settingsADPDCNameTextBox'] = $mainWindow.FindName('SettingsADPDCNameTextBox')
+    $Global:AppControls['settingsADUserOUPathTextBox'] = $mainWindow.FindName('SettingsADUserOUPathTextBox')
+    $Global:AppControls['settingsADTempServerTextBox'] = $mainWindow.FindName('SettingsADTempServerTextBox')
+    $Global:AppControls['settingsADConnectServerTextBox'] = $mainWindow.FindName('SettingsADConnectServerTextBox')
+    $Global:AppControls['settingsADDomainUserGroupTextBox'] = $mainWindow.FindName('SettingsADDomainUserGroupTextBox')
+    $Global:AppControls['settingsADExcludedGroupsTextBox'] = $mainWindow.FindName('SettingsADExcludedGroupsTextBox')
+    $Global:AppControls['settingsTestInfraButton'] = $mainWindow.FindName('SettingsTestInfraButton')
+    $Global:AppControls['settingsTestADObjectsButton'] = $mainWindow.FindName('SettingsTestADObjectsButton')
+    $Global:AppControls['settingsSaveButton'] = $mainWindow.FindName('SettingsSaveButton')
 
     # --- 4. Initialisation des données de l'UI ---
     Initialize-LauncherData
