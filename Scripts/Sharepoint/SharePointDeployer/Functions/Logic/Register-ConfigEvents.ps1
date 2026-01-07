@@ -28,9 +28,12 @@ function Register-ConfigEvents {
 
     # --- 1. LOGIQUE DE CHARGEMENT (Appelée par AuthCallback) ---
     $Global:DeployerLoadAction = {
+        param($UserAuth)
         try {
-            # Check Auth
-            if (-not $Global:AppAzureAuth.UserAuth.Connected) {
+            # Check Auth (Use injected parameter preferably, or fallback to global if missing, but we aim for injected)
+            $isConnected = if ($UserAuth) { $UserAuth.Connected } else { $false }
+            
+            if (-not $isConnected) {
                 # Mode Déconnecté : Vider la liste
                 if ($Ctrl.ListBox) { $Ctrl.ListBox.ItemsSource = $null }
                 # Afficher l'overlay

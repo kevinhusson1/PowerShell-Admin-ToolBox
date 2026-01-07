@@ -168,7 +168,7 @@ try {
         
         # --- SPÉCIFIQUE DEPLOYER : Rafraîchissement des données ---
         if ($newIdentity.Connected -and $Global:DeployerLoadAction) { 
-            & $Global:DeployerLoadAction 
+            & $Global:DeployerLoadAction -UserAuth $newIdentity
         }
     }
 
@@ -183,12 +183,9 @@ try {
 
     # [CORRECTION] Chargement initial des données si déjà authentifié (Secure Token)
     if ($userIdentity.Connected) {
-        # SYNCHRONISATION LEGACY : On met à jour la globale pour que Register-ConfigEvents fonctionne
-        $Global:AppAzureAuth = @{ UserAuth = $userIdentity }
-
         if ($Global:DeployerLoadAction) {
             Write-Verbose "[Deployer] Identité pré-établie. Lancement du chargement des données..."
-            & $Global:DeployerLoadAction
+            & $Global:DeployerLoadAction -UserAuth $userIdentity
         }
     }
 

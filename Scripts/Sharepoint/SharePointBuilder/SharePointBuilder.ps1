@@ -160,8 +160,7 @@ try {
     # Application Visuelle (Module UI)
     Set-AppWindowIdentity -Window $window -UserSession $userIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
 
-    # SYNCHRONISATION LEGACY pour compatibilité modules internes
-    if ($userIdentity.Connected) { $Global:AppAzureAuth = @{ UserAuth = $userIdentity } }
+
 
 }
 catch {
