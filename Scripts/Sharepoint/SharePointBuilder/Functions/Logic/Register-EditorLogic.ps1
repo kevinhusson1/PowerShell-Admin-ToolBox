@@ -628,8 +628,16 @@ function Register-EditorLogic {
     $Ctrl.EdBtnDel.Add_Click({
             $i = $Ctrl.EdTree.SelectedItem; if ($null -eq $i) { return }
             if ([System.Windows.MessageBox]::Show("Supprimer '$($i.Tag.Name)' ?", "Confirmation", "YesNo", "Question") -eq 'No') { return }
-            $FnDel = { param($C, $I) if ($C.Contains($I)) { $C.Remove($I); return $true } foreach ($s in $C) { if (& $FnDel -C $s.Items -I $I) { return $true } } return $false }
-            & $FnDel -C $Ctrl.EdTree.Items -I $i
+            
+            $p = $i.Parent
+            if ($p -is [System.Windows.Controls.ItemsControl]) {
+                $p.Items.Remove($i)
+
+                # FIX: Rafraîchir les badges du parent pour mettre à jour l'état visuel (ex: icône publication)
+                if ($p -is [System.Windows.Controls.TreeViewItem]) {
+                    Update-EditorBadges -TreeItem $p
+                }
+            }
         }.GetNewClosure())
 
     # ==========================================================================

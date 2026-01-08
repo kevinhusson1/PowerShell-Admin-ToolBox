@@ -4,7 +4,7 @@
   "lockFile": "SharePointDeployer.lock",
   "name": "scripts.sharepoint_deployer.name",
   "description": "scripts.sharepoint_deployer.description",
-  "version": "1.0.0",
+  "version": "3.2.0",
   "category": "SharePoint",
   "author": "Service IT",
   "icon": {

@@ -22,8 +22,8 @@ $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSMod
 
 # On définit une préférence Verbose par défaut pour la phase de démarrage.
 # Elle sera écrasée par la configuration de la base de données à l'étape 2.
-$VerbosePreference = "Continue" 
-# $VerbosePreference = "SilentlyContinue" 
+# $VerbosePreference = "Continue" 
+$VerbosePreference = "SilentlyContinue" 
 
 # =====================================================================
 # VARIABLES GLOBALES
