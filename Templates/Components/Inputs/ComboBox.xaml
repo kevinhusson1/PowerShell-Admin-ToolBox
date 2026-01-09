@@ -26,6 +26,8 @@
     <Style TargetType="ComboBox" x:Key="StandardComboBoxStyle">
         <Setter Property="Background" Value="{DynamicResource BackgroundControlBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="MinHeight" Value="38"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -105,11 +107,7 @@
                 <ControlTemplate TargetType="ComboBox">
                     <Grid SnapsToDevicePixels="True">
                         <!-- Conteneur Unifié (Border unique pour TextBox + Toggle) -->
-                        <Border x:Name="MainBorder" 
-                                CornerRadius="8" 
-                                Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}">
+                        <Border x:Name="MainBorder" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -117,16 +115,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Zone de Saisie (Sans bordure interne) -->
-                                <TextBox x:Name="PART_EditableTextBox" 
-                                         Grid.Column="0"
-                                         HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" 
-                                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" 
-                                         Padding="10,0,5,0" 
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         FontSize="{TemplateBinding FontSize}"
-                                         Foreground="{TemplateBinding Foreground}"
-                                         CaretBrush="{TemplateBinding Foreground}">
+                                <TextBox x:Name="PART_EditableTextBox" Grid.Column="0" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" Padding="10,0,5,0" Background="Transparent" BorderThickness="0" FontSize="{TemplateBinding FontSize}" Foreground="{TemplateBinding Foreground}" CaretBrush="{TemplateBinding Foreground}">
                                     <TextBox.Template>
                                         <ControlTemplate TargetType="TextBox">
                                             <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
@@ -135,13 +124,7 @@
                                 </TextBox>
 
                                 <!-- Bouton Flèche (Transparent) -->
-                                <ToggleButton x:Name="toggleButton" 
-                                              Grid.Column="1" 
-                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" 
-                                              Background="Transparent" 
-                                              BorderThickness="0" 
-                                              Width="30" 
-                                              Cursor="Hand">
+                                <ToggleButton x:Name="toggleButton" Grid.Column="1" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Background="Transparent" BorderThickness="0" Width="30" Cursor="Hand">
                                     <ToggleButton.Template>
                                         <ControlTemplate TargetType="ToggleButton">
                                             <Border Background="Transparent">

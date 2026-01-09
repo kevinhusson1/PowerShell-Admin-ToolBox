@@ -1,7 +1,11 @@
 #Requires -Version 7.0
 
-param( 
-    [string]$LauncherPID 
+param(
+    [string]$LauncherPID,
+    [string]$AuthContext,
+    [string]$AuthUPN,     # Nouvelle méthode (Secure)
+    [string]$TenantId,    # ID du Tenant pour l'auth
+    [string]$ClientId     # ID de l'App (AppId)
 )
 
 # =====================================================================
@@ -9,7 +13,8 @@ param(
 # =====================================================================
 try { 
     Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase 
-} catch { 
+}
+catch { 
     Write-Error "Impossible de charger les assemblages WPF."; exit 1 
 }
 
@@ -24,7 +29,8 @@ $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSMod
 try { 
     Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure" -Force
     . (Join-Path $scriptRoot "Functions\Initialize-CreateUserUI.ps1")
-} catch { 
+}
+catch { 
     [System.Windows.MessageBox]::Show("Erreur critique lors de l'import des modules :`n$($_.Exception.Message)", "Erreur", "OK", "Error"); exit 1 
 }
 
@@ -38,7 +44,8 @@ try {
         [System.Windows.MessageBox]::Show((Get-AppText -Key 'messages.execution_limit_reached'), (Get-AppText -Key 'messages.execution_forbidden_title'), "OK", "Error"); exit 1 
     }
     Add-AppScriptLock -Script $manifest -OwnerPID $PID
-} catch { 
+}
+catch { 
     [System.Windows.MessageBox]::Show("Erreur critique lors du verrouillage :`n$($_.Exception.Message)", "Erreur", "OK", "Error"); exit 1 
 }
 
@@ -55,13 +62,14 @@ try {
     if ($isLauncherMode) { 
         Write-Verbose "Mode Lanceur détecté." 
         Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 10 -StatusMessage "10% Initialisation du contexte..."
-    } else {
+    }
+    else {
         Write-Verbose "Mode Autonome détecté."
     }
 
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage
     $scriptLangFile = "$scriptRoot\Localization\$($Global:AppConfig.defaultLanguage).json"
-    if(Test-Path $scriptLangFile){ Add-AppLocalizationSource -FilePath $scriptLangFile }
+    if (Test-Path $scriptLangFile) { Add-AppLocalizationSource -FilePath $scriptLangFile }
     if ($isLauncherMode) {
         Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 60 -StatusMessage "60% Contexte d'authentification établi."
     }
@@ -71,7 +79,7 @@ try {
     $window = Import-AppXamlTemplate -XamlPath $xamlPath
     
     # 2. Chargement des composants de style
-    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display'
+    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'ProfileButton'
     
     if ($isLauncherMode) {
         Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage 80 -StatusMessage "80% Chargement de l'interface utilisateur..."
@@ -90,9 +98,74 @@ try {
         }
         
         $subtitleText.Text = Get-AppText -Key $manifest.description
-    } catch {
+    }
+    catch {
         Write-Warning "Erreur lors du peuplement de l'en-tête du script : $($_.Exception.Message)"
     }
+
+    # ===============================================================
+    # 5. GESTION DE L'IDENTITÉ (Standard v3.0)
+    # ===============================================================
+    
+    # Récupération de la config globale si les paramètres ne sont pas passés (Robustesse)
+    if (-not $TenantId) { $TenantId = $Global:AppConfig.azure.tenantId }
+    if (-not $ClientId) { $ClientId = $Global:AppConfig.azure.authentication.userAuth.appId }
+    
+    # A. Initialisation de l'identité
+    $userIdentity = $null
+
+    # PRIORITÉ 1: Nouvelle méthode Secure (UPN via Token Cache)
+    if (-not [string]::IsNullOrWhiteSpace($AuthUPN)) {
+        Write-Verbose "[CreateUser] AuthUPN reçu : $AuthUPN. Tentative de reprise de session..."
+        try {
+            $userIdentity = Connect-AppChildSession -AuthUPN $AuthUPN -TenantId $TenantId -ClientId $ClientId
+            if (-not $userIdentity.Connected) {
+                Write-Warning "[CreateUser] Connect-AppChildSession a retourné Connected=$false (Erreur: $($userIdentity.Error))"
+            }
+        }
+        catch {
+            Write-Warning "[CreateUser] Exception Auth Secure: $_" 
+            $userIdentity = @{ Connected = $false }
+        }
+    } 
+    # PRIORITÉ 2: Ancienne méthode (Fallback Legacy)
+    elseif (-not [string]::IsNullOrWhiteSpace($AuthContext)) {
+        Write-Verbose "[CreateUser] AuthContext Legacy détecté."
+        try {
+            $json = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AuthContext))
+            $rawObj = $json | ConvertFrom-Json
+            $userIdentity = $rawObj.UserAuth 
+        }
+        catch { 
+            Write-Warning "[CreateUser] Echec Auth Legacy: $_"
+            $userIdentity = @{ Connected = $false } 
+        }
+    }
+    else {
+        # Aucune info -> Non connecté
+        Write-Verbose "[CreateUser] Aucun contexte d'authentification initial."
+        $userIdentity = @{ Connected = $false }
+    }
+
+    # Définition des actions pour le mode autonome
+    $OnConnect = {
+        # Chargement à la volée des configs si nécessaire
+        if (-not $Global:AppConfig) { $Global:AppConfig = Get-AppConfiguration -ProjectRoot $ProjectRoot }
+        
+        $newIdentity = Connect-AppAzureWithUser -AppId $Global:AppConfig.azure.authentication.userAuth.appId -TenantId $Global:AppConfig.azure.tenantId
+        
+        # Mise à jour immédiate de l'UI après connexion réussie
+        Set-AppWindowIdentity -Window $window -UserSession $newIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
+    }
+
+    $OnDisconnect = {
+        Disconnect-AppAzureUser
+        $nullIdentity = @{ Connected = $false }
+        Set-AppWindowIdentity -Window $window -UserSession $nullIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
+    }
+
+    # 2. Application Visuelle (Module UI)
+    Set-AppWindowIdentity -Window $window -UserSession $userIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
 
     # 4. Initialisation de l'UI et attachement des événements
     # La fonction retourne une hashtable des contrôles que nous stockons localement.
@@ -104,10 +177,12 @@ try {
     }
     $window.ShowDialog() | Out-Null
 
-} catch {
+}
+catch {
     $title = Get-AppText -Key 'messages.fatal_error_title'
     [System.Windows.MessageBox]::Show("Une erreur fatale est survenue :`n$($_.Exception.Message)`n$($_.ScriptStackTrace)", $title, "OK", "Error")
-} finally {
+}
+finally {
     # --- NETTOYAGE FINAL ---
     Unlock-AppScriptLock -OwnerPID $PID
 }
