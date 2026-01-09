@@ -119,6 +119,34 @@ function Register-EditorLogic {
 
 
     # ==========================================================================
+    # 1b. HELPER : TRI (SORT) - GLOBAL FUNCTION FOR WPF SCOPE
+    # ==========================================================================
+    # On définit une fonction globale pour éviter les soucis de portée dans les Closures
+    function Global:Sort-EditorTreeRecursive {
+        param($ItemCollection)
+        if ($null -eq $ItemCollection -or $ItemCollection.Count -eq 0) { return }
+
+        $items = @($ItemCollection)
+        $ItemCollection.Clear()
+
+        # Tri : Dossier (0) < Pub (1) < Lien (2), puis Alpha
+        $sortedItems = $items | Sort-Object `
+        @{Expression     = { 
+                $t = if ($_.Tag.Type) { $_.Tag.Type } else { "Folder" }
+                if ($t -eq "Link") { 2 } elseif ($t -eq "Publication") { 1 } else { 0 } 
+            }; Ascending = $true
+        }, 
+        @{Expression = { $_.Tag.Name }; Ascending = $true }
+            
+        foreach ($item in $sortedItems) {
+            $ItemCollection.Add($item) | Out-Null
+            if ($item -is [System.Windows.Controls.TreeViewItem]) {
+                Sort-EditorTreeRecursive -ItemCollection $item.Items
+            }
+        }
+    }
+
+    # ==========================================================================
     # 2. GESTION SÉLECTION & MODIFICATION
     # ==========================================================================
     
@@ -580,14 +608,20 @@ function Register-EditorLogic {
     if ($Ctrl.EdBtnRoot) {
         $Ctrl.EdBtnRoot.Add_Click({ 
                 $newItem = New-EditorNode -Name "Racine"
-                if ($Ctrl.EdTree) { $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true }
+                if ($Ctrl.EdTree) { 
+                    $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true 
+                    Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
+                }
             }.GetNewClosure())
     }
 
     if ($Ctrl.EdBtnRootLink) {
         $Ctrl.EdBtnRootLink.Add_Click({
                 $newItem = New-EditorLinkNode -Name "Nouveau Lien" -Url "https://pnp.github.io/"
-                if ($Ctrl.EdTree) { $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true }
+                if ($Ctrl.EdTree) { 
+                    $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true 
+                    Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
+                }
             }.GetNewClosure())
     }
 
@@ -596,6 +630,7 @@ function Register-EditorLogic {
                 $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
                 if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
                 $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
+                Sort-EditorTreeRecursive -ItemCollection $p.Items
             }.GetNewClosure())
     }
 
@@ -608,6 +643,7 @@ function Register-EditorLogic {
                 
                 $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
                 $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
+                Sort-EditorTreeRecursive -ItemCollection $p.Items
             }.GetNewClosure())
     }
     
@@ -622,6 +658,7 @@ function Register-EditorLogic {
                 $n = New-EditorPubNode -Name "Vers Site..."
                 $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true
                 Update-EditorBadges -TreeItem $p
+                Sort-EditorTreeRecursive -ItemCollection $p.Items
             }.GetNewClosure())
     }
 
@@ -725,7 +762,11 @@ function Register-EditorLogic {
             
             if ($Ctrl.EdTree.Items.Count -gt 0) { if ([System.Windows.MessageBox]::Show("Charger va écraser le modèle actuel. Continuer ?", "Attention", "YesNo", "Warning") -ne 'Yes') { return } }
             
-            if ($Ctrl.EdTree) { Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree }
+            if ($Ctrl.EdTree) { 
+                Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree 
+                # Sort After Load
+                Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
+            }
                 
             # Use Helper to hide all -> avoid null ref on missing panels
             # Use Helper to hide all -> avoid null ref on missing panels
@@ -744,6 +785,9 @@ function Register-EditorLogic {
 
     $Ctrl.EdBtnSave.Add_Click({
             if ($Ctrl.EdTree.Items.Count -eq 0) { [System.Windows.MessageBox]::Show("L'arbre est vide.", "Erreur", "OK", "Warning"); return }
+
+            # Sort Before Save
+            Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
 
             $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree
             # Note : Plus besoin de faire le .Replace("'", "''") ici, c'est géré par le module Database
