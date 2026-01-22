@@ -7,10 +7,11 @@ function Remove-AppNamingRule {
     )
 
     try {
-        $safeId = $RuleId.Replace("'", "''")
-        $query = "DELETE FROM sp_naming_rules WHERE RuleId = '$safeId'"
+        # v3.1 Sanitization SQL
+        $query = "DELETE FROM sp_naming_rules WHERE RuleId = @RuleId"
+        $sqlParams = @{ RuleId = $RuleId }
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         return $true
     }
     catch {

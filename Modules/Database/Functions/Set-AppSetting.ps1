@@ -33,21 +33,25 @@ function Set-AppSetting {
             $valueType = $Value.GetType().Name.ToLower()
             if ($valueType -eq 'int32' -or $valueType -eq 'int64') {
                 $type = 'integer'
-            } elseif ($valueType -eq 'boolean') {
+            }
+            elseif ($valueType -eq 'boolean') {
                 $type = 'boolean'
             }
         }
         # ----------------------------------------
 
-        # --- SÉCURISATION CONTRE L'INJECTION SQL ---
-        $safeKey = $Key.Replace("'", "''")
-        # On doit convertir la valeur en chaîne pour la requête, et l'échapper.
-        $safeValue = if ($null -eq $Value) { "" } else { $Value.ToString().Replace("'", "''") }
-        # -----------------------------------------
-
-        $query = "INSERT OR REPLACE INTO settings (Key, Value, Type) VALUES ('$safeKey', '$safeValue', '$type');"
+        # --- SÉCURISATION CONTRE L'INJECTION SQL (v3.1) ---
+        # Utilisation de paramètres nommés au lieu de l'échappement manuel.
+        $safeValue = if ($null -eq $Value) { "" } else { $Value.ToString() }
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $query = "INSERT OR REPLACE INTO settings (Key, Value, Type) VALUES (@Key, @Value, @Type);"
+        $sqlParams = @{
+            Key   = $Key
+            Value = $safeValue
+            Type  = $type
+        }
+        
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
 
         $logMsg = "{0} '{1}' {2} '$safeValue' ({3}: $type)." -f (Get-AppText 'modules.database.setting_saved_1'), $Key, (Get-AppText 'modules.database.setting_saved_2'), (Get-AppText 'modules.database.setting_saved_3')
         Write-Verbose $logMsg

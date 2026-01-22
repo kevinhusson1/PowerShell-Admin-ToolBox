@@ -7,10 +7,11 @@ function Remove-AppSPTemplate {
     )
 
     try {
-        $safeId = $TemplateId.Replace("'", "''")
-        $query = "DELETE FROM sp_templates WHERE TemplateId = '$safeId'"
+        # v3.1 Sanitization SQL
+        $query = "DELETE FROM sp_templates WHERE TemplateId = @TemplateId"
+        $sqlParams = @{ TemplateId = $TemplateId }
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         return $true
     }
     catch {

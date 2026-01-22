@@ -17,20 +17,22 @@ function Test-AppScriptLock {
     )
 
     try {
+        # v3.1 Sanitization SQL (Use parameters)
         $scriptId = $Script.id
-        $safeScriptId = $scriptId.Replace("'", "''")
+        $sqlParams = @{ ScriptId = $scriptId }
 
         # --- CORRECTION MAJEURE : On récupère la limite depuis la BDD ---
         # On ignore ce qu'il y a dans $Script.maxConcurrentRuns
         
-        $queryConfig = "SELECT MaxConcurrentRuns FROM script_settings WHERE ScriptId = '$safeScriptId';"
-        $dbConfig = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $queryConfig -ErrorAction Stop
+        $queryConfig = "SELECT MaxConcurrentRuns FROM script_settings WHERE ScriptId = @ScriptId;"
+        $dbConfig = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $queryConfig -SqlParameters $sqlParams -ErrorAction Stop
         
         $limit = 1 # Valeur par défaut si introuvable en BDD
         
         if ($dbConfig) {
             $limit = [int]$dbConfig.MaxConcurrentRuns
-        } elseif ($Script.PSObject.Properties['maxConcurrentRuns']) {
+        }
+        elseif ($Script.PSObject.Properties['maxConcurrentRuns']) {
             # Fallback sur le manifeste uniquement si la BDD est muette (cas rare)
             $limit = $Script.maxConcurrentRuns
         }
@@ -43,8 +45,8 @@ function Test-AppScriptLock {
         }
 
         # --- Compter le nombre d'instances en cours ---
-        $countQuery = "SELECT COUNT(*) AS RunCount FROM active_sessions WHERE ScriptName = '$safeScriptId';"
-        $result = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $countQuery -ErrorAction Stop
+        $countQuery = "SELECT COUNT(*) AS RunCount FROM active_sessions WHERE ScriptName = @ScriptId;"
+        $result = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $countQuery -SqlParameters $sqlParams -ErrorAction Stop
         $currentRuns = [int]$result.RunCount
         
         Write-Verbose (("{0} '{1}' : {2}." -f (Get-AppText 'modules.database.lock_check_3'), $scriptId, $currentRuns))

@@ -25,11 +25,12 @@ function Install-AppCertificate {
     }
 
     try {
-        Import-PfxCertificate -FilePath $PfxPath -CertStoreLocation "Cert:\CurrentUser\My" -Password $SecurePassword -Exportable -ErrorAction Stop | Out-Null
+        Import-PfxCertificate -FilePath $PfxPath -CertStoreLocation "Cert:\CurrentUser\My" -Password $SecurePassword -ErrorAction Stop | Out-Null
         $report.Success = $true
         $report.Message = (Get-AppText 'settings_validation.cert_install_cu_success')
         Write-LauncherLog -Message $report.Message -Level Success -LogToUI
-    } catch {
+    }
+    catch {
         $report.Message = (Get-AppText 'settings_validation.cert_install_cu_error') + ": $($_.Exception.Message)"
         Write-LauncherLog -Message $report.Message -Level Error -LogToUI
     }

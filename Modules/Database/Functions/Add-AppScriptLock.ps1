@@ -27,18 +27,24 @@ function Add-AppScriptLock {
     )
     try {
         # --- UTILISATION DE REQUÊTES PARAMÉTRÉES POUR LA SÉCURITÉ ---
-        $scriptId = $Script.id.Replace("'", "''")
-        $computerName = $env:COMPUTERNAME.Replace("'", "''")
+        # --- UTILISATION DE REQUÊTES PARAMÉTRÉES (v3.1) ---
         $startTime = (Get-Date -Format 'o')
         
-        $query = "INSERT INTO active_sessions (ScriptName, OwnerPID, OwnerHost, StartTime) VALUES ('$scriptId', $OwnerPID, '$computerName', '$startTime');"
+        $query = "INSERT INTO active_sessions (ScriptName, OwnerPID, OwnerHost, StartTime) VALUES (@ScriptName, @OwnerPID, @OwnerHost, @StartTime);"
+        $sqlParams = @{
+            ScriptName = $Script.id
+            OwnerPID   = $OwnerPID
+            OwnerHost  = $env:COMPUTERNAME
+            StartTime  = $startTime
+        }
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         # -----------------------------------------------------------
         
         $logMsg = "{0} '{1}' {2} {3}." -f (Get-AppText 'modules.database.lock_registered_1'), $Script.id, (Get-AppText 'modules.database.lock_registered_2'), $OwnerPID
         Write-Verbose $logMsg
-    } catch {
+    }
+    catch {
         $errorMsg = Get-AppText -Key 'modules.database.lock_register_error'
         throw "$errorMsg '$($Script.id)': $($_.Exception.Message)"
     }

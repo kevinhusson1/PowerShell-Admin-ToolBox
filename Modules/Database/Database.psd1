@@ -22,6 +22,7 @@
         'Add-AppKnownGroup',
         'Add-AppScriptLock',
         'Add-AppScriptSecurityGroup',
+        'Clear-AppOrphanLocks',
         'Clear-AppScriptLock',
         'Get-AppDeployConfigs',
         'Get-AppKnownGroups',

@@ -32,6 +32,16 @@ L'audit de sécurité V3 impose de nouvelles règles stricts.
 > **Règle n°1 : Pas de Secrets en Clair**
 > Ne stockez JAMAIS de mots de passe, clés d'API ou secrets dans le code ou les fichiers JSON.
 > Utilisez `Get-ADServiceCredential` ou l'authentification déléguée Azure.
+>
+> **Règle n°2 : Sanitization SQL**
+> Ne jamais concaténer de variables dans une chaîne SQL.
+> Utilisez TOUJOURS le paramètre `-SqlParameters` avec une hashtable.
+>
+> *Incorrect (Vulnérable) :*
+> `Invoke-SqliteQuery -Query "SELECT * FROM Users WHERE Name = '$name'"`
+>
+> *Correct (Sécurisé) :*
+> `Invoke-SqliteQuery -Query "SELECT * FROM Users WHERE Name = @Name" -SqlParameters @{ Name = $name }`
 
 > [!TIP]
 > **Adoptez les Classes PowerShell**

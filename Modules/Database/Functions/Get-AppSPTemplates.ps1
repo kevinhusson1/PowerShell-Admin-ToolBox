@@ -7,14 +7,17 @@ function Get-AppSPTemplates {
     )
 
     try {
+        # v3.1 Sanitization SQL
         $query = "SELECT * FROM sp_templates"
+        $sqlParams = @{}
+        
         if (-not [string]::IsNullOrWhiteSpace($TemplateId)) {
-            $safeId = $TemplateId.Replace("'", "''")
-            $query += " WHERE TemplateId = '$safeId'"
+            $query += " WHERE TemplateId = @TemplateId"
+            $sqlParams.TemplateId = $TemplateId
         }
         $query += " ORDER BY DisplayName"
 
-        return Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        return Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
     }
     catch {
         Write-Warning "Erreur lecture templates : $($_.Exception.Message)"

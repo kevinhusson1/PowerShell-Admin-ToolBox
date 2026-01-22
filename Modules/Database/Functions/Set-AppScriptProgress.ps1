@@ -22,11 +22,15 @@ function Set-AppScriptProgress {
     )
     try {
         # Sécurisation simple des entrées
-        $safeStatusMessage = $StatusMessage.Replace("'", "''")
-
-        $query = "INSERT OR REPLACE INTO script_progress (OwnerPID, ProgressPercentage, StatusMessage) VALUES ($OwnerPID, $ProgressPercentage, '$safeStatusMessage');"
+        # Sécurisation SQL (v3.1)
+        $query = "INSERT OR REPLACE INTO script_progress (OwnerPID, ProgressPercentage, StatusMessage) VALUES (@OwnerPID, @ProgressPercentage, @StatusMessage);"
+        $sqlParams = @{
+            OwnerPID           = $OwnerPID
+            ProgressPercentage = $ProgressPercentage
+            StatusMessage      = $StatusMessage
+        }
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
 
         Write-Verbose "Progression pour PID $OwnerPID mise à jour : $ProgressPercentage% - $StatusMessage"
     }

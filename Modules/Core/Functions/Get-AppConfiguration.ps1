@@ -95,7 +95,10 @@ function Get-AppConfiguration {
 
         # --- NOUVEAU : Peuplement de la section [ad] ---
         $config.ad.serviceUser = Get-AppSetting -Key 'ad.serviceUser' -DefaultValue $config.ad.serviceUser
-        $config.ad.servicePassword = Get-AppSetting -Key 'ad.servicePassword' -DefaultValue $config.ad.servicePassword
+        $config.ad.serviceUser = Get-AppSetting -Key 'ad.serviceUser' -DefaultValue $config.ad.serviceUser
+        # [SECURITY] v3.1 : Le mot de passe ne doit plus être stocké en base.
+        $config.ad.servicePassword = "" 
+        $config.ad.tempServer = Get-AppSetting -Key 'ad.tempServer' -DefaultValue $config.ad.tempServer
         $config.ad.tempServer = Get-AppSetting -Key 'ad.tempServer' -DefaultValue $config.ad.tempServer
         $config.ad.connectServer = Get-AppSetting -Key 'ad.connectServer' -DefaultValue $config.ad.connectServer
         $config.ad.domainName = Get-AppSetting -Key 'ad.domainName' -DefaultValue $config.ad.domainName

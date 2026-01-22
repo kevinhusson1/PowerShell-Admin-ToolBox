@@ -27,10 +27,11 @@ function Get-AppSetting {
     )
 
     try {
-        $safeKey = $Key.Replace("'", "''")
-        $query = "SELECT Value, Type FROM settings WHERE Key = '$safeKey';"
+        # v3.1 Sanitization SQL
+        $query = "SELECT Value, Type FROM settings WHERE Key = @Key;"
+        $sqlParams = @{ Key = $Key }
         
-        $result = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $result = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
 
         if (-not $result) {
             $logMsg = "{0} '{1}'. {2}" -f (Get-AppText 'modules.database.setting_not_found_1'), $Key, (Get-AppText 'modules.database.setting_not_found_2')
@@ -46,7 +47,8 @@ function Get-AppSetting {
                 $intValue = 0
                 if ([int]::TryParse($result.Value, [ref]$intValue)) {
                     return $intValue
-                } else {
+                }
+                else {
                     $warningMsg = "{0} '$($result.Value)' {1} '$Key'. {2}" -f (Get-AppText 'modules.database.int_parse_error_1'), (Get-AppText 'modules.database.int_parse_error_2'), (Get-AppText 'modules.database.setting_not_found_2')
                     Write-Warning $warningMsg
                     return $DefaultValue
@@ -56,7 +58,8 @@ function Get-AppSetting {
                 $boolValue = $false
                 if ([bool]::TryParse($result.Value, [ref]$boolValue)) {
                     return $boolValue
-                } else {
+                }
+                else {
                     $warningMsg = "{0} '$($result.Value)' {1} '$Key'. {2}" -f (Get-AppText 'modules.database.bool_parse_error_1'), (Get-AppText 'modules.database.bool_parse_error_2'), (Get-AppText 'modules.database.setting_not_found_2')
                     Write-Warning $warningMsg
                     return $DefaultValue
@@ -66,7 +69,8 @@ function Get-AppSetting {
                 return $result.Value
             }
         }
-    } catch {
+    }
+    catch {
         $errorMsg = Get-AppText -Key 'modules.database.get_setting_error'
         Write-Warning "$errorMsg '$Key': $($_.Exception.Message)"
         return $DefaultValue

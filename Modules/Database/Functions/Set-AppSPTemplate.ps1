@@ -11,22 +11,26 @@ function Set-AppSPTemplate {
     )
 
     try {
-        # Sécurisation SQL
-        $safeId = $TemplateId.Replace("'", "''")
-        $safeName = $DisplayName.Replace("'", "''")
-        $safeDesc = $Description.Replace("'", "''")
-        $safeCat = $Category.Replace("'", "''")
-        $safeJson = $StructureJson.Replace("'", "''") # Le JSON contient souvent des quotes
+        # Sécurisation SQL (v3.1)
         $date = (Get-Date -Format 'o')
 
         $query = @"
             INSERT OR REPLACE INTO sp_templates 
             (TemplateId, DisplayName, Description, Category, StructureJson, DateModified) 
             VALUES 
-            ('$safeId', '$safeName', '$safeDesc', '$safeCat', '$safeJson', '$date');
+            (@TemplateId, @DisplayName, @Description, @Category, @StructureJson, @DateModified);
 "@
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $sqlParams = @{
+            TemplateId    = $TemplateId
+            DisplayName   = $DisplayName
+            Description   = $Description
+            Category      = $Category
+            StructureJson = $StructureJson
+            DateModified  = $date
+        }
+
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         return $true
     }
     catch {

@@ -7,10 +7,11 @@ function Remove-AppDeployConfig {
     )
 
     try {
-        $safeName = $ConfigName.Replace("'", "''")
-        $query = "DELETE FROM sp_deploy_configs WHERE ConfigName = '$safeName'"
+        # v3.1 Sanitization SQL
+        $query = "DELETE FROM sp_deploy_configs WHERE ConfigName = @ConfigName"
+        $sqlParams = @{ ConfigName = $ConfigName }
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         return $true
     }
     catch {

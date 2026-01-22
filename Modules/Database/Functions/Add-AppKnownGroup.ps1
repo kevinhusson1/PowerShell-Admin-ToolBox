@@ -4,12 +4,18 @@ function Add-AppKnownGroup {
     [CmdletBinding()]
     param([string]$GroupName, [string]$Description)
     
-    $safeName = $GroupName.Trim().Replace("'", "''")
-    $safeDesc = if ($Description) { $Description.Replace("'", "''") } else { "" }
+    # v3.1 Sanitization SQL
+    $paramGroupName = $GroupName.Trim()
+    $paramDesc = if ($Description) { $Description } else { "" }
     
     try {
-        $query = "INSERT OR IGNORE INTO known_groups (GroupName, Description) VALUES ('$safeName', '$safeDesc');"
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $query = "INSERT OR IGNORE INTO known_groups (GroupName, Description) VALUES (@GroupName, @Description);"
+        $sqlParams = @{
+            GroupName   = $paramGroupName
+            Description = $paramDesc
+        }
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         return $true
-    } catch { return $false }
+    }
+    catch { return $false }
 }

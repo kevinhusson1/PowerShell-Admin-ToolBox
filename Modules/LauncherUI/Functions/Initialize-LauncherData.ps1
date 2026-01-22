@@ -84,9 +84,9 @@ function Initialize-LauncherData {
         
         # Peuplement de la section Active Directory ---
         $Global:AppControls.settingsADServiceUserTextBox.Text = $Global:AppConfig.ad.serviceUser
-        if (-not [string]::IsNullOrEmpty($Global:AppConfig.ad.servicePassword)) {
-            $Global:AppControls.settingsADServicePasswordBox.Password = "●●●●●●●●"
-        }
+        $Global:AppControls.settingsADServiceUserTextBox.Text = $Global:AppConfig.ad.serviceUser
+        # [SECURITY] v3.1 : Le champ mot de passe reste vide par défaut.
+        # Le bloc if (-not [string]::IsNullOrEmpty($Global:AppConfig.ad.servicePassword)) a été supprimé.
         # On réinitialise le drapeau à chaque chargement
         $Global:ADPasswordManuallyChanged = $false
         $Global:AppControls.settingsADTempServerTextBox.Text = $Global:AppConfig.ad.tempServer
@@ -100,7 +100,8 @@ function Initialize-LauncherData {
         # On utilise la liste globale qui contient déjà les infos de la BDD (Enabled/MaxRuns)
         Update-ManagementScriptList
 
-    } else {
+    }
+    else {
         Write-Verbose (Get-AppText -Key 'modules.launcherui.non_admin_mode_detected')
         $Global:AppControls.settingsTabItem.Visibility = 'Collapsed'
         $Global:AppControls.GovernanceTabItem.Visibility = 'Collapsed'
@@ -120,7 +121,8 @@ function Initialize-LauncherData {
     if ([string]::IsNullOrWhiteSpace($userAppId)) {
         $authButton.IsEnabled = $false
         $authButton.ToolTip = (Get-AppText 'settings.azure_authbutton_disabled_tooltip')
-    } else {
+    }
+    else {
         $authButton.IsEnabled = $true
         # Le tooltip normal est géré par Update-LauncherAuthButton
     }

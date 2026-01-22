@@ -55,18 +55,8 @@ function Get-ADServiceCredential {
             throw "Le champ mot de passe a été modifié mais est maintenant vide."
         }
     }
-    elseif (-not [string]::IsNullOrEmpty($Global:AppConfig.ad.servicePassword)) {
-        Write-Verbose "Déchiffrement du mot de passe stocké en base de données..."
-        try {
-            $encryptedBytes = [System.Convert]::FromBase64String($Global:AppConfig.ad.servicePassword)
-            $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($encryptedBytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-            $decryptedString = [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
-            $finalSecurePassword = ConvertTo-SecureString -String $decryptedString -AsPlainText -Force
-        } catch {
-            $PasswordControl.Tag = 'Error'
-            throw "Impossible de déchiffrer le mot de passe stocké. Ressaisissez-le manuellement."
-        }
-    }
+    # [SECURITY] v3.1 : Le mot de passe stocké a été supprimé.
+    # Le bloc elseif (-not [string]::IsNullOrEmpty($Global:AppConfig.ad.servicePassword)) a été supprimé.
     else {
         $PasswordControl.Tag = 'Error'
         throw "Aucun mot de passe n'est disponible. Veuillez le saisir."
@@ -76,7 +66,8 @@ function Get-ADServiceCredential {
     $upn = if ($username -like "*@*") { $username } else { "$username@$domain" }
     
     Write-Verbose "Construction de l'objet PSCredential pour l'utilisateur '$upn'."
-    $credential = New-Object System.Management.Automation.PSCredential($upn, $finalSecurePassword)
+    # $credential n'était pas utilisé ni retourné (le code appelant attend un SecureString).
+    # Suppression de la ligne: $credential = New-Object System.Management.Automation.PSCredential($upn, $finalSecurePassword)
     
     # Nettoyage des variables intermédiaires sensibles
     # CORRECTION : Remplacement des 'isset' par la syntaxe correcte

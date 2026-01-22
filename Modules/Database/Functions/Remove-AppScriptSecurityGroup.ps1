@@ -11,12 +11,15 @@ function Remove-AppScriptSecurityGroup {
         [Parameter(Mandatory)] [string]$ADGroup
     )
 
-    $safeId = $ScriptId.Replace("'", "''")
-    $safeGroup = $ADGroup.Trim().Replace("'", "''")
-
+    # v3.1 Sanitization SQL
     try {
-        $query = "DELETE FROM script_security WHERE ScriptId = '$safeId' AND ADGroup = '$safeGroup';"
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $query = "DELETE FROM script_security WHERE ScriptId = @ScriptId AND ADGroup = @ADGroup;"
+        $sqlParams = @{
+            ScriptId = $ScriptId
+            ADGroup  = $ADGroup.Trim()
+        }
+        
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         Write-Verbose "Groupe '$ADGroup' retiré du script '$ScriptId'."
         return $true
     }

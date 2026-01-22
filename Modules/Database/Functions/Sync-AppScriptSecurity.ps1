@@ -19,13 +19,14 @@ function Sync-AppScriptSecurity {
     )
 
     foreach ($script in $Scripts) {
-        # On sécurise l'ID pour le SQL
-        $safeId = $script.id.Replace("'", "''")
-
+        # v3.1 Sanitization SQL
+        
         # 1. Vérifier existence
-        # On utilise une requête COUNT rapide
-        $checkQuery = "SELECT COUNT(1) as Cnt FROM script_security WHERE ScriptId = '$safeId'"
-        $count = (Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $checkQuery).Cnt
+        $checkQuery = "SELECT COUNT(1) as Cnt FROM script_security WHERE ScriptId = @ScriptId"
+        # On définit les params pour le SELECT initiaux
+        $selectParams = @{ ScriptId = $script.id }
+        
+        $count = (Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $checkQuery -SqlParameters $selectParams).Cnt
 
         # 2. Si le script n'est pas encore sécurisé en base, on l'initialise
         if ($count -eq 0) {
@@ -33,10 +34,14 @@ function Sync-AppScriptSecurity {
                 Write-Verbose "Initialisation sécurité BDD pour le script : '$($script.id)'"
                 
                 foreach ($group in $script.security.allowedADGroups) {
-                    $safeGroup = $group.Trim().Replace("'", "''")
-                    if (-not [string]::IsNullOrWhiteSpace($safeGroup)) {
-                        $insertQuery = "INSERT INTO script_security (ScriptId, ADGroup) VALUES ('$safeId', '$safeGroup');"
-                        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $insertQuery
+                    $paramGroup = $group.Trim()
+                    if (-not [string]::IsNullOrWhiteSpace($paramGroup)) {
+                        $insertQuery = "INSERT INTO script_security (ScriptId, ADGroup) VALUES (@ScriptId, @ADGroup);"
+                        $insertParams = @{
+                            ScriptId = $script.id
+                            ADGroup  = $paramGroup
+                        }
+                        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $insertQuery -SqlParameters $insertParams
                     }
                 }
             }

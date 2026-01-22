@@ -11,13 +11,16 @@ function Add-AppScriptSecurityGroup {
         [Parameter(Mandatory)] [string]$ADGroup
     )
 
-    $safeId = $ScriptId.Replace("'", "''")
-    $safeGroup = $ADGroup.Trim().Replace("'", "''")
-
+    # v3.1 Sanitization SQL
     try {
         # INSERT OR IGNORE évite les doublons si on clique deux fois
-        $query = "INSERT OR IGNORE INTO script_security (ScriptId, ADGroup) VALUES ('$safeId', '$safeGroup');"
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $query = "INSERT OR IGNORE INTO script_security (ScriptId, ADGroup) VALUES (@ScriptId, @ADGroup);"
+        $sqlParams = @{
+            ScriptId = $ScriptId
+            ADGroup  = $ADGroup.Trim()
+        }
+        
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         Write-Verbose "Groupe '$ADGroup' ajouté au script '$ScriptId'."
         return $true
     }

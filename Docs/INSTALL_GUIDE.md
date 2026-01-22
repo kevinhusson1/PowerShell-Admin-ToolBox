@@ -111,6 +111,9 @@ Lors du tout premier lancement, configurez l'application pour la lier à Azure.
     *   **Moteur d'Automatisation (Certificat) :**
         *   **Empreinte (Thumbprint) :** Collez l'empreinte générée par le script PowerShell (ex: `A1B2C3D4...`).
         *   Cliquez sur le bouton **"Tester la connexion App-Only"** pour valider que le certificat est bien reconnu et que les droits sont actifs.
+    
+    > [!NOTE]
+    > **Sécurité Active Directory** : Pour des raisons de sécurité, le mot de passe du compte de service AD n'est **jamais sauvegardé** sur le disque. Il vous sera demandé de le saisir (si nécessaire) lors des opérations sensibles nécessitant une élévation de privilèges On-Premise, ou il devra être re-saisi dans l'onglet Paramètres à chaque redémarrage de l'application si vous souhaitez utiliser les fonctions de test.
 
 4.  Cliquez sur **Enregistrer les modifications** en bas de page.
 5.  Redémarrez l'application.

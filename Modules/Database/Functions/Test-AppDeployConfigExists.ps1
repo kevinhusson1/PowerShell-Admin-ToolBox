@@ -8,9 +8,11 @@ function Test-AppDeployConfigExists {
     )
 
     try {
-        $safeName = $ConfigName.Replace("'", "''")
-        $query = "SELECT COUNT(1) as Cnt FROM sp_deploy_configs WHERE ConfigName = '$safeName'"
-        $res = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        # v3.1 Sanitization SQL
+        $query = "SELECT COUNT(1) as Cnt FROM sp_deploy_configs WHERE ConfigName = @ConfigName"
+        $sqlParams = @{ ConfigName = $ConfigName }
+        
+        $res = Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         
         return ($res.Cnt -gt 0)
     }

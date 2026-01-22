@@ -159,26 +159,8 @@ function Register-LauncherEvents {
                         # --- ACTIVE DIRECTORY ---
                         Set-AppSetting -Key 'ad.serviceUser' -Value $Global:AppControls.settingsADServiceUserTextBox.Text
                     
-                        # Chiffrement et sauvegarde du mot de passe
-                        if ($Global:ADPasswordManuallyChanged) {
-                            $securePassword = $Global:AppControls.settingsADServicePasswordBox.SecurePassword
-                            if ($securePassword.Length -eq 0) {
-                                Set-AppSetting -Key 'ad.servicePassword' -Value ""
-                            }
-                            else {
-                                $ptr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
-                                try {
-                                    $unmanagedString = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-                                    $bytes = [System.Text.Encoding]::UTF8.GetBytes($unmanagedString)
-                                    $encryptedBytes = [System.Security.Cryptography.ProtectedData]::Protect($bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-                                    $encryptedString = [System.Convert]::ToBase64String($encryptedBytes)
-                                    Set-AppSetting -Key 'ad.servicePassword' -Value $encryptedString
-                                }
-                                finally {
-                                    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
-                                }
-                            }
-                        }
+                        # [SECURITY] v3.1 : Le mot de passe n'est plus sauvegardé.
+                        # Le bloc de chiffrement et Set-AppSetting -Key 'ad.servicePassword' a été supprimé.
                     
                         Set-AppSetting -Key 'ad.tempServer' -Value $Global:AppControls.settingsADTempServerTextBox.Text
                         Set-AppSetting -Key 'ad.connectServer' -Value $Global:AppControls.settingsADConnectServerTextBox.Text

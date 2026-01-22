@@ -12,12 +12,18 @@ function Set-AppScriptSettings {
         [Parameter(Mandatory)] [int]$MaxConcurrentRuns
     )
 
-    $safeId = $ScriptId.Replace("'", "''")
+    # v3.1 Sanitization SQL
     $intEnabled = if ($IsEnabled) { 1 } else { 0 }
 
     try {
-        $query = "INSERT OR REPLACE INTO script_settings (ScriptId, IsEnabled, MaxConcurrentRuns) VALUES ('$safeId', $intEnabled, $MaxConcurrentRuns);"
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $query = "INSERT OR REPLACE INTO script_settings (ScriptId, IsEnabled, MaxConcurrentRuns) VALUES (@ScriptId, @IsEnabled, @MaxConcurrentRuns);"
+        $sqlParams = @{
+            ScriptId          = $ScriptId
+            IsEnabled         = $intEnabled
+            MaxConcurrentRuns = $MaxConcurrentRuns
+        }
+        
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         Write-Verbose "Paramètres mis à jour pour '$ScriptId'."
         return $true
     }

@@ -103,6 +103,9 @@ try {
 
     # Important : On vérifie le statut Admin APRÈS la tentative de connexion
     $Global:IsAppAdmin = Test-IsAppAdmin
+
+    # --- Nettoyage des verrous orphelins (Crash précédents) ---
+    Clear-AppOrphanLocks
 }
 catch {
     [System.Windows.MessageBox]::Show("Erreur critique lors du chargement de la configuration : $($_.Exception.Message)", "Erreur de démarrage", "OK", "Error")

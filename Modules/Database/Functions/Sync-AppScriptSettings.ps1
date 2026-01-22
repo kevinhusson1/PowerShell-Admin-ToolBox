@@ -15,31 +15,39 @@ function Sync-AppScriptSettings {
         [Parameter(Mandatory)] [string]$AdminGroupName
     )
 
-    $safeId = $ScriptId.Replace("'", "''")
+    # v3.1 Sanitization SQL
 
     # 1. Table script_settings (Paramètres)
     try {
-        # INSERT OR IGNORE : Ne fait rien si l'ID existe déjà (donc on garde vos réglages)
-        $querySettings = "INSERT OR IGNORE INTO script_settings (ScriptId, IsEnabled, MaxConcurrentRuns) VALUES ('$safeId', 1, 1);"
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $querySettings -ErrorAction Stop
-    } catch {
+        # INSERT OR IGNORE : Ne fait rien si l'ID existe déjà
+        $querySettings = "INSERT OR IGNORE INTO script_settings (ScriptId, IsEnabled, MaxConcurrentRuns) VALUES (@ScriptId, 1, 1);"
+        $settingsParams = @{ ScriptId = $ScriptId }
+        
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $querySettings -SqlParameters $settingsParams -ErrorAction Stop
+    }
+    catch {
         Write-Warning "Erreur synchro settings pour $ScriptId : $($_.Exception.Message)"
     }
 
     # 2. Table script_security (Droits)
     try {
         # On vérifie s'il y a AU MOINS UN groupe défini pour ce script
-        $checkQuery = "SELECT COUNT(1) as Cnt FROM script_security WHERE ScriptId = '$safeId'"
-        $count = (Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $checkQuery).Cnt
+        $checkQuery = "SELECT COUNT(1) as Cnt FROM script_security WHERE ScriptId = @ScriptId"
+        # On réutilise settingsParams (ScriptId) car c'est le même
+        $count = (Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $checkQuery -SqlParameters $settingsParams).Cnt
 
         # Si aucun groupe n'est défini (nouveau script), on ajoute le groupe Admin par sécurité
         if ($count -eq 0 -and -not [string]::IsNullOrWhiteSpace($AdminGroupName)) {
-            $safeGroup = $AdminGroupName.Trim().Replace("'", "''")
-            $querySec = "INSERT INTO script_security (ScriptId, ADGroup) VALUES ('$safeId', '$safeGroup');"
-            Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $querySec -ErrorAction Stop
+            $querySec = "INSERT INTO script_security (ScriptId, ADGroup) VALUES (@ScriptId, @ADGroup);"
+            $secParams = @{
+                ScriptId = $ScriptId
+                ADGroup  = $AdminGroupName.Trim()
+            }
+            Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $querySec -SqlParameters $secParams -ErrorAction Stop
             Write-Verbose "Sécurité initialisée pour '$ScriptId' avec le groupe Admin."
         }
-    } catch {
+    }
+    catch {
         Write-Warning "Erreur synchro sécurité pour $ScriptId : $($_.Exception.Message)"
     }
 }

@@ -15,24 +15,32 @@ function Set-AppDeployConfig {
 
     try {
         # Sécurisation SQL
-        $safeName = $ConfigName.Replace("'", "''")
-        $safeUrl = $SiteUrl.Replace("'", "''")
-        $safeLib = $LibraryName.Replace("'", "''")
-        $safeFolder = $TargetFolder.Replace("'", "''")
+        # Sécurisation SQL (v3.1)
         $safeOverride = if ($OverwritePermissions) { 1 } else { 0 }
-        $safeTpl = $TemplateId.Replace("'", "''")
-        $safeFolderPath = if ($TargetFolderPath) { $TargetFolderPath.Replace("'", "''") } else { "" }
-        $safeRoles = if ($AuthorizedRoles) { $AuthorizedRoles.Replace("'", "''") } else { "" }
+        $safeFolderPath = if ($TargetFolderPath) { $TargetFolderPath } else { "" }
+        $safeRoles = if ($AuthorizedRoles) { $AuthorizedRoles } else { "" }
         $date = (Get-Date -Format 'o')
 
         $query = @"
             INSERT OR REPLACE INTO sp_deploy_configs 
             (ConfigName, SiteUrl, LibraryName, TargetFolder, OverwritePermissions, TemplateId, DateModified, TargetFolderPath, AuthorizedRoles) 
             VALUES 
-            ('$safeName', '$safeUrl', '$safeLib', '$safeFolder', $safeOverride, '$safeTpl', '$date', '$safeFolderPath', '$safeRoles');
+            (@ConfigName, @SiteUrl, @LibraryName, @TargetFolder, @OverwritePermissions, @TemplateId, @DateModified, @TargetFolderPath, @AuthorizedRoles);
 "@
         
-        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -ErrorAction Stop
+        $sqlParams = @{
+            ConfigName           = $ConfigName
+            SiteUrl              = $SiteUrl
+            LibraryName          = $LibraryName
+            TargetFolder         = $TargetFolder
+            OverwritePermissions = $safeOverride
+            TemplateId           = $TemplateId
+            DateModified         = $date
+            TargetFolderPath     = $safeFolderPath
+            AuthorizedRoles      = $safeRoles
+        }
+
+        Invoke-SqliteQuery -DataSource $Global:AppDatabasePath -Query $query -SqlParameters $sqlParams -ErrorAction Stop
         return $true
     }
     catch {

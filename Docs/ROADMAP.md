@@ -16,13 +16,13 @@ Ce document recense la vision à long terme, les chantiers techniques prioritair
 *Priorité absolue : Combler les failles de sécurité identifiées lors de l'audit 2026.*
 
 ### 🛡️ Sécurité des Secrets (Immédiat)
-- [ ] **Suppression des Mots de Passe en Clair** : Retirer le stockage du mot de passe AD (`servicePassword`) de la base SQLite locale.
-- [ ] **Certificats Non-Exportables** : Modifier la procédure d'installation (`Install-AppCertificate.ps1`) pour interdire l'exportation de la clé privée depuis le magasin Windows.
-- [ ] **Sanitization SQL** : Remplacer l'échappement manuel des chaînes (`Replace("'", "''")`) par des requêtes paramétrées pour prévenir les injections SQL.
+- [x] **Suppression des Mots de Passe en Clair** : Retirer le stockage du mot de passe AD (`servicePassword`) de la base SQLite locale.
+- [x] **Certificats Non-Exportables** : Modifier la procédure d'installation (`Install-AppCertificate.ps1`) pour interdire l'exportation de la clé privée depuis le magasin Windows.
+- [x] **Sanitization SQL** : Remplacer l'échappement manuel des chaînes (`Replace("'", "''")`) par des requêtes paramétrées pour prévenir les injections SQL.
 
 ### 🧹 Nettoyage & Robustesse
-- [ ] **Gestion des Verrous** : Améliorer la résilience du mécanisme de verrouillage (`active_sessions`) pour gérer les crashs du Launcher (nettoyage au démarrage).
-- [ ] **Dépendances** : Mettre en place un script de mise à jour automatique pour `Vendor\PSSQLite`.
+- [x] **Gestion des Verrous** : Améliorer la résilience du mécanisme de verrouillage (`active_sessions`) pour gérer les crashs du Launcher (nettoyage au démarrage).
+- [x] **Dépendances** : Mettre en place un script de mise à jour automatique pour `Vendor\PSSQLite`.
 
 ---
 
