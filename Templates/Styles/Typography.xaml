@@ -1,9 +1,9 @@
 <!-- Templates/Styles/Typography.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- NOTE IMPORTANTE : Remplacement de StaticResource par DynamicResource -->
-    
+
     <Style TargetType="TextBlock" x:Key="H1Style">
         <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="Bold"/>
@@ -17,26 +17,38 @@
         <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
         <Setter Property="Margin" Value="0,0,0,15"/>
     </Style>
-    
+
     <Style TargetType="TextBlock" x:Key="H3Style">
         <Setter Property="FontSize" Value="16"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
         <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
-    
+
     <Style TargetType="TextBlock" x:Key="H4Style">
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource DarkTextBrush}"/>
         <Setter Property="Margin" Value="0,0,0,3"/>
     </Style>
-    
+
     <Style TargetType="TextBlock" x:Key="DescriptionTextStyle">
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{DynamicResource GrayBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="Margin" Value="0,3,0,0"/>
+    </Style>
+
+    <!-- Texte Lien (Bleu Interactif) -->
+    <Style x:Key="LinkTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="TextDecorations" Value="Underline"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

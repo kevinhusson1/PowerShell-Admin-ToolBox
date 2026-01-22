@@ -1,14 +1,17 @@
 {
-    "id": "List-User-Graph-v1",
+    "id": "ListUserGraph-v1",
     "scriptFile": "ListUserGraph.ps1",
-    "name": "scripts.list-user-graph.name",
-    "description": "scripts.list-user-graph.description",
+    "lockFile": "ListUserGraph.lock",
+    "name": "scripts.ListUserGraph.name",
+    "description": "scripts.ListUserGraph.description",
     "version": "1.0.0",
-    "category": "UserManagement",
-    "author": "Service IT",
-    "icon": { 
-        "type": "png", 
+    "category": "User Management",
+    "author": "Kevin HUSSON",
+    "icon": {
+        "type": "png",
         "value": "address-book.png",
-        "backgroundColor": "#06b6d4" 
-    }
+        "backgroundColor": "#0078D4"
+    },
+    "tags": ["Azure", "Users", "Graph"],
+    "requiredModules": ["Microsoft.Graph.Users"]
 }
