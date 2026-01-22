@@ -1,0 +1,25 @@
+{
+    "management": {
+        "tab_title": "Gestion",
+        "library_title": "Bibliothèque de Groupes",
+        "library_desc": "Ajouter ou supprimer des groupes connus.",
+        "library_placeholder_add": "Nouveau groupe Azure AD...",
+        "library_tooltip_add": "Vérifier et Ajouter à la bibliothèque",
+        "library_placeholder_select": "Sélectionner pour supprimer...",
+        "library_tooltip_remove": "Supprimer le groupe sélectionné",
+        "scripts_list_title": "Scripts Installés",
+        "detail_select_prompt": "Sélectionnez un script pour le configurer.",
+        "detail_enabled": "Activé",
+        "detail_execution_title": "Exécution",
+        "detail_max_runs": "Max simultanées (-1 = illimité)",
+        "detail_security_title": "Sécurité & Accès",
+        "detail_security_desc": "Cochez les groupes autorisés pour ce script.",
+        "btn_save": "Enregistrer les modifications",
+        "msg_group_added": "Groupe '{0}' ajouté à la bibliothèque.",
+        "msg_group_not_found": "Le groupe '{0}' n'a pas été trouvé dans Azure AD.",
+        "msg_confirm_delete": "Supprimer '{0}' de la bibliothèque ?\nCela le retirera aussi de tous les scripts.",
+        "msg_select_group": "Veuillez sélectionner un groupe à supprimer.",
+        "msg_save_success": "Configuration enregistrée avec succès.",
+        "err_invalid_int": "Le nombre d'instances doit être un chiffre entier."
+    }
+}

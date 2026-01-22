@@ -1,0 +1,9 @@
+{
+    "modules": {
+        "core": {
+            "scripts_folder_not_found": "Le dossier des scripts est introuvable",
+            "manifest_parse_error": "Impossible de lire ou de parser le manifest",
+            "config_build_error": "Une erreur critique est survenue lors de la construction de l'objet de configuration"
+        }
+    }
+}

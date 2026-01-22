@@ -1,0 +1,297 @@
+{
+  "app": {
+    "title": "Script Tools Box",
+    "subtitle": "Sélecteur dynamique de scripts"
+  },
+  "launcher": {
+    "details_default": "Sélectionnez un script pour afficher les détails",
+    "execute_button": "▶️   Exécuter le script",
+    "bring_to_front_button": "🔼   Mettre au premier plan",
+    "stop_button": "◎   Arrêter l'exécution",
+    "status_available": "Scripts disponibles",
+    "status_active": "Scripts actifs",
+    "close_button": "Fermer toutes les applications",
+    "clear_locks_button": "Réinitialiser tous les verrous",
+    "clear_locks_tooltip": "Action réservée aux administrateurs. Force la suppression de tous les verrous de scripts.",
+    "connect_prompt_title": "Connexion Requise",
+    "connect_prompt_desc": "Veuillez vous connecter avec votre compte Microsoft 365 pour accéder aux applications et scripts autorisés."
+  },
+  "launcherLog": {
+    "successLaunch": "Interface du lanceur chargée avec succès.",
+    "launchScriptSuccess": "Lancement du script",
+    "stopScriptSuccess1": "Processus",
+    "stopScriptSuccess2": "arrêté avec succès.",
+    "stopScriptFailure1": "Impossible d'arrêter le processus",
+    "stopScriptFailure2": "Il s'est peut-être déjà terminé.",
+    "deleteSessionFile1": "Fichier de session",
+    "deleteSessionFile2": "nettoyé.",
+    "bringToFrontButtonFail1" : "La fenêtre du script",
+    "bringToFrontButtonFail2" : "n'est pas encore prête ou est invisible.",
+    "bringToFrontButtonError" : "Impossible de trouver le processus pour le script"
+  },
+  "messages": {
+    "settings_saved_success": "Les paramètres ont été enregistrés avec succès dans la base de données.",
+    "settings_saved_error": "Erreur lors de la sauvegarde des paramètres",
+    "clear_locks_success_log": "Tous les verrous de scripts ont été réinitialisés par un administrateur.",
+    "clear_locks_success_ui": "Les tables de verrous et de progression ont été vidées avec succès.",
+    "clear_locks_error_ui": "Une erreur est survenue lors de la réinitialisation des verrous.",
+    "execution_forbidden_title": "Exécution Interdite",
+    "execution_limit_reached": "Le nombre maximum d'exécutions a été atteint pour le script",
+    "script_file_not_found": "Le fichier de script est introuvable",
+    "script_launch_error": "Erreur lors du lancement du script",
+    "user_connected_log": "Utilisateur connecté avec succès :",
+    "user_disconnected_log": "Utilisateur déconnecté :",
+    "settings_saved_log": "Les paramètres de l'application ont été sauvegardés.",
+    "script_list_refreshed_1": "Liste des scripts mise à jour.",
+    "script_list_refreshed_2": "scripts maintenant visibles.",
+    "timerPIDclose1" : "Le script",
+    "timerPIDclose2" : "a été détecté comme terminé.",
+    "timerProgressStop" : "[TIMER] Le suivi de progression est arrêté (plus aucun script à surveiller)."
+  },
+  "confirmation": {
+    "title": "Confirmation",
+    "close_all_apps": "Êtes-vous sûr de vouloir fermer tous les scripts en cours d'exécution ?\nToute progression non sauvegardée sera perdue.",
+    "clear_locks_title": "Confirmation de réinitialisation",
+    "clear_locks_message": "Êtes-vous sûr de vouloir forcer la suppression de TOUS les verrous de scripts actifs ?\nCette action est irréversible et peut interrompre des utilisateurs."
+  },
+  "tabs": {
+    "scripts": "Scripts",
+    "journal": "Journal",
+    "settings": "Paramètres"
+  },
+  "settings": {
+    "save_button": "Enregistrer les modifications",
+    "test_button_inprogress": "Test en cours...",
+    "section_general": "Paramètres Généraux",
+    "company_name": "Nom de l'entreprise",
+    "app_version": "Version de l'application",
+    "default_language": "Langue par défaut",
+    "enable_verbose": "Activer les logs détaillés (Verbose)",
+    "section_ui": "Interface Utilisateur",
+    "launcher_width": "Largeur du lanceur (pixels)",
+    "launcher_height": "Hauteur du lanceur (pixels)",
+    "section_azure": "Configuration Azure",
+    "tenant_id": "Tenant ID",
+    "azure_usermode": "Authentification Utilisateur",
+    "azure_appid": "Application (Client) ID",
+    "azure_scopes": "Scopes demandés (séparés par des virgules)",
+    "azure_section_security": "Sécurité",
+    "security_admingroup": "Nom du groupe Azure AD des administrateurs",
+    "security_usergroup": "Nom du groupe Azure AD des utilisateurs autorisés",
+    "security_startupmode": "Mode d'authentification au démarrage",
+    "section_ad": "Services Active Directory",
+    "ad_service_user": "Nom d'utilisateur du compte de service",
+    "ad_service_password": "Mot de passe du compte de service",
+    "ad_test_creds_button": "Tester les identifiants",
+    "ad_temp_server": "Serveur de fichiers temporaires",
+    "ad_connect_server": "Serveur AD Connect",
+    "ad_domain_name": "Nom du domaine (ex: contoso.org)",
+    "ad_user_ou_path": "Chemin de l'OU de création des utilisateurs",
+    "ad_pdc_name": "Contrôleur de domaine principal",
+    "ad_domain_user_group": "Nom du groupe 'Utilisateurs du domaine'",
+    "ad_excluded_groups": "Groupes AD à exclure (séparés par des virgules)",
+    "azure_authbutton_disabled_tooltip": "Veuillez configurer et sauvegarder un 'Application (Client) ID' pour l'authentification utilisateur afin d'activer ce bouton.",
+    "azure_test_connection_button": "Tester la connexion"
+  },
+  "settings_validation": {
+    "auth_start": "Début du test d'authentification Active Directory...",
+    "auth_use_saved_password": "Utilisation du mot de passe sauvegardé pour le test.",
+    "auth_user_required": "Le nom d'utilisateur est requis.",
+    "auth_domain_required": "Le nom du domaine est requis.",
+    "auth_password_required": "Aucun mot de passe n'est saisi ou sauvegardé.",
+    "auth_attempt": "Tentative de connexion au domaine '{0}' avec l'utilisateur '{1}'...",
+    "auth_success_log": "Authentification Active Directory réussie !",
+    "auth_success_box_title": "Test de Connexion",
+    "auth_success_box_message": "La connexion à l'Active Directory a réussi.",
+    "auth_failure_log": "Échec du test d'authentification : {0}",
+    "auth_failure_box_title": "Test de Connexion",
+    "auth_failure_box_message": "Échec de la connexion à l'Active Directory.\n\nErreur : {0}",
+    "infra_test_start": "Début du test de l'infrastructure Active Directory...",
+    "infra_success_box_title": "Validation de l'Infrastructure",
+    "infra_success_box_message": "Les serveurs d'infrastructure ont été validés avec succès !",
+    "infra_failure_box_title": "Validation de l'Infrastructure",
+    "infra_adconnect_empty": "Le nom du serveur AD Connect est requis.",
+    "infra_tempserver_empty": "Le nom du serveur de fichiers temporaires est requis.",
+    "infra_adconnect_ping_failed": "Le serveur AD Connect '{0}' est injoignable (échec du ping).",
+    "infra_tempserver_ping_failed": "Le serveur de fichiers temporaires '{0}' est injoignable (échec du ping).",
+    "infra_adsync_not_found": "Le serveur AD Connect '{0}' est joignable, mais le service 'ADSync' est introuvable.",
+    "adobjects_test_start": "Début de la validation des objets de l'annuaire...",
+    "adobjects_success_box_title": "Validation des Objets AD",
+    "adobjects_failure_box_title": "Validation des Objets AD",
+    "adobjects_ou_empty": "Le chemin de l'OU de création est requis.",
+    "adobjects_domainusergroup_empty": "Le nom du groupe 'Utilisateurs du domaine' est requis.",
+    "adobjects_ou_not_found": "L'unité d'organisation spécifiée est introuvable.",
+    "adobjects_domainusergroup_not_found": "Le groupe avec le sAMAccountName '{0}' est introuvable.",
+    "adobjects_excluded_found": "Groupes trouvés : {0}.",
+    "adobjects_excluded_not_found": "Groupes NON trouvés : {0}.",
+    "adobjects_excluded_all_found": "Tous les groupes à exclure ont été validés : {0}.",
+    "adobjects_success_all": "L'OU et le groupe 'Utilisateurs du domaine' ont été validés avec succès.",
+    "azure_test_success_title": "Test de Connexion Réussi",
+    "azure_test_failure_title": "Test de Connexion Échoué",
+    "azure_user_test_success": "La connexion avec l'utilisateur actuel est valide et fonctionnelle.",
+    "azure_user_test_failure": "La validation du jeton de l'utilisateur a échoué."
+  },
+  "scripts": {
+    "copy-group": {
+      "name": "Copie de Groupe",
+      "description": "Copie les membres d'un groupe AD vers un autre."
+    },
+    "create-user": {
+      "name": "Création d'utilisateur",
+      "description": "Création de compte avec synchronisation Azure AD."
+    },
+    "DefaultUI": {
+      "name": "Interface par défaut",
+      "description": "Interface utilisateur par défaut pour les scripts personnalisés."
+    },
+    "disable-user": {
+      "name": "Désactiver utilisateur",
+      "description": "Désactive un compte et gère ses dépendances."
+    },
+    "list-user-graph": {
+      "name": "Annuaire Entreprise",
+      "description": "Affiche la liste des utilisateurs depuis Azure AD."
+    },
+    "reactive-user": {
+      "name": "Réactiver utilisateur",
+      "description": "Réactive un compte utilisateur précédemment désactivé."
+    }
+  },
+  "ui": {
+    "xaml_file_not_found": "Le fichier XAML est introuvable",
+    "loading_xaml_file": "Chargement du fichier XAML",
+    "replacing_keys_1": "Remplacement de",
+    "replacing_keys_2": "clés de traduction...",
+    "xaml_parse_error": "Erreur lors du parsing du fichier XAML",
+    "component_unknown_1": "Le composant UI",
+    "component_unknown_2": "est inconnu et ne sera pas chargé.",
+    "loading_components_1": "Chargement de",
+    "loading_components_2": "dictionnaires de ressources",
+    "style_file_not_found_1": "Le fichier de style",
+    "style_file_not_found_2": "est introuvable.",
+    "component_init_error": "Une erreur est survenue lors de l'initialisation des composants UI",
+    "rtb_target_not_found": "Cible de log RichTextBox introuvable. Le log UI sera ignoré.",
+    "progressUpdate": "Chargement en cours..."
+  },
+  "modules": {
+     "azure": {
+      "auth_error": "Échec de l'authentification utilisateur",
+      "disconnect_error": "Erreur lors de la déconnexion",
+      "get_groups_error": "Impossible de récupérer les groupes Azure de l'utilisateur",
+      "get_groups_success1": "Récupération de", 
+      "get_groups_success2": "groupes Azure AD pour l'utilisateur actuel.",
+      "get_groups_failure": "L'utilisateur n'est membre d'aucun groupe ou la réponse est vide." 
+    },
+    "core": {
+      "scripts_folder_not_found": "Le dossier des scripts est introuvable",
+      "manifest_parse_error": "Impossible de lire ou de parser le manifest",
+      "config_build_error": "Une erreur critique est survenue lors de la construction de l'objet de configuration"
+    },
+    "database": {
+      "lock_registered_1": "Verrou pour le script",
+      "lock_registered_2": "enregistré pour le PID",
+      "lock_register_error": "Impossible d'enregistrer le verrou pour le script",
+      "all_locks_cleared": "Tous les verrous ont été libérés de la base de données (tables 'active_sessions' et 'script_progress' vidées)..",
+      "clear_locks_error": "Impossible de vider la table des verrous",
+      "get_setting_error": "Erreur lors de la récupération du paramètre",
+      "setting_not_found_1": "Paramètre",
+      "setting_not_found_2": "Utilisation de la valeur par défaut.",
+      "setting_found_1": "Paramètre",
+      "setting_found_2": "Valeur brute",
+      "setting_found_3": "Type",
+      "int_parse_error_1": "Impossible de convertir la valeur",
+      "int_parse_error_2": "en entier pour la clé",
+      "bool_parse_error_1": "Impossible de convertir la valeur",
+      "bool_parse_error_2": "en booléen pour la clé",
+      
+      "db_not_found": "Base de données introuvable",
+      "db_creating": "Création et initialisation du schéma complet.",
+      "schema_init_success": "Schéma de base de données initialisé.",
+      "schema_checking": "Vérification du schéma de la base de données existante...",
+      "table_missing_1": "La table",
+      "table_missing_2": "est manquante. Tentative de création...",
+      "table_created_1": "Table",
+      "table_created_2": "créée avec succès.",
+      "schema_check_done": "Vérification du schéma terminée.",
+      "schema_error": "Impossible de créer ou de valider le schéma de la base de données",
+      
+      "set_setting_error": "Erreur lors de la sauvegarde du paramètre",
+      "setting_saved_1": "Paramètre",
+      "setting_saved_2": "sauvegardé avec la valeur",
+      "setting_saved_3": "Type",
+      
+      "lock_check_1": "Vérification du verrou pour le script",
+      "lock_check_2": "Limite de concurrence",
+      "lock_check_3": "Instances actuellement en cours pour le script",
+      "lock_limit_reached_1": "Le nombre maximum d'exécutions",
+      "lock_limit_reached_2": "pour le script",
+      "lock_limit_reached_3": "a été atteint.",
+      "lock_check_error": "Erreur lors de la vérification du verrou pour le script",
+      
+      "lock_release_error": "Impossible de libérer la session pour le PID",
+      "lock_released_1": "Session pour le PID",
+      "lock_released_2": "libérée de la base de données."
+    },
+    "launcherui": {
+      "user_groups": "Groupes de l'utilisateur",
+      "scripts_authorized_1": "scripts autorisés trouvés sur",
+      "scripts_authorized_2": "au total",
+      "manifest_incomplete_1": "Le manifeste",
+      "manifest_incomplete_2": "est incomplet (id, scriptFile, ou name manquant) et sera ignoré.",
+      "scan_filter_error": "Erreur lors du scan ou du filtrage des scripts",
+      
+      "admin_mode_detected": "Mode Administrateur détecté. Affichage des paramètres complets.",
+      "non_admin_mode_detected": "Mode Non-Administrateur détecté. Masquage des paramètres.",
+            
+      "stop_process_error": "Impossible d'arrêter le processus",
+      "stop_attempt_1": "Tentative d'arrêt forcé du processus",
+      "stop_attempt_2": "pour le script",
+      
+      "admin_check_start": "--- Début de la vérification des droits d'administration ---",
+      "admin_check_system_mode": "Aucun utilisateur Azure connecté (mode Système). Accès Admin accordé par défaut.",
+      "admin_check_user_connected": "Utilisateur Azure connecté",
+      "admin_check_no_group": "Le nom du groupe administrateur n'est pas configuré. Accès refusé.",
+      "admin_check_group_required": "Groupe administrateur requis",
+      "admin_check_success": "CORRESPONDANCE TROUVÉE ! L'utilisateur est membre du groupe admin. Accès accordé.",
+      "admin_check_failure": "Aucune correspondance trouvée. L'utilisateur n'est pas membre du groupe admin. Accès refusé.",
+      "admin_check_error": "Erreur lors de la vérification des droits d'administration",
+      
+      "auth_tooltip_connected": "Connecté en tant que",
+      "auth_tooltip_system": "Connecté en tant que : Système",
+      
+      "updating_script_list_ui_1": "Mise à jour de l'interface avec",
+      "updating_script_list_ui_2": "scripts."
+    },
+    "localization": {
+      "source_file_not_found": "Fichier de source de traduction introuvable",
+      "source_merged_1": "Source de traduction",
+      "source_merged_2": "fusionnée avec succès.",
+      "merge_error": "Erreur lors de la fusion de la source de traduction",
+
+      "key_not_found": "Clé de traduction introuvable",
+      "key_lookup_error": "Erreur lors de la recherche de la clé",
+      
+      "lang_file_not_found_1": "Fichier de langue",
+      "lang_file_not_found_2": "introuvable. Le système de traduction risque de ne pas fonctionner correctement.",
+      "lang_file_loaded_1": "Traduction",
+      "lang_file_loaded_2": "chargée avec succès.",
+      "lang_file_error": "Erreur lors du chargement du fichier de langue"      
+    },
+    "ui": {
+      "xaml_file_not_found": "Le fichier XAML est introuvable",
+      "loading_xaml_file": "Chargement du fichier XAML",
+      "replacing_keys_1": "Remplacement de",
+      "replacing_keys_2": "clés de traduction...",
+      "xaml_parse_error": "Erreur lors du parsing du fichier XAML",
+      "component_unknown_1": "Le composant UI",
+      "component_unknown_2": "est inconnu et ne sera pas chargé.",
+      "loading_components_1": "Chargement de",
+      "loading_components_2": "dictionnaires de ressources",
+      "style_file_not_found_1": "Le fichier de style",
+      "style_file_not_found_2": "est introuvable.",
+      "component_init_error": "Une erreur est survenue lors de l'initialisation des composants UI",
+      "rtb_target_not_found": "Cible de log RichTextBox introuvable. Le log UI sera ignoré.",
+      "progressUpdate": "Chargement en cours..." 
+    }
+  }
+}

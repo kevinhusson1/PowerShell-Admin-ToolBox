@@ -1,0 +1,49 @@
+{
+    "scripts": {
+        "ListUserGraph": {
+            "name": "Annuaire Utilisateurs",
+            "description": "Consultation, recherche et export des utilisateurs via Microsoft Graph."
+        }
+    },
+    "ui": {
+        "window_title": "Annuaire d'Entreprise",
+        "filters": {
+            "job_title": "Poste :",
+            "department": "Service :",
+            "all": "Tous",
+            "reset": "Réinitialiser Filtres"
+        },
+        "search": {
+            "label": "Rechercher (min 3 car.) :",
+            "placeholder": "Nom, email, téléphone..."
+        },
+        "headers": {
+            "display_name": "Nom d'Affichage",
+            "mail": "Email",
+            "job_title": "Poste",
+            "department": "Service",
+            "phone_work": "Tél. Bur.",
+            "phone_mobile": "Mobile",
+            "actions": "Détails"
+        },
+        "buttons": {
+            "export": "Exporter la Vue",
+            "close": "Fermer",
+            "details": "ℹ"
+        },
+        "status": {
+            "loading": "Chargement des données depuis Microsoft Graph...",
+            "processing": "Traitement et formatage...",
+            "ready": "{0} utilisateur(s) affiché(s).",
+            "error": "Erreur lors du chargement."
+        },
+        "tooltips": {
+            "show_details": "Afficher la fiche complète de l'utilisateur"
+        }
+    },
+    "messages": {
+        "no_data_export": "Aucune donnée à exporter dans la vue actuelle.",
+        "export_success": "Données exportées avec succès !",
+        "export_error": "Erreur lors de l'exportation : {0}"
+    }
+}

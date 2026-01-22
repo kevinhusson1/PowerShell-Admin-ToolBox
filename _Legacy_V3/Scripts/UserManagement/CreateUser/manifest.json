@@ -1,0 +1,15 @@
+{
+    "id": "Create-User-v1",
+    "scriptFile": "CreateUser.ps1",    
+    "lockFile": "CreateUser.lock", 
+    "name": "scripts.create-user.name",
+    "description": "scripts.create-user.description",
+    "version": "1.0.0",
+    "category": "UserManagement",
+    "author": "Service IT",
+    "icon": { 
+        "type": "png", 
+        "value": "user-add.png",
+        "backgroundColor": "#3b82f6" 
+    }
+}

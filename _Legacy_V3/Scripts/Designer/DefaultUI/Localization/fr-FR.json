@@ -1,0 +1,13 @@
+{
+    "scripts": {
+        "DefaultUI": {
+            "name": "Interface par défaut",
+            "description": "Interface utilisateur par défaut pour les scripts personnalisés."
+        }
+    },
+    "default_ui": {
+        "window_title": "Template d'Application",
+        "sample_text": "Ceci est un texte de démonstration centré dans la zone de contenu principale. L'interface s'adapte automatiquement à la taille de la fenêtre.",
+        "footer_info": "Zone de statut ou d'information contextuelle."
+    }
+}

@@ -1,0 +1,52 @@
+<!-- Templates/Components/Inputs/RadioButton.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style TargetType="{x:Type RadioButton}" x:Key="StandardRadioButtonStyle">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{TemplateBinding Background}">
+                        <!-- Conteneur Visuel -->
+                        <Grid Width="20" Height="20" VerticalAlignment="Center">
+                            <!-- Cercle Extérieur (Anneau) -->
+                            <Ellipse x:Name="Ring" Stroke="{DynamicResource BorderMediumBrush}" StrokeThickness="2" Fill="{DynamicResource BackgroundControlBrush}"/>
+
+                            <!-- Cercle Intérieur (Point) -->
+                            <Ellipse x:Name="Bullet" Fill="{DynamicResource PrimaryBrush}" Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        </Grid>
+
+                        <!-- Label -->
+                        <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <ControlTemplate.Triggers>
+                        <!-- État Coché -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="Bullet" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+
+                        <!-- État Survol -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="Ring" Property="StrokeThickness" Value="2"/>
+                        </Trigger>
+
+                        <!-- État Désactivé -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource BorderLightBrush}"/>
+                            <Setter TargetName="Ring" Property="Fill" Value="{DynamicResource BackgroundDisabledBrush}"/>
+                            <Setter TargetName="Bullet" Property="Fill" Value="{DynamicResource TextDisabledBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

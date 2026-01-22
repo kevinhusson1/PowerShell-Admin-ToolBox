@@ -1,0 +1,14 @@
+{
+    "id": "Reactive-User-v1",
+    "scriptFile": "ReactiveUser.ps1",
+    "name": "scripts.reactive-user.name",
+    "description": "scripts.reactive-user.description",
+    "version": "1.0.0",
+    "category": "UserManagement",
+    "author": "Service IT",
+    "icon": { 
+        "type": "png", 
+        "value": "user-check.png",
+        "backgroundColor": "#10b981" 
+    }
+}

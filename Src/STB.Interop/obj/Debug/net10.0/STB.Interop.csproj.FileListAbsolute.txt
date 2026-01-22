@@ -1,0 +1,12 @@
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\bin\Debug\net10.0\STB.Interop.deps.json
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\bin\Debug\net10.0\STB.Interop.dll
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\bin\Debug\net10.0\STB.Interop.pdb
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.GeneratedMSBuildEditorConfig.editorconfig
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.AssemblyInfoInputs.cache
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.AssemblyInfo.cs
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.csproj.CoreCompileInputs.cache
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.sourcelink.json
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.dll
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\refint\STB.Interop.dll
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\STB.Interop.pdb
+C:\CLOUD\Github\PowerShell-Admin-ToolBox\Src\STB.Interop\obj\Debug\net10.0\ref\STB.Interop.dll

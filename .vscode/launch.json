@@ -1,15 +1,17 @@
 {
-    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
-    // Pointez pour afficher la description des attributs existants.
-    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "PowerShell: Launch Current File",
-            "type": "PowerShell",
+            "name": "Debug STB.Host",
+            "type": "coreclr",
             "request": "launch",
-            "script": "${file}",
-            "args": []
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Src/STB.Host/bin/Debug/net10.0-windows/STB.Host.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/Src/STB.Host",
+            "stopAtEntry": false,
+            "console": "internalConsole"
         }
-    ]
+    ],
+    "compounds": []
 }
