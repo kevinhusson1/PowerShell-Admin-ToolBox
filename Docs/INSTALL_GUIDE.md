@@ -69,7 +69,7 @@ $cert = New-SelfSignedCertificate `
     -Subject "CN=$certName" `
     -KeySpec KeyExchange `
     -Provider "Microsoft RSA SChannel Cryptographic Provider" `
-    -KeyExportPolicy Exportable `
+    -KeyExportPolicy NonExportable `
     -HashAlgorithm SHA256 `
     -KeyLength 2048 `
     -NotAfter (Get-Date).AddYears(5) `

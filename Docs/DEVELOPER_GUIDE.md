@@ -1,89 +1,79 @@
-# Guide du Développeur - Création d'un nouveau Script
+# Guide du Développeur - Script Tools Box v3.0
 
-Ce guide explique comment ajouter une nouvelle fonctionnalité à la **Script Tools Box** en utilisant le "Golden Master" (Template v2.0).
+Ce guide est destiné aux développeurs souhaitant contribuer au projet ou créer de nouveaux scripts.
 
-## 1. Duplication du Template
+---
 
-Ne partez jamais d'une page blanche.
-1.  Copiez le dossier `Scripts/Designer/DefaultUI`.
-2.  Collez-le dans la catégorie appropriée (ex: `Scripts/UserManagement/MonNouveauScript`).
-3.  Renommez le dossier avec le nom technique de votre script.
+## 1. Architecture Logicielle
+L'application est découpée en modules indépendants situés dans `/Modules`.
 
-## 2. Configuration de l'Identité (Manifeste)
+### Les Modules Clés
+*   **Core** : Configuration globale, chargement des paramètres.
+*   **Database** : Abstraction de la couche SQLite. **Ne jamais attaquer SQLite directement**, utilisez toujours les fonctions `Set-App...` ou `Get-App...`.
+*   **Azure** : Gestion de l'identité (MSAL/Graph) et du cache de token partagé.
+*   **UI** : Composants graphiques et moteur de chargement XAML.
+*   **LauncherUI** : Logique spécifique au lanceur (Dashboard, Gouvernance).
+*   **Logging** : Gestion centralisée des logs.
 
-Ouvrez le fichier `manifest.json` dans votre nouveau dossier.
-1.  **ID (Critique) :** Changez l'ID (ex: `My-Script-v1`). Il doit être UNIQUE dans toute l'application.
-    *   *C'est cet ID qui servira de clé dans la base de données SQLite.*
-2.  **ScriptFile :** Renommez le fichier `.ps1` (voir étape 3) et mettez le nom ici.
-3.  **Textes :** Mettez à jour les clés de traduction (`name`, `description`).
-4.  **Icone :** Choisissez une icône PNG dans `Templates/Resources/Icons/PNG` et référencez-la.
+---
 
-## 3. Renommage des Fichiers
+## 2. Création d'un Nouveau Script
 
-Dans votre dossier :
-1.  Renommez `DefaultUI.ps1` en `MonNouveauScript.ps1`.
-2.  Renommez `DefaultUI.xaml` en `MonNouveauScript.xaml`.
+### A. Le "Golden Master"
+Tout nouveau script doit être créé à partir du modèle : `Scripts/Designer/DefaultUI`.
+1.  **Copier** le dossier `DefaultUI`.
+2.  **Renommer** le dossier et les fichiers (`.ps1`, `.xaml`).
+3.  **Modifier** le `manifest.json` (Nouvel ID unique requis).
 
-## 4. Adaptation du Code (.ps1)
+### B. Standards de Code (2025+)
+L'audit de sécurité V3 impose de nouvelles règles stricts.
 
-Ouvrez `MonNouveauScript.ps1`.
-1.  **Ligne ~100 (Chargement XAML) :** Mettez à jour le nom du fichier XAML à charger :
-    ```powershell
-    $window = Import-AppXamlTemplate -XamlPath (Join-Path $scriptRoot "MonNouveauScript.xaml")
-    ```
-2.  **Logique Métier :**
-    *   Utilisez le dossier `Functions/` pour créer vos fonctions spécifiques (ex: `Functions/Process-User.ps1`).
-    *   Chargez-les via "Dot-Sourcing" dans le script principal.
+> [!IMPORTANT]
+> **Règle n°1 : Pas de Secrets en Clair**
+> Ne stockez JAMAIS de mots de passe, clés d'API ou secrets dans le code ou les fichiers JSON.
+> Utilisez `Get-ADServiceCredential` ou l'authentification déléguée Azure.
 
-## 5. Gestion de l'Identité (Authentification)
+> [!TIP]
+> **Adoptez les Classes PowerShell**
+> Préférez les `class` aux `PSCustomObject` pour vos modèles de données internes.
+>
+> ```powershell
+> class UserReport {
+>     [string]$UPN
+>     [datetime]$LastLogin
+>     
+>     UserReport([string]$u) { $this.UPN = $u }
+> }
+> ```
 
-Depuis la version 3.0, l'authentification est gérée via un partage sécurisé du cache de token MSAL (SSO "Zero-Trust").
+### C. Gestion de l'Identité
+Le script ne doit pas gérer l'authentification lui-même. Il reçoit sa session du Launcher.
 
-### A. Paramètres Requis
-Votre script doit accepter les paramètres suivants pour recevoir l'identité depuis le Launcher :
 ```powershell
+# Dans le bloc param() de votre script
 param(
-    [string]$LauncherPID,
-    [string]$AuthUPN,     # Requis pour le SSO
+    [string]$AuthUPN,
     [string]$TenantId,
     [string]$ClientId,
-    # ... autres params ...
+    [string]$LauncherPID
 )
-```
 
-### B. Implémentation Standard (Logique)
-Utilisez la fonction **`Connect-AppChildSession`** (Module Azure) pour restaurer la session sans manipuler de secrets :
-```powershell
+# Récupération de la session (Single Sign-On)
 $userIdentity = Connect-AppChildSession -AuthUPN $AuthUPN -TenantId $TenantId -ClientId $ClientId
 ```
 
-### C. Interface Utilisateur (UI)
-Utilisez la fonction **`Set-AppWindowIdentity`** (Module UI) pour gérer le bouton d'identité (Initials, Nom, Déconnexion) :
-```powershell
-# Callbacks pour le mode autonome (Test/Dev)
-$OnConnect = { ... }
-$OnDisconnect = { ... }
+---
 
-Set-AppWindowIdentity -Window $window `
-                      -UserSession $userIdentity `
-                      -LauncherPID $LauncherPID `
-                      -OnConnect $OnConnect `
-                      -OnDisconnect $OnDisconnect
-```
-*(Voir le script `DefaultUI.ps1` pour l'implémentation complète des callbacks.)*
+## 3. Traduction (i18n)
+L'application est multilingue (FR/EN).
+*   Chaque dossier de script contient un sous-dossier `Localization`.
+*   Les fichiers JSON (`fr-FR.json`) contiennent les clés de texte.
+*   Dans le XAML, utilisez les ancres : `##loc:monscript.ma_cle##`.
 
-## 6. Traduction (Localization)
+---
 
-1.  Ouvrez `Localization/fr-FR.json` dans votre dossier de script.
-2.  Changez la clé racine (ex: remplacez `default_ui` par `my_script`).
-3.  Ajoutez vos textes.
-4.  Dans le fichier XAML, utilisez les balises `##loc:my_script.ma_cle##`.
-
-## 7. Activation & Test
-
-1.  Lancez le **Launcher**.
-2.  Connectez-vous en tant qu'Administrateur.
-3.  Allez dans l'onglet **Gestion**.
-4.  Vous devriez voir votre nouveau script dans la liste (avec une pastille grise).
-5.  **Activez-le** (Switch vert) et donnez-vous les droits (Cochez votre groupe).
-6.  Allez dans l'onglet **Scripts** : Votre tuile doit apparaître.
+## 4. Tests
+Avant de soumettre votre script :
+1.  Validez le code avec **PSScriptAnalyzer**.
+2.  Testez le redimensionnement de la fenêtre WPF.
+3.  Vérifiez que le script se ferme proprement (libération du verrou BDD).
