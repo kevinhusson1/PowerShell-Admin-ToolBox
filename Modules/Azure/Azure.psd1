@@ -21,6 +21,7 @@
     FunctionsToExport = @(
         'Add-AppGraphPermission',
         'Connect-AppAzureWithUser',
+        'Connect-AppAzureCert',
         'Disconnect-AppAzureUser',
         'Get-AppAzureGroupMembers',
         'Get-AppServicePrincipalPermissions',
@@ -28,6 +29,7 @@
         'Test-AppAzureCertConnection',
         'Test-AppAzureUserConnection',
         'Connect-AppChildSession',
-        'Get-AppCertificateStatus'
+        'Get-AppCertificateStatus',
+        'Get-AppAzureDirectoryUsers'
     )
 }

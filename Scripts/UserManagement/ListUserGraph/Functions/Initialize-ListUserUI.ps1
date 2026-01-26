@@ -1,4 +1,19 @@
 function Initialize-ListUserUI {
+    <#
+    .SYNOPSIS
+        Initialise l'interface utilisateur XAML et attache les événements pour ListUserGraph.
+
+    .DESCRIPTION
+        Cette fonction mappe les contrôles XAML à une hashtable globale script, configure les filtres,
+        la barre latérale, les actions (Mail, Teams, Copy) et la logique de recherche.
+
+    .PARAMETER Window
+        La fenêtre WPF parente contenant les contrôles.
+
+    .PARAMETER AllUsersData
+        La liste complète des utilisateurs (PSCustomObject) chargée depuis Graph.
+    #>
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)][System.Windows.Window]$Window,
         [Parameter(Mandatory)][System.Collections.IList]$AllUsersData
@@ -23,6 +38,8 @@ function Initialize-ListUserUI {
         'SidebarColumn'       = $Window.FindName('SidebarColumn')
         'ButtonCloseSidebar'  = $Window.FindName('CloseSidebarButton')
         'DetailAvatarText'    = $Window.FindName('DetailAvatarText')
+        'DetailAvatarImage'   = $Window.FindName('DetailAvatarImage')
+        'DetailAvatarBorder'  = $Window.FindName('DetailAvatarBorder')
         'DetailDisplayName'   = $Window.FindName('DetailDisplayName')
         'DetailJobTitle'      = $Window.FindName('DetailJobTitle')
         'DetailEmail'         = $Window.FindName('DetailEmail')
@@ -33,7 +50,11 @@ function Initialize-ListUserUI {
         'DetailCompany'       = $Window.FindName('DetailCompany')
         'DetailCity'          = $Window.FindName('DetailCity')
         'DetailManager'       = $Window.FindName('DetailManager')
-        # Manager field not in XAML yet but good to have prepared
+        
+        # Detail Actions
+        'ButtonActionTeams'   = $Window.FindName('ButtonActionTeams')
+        'ButtonActionMail'    = $Window.FindName('ButtonActionMail')
+        'ButtonActionCopy'    = $Window.FindName('ButtonActionCopy')
     }
 
     # 2. LOGIQUE UI COMMUNE
@@ -59,7 +80,7 @@ function Initialize-ListUserUI {
             $allText = Get-AppText 'ui.filters.all'
 
             # DEBUG LOGS (Pour comprendre pourquoi le filtre échoue)
-            Write-Host "FILTER DEBUG | Job: '$jobFilter' | Dept: '$deptFilter' | Search: '$searchText' | ALL: '$allText'" -ForegroundColor Cyan
+            Write-Verbose "FILTER DEBUG | Job: '$jobFilter' | Dept: '$deptFilter' | Search: '$searchText' | ALL: '$allText'"
 
             # 2. Filtrage
             $filtered = $script:LUG_CacheData | Where-Object {
@@ -120,7 +141,7 @@ function Initialize-ListUserUI {
                 })
 
             # Debug Résultat
-            Write-Host "FILTER RESULT | Found: $($view.Count) items" -ForegroundColor Green
+            Write-Verbose "FILTER RESULT | Found: $($view.Count) items"
         }
         catch {
             Write-Error "Error in FilterLogic: $_"
@@ -177,6 +198,17 @@ function Initialize-ListUserUI {
                     $script:LUG_Controls.DetailGridSplitter.Visibility = 'Visible'
                 }
 
+                # RESET UI AVATAR (Important pour éviter la persistance de l'image précédente)
+                if ($script:LUG_Controls.DetailAvatarImage) {
+                    $script:LUG_Controls.DetailAvatarImage.ImageSource = $null
+                }
+                if ($script:LUG_Controls.DetailAvatarText) {
+                    $script:LUG_Controls.DetailAvatarText.Visibility = 'Visible'
+                }
+                if ($script:LUG_Controls.DetailAvatarBorder) {
+                    $script:LUG_Controls.DetailAvatarBorder.Visibility = 'Collapsed'
+                }
+
                 # Remplir Avatar (Initiales)
                 if ($script:LUG_Controls.DetailAvatarText) {
                     $initials = "??"
@@ -199,6 +231,8 @@ function Initialize-ListUserUI {
                 & $script:SetDetailText 'DetailCompany'     $selectedUser.CompanyName
                 & $script:SetDetailText 'DetailCity'        $selectedUser.City
                 & $script:SetDetailText 'DetailManager'     $selectedUser.ManagerDisplayName
+
+                # Photo Logic Removed
             }
         })
 
@@ -221,9 +255,57 @@ function Initialize-ListUserUI {
     }
 
 
-    # 4. INITIALISATION
-    $jobs = $AllUsersData | Select-Object -ExpandProperty JobTitle -Unique | Sort-Object
-    $depts = $AllUsersData | Select-Object -ExpandProperty Department -Unique | Sort-Object
+    # 4. ACTIONS DETAIL
+    
+    # Helper Notification
+    $script:ShowNotification = {
+        param($Msg)
+        if ($script:LUG_Controls.LabelStatus) {
+            $currentData = $script:LUG_Controls.LabelStatus.Text -split " \| "
+            $baseText = $currentData[0]
+            $script:LUG_Controls.LabelStatus.Dispatcher.Invoke({
+                    $script:LUG_Controls.LabelStatus.Text = "$baseText | $Msg"
+                })
+        }
+    }
+
+    # Bouton Teams
+    if ($script:LUG_Controls.ButtonActionTeams) {
+        $script:LUG_Controls.ButtonActionTeams.Add_Click({
+                $email = $script:LUG_Controls.DetailEmail.Text
+                if ($email -and $email -ne "-" -and $email -match "@") {
+                    Start-Process "msteams:/l/chat/0/0?users=$email"
+                    & $script:ShowNotification ((Get-AppText 'notifications.teams_open') -f $email)
+                }
+            })
+    }
+
+    # Bouton Mail
+    if ($script:LUG_Controls.ButtonActionMail) {
+        $script:LUG_Controls.ButtonActionMail.Add_Click({
+                $email = $script:LUG_Controls.DetailEmail.Text
+                if ($email -and $email -ne "-" -and $email -match "@") {
+                    Start-Process "mailto:$email"
+                    & $script:ShowNotification ((Get-AppText 'notifications.mail_open') -f $email)
+                }
+            })
+    }
+
+    # Bouton Copy
+    if ($script:LUG_Controls.ButtonActionCopy) {
+        $script:LUG_Controls.ButtonActionCopy.Add_Click({
+                $email = $script:LUG_Controls.DetailEmail.Text
+                if ($email -and $email -ne "-") {
+                    Set-Clipboard -Value $email
+                    & $script:ShowNotification ((Get-AppText 'notifications.email_copied') -f $email)
+                }
+            })
+    }
+
+
+    # 5. INITIALISATION
+    $jobs = $AllUsersData | ForEach-Object { $_.JobTitle } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique | Sort-Object
+    $depts = $AllUsersData | ForEach-Object { $_.Department } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique | Sort-Object
 
     $script:LUG_Controls.ComboBoxPoste.ItemsSource = @((Get-AppText 'ui.filters.all')) + $jobs
     $script:LUG_Controls.ComboBoxDepartement.ItemsSource = @((Get-AppText 'ui.filters.all')) + $depts

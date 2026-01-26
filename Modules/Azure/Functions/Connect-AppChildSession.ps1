@@ -16,10 +16,18 @@ function Connect-AppChildSession {
 
         # 1. Connexion via Cache MSAL
         # On utilise le scope 'CurrentUser' explicitement pour taper dans le cache partagé du Launcher
-        $scopes = @("User.Read", "GroupMember.Read.All")
+        $scopes = @("User.Read", "User.Read.All", "GroupMember.Read.All")
         
         # Le Launcher s'est connecté, donc le Refresh Token est dans le cache utilisateur Windows.
         # On réutilise ce token pour obtenir un AccessToken valide pour ce nouveau process.
+        
+        # VERIFICATION PREALABLE : Si on est déjà connecté mais qu'il manque le scope, on sort pour forcer la reco
+        $ctx = Get-MgContext -ErrorAction SilentlyContinue
+        if ($ctx -and ($ctx.Scopes -notcontains "User.Read.All")) {
+            Write-Verbose "[AppChildSession] Scope 'User.Read.All' manquant dans la session active. Déconnexion forcée pour mise à jour."
+            Disconnect-MgGraph -ErrorAction SilentlyContinue
+        }
+
         Connect-MgGraph -ClientId $ClientId -TenantId $TenantId -Scopes $scopes -ContextScope CurrentUser -ErrorAction Stop | Out-Null
         
         # 2. Vérification de l'identité réelle (Au cas où le cache contiendrait un autre compte par défaut)

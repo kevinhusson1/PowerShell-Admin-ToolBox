@@ -187,7 +187,9 @@
                         <RowDefinition Height="Auto"/>
                         <!-- Section 1 -->
                         <RowDefinition Height="Auto"/>
-                        <!-- Section 2 -->
+                        <!-- Section 2 (Actions) -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Section 3 (Content) -->
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -226,9 +228,18 @@
                     </Grid>
 
                     <!-- Profile Header (Avatar + Nom) -->
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,30">
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,20">
                         <Border Style="{DynamicResource LargeAvatarBorderStyle}" Margin="0,0,15,0">
-                            <TextBlock x:Name="DetailAvatarText" Style="{DynamicResource LargeAvatarTextStyle}"/>
+                            <Grid>
+                                <!-- Initiales (Fond) -->
+                                <TextBlock x:Name="DetailAvatarText" Style="{DynamicResource LargeAvatarTextStyle}"/>
+                                <!-- Photo (Superposée) -->
+                                <Border x:Name="DetailAvatarBorder" CornerRadius="32" Width="64" Height="64" BorderThickness="2" BorderBrush="{DynamicResource PrimaryLightBrush}">
+                                    <Border.Background>
+                                        <ImageBrush x:Name="DetailAvatarImage" Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="DetailDisplayName" Text="-" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"/>
@@ -236,8 +247,32 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Section Content (Scrollable if needed, but simple stack here) -->
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <!-- Barre d'Actions Rapides -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,20">
+                        <!-- Bouton Teams -->
+                        <Button x:Name="ButtonActionTeams" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" ToolTip="Ouvrir dans Teams" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💬" Margin="0,0,8,0" FontSize="14"/>
+                                <TextBlock Text="Chat" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Bouton Mail -->
+                        <Button x:Name="ButtonActionMail" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" ToolTip="Envoyer un e-mail" Padding="10,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="✉" Margin="0,0,8,0" FontSize="14"/>
+                                <TextBlock Text="Mail" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        
+                         <!-- Bouton Copie -->
+                        <Button x:Name="ButtonActionCopy" Style="{DynamicResource SecondaryButtonStyle}" ToolTip="Copier l'e-mail" Padding="10,6">
+                            <TextBlock Text="📋" FontSize="14"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Section Content (Scrollable) -->
+                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <!-- Info Générales -->
                             <TextBlock Text="Informations Générales" Style="{DynamicResource SectionHeaderStyle}" Margin="0,0,0,15"/>

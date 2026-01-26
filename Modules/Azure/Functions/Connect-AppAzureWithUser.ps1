@@ -1,7 +1,7 @@
 function Connect-AppAzureWithUser {
     [CmdletBinding()]
     param(
-        [string[]]$Scopes = @("User.Read", "GroupMember.Read.All"),
+        [string[]]$Scopes = @("User.Read", "User.Read.All", "GroupMember.Read.All"),
         [Parameter(Mandatory)] [string]$AppId,
         [Parameter(Mandatory)] [string]$TenantId,
         [string]$HintUser # L'email pour le SSO
@@ -11,36 +11,45 @@ function Connect-AppAzureWithUser {
         # 1. Est-ce qu'on est déjà connecté DANS CE PROCESSUS ?
         $currentContext = Get-MgContext -ErrorAction SilentlyContinue
         
-        # Si on est déjà connecté, on vérifie si c'est le bon user
+        # Si on est déjà connecté, on vérifie si c'est le bon user ET si on a les bons droits
         if ($currentContext) {
+            # Check Scope Manquant
+            if ($currentContext.Scopes -notcontains "User.Read.All") {
+                Write-Verbose "[Auth] Scope 'User.Read.All' manquant. Reset de la session."
+                Disconnect-MgGraph -ErrorAction SilentlyContinue
+                $currentContext = $null
+            }
             # On fait un appel léger pour vérifier qui est là
-            try {
-                $me = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=displayName,userPrincipalName' -Method GET -ErrorAction Stop
+            elseif ($true) {
+                # Bloc try/catch original conservé via elseif trucmuche ou juste indentation
+                try {
+                    $me = Invoke-MgGraphRequest -Uri '/v1.0/me?$select=displayName,userPrincipalName' -Method GET -ErrorAction Stop
                 
-                # Si un Hint est fourni et que ça ne matche pas, on doit se déconnecter
-                if (-not [string]::IsNullOrWhiteSpace($HintUser) -and $me.userPrincipalName -ne $HintUser) {
-                    Disconnect-MgGraph -ErrorAction SilentlyContinue
-                    $currentContext = $null
-                }
-                else {
-                    # C'est le bon user (ou on s'en fiche), on garde la session
+                    # Si un Hint est fourni et que ça ne matche pas, on doit se déconnecter
+                    if (-not [string]::IsNullOrWhiteSpace($HintUser) -and $me.userPrincipalName -ne $HintUser) {
+                        Disconnect-MgGraph -ErrorAction SilentlyContinue
+                        $currentContext = $null
+                    }
+                    else {
+                        # C'est le bon user (ou on s'en fiche), on garde la session
                     
-                    # Fallback DisplayName & Initiales (Code dupliqué pour la robustesse)
-                    $displayName = if (-not [string]::IsNullOrWhiteSpace($me.DisplayName)) { $me.DisplayName } else { $me.userPrincipalName }
-                    $initials = (($displayName -split ' ' | Where-Object { $_ }) | ForEach-Object { $_.Substring(0, 1) }) -join ''
+                        # Fallback DisplayName & Initiales (Code dupliqué pour la robustesse)
+                        $displayName = if (-not [string]::IsNullOrWhiteSpace($me.DisplayName)) { $me.DisplayName } else { $me.userPrincipalName }
+                        $initials = (($displayName -split ' ' | Where-Object { $_ }) | ForEach-Object { $_.Substring(0, 1) }) -join ''
 
-                    return [PSCustomObject]@{
-                        Connected         = $true
-                        Success           = $true
-                        UserPrincipalName = $me.userPrincipalName
-                        DisplayName       = $displayName 
-                        Initials          = $initials
+                        return [PSCustomObject]@{
+                            Connected         = $true
+                            Success           = $true
+                            UserPrincipalName = $me.userPrincipalName
+                            DisplayName       = $displayName 
+                            Initials          = $initials
+                        }
                     }
                 }
-            }
-            catch {
-                # Token expiré ou invalide
-                $currentContext = $null
+                catch {
+                    # Token expiré ou invalide
+                    $currentContext = $null
+                }
             }
         }
 

@@ -25,7 +25,7 @@ $Global:ProjectRoot = $projectRoot
 $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSModulePath)"
 
 # Fonction Feedback Launcher
-function Send-Progress { param([int]$Percent, [string]$Msg) if ($LauncherPID) { Set-AppScriptProgress -OwnerPID $PID -ProgressPercentage $Percent -StatusMessage $Msg } }
+function Send-Progress { param([int]$Percent, [string]$Msg) if ($LauncherPID) { Set-AppScriptProgress -OwnerPID $PIDs -ProgressPercentage $Percent -StatusMessage $Msg } }
 
 Send-Progress 10 "Initialisation..."
 
@@ -33,7 +33,7 @@ Send-Progress 10 "Initialisation..."
 # 2. CHARGEMENT MODULES & CONFIG
 # =====================================================================
 try {
-    Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure" -Force
+    Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure", "ThreadJob" -Force
     
     # Chargement dynamique des fonctions locales
     Get-ChildItem -Path (Join-Path $scriptRoot "Functions") -Filter "*.ps1" | ForEach-Object { . $_.FullName }
@@ -45,7 +45,7 @@ try {
     if (-not (Test-AppScriptLock -Script $manifest)) {
         [System.Windows.MessageBox]::Show((Get-AppText 'messages.execution_limit_reached'), "Stop", "OK", "Error"); exit 1
     }
-    Add-AppScriptLock -Script $manifest -OwnerPID $PID
+    Add-AppScriptLock -Script $manifest -OwnerPID $PIDs
 
     # Config & Langue
     $Global:AppConfig = Get-AppConfiguration
@@ -112,27 +112,80 @@ try {
     $txtDesc = $window.FindName("HeaderSubtitleText")
     if ($txtDesc -and $manifest.description) { $txtDesc.Text = Get-AppText $manifest.description }
 
-    # --- LOGIQUE DE CHARGEMENT DES DONNÉES ---
+    # --- LOGIQUE DE CHARGEMENT DES DONNÉES (ASYNC) ---
     $LoadAction = {
         param($UserAuth)
         if ($UserAuth.Connected) {
-            Send-Progress 60 "Récupération de l'annuaire depuis Microsoft Graph..."
             # On passe la société définie dans la config globale comme filtre par défaut
-            # Si Config vide (mode autonome brut), on peut laisser $null ou un par défaut
             $companyFilter = if ($Global:AppConfig.companyName) { $Global:AppConfig.companyName } else { $null }
+            $certThumb = $Global:AppConfig.azure.certThumbprint
             
-            # Utilisation du thread UI pour simplifier (Async/Await pattern possible pour V4)
-            try {
-                # On force un rafraichissement UI pour montrer le chargement
-                [System.Windows.Forms.Application]::DoEvents() 
+            # Paramètres pour le Job
+            $jobParams = @{
+                TenantId      = $TenantId
+                ClientId      = $ClientId
+                Thumb         = $certThumb
+                CompanyFilter = $companyFilter
+                ScriptRoot    = $scriptRoot
+                ProjectRoot   = $projectRoot
+            }
+
+            # Démarrage du Job
+            $loadingJob = Start-ThreadJob -ArgumentList $jobParams -ScriptBlock {
+                param($ArgsMap)
+
+                $ErrorActionPreference = 'Stop'
                 
-                $users = Get-GraphDirectoryUsers -CompanyNameFilter $companyFilter
+                # Re-chargement minimal des modules nécessaires dans le Runspace du Job
+                $projectRoot = $ArgsMap.ProjectRoot
+                $env:PSModulePath = "$($projectRoot)\Modules;$($projectRoot)\Vendor;$($env:PSModulePath)"
+                
+                Import-Module "Azure", "Core" -Force
+
+                # -- Authentification dans le Job --
+                # Note: On doit ré-authentifier le contexte du Job (Connect-MgGraph est session-based)
+                # Cas 1: Certificat (App-Only) favorisé pour la stabilité
+                if ([string]::IsNullOrWhiteSpace($ArgsMap.Thumb) -eq $false) {
+                    Connect-AppAzureCert -TenantId $ArgsMap.TenantId -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb
+                }
+                else {
+                    # TODO: Cas User Delegated dans un ThreadJob est complexe (Token Cache).
+                    # Pour l'instant on assume que le contexte process suffit ou on devra passer le Token.
+                    # Fallback simple: on tente de récupérer le contexte du process parent via Azure module si implémenté, 
+                    # sinon on risque de devoir passer l'AccessToken explicitement. 
+                    # Pour ListUserGraph v3, assumons que le certificat est la cible principale.
+                }
+
+                # Appel de la fonction de récupération
+                return Get-AppAzureDirectoryUsers -CompanyNameFilter $ArgsMap.CompanyFilter
+            }
+
+            # Boucle d'attente non-bloquante (UI Pump)
+            Send-Progress 60 "Récupération de l'annuaire (Async)..."
+            
+            while ($loadingJob.State -eq 'Running') {
+                [System.Windows.Forms.Application]::DoEvents()
+                Start-Sleep -Milliseconds 50
+            }
+
+            # Traitement résultat
+            try {
+                $result = Receive-Job -Job $loadingJob -Wait -ErrorAction Stop
+                
+                if ($loadingJob.State -eq 'Failed') {
+                    throw $loadingJob.ChildJobs[0].Error[0]
+                }
+                
+                $users = $result | Sort-Object DisplayName
                 
                 Send-Progress 80 "Construction de l'affichage..."
                 Initialize-ListUserUI -Window $window -AllUsersData $users
             }
             catch {
-                [System.Windows.MessageBox]::Show("Erreur Graph API : $($_.Exception.Message)", "Erreur Données", "OK", "Error")
+                [System.Windows.MessageBox]::Show("Erreur Graph API (Job) : $($_.Exception.Message)", "Erreur Données", "OK", "Error")
+            }
+            finally {
+                Remove-Job -Job $loadingJob -Force -ErrorAction SilentlyContinue
             }
         }
     }
@@ -162,7 +215,7 @@ try {
 }
 catch {
     [System.Windows.MessageBox]::Show("Erreur UI : $($_.Exception.Message)", "Crash", "OK", "Error")
-    Unlock-AppScriptLock -OwnerPID $PID
+    Unlock-AppScriptLock -OwnerPID $PIDs
     exit 1
 }
 
@@ -174,5 +227,5 @@ try {
     $window.ShowDialog() | Out-Null
 }
 finally {
-    Unlock-AppScriptLock -OwnerPID $PID
+    Unlock-AppScriptLock -OwnerPID $PIDs
 }
