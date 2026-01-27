@@ -106,6 +106,11 @@ function Global:Update-TreePreview {
                 
                 return $item
             }
+            elseif ($Node.Type -eq "InternalLink") {
+                # --- NOEUD LIEN INTERNE ---
+                $item = New-EditorInternalLinkNode -Name $finalName -TargetNodeId $Node.TargetNodeId
+                return $item
+            }
             else {
                 # --- NOEUD DOSSIER ---
                 $item = New-EditorNode -Name $finalName

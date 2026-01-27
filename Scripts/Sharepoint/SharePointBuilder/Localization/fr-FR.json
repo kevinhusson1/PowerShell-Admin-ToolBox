@@ -16,7 +16,7 @@
     "log_template_selected": "ℹ️ Modèle sélectionné : '{0}'",
     "log_rule_selected": "ℹ️ Règle sélectionnée : '{0}'",
     "log_folder_selected": "ℹ️ Cible définie : '{0}'",
-    
+
     "tab_deploy": "🚀 Déploiement",
     "tab_editor_template": "✏️ Éditeur de Modèle",
     "tab_form_destination": "📋 Formulaire Destination",
@@ -39,11 +39,11 @@
 
     "label_deployment": "Déploiement",
     "label_overwrite_permissions": "Écraser les permissions existantes",
-    
+
     "label_logs": "📝 Journal d'opérations",
     "msg_waiting": "En attente...",
     "msg_ready": "Prêt.",
-    
+
     "btn_reset": "↺ Réinitialiser",
     "btn_copy_url": "📋 URL",
     "btn_open": "↗ Ouvrir",
@@ -77,7 +77,7 @@
     "title_edit_link": "Édition de Lien",
     "label_display_name": "Nom affiché",
     "label_target_url": "URL Cible",
-    "btn_delete_link": "Supprimer ce lien", 
+    "btn_delete_link": "Supprimer ce lien",
     "msg_select_folder_tree": "Sélectionnez un dossier dans l'arbre",
 
     "label_validation_context": "Contexte de validation",
@@ -88,7 +88,7 @@
 
     "label_existing_rule": "Règle existante",
     "label_naming_structure": "Structure du nommage",
-    
+
     "btn_add_label": "+ Texte Fixe",
     "btn_add_text": "+ Champ Saisie",
     "btn_add_combo": "+ Liste Choix",
@@ -101,7 +101,7 @@
     "label_options_list": "Options (séparées par virgule)",
     "label_visual_width": "Largeur visuelle (px)",
     "label_force_upper": "Forcer majuscules",
-    
+
     "msg_select_field": "Sélectionnez un champ à gauche",
     "label_live_preview": "Aperçu en temps réel :",
     "label_generated_result": "Résultat généré :",
@@ -132,15 +132,17 @@
 
     "btn_add_link_child": "+ Lien Enfant",
     "btn_add_publication": "+ Publication",
-    "tooltip_add_root": "Ajouter un dossier à la racine",
-    "tooltip_add_link_root": "Ajouter un lien raccourci à la racine",
-    "tooltip_add_child": "Ajouter un sous-dossier au dossier sélectionné",
-    "tooltip_add_link_child": "Ajouter un lien raccourci dans le dossier sélectionné",
-    "tooltip_add_publication": "Ajouter une publication (lien sécurisé) dans le dossier",
+    "tooltip_add_root": "Ajouter un dossier racine",
+    "tooltip_add_root_link": "Ajouter un lien racine",
+    "tooltip_add_child": "Ajouter un dossier enfant",
+    "tooltip_add_child_link": "Ajouter un lien enfant",
+    "tooltip_add_internal_link": "Ajouter un lien interne (vers un autre dossier)",
+    "tooltip_add_publication": "Ajouter une publication (vers un site)",
+    "tooltip_delete_item": "Supprimer l'élément sélectionné",
 
     "msg_model_saved": "✅ Modèle '{0}' sauvegardé avec succès !",
     "msg_model_deleted": "🗑️ Modèle supprimé.",
-    
+
     "dialog_save_config_title": "Sauvegarder la configuration",
     "dialog_save_config_name": "Nom de la configuration :",
     "label_security_access": "Sécurité &amp; Accès",
@@ -157,7 +159,7 @@
     "log_lib_selected": "ℹ️ Bibliothèque : '{0}'",
     "log_target_restored": "ℹ️ Cible restaurée : {0}",
     "log_config_loaded": "✅ Configuration chargée.",
-    
+
     "log_deploy_start": "ℹ️ Démarrage déploiement...",
     "log_deploy_init": "🐞 Initialisation...",
     "log_deploy_connected": "ℹ️ Connexion établie sur {0}",
@@ -182,6 +184,7 @@
     "log_deploy_finished": "✅ Déploiement terminé.",
     "log_deploy_create_link": "ℹ️ Création lien (Noeud) : {0} ({1})",
     "log_deploy_link_ok": "✅ Lien créé avec succès.",
+    "log_deploy_create_internal_link": "ℹ️ Création lien interne : {0}",
     "title_edit_pub": "Publication (Partage)",
     "label_pub_name": "Nom de la publication :",
     "label_pub_target_site": "Site Cible :",

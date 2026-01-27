@@ -425,15 +425,91 @@
                                     <TreeView x:Name="EditorTreeView" Grid.Row="1" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Margin="5"/>
 
                                     <!-- Toolbar Arbre -->
+                                    <!-- Toolbar Arbre -->
                                     <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10" CornerRadius="0,0,15,15">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button x:Name="EditorAddRootButton" Content="##loc:sp_builder.btn_add_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_root##"/>
-                                            <Button x:Name="EditorAddRootLinkButton" Content="##loc:sp_builder.btn_add_link_root##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_link_root##"/>
-                                            <Button x:Name="EditorAddChildButton" Content="##loc:sp_builder.btn_add_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_child##"/>
-                                            <Button x:Name="EditorAddChildLinkButton" Content="##loc:sp_builder.btn_add_link_child##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_link_child##"/>
-                                            <Button x:Name="EditorAddPubButton" Content="##loc:sp_builder.btn_add_publication##" Style="{DynamicResource SecondaryButtonStyle}" Height="30" FontSize="11" Margin="0,0,5,0" ToolTip="##loc:sp_builder.tooltip_add_publication##" Background="#FFF3E0" Foreground="#E65100"/>
-                                            <Button x:Name="EditorDeleteNodeButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="30" Width="40" Padding="0" Foreground="{DynamicResource DangerBrush}" ToolTip="##loc:form_editor.delete_tooltip##"/>
-                                        </StackPanel>
+                                        <Border.Resources>
+                                            <Style x:Key="ToolbarIconButtonStyle" TargetType="Button">
+                                                <Setter Property="Padding" Value="5"/>
+                                                <Setter Property="Height" Value="36"/>
+                                                <Setter Property="Width" Value="36"/>
+                                                <Setter Property="Margin" Value="0,0,5,5"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                                <Setter Property="BorderBrush" Value="#DDDDDD"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
+                                                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#AAAAAA"/>
+                                                                    <!-- Slight darken effect -->
+                                                                    <Setter TargetName="Bd" Property="Effect">
+                                                                        <Setter.Value>
+                                                                            <DropShadowEffect ShadowDepth="0" Color="Gray" BlurRadius="5" Opacity="0.3"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Trigger>
+                                                                <Trigger Property="IsEnabled" Value="False">
+                                                                    <Setter Property="Opacity" Value="0.3"/>
+                                                                    <Setter TargetName="Bd" Property="Background" Value="#F0F0F0"/>
+                                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#E0E0E0"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Border.Resources>
+                                        
+                                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
+                                            <!-- RACINE (Jaune Pastel) -->
+                                            <Button x:Name="EditorAddRootButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#FFF9C4" ToolTip="##loc:sp_builder.tooltip_add_root##">
+                                                <Image x:Name="IconAddRoot" Stretch="Uniform"/>
+                                            </Button>
+
+                                            <!-- RACINE LIEN (Vert Pastel) -->
+                                            <Button x:Name="EditorAddRootLinkButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#DCEDC8" Margin="0,0,15,5" ToolTip="##loc:sp_builder.tooltip_add_root_link##">
+                                                <Image x:Name="IconAddRootLink" Stretch="Uniform"/>
+                                            </Button>
+                                            
+                                            <!-- ENFANT DOSSIER (Jaune très clair) -->
+                                            <Button x:Name="EditorAddChildButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#FFFDE7" ToolTip="##loc:sp_builder.tooltip_add_child##">
+                                                <Image x:Name="IconAddChild" Stretch="Uniform"/>
+                                            </Button>
+
+                                            <!-- ENFANT LIEN (Vert très clair) -->
+                                            <Button x:Name="EditorAddChildLinkButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#F1F8E9" ToolTip="##loc:sp_builder.tooltip_add_child_link##">
+                                                <Image x:Name="IconAddChildLink" Stretch="Uniform"/>
+                                            </Button>
+
+                                            <!-- ENFANT LIEN INTERNE (Cyan Pastel) -->
+                                            <Button x:Name="EditorAddChildInternalLinkButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#E0F2F1" BorderBrush="#80CBC4" ToolTip="##loc:sp_builder.tooltip_add_internal_link##">
+                                                <Image x:Name="IconAddInternalLink" Stretch="Uniform"/>
+                                            </Button>
+
+                                            <!-- PUBLICATION (Bleu Pastel) -->
+                                            <Button x:Name="EditorAddPubButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#E3F2FD" BorderBrush="#90CAF9" Margin="0,0,15,5" ToolTip="##loc:sp_builder.tooltip_add_publication##">
+                                                <Image x:Name="IconAddPub" Stretch="Uniform"/>
+                                            </Button>
+                                            
+                                            <!-- NEW: PERMISSION (Violet Pastel) -->
+                                            <Button x:Name="EditorGlobalAddPermButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#E8EAF6" BorderBrush="#C5CAE9" ToolTip="##loc:sp_builder.tooltip_add_permission##">
+                                                <Image x:Name="IconAddPerm" Stretch="Uniform"/>
+                                            </Button>
+
+                                            <!-- NEW: MÉTAGONNÉE/TAG (Indigot/Bleu Roi Pastel) - Utilisation tag.png -->
+                                            <Button x:Name="EditorGlobalAddTagButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#E1F5FE" BorderBrush="#B3E5FC" Margin="0,0,15,5" ToolTip="##loc:sp_builder.tooltip_add_tag##">
+                                                <Image x:Name="IconAddTag" Stretch="Uniform"/>
+                                            </Button>
+                                            
+                                            <!-- SUPPRIMER (Rouge Pastel) -->
+                                            <Button x:Name="EditorDeleteButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#FFEBEE" BorderBrush="#FFCDD2" ToolTip="##loc:sp_builder.tooltip_delete_item##">
+                                                <Image x:Name="IconDelete" Stretch="Uniform"/>
+                                            </Button>
+                                        </WrapPanel>
                                     </Border>
                                 </Grid>
                             </Border>
@@ -457,7 +533,7 @@
 
                                     <!-- Formulaire Propriétés -->
                                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
-                                        <Grid>
+                                        <StackPanel>
 
                                             <!-- A. MODE DOSSIER -->
                                             <StackPanel x:Name="EdPanelFolder">
@@ -466,62 +542,7 @@
                                                 <TextBlock Text="##loc:sp_builder.label_folder_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du dossier dans SharePoint"/>
 
-                                                <!-- 2. Permissions -->
-                                                <Grid Margin="0,0,0,10">
-                                                    <TextBlock Text="##loc:sp_builder.label_permissions##" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
-                                                    <Button x:Name="EditorAddPermButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter une permission"/>
-                                                </Grid>
-
-                                                <!-- Liste Permissions -->
-                                                <ListBox x:Name="EditorPermissionsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
-                                                    <ListBox.ItemContainerStyle>
-                                                        <Style TargetType="ListBoxItem">
-                                                            <Setter Property="Padding" Value="0"/>
-                                                            <Setter Property="Margin" Value="0,0,0,5"/>
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="ListBoxItem">
-                                                                        <ContentPresenter/>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                        </Style>
-                                                    </ListBox.ItemContainerStyle>
-                                                </ListBox>
-
-                                                <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,20"/>
-
-                                                <!-- 3. Métadonnées -->
-                                                <Grid Margin="0,0,0,10">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="##loc:sp_builder.label_metadata_tags##" Style="{DynamicResource H4Style}" VerticalAlignment="Center"/>
-                                                        <Border x:Name="EditorMetadataBadge" Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" Visibility="Collapsed">
-                                                            <TextBlock Text="##loc:sp_builder.badge_schema_linked##" FontSize="9" Foreground="{DynamicResource InfoBrush}" FontWeight="Bold"/>
-                                                        </Border>
-                                                    </StackPanel>
-                                                    <Button x:Name="EditorAddTagButton" Content="+" Style="{DynamicResource PrimaryButtonStyle}" Width="24" Height="24" Padding="0" HorizontalAlignment="Right" ToolTip="Ajouter un tag"/>
-                                                </Grid>
-
-                                                <!-- Liste Tags -->
-                                                <ListBox x:Name="EditorTagsListBox" Margin="0,0,0,20" BorderThickness="0" Background="Transparent">
-                                                    <ListBox.ItemContainerStyle>
-                                                        <Style TargetType="ListBoxItem">
-                                                            <Setter Property="Padding" Value="0"/>
-                                                            <Setter Property="Margin" Value="0,0,0,5"/>
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="ListBoxItem">
-                                                                        <ContentPresenter/>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                        </Style>
-                                                    </ListBox.ItemContainerStyle>
-                                                </ListBox>
-
-
+                                                <!-- Permissions moved to TreeView (Child Nodes) -->
 
                                             </StackPanel>
 
@@ -578,6 +599,27 @@
 
                                                 <Button x:Name="EdLinkDeleteButton" Content="##loc:sp_builder.btn_delete_link##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
+                                            
+                                            <!-- D-bis. MODE INTERNAL LINK (NEW) -->
+                                            <StackPanel x:Name="EdPanelInternalLink" Visibility="Collapsed">
+                                                <Border Background="#E0F2F1" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="🔗" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Lien Interne" FontWeight="SemiBold" Foreground="#00695C"/>
+                                                        <TextBlock Text="↪️" Margin="5,0,0,0" FontSize="10" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdInternalLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
+
+                                                <TextBlock Text="ID Cible (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdInternalLinkIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888"/>
+                                                
+                                                <TextBlock Text="Pour changer la cible, supprimez ce lien et recréez-le." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+
+                                                <Button x:Name="EdInternalLinkDeleteButton" Content="Supprimer ce lien" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                            </StackPanel>
 
                                             <!-- E. MODE PUBLICATION (NEW) -->
                                             <StackPanel x:Name="EdPanelPub" Visibility="Collapsed">
@@ -615,7 +657,10 @@
                                                 <Button x:Name="EdPubDeleteButton" Content="Supprimer la publication" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,10,0,0"/>
                                             </StackPanel>
 
-                                        </Grid>
+                                            <!-- F. GLOBAL TAGS (REMOVED - Use TreeView Nodes) -->
+                                            <StackPanel x:Name="EdPanelGlobalTags" Visibility="Collapsed"/>
+
+                                        </StackPanel>
                                     </ScrollViewer>
 
                                     <!-- Overlay "Aucune sélection" -->

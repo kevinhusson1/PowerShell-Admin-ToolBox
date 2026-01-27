@@ -48,21 +48,46 @@ function Global:Convert-EditorTreeToJson {
             }
         }
 
+        # 2.5 CAS LIEN INTERNE (NOUVEAU)
+        if ($data.Type -eq "InternalLink") {
+            return @{
+                Type         = "InternalLink"
+                Name         = $data.Name
+                TargetNodeId = $data.TargetNodeId
+            }
+        }
+
         # 3. CAS DOSSIER
         # On construit une Hashtable propre pour le JSON
         $nodeHash = @{
             Name        = $data.Name
-            Permissions = $data.Permissions
-            Tags        = $data.Tags
+            Id          = $data.Id
+            Permissions = @()
+            Tags        = @()
             Folders     = @()
         }
 
         # Récursion sur les enfants visuels
         foreach ($childItem in $Item.Items) {
-            # FIX: Ignorer les métadonnées visuelles (qui sont dans le TreeView pour l'édition)
-            if ($childItem.Name -eq "MetaItem") { continue }
-
-            $nodeHash.Folders += Get-NodeData -Item $childItem
+            $childData = $childItem.Tag
+            
+            # Gestion Types Enfants
+            if ($childData.Type -eq "Permission") {
+                $nodeHash.Permissions += @{
+                    Email = $childData.Email
+                    Level = $childData.Level
+                }
+            }
+            elseif ($childData.Type -eq "Tag") {
+                $nodeHash.Tags += @{
+                    Name  = $childData.Name
+                    Value = $childData.Value
+                }
+            }
+            else {
+                # Dossier / Lien / Pub / InternalLink -> Folders List
+                $nodeHash.Folders += Get-NodeData -Item $childItem
+            }
         }
         
         return $nodeHash
@@ -73,27 +98,10 @@ function Global:Convert-EditorTreeToJson {
         $rootList += Get-NodeData -Item $rootItem
     }
 
-    # On encapsule dans une structure standard
     $finalObj = @{ Folders = $rootList }
-    
     return $finalObj | ConvertTo-Json -Depth 10 -Compress
 }
 
-# 2. JSON -> TREEVIEW (Chargement)
-<#
-.SYNOPSIS
-    Reconstruit l'arbre visuel d'édition à partir d'un JSON.
-
-.DESCRIPTION
-    Désérialise le JSON et récrée récursivement les noeuds du TreeView (Nodes, Badges, Metadata)
-    en utilisant les fonctions New-EditorNode et Update-EditorBadges.
-
-.PARAMETER Json
-    La chaîne JSON source.
-
-.PARAMETER TreeView
-    Le contrôle TreeView cible (sera vidé avant le chargement).
-#>
 function Global:Convert-JsonToEditorTree {
     param(
         [string]$Json, 
@@ -105,51 +113,73 @@ function Global:Convert-JsonToEditorTree {
 
     try {
         $structure = $Json | ConvertFrom-Json
-        
-        # Gestion de la racine (Array ou Object)
         $folders = if ($structure.Folders) { $structure.Folders } else { @($structure) }
 
         function Build-Node {
             param($Data)
             
-            # Création Visuelle
+            # Création Visuelle (Dossier par défaut via New-EditorNode)
             $newItem = New-EditorNode -Name $Data.Name
+            if ($Data.Id) { $newItem.Tag.Id = $Data.Id }
+
+            # Hydratation Enfants (Permissions / Tags / Sous-Dossiers)
             
-            # Hydratation des Données
-            # Note : ConvertFrom-Json crée des PSCustomObject, on doit parfois les caster
-            
-            # Permissions
+            # Permissions -> Noeuds
             if ($Data.Permissions) {
-                $newItem.Tag.Permissions = [System.Collections.Generic.List[psobject]]::new()
+                $newItem.Tag.Permissions = $null # On vide la liste data parent, on utilise les noeuds enfants
                 foreach ($p in $Data.Permissions) { 
-                    $newItem.Tag.Permissions.Add([PSCustomObject]@{ Email = $p.Email; Level = $p.Level }) 
+                    $pNode = New-EditorPermNode -Email $p.Email -Level $p.Level
+                    $newItem.Items.Add($pNode) | Out-Null
                 }
             }
             
-            # Tags
+            # Tags -> Noeuds
             if ($Data.Tags) {
-                $newItem.Tag.Tags = [System.Collections.Generic.List[psobject]]::new()
+                $newItem.Tag.Tags = $null # Idem
                 foreach ($t in $Data.Tags) { 
-                    $newItem.Tag.Tags.Add([PSCustomObject]@{ Name = $t.Name; Value = $t.Value }) 
+                    $tNode = New-EditorTagNode -Name $t.Name -Value $t.Value
+                    $newItem.Items.Add($tNode) | Out-Null
                 }
             }
             
-            # Récursion Enfants
+            # Récursion Dossiers/Liens/Pubs
             if ($Data.Folders) {
                 foreach ($sub in $Data.Folders) {
                     if ($sub.Type -eq "Link") {
                         $subItem = New-EditorLinkNode -Name $sub.Name -Url $sub.Url
+                        # Charge les Tags du Lien aussi !
+                        if ($sub.Tags) {
+                            foreach ($t in $sub.Tags) {
+                                $tNode = New-EditorTagNode -Name $t.Name -Value $t.Value
+                                $subItem.Items.Add($tNode) | Out-Null
+                            }
+                        }
                     }
                     elseif ($sub.Type -eq "Publication") {
                         $subItem = New-EditorPubNode -Name $sub.Name
-                        # Hydratation Pub Data
-                        $subItem.Tag.Name = $sub.Name
                         $subItem.Tag.TargetSiteMode = $sub.TargetSiteMode
                         $subItem.Tag.TargetSiteUrl = $sub.TargetSiteUrl
                         $subItem.Tag.TargetFolderPath = $sub.TargetFolderPath
                         $subItem.Tag.UseModelName = $sub.UseModelName
                         $subItem.Tag.GrantUser = $sub.GrantUser
                         $subItem.Tag.GrantLevel = $sub.GrantLevel
+                        # Charge les Tags de la Pub
+                        if ($sub.Tags) {
+                            foreach ($t in $sub.Tags) {
+                                $tNode = New-EditorTagNode -Name $t.Name -Value $t.Value
+                                $subItem.Items.Add($tNode) | Out-Null
+                            }
+                        }
+                    }
+                    elseif ($sub.Type -eq "InternalLink") {
+                        $subItem = New-EditorInternalLinkNode -Name $sub.Name -TargetNodeId $sub.TargetNodeId
+                        # Charge Tags InternalLink
+                        if ($sub.Tags) {
+                            foreach ($t in $sub.Tags) {
+                                $tNode = New-EditorTagNode -Name $t.Name -Value $t.Value
+                                $subItem.Items.Add($tNode) | Out-Null
+                            }
+                        }
                     }
                     else {
                         $subItem = Build-Node -Data $sub
@@ -158,31 +188,22 @@ function Global:Convert-JsonToEditorTree {
                 }
             }
 
-            # Mise à jour des badges
             Update-EditorBadges -TreeItem $newItem
-
             return $newItem
         }
 
         foreach ($f in $folders) {
-            if ($f.Type -eq "Link") {
-                $rootNode = New-EditorLinkNode -Name $f.Name -Url $f.Url
+            # Note: A la racine, on ne supporte a priori que des Dossiers, mais si Link/Pub à la racine...
+            if ($f.Type -eq "Link") { 
+                $rootNode = New-EditorLinkNode -Name $f.Name -Url $f.Url 
+                if ($f.Tags) { foreach ($t in $f.Tags) { $rootNode.Items.Add((New-EditorTagNode -Name $t.Name -Value $t.Value)) | Out-Null } }
             }
-            # Note: Publications at Root are possible theoretically but rare
-            elseif ($f.Type -eq "Publication") {
-                $rootNode = New-EditorPubNode -Name $f.Name
-                $rootNode.Tag.Name = $f.Name
-                $rootNode.Tag.TargetSiteMode = $f.TargetSiteMode
-                $rootNode.Tag.TargetSiteUrl = $f.TargetSiteUrl
-                $rootNode.Tag.TargetFolderPath = $f.TargetFolderPath
-                $rootNode.Tag.UseModelName = $f.UseModelName
-                $rootNode.Tag.GrantUser = $f.GrantUser
-                $rootNode.Tag.GrantLevel = $f.GrantLevel
-            }
+            # ... Cases for Pub/InternalLink at root ...
             else {
                 $rootNode = Build-Node -Data $f
             }
             $TreeView.Items.Add($rootNode) | Out-Null
+            Update-EditorBadges -TreeItem $rootNode
         }
     }
     catch {

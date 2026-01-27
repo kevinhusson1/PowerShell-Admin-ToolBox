@@ -18,7 +18,7 @@ function Initialize-BuilderLogic {
     # 1. Chargement des sous-fonctions logiques
     $logicPath = Join-Path $ScriptRoot "Functions\Logic"
     if (Test-Path $logicPath) {
-        Get-ChildItem -Path $logicPath -Filter "*.ps1" | ForEach-Object { 
+        Get-ChildItem -Path $logicPath -Filter "*.ps1" -Recurse | ForEach-Object { 
             Write-Verbose "Chargement logique : $($_.Name)"
             . $_.FullName 
         }
@@ -27,6 +27,43 @@ function Initialize-BuilderLogic {
     # 2. Récupération centralisée des contrôles
     $Ctrl = Get-BuilderControls -Window $Window
     if (-not $Ctrl) { return }
+
+    # 🆕: Chargement des Icônes depuis le dossier Templates
+    $navIconsPath = Join-Path $Context.ScriptRoot "Templates\Resources\Icons\BUTTONS" # Chemin relatif si possible ou via ProjectRoot global
+    # On préfère passer par ProjectRoot s'il est dispo dans Context ou Global
+    if ($Global:ProjectRoot) { $navIconsPath = Join-Path $Global:ProjectRoot "Templates\Resources\Icons\BUTTONS" }
+
+    if (Test-Path $navIconsPath) {
+        $maps = @{
+            "IconAddRoot"         = "rootFolder.png"
+            "IconAddRootLink"     = "up-right-arrow.png"
+            "IconAddChild"        = "folder.png"
+            "IconAddChildLink"    = "link.png"
+            "IconAddInternalLink" = "share.png"
+            "IconAddPub"          = "shuttle.png"
+            "IconDelete"          = "trash.png"
+            
+            "IconAddPerm"         = "key.png"
+            "IconAddTag"          = "tag.png"
+        }
+
+        foreach ($key in $maps.Keys) {
+            if ($Ctrl[$key]) {
+                $fullPath = Join-Path $navIconsPath $maps[$key]
+                if (Test-Path $fullPath) {
+                    try {
+                        $bmp = New-Object System.Windows.Media.Imaging.BitmapImage
+                        $bmp.BeginInit()
+                        $bmp.UriSource = [Uri]$fullPath
+                        $bmp.CacheOption = "OnLoad"
+                        $bmp.EndInit()
+                        $Ctrl[$key].Source = $bmp
+                    }
+                    catch { Write-Warning "Erreur chargement icône $key : $_" }
+                }
+            }
+        }
+    }
 
     # 3. Initialisation UX
     $Ctrl.CbSites.IsEnabled = $false
@@ -41,7 +78,7 @@ function Initialize-BuilderLogic {
     Register-SiteEvents     -Ctrl $Ctrl -PreviewLogic $PreviewLogic -Window $Window -Context $Context
     Register-DeployEvents   -Ctrl $Ctrl -Window $Window
     # NOUVEAU : Câblage de l'éditeur
-    Register-EditorLogic    -Ctrl $Ctrl -Window $Window
+    Register-EditorLogic    -Ctrl $Ctrl -Window $Window -Context $Context
 
     Register-FormEditorLogic -Ctrl $Ctrl -Window $Window
 }

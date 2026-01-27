@@ -58,6 +58,7 @@ function Global:New-EditorNode {
     # Données
     $dataObject = [PSCustomObject]@{
         Name        = $Name
+        Id          = [Guid]::NewGuid().ToString() # NOUVEAU : ID Unique pour Liens Internes
         Permissions = [System.Collections.Generic.List[psobject]]::new()
         Tags        = [System.Collections.Generic.List[psobject]]::new()
     }
@@ -79,6 +80,7 @@ function Global:New-EditorLinkNode {
         Type = "Link"
         Name = $Name 
         Url  = $Url 
+        Tags = [System.Collections.Generic.List[psobject]]::new()
     }
     
     $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
@@ -114,6 +116,7 @@ function Global:New-EditorPubNode {
         UseModelName     = $true
         GrantUser        = ""
         GrantLevel       = "Read"
+        Tags             = [System.Collections.Generic.List[psobject]]::new()
     }
     
     $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
@@ -152,20 +155,23 @@ function Global:Update-EditorBadges {
     if (-not $TreeItem -or -not $TreeItem.Tag) { return }
     
     $data = $TreeItem.Tag
-    # Si c'est un Lien (Type = Link), pas de badges
-    if ($data.Type -eq "Link") { return }
+    # REMOVED: Si c'est un Lien (Type = Link), on autorise maintenant les BADGES (Tags)
+    # if ($data.Type -eq "Link") { return }
 
     $header = $TreeItem.Header
     if ($header -isnot [System.Windows.Controls.StackPanel]) { return }
 
-    # Compter les éléments
-    $cntP = if ($data.Permissions) { $data.Permissions.Count } else { 0 }
-    $cntT = if ($data.Tags) { $data.Tags.Count } else { 0 }
-    
-    # Compter les Publications (Enfants de type 'Publication')
+    # Compter les éléments (Enfants VISUELS)
+    $cntP = 0
+    $cntT = 0
     $cntPub = 0
+    
     foreach ($child in $TreeItem.Items) {
-        if ($child.Tag -and $child.Tag.Type -eq "Publication") { $cntPub++ }
+        if ($child.Tag) {
+            if ($child.Tag.Type -eq "Permission") { $cntP++ }
+            elseif ($child.Tag.Type -eq "Tag") { $cntT++ }
+            elseif ($child.Tag.Type -eq "Publication") { $cntPub++ }
+        }
     }
     
     # ⭐ MÉTHODE ROBUSTE : Supprimer tous les badges existants (indices 2+)
@@ -222,70 +228,10 @@ function Global:Update-EditorBadges {
     }
     
     # ==========================================================================
-    # GESTION DES SOUS-ÉLÉMENTS (Metadata : Permissions, Tags)
+    # GESTION DES SOUS-ÉLÉMENTS : DÉSACTIVÉ (Mode TreeView Strict)
+    # Les Permissions et Tags sont désormais des vrais Noeuds gérés manuellement.
+    # Update-EditorBadges ne s'occupe plus que des Badges.
     # ==========================================================================
-    
-    # 1. Nettoyage des anciens items metadata (identifiés par Name="MetaItem")
-    $metaItems = @()
-    foreach ($child in $TreeItem.Items) {
-        if ($child.Name -eq "MetaItem") { $metaItems += $child }
-    }
-    foreach ($m in $metaItems) { $TreeItem.Items.Remove($m) }
-
-    # Helper pour la création d'items
-    $fnAddMeta = {
-        param($StyleKey, $Text, $Data)
-        $mItem = New-Object System.Windows.Controls.TreeViewItem
-        $mItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
-        $mItem.Name = "MetaItem"
-        $mItem.Tag = $Data
-        
-        $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
-        
-        # Icône typée via Style
-        $mIcon = New-Object System.Windows.Controls.TextBlock 
-        
-        $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, $StyleKey)
-
-        $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $Text; FontSize = 11; VerticalAlignment = "Center" }
-        
-        $mStack.Children.Add($mIcon) | Out-Null
-        $mStack.Children.Add($mText) | Out-Null
-        $mItem.Header = $mStack
-        
-        return $mItem
-    }
-
-    $idx = 0
-
-    # 2. Permissions
-    if ($data.Permissions) {
-        foreach ($p in $data.Permissions) {
-            $pName = ""
-            if ($p.PSObject.Properties['Identity']) { $pName = "$($p.Identity) ($($p.Level))" }
-            elseif ($p.PSObject.Properties['User']) { $pName = "$($p.User) ($($p.Level))" }
-            elseif ($p.PSObject.Properties['Email']) { $pName = "$($p.Email) ($($p.Level))" }
-            else { $pName = [string]$p } 
-
-            $newItem = & $fnAddMeta -StyleKey "PermIconStyle" -Text $pName -Data $p
-            $TreeItem.Items.Insert($idx, $newItem)
-            $idx++
-        }
-    }
-
-    # 3. Tags
-    if ($data.Tags) {
-        foreach ($t in $data.Tags) {
-            $tName = ""
-            if ($t.PSObject.Properties['Name']) { $tName = "$($t.Name) : $($t.Value)" }
-            elseif ($t.PSObject.Properties['Column']) { $tName = "$($t.Column) : $($t.Term)" }
-            else { $tName = [string]$t }
-
-            $newItem = & $fnAddMeta -StyleKey "TagIconStyle" -Text $tName -Data $t
-            $TreeItem.Items.Insert($idx, $newItem)
-            $idx++
-        }
-    }
 
     # ⭐ Force le refresh visuel
     try {
@@ -295,4 +241,79 @@ function Global:Update-EditorBadges {
         $TreeItem.UpdateLayout()
     }
     catch { }
+}
+
+function Global:New-EditorPermNode {
+    param(
+        [string]$Email = "user@domaine.com",
+        [string]$Level = "Read"
+    )
+
+    $mItem = New-Object System.Windows.Controls.TreeViewItem
+    $mItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+    
+    $mItem.Tag = [PSCustomObject]@{
+        Type        = "Permission"
+        Email       = $Email
+        Level       = $Level
+        User        = $Email # Alias for compatibility
+        Permissions = $null # Leaf node
+        Tags        = $null # Leaf node
+    }
+    
+    # Negative margin to reduce indentation for "Leaf" metadata nodes
+    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal"; Margin = "-18,0,0,0" }
+    
+    # Icon Key (EMOJI - Robust)
+    $mIcon = New-Object System.Windows.Controls.TextBlock
+    $mIcon.Text = "👤"
+    $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "PermIconStyle")
+    $mIcon.FontSize = 14
+    $mIcon.Margin = "0,0,5,0"
+    
+    $display = "$Email ($Level)"
+    $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $display; FontSize = 12; VerticalAlignment = "Center"; FontStyle = "Italic"; Foreground = "#555" }
+    
+    $mStack.Children.Add($mIcon) | Out-Null
+    $mStack.Children.Add($mText) | Out-Null
+    $mItem.Header = $mStack
+    
+    return $mItem
+}
+
+function Global:New-EditorTagNode {
+    param(
+        [string]$Name = "Nom",
+        [string]$Value = "Valeur"
+    )
+
+    $mItem = New-Object System.Windows.Controls.TreeViewItem
+    $mItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+    
+    $mItem.Tag = [PSCustomObject]@{
+        Type        = "Tag"
+        Name        = $Name
+        Value       = $Value
+        Permissions = $null
+        Tags        = $null # Leaf node
+    }
+    
+    # Negative margin to reduce indentation for "Leaf" metadata nodes
+    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal"; Margin = "-18,0,0,0" }
+    
+    # Icon Tag (EMOJI - Robust)
+    $mIcon = New-Object System.Windows.Controls.TextBlock
+    $mIcon.Text = "🏷️"
+    $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TagIconStyle")
+    $mIcon.FontSize = 14
+    $mIcon.Margin = "0,0,5,0"
+    
+    $display = "$Name : $Value"
+    $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $display; FontSize = 12; VerticalAlignment = "Center"; Foreground = "#00695C" }
+    
+    $mStack.Children.Add($mIcon) | Out-Null
+    $mStack.Children.Add($mText) | Out-Null
+    $mItem.Header = $mStack
+    
+    return $mItem
 }

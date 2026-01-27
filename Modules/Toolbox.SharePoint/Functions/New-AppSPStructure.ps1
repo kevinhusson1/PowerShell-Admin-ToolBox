@@ -54,19 +54,141 @@ function New-AppSPStructure {
         
         $structure = $StructureJson | ConvertFrom-Json
         
-        function Process-Folder {
+        # 0. PRE-PROCESSING : MAPPING ID -> PATH (Pour Liens Internes)
+        Log "Construction de la carte des IDs..." "DEBUG"
+        $IdToPathMap = @{}
+
+        function Build-IdMap {
+            param($SubStructure, $CurrentPath)
+            
+            # Si c'est un tableau (cas "Folders"), on itère
+            if ($SubStructure -is [System.Array]) {
+                foreach ($item in $SubStructure) { Build-IdMap -SubStructure $item -CurrentPath $CurrentPath }
+                return
+            }
+
+            # Si c'est un dossier (pas un lien ni une pub)
+            if ($SubStructure.Type -ne "Link" -and $SubStructure.Type -ne "InternalLink" -and $SubStructure.Type -ne "Publication" -and $SubStructure.Name) {
+                # Construction path
+                $myPath = "$CurrentPath/$($SubStructure.Name)"
+                
+                # Enregistrement ID
+                if ($SubStructure.Id) {
+                    $IdToPathMap[$SubStructure.Id] = $myPath
+                }
+
+                # Récursion
+                if ($SubStructure.Folders) {
+                    Build-IdMap -SubStructure $SubStructure.Folders -CurrentPath $myPath
+                }
+            }
+        }
+
+        # Lancement Mapping (Attention au path de base)
+        # On simule un parcours virtuel
+        if ($structure.Folders) { Build-IdMap -SubStructure $structure.Folders -CurrentPath "" }
+        else { Build-IdMap -SubStructure $structure -CurrentPath "" }
+
+        Log "Mapping IDs terminé ($($IdToPathMap.Count) entrées)." "DEBUG"
+
+
+        function Set-NewFolder {
             param($CurrentPath, $FolderObj)
 
-            # 0. GESTION TYPE = LINK (Nouveau Mode)
+            # 0. GESTION TYPE = LINK (Existant)
             if ($FolderObj.Type -eq "Link") {
                 $linkName = $FolderObj.Name
                 $linkUrl = $FolderObj.Url
                 Log (Loc "log_deploy_create_link" @($linkName, $linkUrl)) "INFO"
                 $resLink = New-AppSPLink -Name $linkName -TargetUrl $linkUrl -Folder $CurrentPath -Connection $conn
-                if ($resLink.Success) { Log (Loc "log_deploy_link_ok") "DEBUG" }
+                if ($resLink.Success) { 
+                    Log (Loc "log_deploy_link_ok") "DEBUG" 
+                    
+                    # GESTION TAGS POUR LIENS
+                    if ($FolderObj.Tags) {
+                        Log (Loc "log_deploy_apply_tags") "DEBUG"
+                        $valuesHash = @{}
+                        foreach ($tag in $FolderObj.Tags) { $valuesHash[$tag.Name] = $tag.Value }
+                         
+                        if ($valuesHash.Count -gt 0) {
+                            try {
+                                # Récupération Item
+                                $fileItem = $resLink.File.ListItemAllFields
+                                if (-not $fileItem) {
+                                    # Fallback : Re-fetch si l'objet retourné n'a pas les champs chargés
+                                    $temp = Get-PnPFile -Url $resLink.File.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
+                                    $fileItem = $temp
+                                }
+                                 
+                                Set-PnPListItem -List $TargetLibraryName -Identity $fileItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
+                                Log (Loc "log_deploy_tags_applied") "INFO"
+                            }
+                            catch { Err "Erreur Tags Lien : $($_.Exception.Message)" }
+                        }
+                    }
+                }
                 else { Err "Erreur création lien '$linkName' : $($resLink.Message)" }
                 return # Stop ici pour un lien
             }
+            
+            # 0-BIS. GESTION TYPE = INTERNAL LINK (NOUVEAU)
+            if ($FolderObj.Type -eq "InternalLink") {
+                $linkName = $FolderObj.Name
+                $targetId = $FolderObj.TargetNodeId
+                
+                Log (Loc "log_deploy_create_internal_link" $linkName) "INFO"
+                
+                # A. Résolution Cible
+                if (-not $IdToPathMap.ContainsKey($targetId)) {
+                    Log "⚠️ Cible introuvable pour le lien '$linkName' (ID: $targetId). Lien ignoré." "WARNING"
+                    return
+                }
+                
+                $relPath = $IdToPathMap[$targetId]
+                # Construction URL absolue cible
+                # $TargetSiteUrl + $TargetLibraryUrl + $relPath
+                # Attention : $libUrl est ServerRelative (ex: /sites/MySite/MyLib)
+                
+                $uri = New-Object Uri($TargetSiteUrl)
+                $baseHost = "$($uri.Scheme)://$($uri.Host)"
+                $fullTargetUrl = "$baseHost$startPath$relPath"
+                
+                # B. Création .url
+                if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
+                
+                $resLink = New-AppSPLink -Name $linkName -TargetUrl $fullTargetUrl -Folder $CurrentPath -Connection $conn
+                if ($resLink.Success) { 
+                    Log "Lien interne créé vers '$relPath'." "DEBUG" 
+                    
+                    # GESTION TAGS POUR LIENS INTERNES
+                    if ($FolderObj.Tags) {
+                        Log (Loc "log_deploy_apply_tags") "DEBUG"
+                        $valuesHash = @{}
+                        foreach ($tag in $FolderObj.Tags) { $valuesHash[$tag.Name] = $tag.Value }
+                         
+                        if ($valuesHash.Count -gt 0) {
+                            try {
+                                # Item
+                                $fileItem = $resLink.File.ListItemAllFields
+                                if (-not $fileItem) {
+                                    $temp = Get-PnPFile -Url $resLink.File.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
+                                    $fileItem = $temp
+                                }
+                                 
+                                Set-PnPListItem -List $TargetLibraryName -Identity $fileItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
+                                Log (Loc "log_deploy_tags_applied") "INFO"
+                            }
+                            catch { Err "Erreur Tags Lien Interne : $($_.Exception.Message)" }
+                        }
+                    }
+                }
+                else { Err "Erreur lien interne '$linkName' : $($resLink.Message)" }
+                return
+            }
+            
+            # 0-TER. GESTION TYPE = PUBLICATION (Déporté ici ou traité plus bas ?)
+            # Pour l'instant traité dans le bloc Folders, mais on pourrait l'uniformiser ici.
+            # On laisse le bloc 6 existant pour ne pas trop perturber.
 
             $folderName = $FolderObj.Name
             $fullPath = "$CurrentPath/$folderName"
@@ -218,6 +340,37 @@ function New-AppSPStructure {
                             throw "Echec création raccourci : $($resShortcut.Message)"
                         }
 
+                        # C-bis. GESTION TAGS SUR LA PUBLICATION (CIBLE)
+                        if ($pub.Tags) {
+                            Log "Application des tags sur la publication..." "DEBUG"
+                            $valuesHash = @{}
+                            foreach ($tag in $pub.Tags) { $valuesHash[$tag.Name] = $tag.Value }
+                             
+                            if ($valuesHash.Count -gt 0) {
+                                try {
+                                    # Récupération Item Cible
+                                    $pubItem = $resShortcut.File.ListItemAllFields
+                                    if (-not $pubItem) {
+                                        $temp = Get-PnPFile -Url $resShortcut.File.ServerRelativeUrl -AsListItem -Connection $targetCtx -ErrorAction Stop
+                                        $pubItem = $temp
+                                    }
+                                    # Note: On doit identifier la List de destination. Resolve-PnPFolder nous a donné un folder.
+                                    # On peut essayer de déduire la List via le contexte ou l'item.
+                                    # Pour simplifier, on applique sur l'item récupéré (ListItem object direct PnP)
+                                     
+                                    # Set-PnPListItem sur un objet ListItem direct nécessite PnP 1.5+ ou Identity
+                                    # Si on a l'ID et la List Id, c'est mieux.
+                                     
+                                    # Astuce : Set-PnPListItem accepte -Identity <ListItem> sur le contexte courant
+                                    Set-PnPListItem -Identity $pubItem -Values $valuesHash -Connection $targetCtx -ErrorAction Stop
+                                    Log "Tags appliqués sur la publication." "INFO"
+                                }
+                                catch {
+                                    Log "  ⚠️ Erreur Tags Publication : $($_.Exception.Message)" "WARNING"
+                                }
+                            }
+                        }
+
                         # D. ATTRIBUTION DROITS SOURCE (GRANT)
                         if ($pub.GrantUser) {
                             $spRole = switch ($pub.GrantLevel) { "Contribute" { "Contribute" } Default { "Read" } }
@@ -252,11 +405,11 @@ function New-AppSPStructure {
                     # On ignore les noeuds PUBLICATION ici car ils sont traités spécifiquement plus haut.
                     # FIX: On laisse passer les LIENS (Type=Link) pour qu'ils soient traités par l'appel récursif (qui gère le cas unitaire).
                     if ($sub.Type -ne "Publication") {
-                        Process-Folder -CurrentPath $folder.ServerRelativeUrl -FolderObj $sub
+                        Set-NewFolder -CurrentPath $folder.ServerRelativeUrl -FolderObj $sub
                     }
                 }
             }
-        } # End Function Process-Folder
+        } # End Function Set-NewFolder
 
         # --- CORRECTION 2 : Gestion Racine vs Pas de Racine ---
         $startPath = $libUrl
@@ -293,11 +446,11 @@ function New-AppSPStructure {
         # Lancement Récursion
         if ($structure.Folders) {
             foreach ($f in $structure.Folders) { 
-                Process-Folder -CurrentPath $startPath -FolderObj $f 
+                Set-NewFolder -CurrentPath $startPath -FolderObj $f 
             }
         }
         else {
-            Process-Folder -CurrentPath $startPath -FolderObj $structure
+            Set-NewFolder -CurrentPath $startPath -FolderObj $structure
         }
 
         Log (Loc "log_deploy_finished") "SUCCESS"
