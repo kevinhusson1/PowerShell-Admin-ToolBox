@@ -1,4 +1,4 @@
-# Documentation Technique - SharePoint Builder v3.0
+# Documentation Technique - SharePoint Builder v3.1
 
 ## 📋 Présentation
 
@@ -47,31 +47,49 @@ L'arbre de sélection du dossier cible (`TargetExplorerTreeView`) implémente de
 - **Pagination Client-Side** : Pour les dossiers contenant des milliers d'éléments, seuls les 10 premiers sont affichés, avec un bouton "Charger la suite..." pour éviter le freeze.
 - **Auto-Pilot (Restauration)** : Lors du chargement d'une config sauvegardée, un algorithme récursif asynchrone développe automatiquement l'arbre niveau par niveau jusqu'au dossier cible sauvegardé.
 
-### 3. Éditeur de Modèles Visuel
+### 3. Éditeur de Modèles Visuel (UX/UI v3.1)
 
-Permet de manipuler des structures JSON complexes sans éditer le texte manuellement :
+Permet de manipuler des structures JSON complexes sans éditer le texte manuellement. La version 3.1 introduit une refonte ergonomique :
 
-- Gestion complète de l'arborescence (Ajout Racine/Enfant, Suppression).
-- Configuration détaillée des nœuds :
+- **Toolbar Modernisée** : Remplacement des boutons textes par des icônes explicites avec Tooltips localisés.
+- **Nouveaux Types de Nœuds** :
+  - **Liens Internes** : Navigation intra-site.
+  - **Publications** : Raccourcis ou copies vers d'autres sites.
+- **Configuration Avancée** :
   - **Permissions** : Gestion fine des droits (Utilisateurs/Groupes Azure AD).
-  - **Tags** : Métadonnées SharePoint (Taxonomie ou Champs Texte).
-  - **Publications** : Création de liens transverses (`.url`) sécurisés vers d'autres sites.
-- Feedback visuel en temps réel et validation des données.
+  - **Tags** : Métadonnées SharePoint (Taxonomie/Managed Metadata ou Champs Texte).
 
-### 4. Authentification Hybride
+### 4. Liens Internes & Navigation (Nouveau v3.1)
+
+Le Builder supporte désormais la création de **Liens Internes**, permettant de créer des raccourcis de navigation au sein même de la structure déployée.
+
+- **Mapping d'IDs** : Avant le déploiement, le moteur indexe tous les dossiers cibles avec un ID unique.
+- **Résolution Dynamique** : Lors de la création du lien, le moteur résout le chemin physique final (`/sites/MonSite/MaLib/MonDossierTarget`).
+- **Implémentation** : Création de fichiers `.url` natifs SharePoint, supportant les métadonnées.
+
+### 5. Gestion Avancée des Métadonnées (Moteur de Tags v2)
+
+Le moteur d'application des tags (`New-AppSPStructure`) a été entièrement réécrit pour garantir l'intégrité des données existantes :
+
+- **Mode "Append" (Non-Destructif)** : Le moteur lit les tags déjà présents sur un élément (ex: "RH"), les fusionne avec les nouveaux tags du modèle (ex: "Direction"), et réapplique l'ensemble ("RH;Direction").
+- **Support Multi-Valeurs (Arrays)** : Les tags multiples sont passés sous forme de vecteurs (`Array`) à PnP PowerShell, garantissant leur reconnaissance correcte comme valeurs distinctes dans les colonnes Choix ou Taxonomie.
+- **Récupération d'Identité Robuste** : Utilisation systématique de `Get-PnPFile -AsListItem` pour manipuler les fichiers complexes (comme les `.url`), résolvant les erreurs d'ID introuvable.
+- **Vérification "Set-Based"** : La validation compare les *ensembles* de tags (Sets) en ignorant la casse et les espaces, éliminant les faux positifs.
+
+### 6. Authentification Hybride
 
 L'application gère deux contextes d'authentification parallèles :
 
 - **Microsoft Graph** (via `Connect-AppGraph`) : Pour la récupération de l'identité utilisateur et les opérations transverses Azure AD.
 - **PnP PowerShell** (via `Connect-AppSharePoint`) : Pour toutes les opérations SharePoint. Supporte l'authentification **App-Only** (Certificat) pour les opérations "Sadmin" et **Interactive** pour l'accès standard.
 
-### 5. Système de Logging Centralisé
+### 7. Système de Logging Centralisé
 
 - Module `Logging` avec la fonction `Write-AppLog`.
 - Supporte l'écriture multiple : Console (Verbose), Interface UI (RichTextBox), et Collection (Listes.
 - Format standardisé `[HH:mm:ss] [LEVEL] Message` garantissant une traçabilité uniforme entre le lanceur, l'application et les jobs enfants.
 
-### 6. Validation Avancée (Multi-Niveaux)
+### 8. Validation Avancée (Multi-Niveaux)
 
 Le Builder intègre un moteur de validation pré-déploiement (`Test-AppSPModel`) opérant en 3 passes :
 

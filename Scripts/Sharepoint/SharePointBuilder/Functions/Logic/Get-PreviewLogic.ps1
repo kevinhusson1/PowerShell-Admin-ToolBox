@@ -38,17 +38,31 @@ function Get-PreviewLogic {
         $cBtn = $Window.FindName("DeployButton")
         $cBtnValidate = $Window.FindName("ValidateModelButton")
         $cPanel = $Window.FindName("DynamicFormPanel")
+        $cBtnValidate = $Window.FindName("ValidateModelButton")
+        $cPanel = $Window.FindName("DynamicFormPanel")
         $cTree = $Window.FindName("PreviewTreeView")
+        $cMeta = $Window.FindName("FolderNameMetaPreview")
 
         if (-not $cBtn) { return }
 
-        # 2. Calcul du Nom (Formulaire)
+        # 2. Calcul du Nom (Formulaire) & Metadonnées
         $finalName = ""
+        $metaParts = @()
+        
         if ($cPanel -and $cPanel.Children) {
             foreach ($c in $cPanel.Children) {
-                if ($c -is [System.Windows.Controls.TextBox]) { $finalName += $c.Text }
-                elseif ($c -is [System.Windows.Controls.TextBlock] -and $c.Tag -eq "Static") { $finalName += $c.Text }
-                elseif ($c -is [System.Windows.Controls.ComboBox]) { $finalName += $c.SelectedItem }
+                if ($c -is [System.Windows.Controls.TextBox]) { 
+                    $finalName += $c.Text 
+                    if ($c.Tag -and $c.Tag.IsMeta) { $metaParts += "$($c.Tag.Key)=$($c.Text)" }
+                }
+                elseif ($c -is [System.Windows.Controls.TextBlock] -and ($c.Tag -eq "Static" -or $c.Tag.Type -eq "Static")) { 
+                    $finalName += $c.Text 
+                    if ($c.Tag -is [hashtable] -and $c.Tag.IsMeta) { $metaParts += "$($c.Tag.Key)=$($c.Text)" }
+                }
+                elseif ($c -is [System.Windows.Controls.ComboBox]) { 
+                    $finalName += $c.SelectedItem 
+                    if ($c.Tag -and $c.Tag.IsMeta) { $metaParts += "$($c.Tag.Key)=$($c.SelectedItem)" }
+                }
             }
         }
 
@@ -61,11 +75,25 @@ function Get-PreviewLogic {
                 $cPreview.Text = if ($finalName) { $finalName } else { "..." }
                 $cPreview.Opacity = 1
                 $cPreview.Foreground = $Window.FindResource("PrimaryBrush")
+                
+                # Update Meta
+                if ($cMeta) {
+                    if ($metaParts.Count -gt 0) {
+                        $cMeta.Text = $metaParts -join " | "
+                        $cMeta.Foreground = [System.Windows.Media.Brushes]::Teal
+                    }
+                    else {
+                        $cMeta.Text = "(Aucune métadonnée)"
+                        $cMeta.Foreground = [System.Windows.Media.Brushes]::Gray
+                    }
+                }
             }
             else {
                 $cPreview.Text = "(Déploiement à la racine de la bibliothèque)"
                 $cPreview.Opacity = 0.6
                 $cPreview.Foreground = $Window.FindResource("TextSecondaryBrush")
+                
+                if ($cMeta) { $cMeta.Text = "-" }
             }
         }
 

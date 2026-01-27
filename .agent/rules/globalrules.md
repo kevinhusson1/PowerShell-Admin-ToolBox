@@ -3,6 +3,7 @@ trigger: always_on
 ---
 
 # Règles de Développement - PowerShell Admin ToolBox
+Règle globale a appliquez, ne me répond qu'en français. tes pistes de réflexion interne peuvent etre en anglais mais la réponse final ou les artefact que tu génère doivent etre en français.
 
 Ces règles doivent être impérativement suivies pour garantir la stabilité, la sécurité et la maintenabilité du projet.
 

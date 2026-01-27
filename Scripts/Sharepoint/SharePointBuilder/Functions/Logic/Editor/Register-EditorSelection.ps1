@@ -60,6 +60,43 @@ function Global:Register-EditorSelectionHandler {
                         $Ctrl.EdPropPanelTag.DataContext = $selectedItem
                         if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = $data.Name }
                         if ($Ctrl.EdTagValueBox) { $Ctrl.EdTagValueBox.Text = $data.Value }
+                        
+                        # Dynamic/Static Logic
+                        if ($Ctrl.EdTagDynamicCheck) { $Ctrl.EdTagDynamicCheck.IsChecked = if ($data.IsDynamic) { $true }else { $false } }
+                        
+                        # Populate Sources (List of Rules)
+                        if ($Ctrl.EdTagSourceFormBox) {
+                            $rules = Get-AppNamingRules
+                            $Ctrl.EdTagSourceFormBox.ItemsSource = $rules
+                            if ($data.SourceForm) {
+                                $found = $rules | Where-Object { $_.RuleId -eq $data.SourceForm } | Select-Object -First 1
+                                $Ctrl.EdTagSourceFormBox.SelectedItem = $found
+                            }
+                        }
+                        
+                        # Populate Vars (If Form Selected)
+                        if ($Ctrl.EdTagSourceVarBox -and $data.SourceForm) {
+                            $r = Get-AppNamingRules | Where-Object { $_.RuleId -eq $data.SourceForm } | Select-Object -First 1
+                            if ($r) {
+                                try {
+                                    $json = $r.DefinitionJson | ConvertFrom-Json
+                                    $vars = $json.Layout | Where-Object { $_.Type -ne "Label" } | Select-Object -ExpandProperty Name
+                                    $Ctrl.EdTagSourceVarBox.ItemsSource = $vars
+                                    $Ctrl.EdTagSourceVarBox.Text = $data.SourceVar
+                                }
+                                catch {}
+                            }
+                        }
+                        
+                        # Visibility
+                        if ($data.IsDynamic) {
+                            if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Visible" }
+                            if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Collapsed" }
+                        }
+                        else {
+                            if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Collapsed" }
+                            if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Visible" }
+                        }
                     }
                 }
                 # C. LINK
@@ -95,6 +132,11 @@ function Global:Register-EditorSelectionHandler {
                         }
                         if ($Ctrl.EdPubPathBox) { $Ctrl.EdPubPathBox.Text = $data.TargetFolderPath }
                         if ($Ctrl.EdPubUseModelNameChk) { $Ctrl.EdPubUseModelNameChk.IsChecked = $data.UseModelName }
+                        if ($Ctrl.EdPubUseFormMetaChk) { 
+                            $Ctrl.EdPubUseFormMetaChk.IsChecked = if ($data.UseFormMetadata) { $true } else { $false } 
+                            # FIX: Metadata only allowed if creating a folder (UseModelName = true)
+                            $Ctrl.EdPubUseFormMetaChk.IsEnabled = [bool]$data.UseModelName
+                        }
                     
                         if ($Ctrl.EdPubGrantUserBox) { $Ctrl.EdPubGrantUserBox.Text = $data.GrantUser }
                         if ($Ctrl.EdPubGrantLevelBox) { $Ctrl.EdPubGrantLevelBox.Text = $data.GrantLevel }
@@ -223,6 +265,71 @@ function Global:Register-EditorSelectionHandler {
                 }
             }.GetNewClosure())
     }
+    # 2b. DYNAMIC TAG HANDLERS
+    if ($Ctrl.EdTagDynamicCheck) {
+        $Ctrl.EdTagDynamicCheck.Add_Click({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Tag") {
+                    $isDyn = [bool]$this.IsChecked
+                    $sel.Tag.IsDynamic = $isDyn
+                
+                    # Switch Visibility
+                    if ($isDyn) {
+                        if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Visible" }
+                        if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Collapsed" }
+                    
+                        # Force Load Rules if Empty
+                        if ($Ctrl.EdTagSourceFormBox.Items.Count -eq 0) {
+                            $rules = Get-AppNamingRules
+                            $Ctrl.EdTagSourceFormBox.ItemsSource = $rules
+                        }
+                    }
+                    else {
+                        if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Collapsed" }
+                        if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Visible" }
+                    }
+                }
+            }.GetNewClosure())
+    }
+    
+    if ($Ctrl.EdTagSourceFormBox) {
+        $Ctrl.EdTagSourceFormBox.Add_SelectionChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                $rule = $this.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Tag" -and $rule) {
+                    $sel.Tag.SourceForm = $rule.RuleId
+                
+                    # Load Variables
+                    try {
+                        $json = $rule.DefinitionJson | ConvertFrom-Json
+                        $vars = $json.Layout | Where-Object { $_.Type -ne "Label" } | Select-Object -ExpandProperty Name
+                        if ($Ctrl.EdTagSourceVarBox) {
+                            $Ctrl.EdTagSourceVarBox.ItemsSource = $vars
+                            $Ctrl.EdTagSourceVarBox.SelectedIndex = -1
+                        }
+                    }
+                    catch { }
+                }
+            }.GetNewClosure())
+    }
+    
+    if ($Ctrl.EdTagSourceVarBox) {
+        $Ctrl.EdTagSourceVarBox.Add_SelectionChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Tag" -and $this.SelectedItem) {
+                    $sel.Tag.SourceVar = $this.SelectedItem
+                
+                    # Update visual text
+                    $tName = "$($sel.Tag.Name) : [$($sel.Tag.SourceVar)]"
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                        $sel.Header.Children[1].Text = $tName 
+                    } 
+                }
+            }.GetNewClosure())
+    }
     if ($Ctrl.EdTagDeleteButton) {
         $Ctrl.EdTagDeleteButton.Add_Click({
                 $sel = $Ctrl.EdTree.SelectedItem
@@ -244,6 +351,7 @@ function Global:Register-EditorSelectionHandler {
     # Generic Name Box (Folder)
     if ($Ctrl.EdNameBox) {
         $Ctrl.EdNameBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
                 $sel = $Ctrl.EdTree.SelectedItem
                 # Only for Folder (No Permission, Tag, Link, etc.)
                 if ($sel -and $sel.Tag -and $sel.Tag.Type -ne "Link" -and $sel.Tag.Type -ne "InternalLink" -and $sel.Tag.Type -ne "Publication" -and $sel.Tag.Type -ne "Permission" -and $sel.Tag.Type -ne "Tag" ) {
@@ -263,13 +371,16 @@ function Global:Register-EditorSelectionHandler {
     # Links
     if ($Ctrl.EdLinkNameBox) {
         $Ctrl.EdLinkNameBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Tag -and $sel.Tag.Type -eq "Link") {
                     $newName = $Ctrl.EdLinkNameBox.Text
                     $sel.Tag.Name = $newName
-                    if ($sel.Header -is [System.Windows.Controls.StackPanel]) { 
-                        $txtBlock = $sel.Header.Children | Where-Object { $_ -is [System.Windows.Controls.TextBlock] } | Select-Object -First 1
-                        if ($txtBlock) { $txtBlock.Text = if ([string]::IsNullOrWhiteSpace($newName)) { "(Sans nom)" } else { $newName } }
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                        $txtBlock = $sel.Header.Children[1]
+                        if ($txtBlock -is [System.Windows.Controls.TextBlock]) {
+                            $txtBlock.Text = if ([string]::IsNullOrWhiteSpace($newName)) { "(Sans nom)" } else { $newName }
+                        }
                     }
                 }
             }.GetNewClosure())
@@ -306,9 +417,14 @@ function Global:Register-EditorSelectionHandler {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Tag.Type -eq "Publication") {
                     $sel.Tag.Name = $this.Text
+                    
+                    # Update Visual
+                    $tName = $this.Text
+                    if ($sel.Tag.UseFormMetadata) { $tName += " [META]" }
+                    
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
                         $txtBlock = $sel.Header.Children[1]
-                        if ($txtBlock) { $txtBlock.Text = $this.Text }
+                        if ($txtBlock) { $txtBlock.Text = $tName }
                     }
                 }
             }.GetNewClosure())
@@ -344,7 +460,52 @@ function Global:Register-EditorSelectionHandler {
         $Ctrl.EdPubUseModelNameChk.Add_Click({
                 if ($Script:IsPopulating) { return }
                 $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Publication") { $sel.Tag.UseModelName = [bool]$this.IsChecked }
+                if ($sel -and $sel.Tag.Type -eq "Publication") { 
+                    $isChecked = [bool]$this.IsChecked
+                    $sel.Tag.UseModelName = $isChecked 
+                    
+                    # FIX: Enforce dependency on Metadata Checkbox
+                    if ($Ctrl.EdPubUseFormMetaChk) {
+                        $Ctrl.EdPubUseFormMetaChk.IsEnabled = $isChecked
+                        if (-not $isChecked) {
+                            $Ctrl.EdPubUseFormMetaChk.IsChecked = $false
+                            $sel.Tag.UseFormMetadata = $false
+                            
+                            # Update Visual (Remove [META] badge)
+                            if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                                $txtBlock = $sel.Header.Children[1]
+                                $txtBlock.Text = $sel.Tag.Name
+                                $txtBlock.Foreground = [System.Windows.Media.Brushes]::Black
+                            }
+                        }
+                    }
+                }
+            }.GetNewClosure())
+    }
+    if ($Ctrl.EdPubUseFormMetaChk) {
+        $Ctrl.EdPubUseFormMetaChk.Add_Click({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") { 
+                    $sel.Tag.UseFormMetadata = [bool]$this.IsChecked 
+                    
+                    # Update Visual
+                    $tName = $sel.Tag.Name
+                    $color = [System.Windows.Media.Brushes]::Black
+                    
+                    if ($sel.Tag.UseFormMetadata) { 
+                        $tName += " [META]" 
+                        $color = [System.Windows.Media.Brushes]::Teal
+                    }
+                    
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                        $txtBlock = $sel.Header.Children[1]
+                        if ($txtBlock) { 
+                            $txtBlock.Text = $tName 
+                            $txtBlock.Foreground = $color
+                        }
+                    }
+                }
             }.GetNewClosure())
     }
     if ($Ctrl.EdPubGrantUserBox) {
@@ -386,9 +547,9 @@ function Global:Register-EditorSelectionHandler {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Tag.Type -eq "InternalLink") {
                     $sel.Tag.Name = $this.Text
-                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
-                        # FIX: Target Index 1
-                        $sel.Header.Children[1].Text = $this.Text 
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 3) { 
+                        # FIX: Target Index 2 (Name) - Index 0=Icon, 1=Arrow, 2=Name
+                        $sel.Header.Children[2].Text = $this.Text 
                     }
                 } 
             }.GetNewClosure())

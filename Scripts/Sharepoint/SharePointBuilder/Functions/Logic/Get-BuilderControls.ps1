@@ -157,6 +157,7 @@ function Get-BuilderControls {
         EdPubSiteUrlBox            = $Window.FindName("EdPubSiteUrlBox")
         EdPubPathBox               = $Window.FindName("EdPubPathBox")
         EdPubUseModelNameChk       = $Window.FindName("EdPubUseModelNameChk")
+        EdPubUseFormMetaChk        = $Window.FindName("EdPubUseFormMetaChk")
         EdPubGrantUserBox          = $Window.FindName("EdPubGrantUserBox")
         EdPubGrantLevelBox         = $Window.FindName("EdPubGrantLevelBox")
         EdPubDeleteButton          = $Window.FindName("EdPubDeleteButton")
@@ -208,6 +209,9 @@ function Get-BuilderControls {
         
         PropForceUpper             = $Window.FindName("PropForceUpperCheck")
         PanelForceUpper            = $Window.FindName("PanelPropForceUpper")
+        
+        PropIsMetadataCheck        = $Window.FindName("PropIsMetadataCheck")
+        PanelIsMetadata            = $Window.FindName("PanelPropIsMetadata")
 
         # --- FORMULAIRE EDITOR (Preview) ---
         FormLivePreview            = $Window.FindName("FormLivePreviewPanel")

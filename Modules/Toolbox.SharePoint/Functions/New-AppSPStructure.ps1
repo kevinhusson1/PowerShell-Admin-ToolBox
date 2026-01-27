@@ -8,7 +8,9 @@ function New-AppSPStructure {
         [Parameter(Mandatory)] [string]$ClientId,
         [Parameter(Mandatory)] [string]$Thumbprint,
         [Parameter(Mandatory)] [string]$TenantName,
-        [Parameter(Mandatory = $false)] [string]$TargetFolderUrl
+        [Parameter(Mandatory = $false)] [string]$TargetFolderUrl,
+        [Parameter(Mandatory = $false)] [hashtable]$FormValues,
+        [Parameter(Mandatory = $false)] [hashtable]$RootMetadata
     )
 
     $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new() }
@@ -29,6 +31,113 @@ function New-AppSPStructure {
             return $s
         }
         return $key 
+    }
+
+    # Helper pour l'application des tags (Append Mode & Array Support)
+    function Update-SPTags {
+        param($Item, $TagsConfig, $List, $Connection)
+        
+        if (-not $Item -or -not $Item.Id) { return }
+
+        $groupedTags = $TagsConfig | Group-Object Name
+        $valuesHash = @{}
+        $updatesNeeded = $false
+
+        try {
+            $currentItem = Get-PnPListItem -List $List -Id $Item.Id -Connection $Connection -ErrorAction Stop
+            
+            foreach ($g in $groupedTags) {
+                $fieldName = $g.Name
+                # On force un tableau de chaînes pour PnP
+                
+                # --- RESOLUTION DYNAMIQUE ---
+                $resolvedValues = @()
+                foreach ($t in $g.Group) {
+                    if ($t.IsDynamic -and $FormValues -and $t.SourceVar) {
+                        # Valeur depuis le formulaire
+                        $dynVal = $FormValues[$t.SourceVar]
+                        if (-not [string]::IsNullOrWhiteSpace($dynVal)) {
+                            $resolvedValues += $dynVal
+                        }
+                    }
+                    else {
+                        # Valeur statique
+                        if ($t.Value) { $resolvedValues += $t.Value }
+                        elseif ($t.Term) { $resolvedValues += $t.Term }
+                    }
+                }
+                
+                $newValues = $resolvedValues 
+
+                # -- Logique APPEND --
+                $existingVal = $currentItem[$fieldName]
+                $mergedList = [System.Collections.Generic.List[string]]::new()
+                
+                if ($null -ne $existingVal) {
+                    if ($existingVal -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) {
+                        $mergedList.Add($existingVal.Label)
+                    }
+                    elseif ($existingVal -is [Array] -or $existingVal -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValueCollection]) {
+                        foreach ($v in $existingVal) {
+                            if ($v -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) { $mergedList.Add($v.Label) }
+                            else { $mergedList.Add($v.ToString()) }
+                        }
+                    }
+                    else {
+                        # Fallback simple
+                        $strVal = $existingVal.ToString()
+                        if ($strVal -ne "") { $mergedList.Add($strVal) }
+                    }
+                }
+
+                foreach ($n in $newValues) {
+                    if (-not $mergedList.Contains($n)) { $mergedList.Add($n) }
+                }
+
+                # On passe un tableau à Set-PnPListItem (Gère Multi-Choice & Taxonomy correctement)
+                $valuesHash[$fieldName] = $mergedList.ToArray()
+                $updatesNeeded = $true
+            }
+
+            if ($updatesNeeded) {
+                $kvString = ($valuesHash.GetEnumerator() | ForEach-Object { "[$($_.Key)=Array($($_.Value.Count))]" }) -join " "
+                Log "  > Tags (Update/Append) : $kvString" "DEBUG"
+
+                Set-PnPListItem -List $List -Identity $Item.Id -Values $valuesHash -Connection $Connection -ErrorAction Stop
+                Log (Loc "log_deploy_tags_applied") "INFO"
+
+                # -- Verification --
+                $verifyItem = Get-PnPListItem -List $List -Id $Item.Id -Connection $Connection -ErrorAction SilentlyContinue
+                foreach ($k in $valuesHash.Keys) {
+                    $expectedArr = $valuesHash[$k]
+                    # Extraction Actuel
+                    $actualVal = $verifyItem[$k]
+                    $actualLabels = @()
+                    if ($actualVal -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) { $actualLabels += $actualVal.Label }
+                    elseif ($actualVal -is [Array]) { 
+                        foreach ($x in $actualVal) {
+                            if ($x -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) { $actualLabels += $x.Label }
+                            else { $actualLabels += $x.ToString() }
+                        }
+                    }
+                    elseif ($actualVal) { $actualLabels += $actualVal.ToString() }
+
+                    foreach ($exp in $expectedArr) {
+                        if ($actualLabels -notcontains $exp) {
+                            # Double check avec Trim
+                            $found = $false
+                            foreach ($a in $actualLabels) { if ($a.Trim() -eq $exp.Trim()) { $found = $true; break } }
+                            if (-not $found) {
+                                Log "  ⚠️ ECHEC TAG '$k' : '$exp' manquant (Actuel: $($actualLabels -join ','))" "WARNING"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch {
+            Log "  ⚠️ Erreur Update-SPTags : $($_.Exception.Message)" "WARNING"
+        }
     }
 
     try {
@@ -104,26 +213,19 @@ function New-AppSPStructure {
                 if ($resLink.Success) { 
                     Log (Loc "log_deploy_link_ok") "DEBUG" 
                     
-                    # GESTION TAGS POUR LIENS
+                    # GESTION TAGS POUR LIENS (Refactorisé)
                     if ($FolderObj.Tags) {
-                        Log (Loc "log_deploy_apply_tags") "DEBUG"
-                        $valuesHash = @{}
-                        foreach ($tag in $FolderObj.Tags) { $valuesHash[$tag.Name] = $tag.Value }
-                         
-                        if ($valuesHash.Count -gt 0) {
-                            try {
-                                # Récupération Item
-                                $fileItem = $resLink.File.ListItemAllFields
-                                if (-not $fileItem) {
-                                    # Fallback : Re-fetch si l'objet retourné n'a pas les champs chargés
-                                    $temp = Get-PnPFile -Url $resLink.File.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
-                                    $fileItem = $temp
-                                }
-                                 
-                                Set-PnPListItem -List $TargetLibraryName -Identity $fileItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
-                                Log (Loc "log_deploy_tags_applied") "INFO"
-                            }
-                            catch { Err "Erreur Tags Lien : $($_.Exception.Message)" }
+                        # Récupération Item Robuste
+                        $fileItem = $null
+                        try {
+                            $fileItem = Get-PnPFile -Url $resLink.File.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
+                        }
+                        catch { 
+                            Log "  ⚠️ Erreur récupération Item pour tags lien '$linkName': $_" "WARNING"
+                        }
+
+                        if ($fileItem) {
+                            Update-SPTags -Item $fileItem -TagsConfig $FolderObj.Tags -List $TargetLibraryName -Connection $conn
                         }
                     }
                 }
@@ -160,25 +262,19 @@ function New-AppSPStructure {
                 if ($resLink.Success) { 
                     Log "Lien interne créé vers '$relPath'." "DEBUG" 
                     
-                    # GESTION TAGS POUR LIENS INTERNES
+                    # GESTION TAGS POUR LIENS INTERNES (Refactorisé)
                     if ($FolderObj.Tags) {
-                        Log (Loc "log_deploy_apply_tags") "DEBUG"
-                        $valuesHash = @{}
-                        foreach ($tag in $FolderObj.Tags) { $valuesHash[$tag.Name] = $tag.Value }
-                         
-                        if ($valuesHash.Count -gt 0) {
-                            try {
-                                # Item
-                                $fileItem = $resLink.File.ListItemAllFields
-                                if (-not $fileItem) {
-                                    $temp = Get-PnPFile -Url $resLink.File.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
-                                    $fileItem = $temp
-                                }
-                                 
-                                Set-PnPListItem -List $TargetLibraryName -Identity $fileItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
-                                Log (Loc "log_deploy_tags_applied") "INFO"
-                            }
-                            catch { Err "Erreur Tags Lien Interne : $($_.Exception.Message)" }
+                        # Récupération Item Robuste
+                        $fileItem = $null
+                        try {
+                            $fileItem = Get-PnPFile -Url $resLink.File.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
+                        }
+                        catch { 
+                            Log "  ⚠️ Erreur récupération Item pour tags lien '$linkName': $_" "WARNING"
+                        }
+
+                        if ($fileItem) {
+                            Update-SPTags -Item $fileItem -TagsConfig $FolderObj.Tags -List $TargetLibraryName -Connection $conn
                         }
                     }
                 }
@@ -236,7 +332,13 @@ function New-AppSPStructure {
                         foreach ($perm in $FolderObj.Permissions) {
                             $email = $perm.Email
                             $role = $perm.Level
-                            $spRole = switch ($role.ToLower()) { "read" { "Read" } "contribute" { "Contribute" } "full" { "Full Control" } Default { "Read" } }
+                            $spRole = switch ($role.ToLower()) { 
+                                "read" { "Read" } 
+                                "contribute" { "Contribute" } 
+                                "full" { "Full Control" } 
+                                "full control" { "Full Control" } # Fix for JSON "Full Control"
+                                Default { "Read" } 
+                            }
                             try {
                                 Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $email -AddRole $spRole -Connection $conn -ErrorAction Stop
                                 Log "Permission ajoutée : $email -> $spRole" "INFO"
@@ -256,18 +358,9 @@ function New-AppSPStructure {
                     catch { Err "Erreur globale Permissions : $($_.Exception.Message)" }
                 }
 
-                # 4. TAGS
+                # 4. TAGS (Refactorisé)
                 if ($FolderObj.Tags) {
-                    Log (Loc "log_deploy_apply_tags") "DEBUG"
-                    $valuesHash = @{}
-                    foreach ($tag in $FolderObj.Tags) { $valuesHash[$tag.Name] = $tag.Value }
-                    if ($valuesHash.Count -gt 0) {
-                        try {
-                            Set-PnPListItem -List $TargetLibraryName -Identity $folderItem.Id -Values $valuesHash -Connection $conn -ErrorAction Stop
-                            Log (Loc "log_deploy_tags_applied") "INFO"
-                        }
-                        catch { Err "Erreur Tags : $($_.Exception.Message)" }
-                    }
+                    Update-SPTags -Item $folderItem -TagsConfig $FolderObj.Tags -List $TargetLibraryName -Connection $conn
                 }
             }
 
@@ -340,35 +433,63 @@ function New-AppSPStructure {
                             throw "Echec création raccourci : $($resShortcut.Message)"
                         }
 
-                        # C-bis. GESTION TAGS SUR LA PUBLICATION (CIBLE)
-                        if ($pub.Tags) {
-                            Log "Application des tags sur la publication..." "DEBUG"
-                            $valuesHash = @{}
-                            foreach ($tag in $pub.Tags) { $valuesHash[$tag.Name] = $tag.Value }
-                             
-                            if ($valuesHash.Count -gt 0) {
-                                try {
-                                    # Récupération Item Cible
-                                    $pubItem = $resShortcut.File.ListItemAllFields
-                                    if (-not $pubItem) {
-                                        $temp = Get-PnPFile -Url $resShortcut.File.ServerRelativeUrl -AsListItem -Connection $targetCtx -ErrorAction Stop
-                                        $pubItem = $temp
+                        # C-bis. RÉCUPÉRATION ITEM (ROBUSTE)
+                        $pubItem = $null
+                        try {
+                            # On tente via UniqueId si dispo, sinon via URL en mode ListItem
+                            if ($resShortcut.File -and $resShortcut.File.UniqueId) {
+                                $pubItem = Get-PnPListItem -List $TargetLibraryName -UniqueId $resShortcut.File.UniqueId -Connection $targetCtx -ErrorAction SilentlyContinue
+                            }
+                            if (-not $pubItem) {
+                                $pubItem = Get-PnPFile -Url $resShortcut.File.ServerRelativeUrl -AsListItem -Connection $targetCtx -ErrorAction Stop
+                            }
+                        }
+                        catch {
+                            Log "  ⚠️ Impossible de récupérer l'Item de la publication pour les métadonnées : $($_.Exception.Message)" "WARNING"
+                        }
+
+                        # GESTION TAGS
+                        if ($pub.Tags -and $pubItem) {
+                            Update-SPTags -Item $pubItem -TagsConfig $pub.Tags -List $TargetLibraryName -Connection $targetCtx
+                        }
+
+                        # C-ter. PUBLICATION METADATA (Formulaire -> Dossier Cible)
+                        if ($pub.UseFormMetadata -and $RootMetadata -and $RootMetadata.Count -gt 0) {
+                            Log "  > Application des métadonnées du formulaire sur le dossier cible de la publication..." "DEBUG"
+                            try {
+                                $targetFolderItem = $null
+
+                                # 1. On tente d'utiliser le dossier déjà résolu pour la création du raccourci
+                                if ($resolvedDest) {
+                                    # Si ListItem manquant, on le recharge
+                                    if (-not $resolvedDest.ListItemAllFields -or -not $resolvedDest.ListItemAllFields.Id) {
+                                        $resolvedDest = Get-PnPFolder -Url $resolvedDest.ServerRelativeUrl -Includes ListItemAllFields -Connection $targetCtx -ErrorAction SilentlyContinue
                                     }
-                                    # Note: On doit identifier la List de destination. Resolve-PnPFolder nous a donné un folder.
-                                    # On peut essayer de déduire la List via le contexte ou l'item.
-                                    # Pour simplifier, on applique sur l'item récupéré (ListItem object direct PnP)
-                                     
-                                    # Set-PnPListItem sur un objet ListItem direct nécessite PnP 1.5+ ou Identity
-                                    # Si on a l'ID et la List Id, c'est mieux.
-                                     
-                                    # Astuce : Set-PnPListItem accepte -Identity <ListItem> sur le contexte courant
-                                    Set-PnPListItem -Identity $pubItem -Values $valuesHash -Connection $targetCtx -ErrorAction Stop
-                                    Log "Tags appliqués sur la publication." "INFO"
+                                    $targetFolderItem = $resolvedDest.ListItemAllFields
                                 }
-                                catch {
-                                    Log "  ⚠️ Erreur Tags Publication : $($_.Exception.Message)" "WARNING"
+                                
+                                # 2. Fallback si non résolu ou item manquant
+                                if (-not $targetFolderItem) {
+                                    $tmpFolder = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
+                                    $tmpFolder = Get-PnPFolder -Url $tmpFolder.ServerRelativeUrl -Includes ListItemAllFields -Connection $targetCtx -ErrorAction Stop
+                                    $targetFolderItem = $tmpFolder.ListItemAllFields
+                                }
+
+                                if ($targetFolderItem) {
+                                    # Conversion Metadata -> Format Tags
+                                    $metaTags = @()
+                                    foreach ($k in $RootMetadata.Keys) {
+                                        $metaTags += [PSCustomObject]@{ Name = $k; Value = $RootMetadata[$k] }
+                                    }
+                                    
+                                    Update-SPTags -Item $targetFolderItem -TagsConfig $metaTags -List $TargetLibraryName -Connection $targetCtx
+                                    Log "    Metadonnées appliquées sur le dossier '$($targetFolderItem.Name)'." "INFO"
+                                }
+                                else {
+                                    Log "  ⚠️ Erreur Meta Pub : Impossible de récupérer l'Item du dossier cible." "WARNING"
                                 }
                             }
+                            catch { Log "  ⚠️ Erreur Meta Pub : $($_.Exception.Message)" "WARNING" }
                         }
 
                         # D. ATTRIBUTION DROITS SOURCE (GRANT)
@@ -433,6 +554,25 @@ function New-AppSPStructure {
                 
                 $startPath = $rootFolder.ServerRelativeUrl
                 Log (Loc "log_deploy_root_ok" $startPath) "SUCCESS"
+                
+                # APPLICATION METADONNÉES RACINE (Formulaire)
+                if ($RootMetadata -and $RootMetadata.Count -gt 0) {
+                    Log (Loc "log_deploy_root_meta") "DEBUG"
+                    try {
+                        # Récupération Item Dossier Racine
+                        $rootItem = Get-PnPFolder -Url $rootFolder.ServerRelativeUrl -Includes ListItemAllFields -Connection $conn -ErrorAction Stop
+                        if ($rootItem.ListItemAllFields) {
+                            # Conversion Standard
+                            $metaTags = @()
+                            foreach ($k in $RootMetadata.Keys) {
+                                $metaTags += [PSCustomObject]@{ Name = $k; Value = $RootMetadata[$k] }
+                            }
+                            Update-SPTags -Item $rootItem.ListItemAllFields -TagsConfig $metaTags -List $TargetLibraryName -Connection $conn
+                            Log "Métadonnées de formulaire appliquées au dossier racine." "INFO"
+                        }
+                    }
+                    catch { Log "⚠️ Erreur application métadonnées racine : $($_.Exception.Message)" "WARNING" }
+                }
             }
             catch {
                 Err "Erreur racine : $($_.Exception.Message)"

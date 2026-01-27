@@ -215,6 +215,32 @@ function Register-DeployEvents {
             # Si on ne crée pas de dossier, on passe une chaîne vide pour le nom du dossier
             $folderNameParam = if ($Ctrl.ChkCreateFolder.IsChecked) { $Ctrl.TxtPreview.Text } else { "" }
 
+            # --- CAPTURE VALEURS FORMULAIRE & METADONNÉES ---
+            $formValues = @{}
+            $rootMetadata = @{}
+            
+            if ($Ctrl.PanelForm -and $Ctrl.PanelForm.Children) {
+                foreach ($c in $Ctrl.PanelForm.Children) {
+                    $val = $null
+                    $key = $null
+                    $isMeta = $false
+                    
+                    if ($c.Tag -is [System.Collections.IDictionary]) {
+                        $key = $c.Tag.Key
+                        $isMeta = $c.Tag.IsMeta
+                        
+                        if ($c -is [System.Windows.Controls.TextBox]) { $val = $c.Text }
+                        elseif ($c -is [System.Windows.Controls.ComboBox]) { $val = $c.SelectedItem }
+                        elseif ($c -is [System.Windows.Controls.TextBlock]) { $val = $c.Text }
+                        
+                        if ($key) {
+                            $formValues[$key] = $val
+                            if ($isMeta) { $rootMetadata[$key] = $val }
+                        }
+                    }
+                }
+            }
+
             # --- CONFIGURATION JOB (LOCALISATION) ---
             $lang = if ($Global:AppConfig.defaultLanguage) { $Global:AppConfig.defaultLanguage } else { "fr-FR" }
             $locFile = Join-Path $Global:ProjectRoot "Scripts\Sharepoint\SharePointBuilder\Localization\$lang.json"
@@ -230,6 +256,8 @@ function Register-DeployEvents {
                 FolderName    = $folderNameParam 
                 StructureJson = ($Ctrl.CbTemplates.SelectedItem.StructureJson)
                 LocFilePath   = $locFile
+                FormValues    = $formValues
+                RootMetadata  = $rootMetadata
             }
 
             $job = Start-Job -ScriptBlock {
@@ -254,7 +282,9 @@ function Register-DeployEvents {
                         -ClientId $ArgsMap.ClientId `
                         -Thumbprint $ArgsMap.Thumb `
                         -TenantName $ArgsMap.Tenant `
-                        -TargetFolderUrl $ArgsMap.LibRelUrl
+                        -TargetFolderUrl $ArgsMap.LibRelUrl `
+                        -FormValues $ArgsMap.FormValues `
+                        -RootMetadata $ArgsMap.RootMetadata
                 }
                 catch { throw $_ }
             } -ArgumentList $jobArgs
@@ -517,7 +547,7 @@ function Register-DeployEvents {
     # 1. Helper : Charger la liste des configs
     $LoadDeployConfigs = {
         try {
-            # & $Log "Chargement des configurations..." "Info" # Trop verbeux au survol
+            & $Log "Chargement des configurations..." "Info"
             $configs = @(Get-AppDeployConfigs)
             
             # Force refresh by nulling first
@@ -525,7 +555,7 @@ function Register-DeployEvents {
             $Ctrl.CbDeployConfigs.ItemsSource = $configs
             $Ctrl.CbDeployConfigs.DisplayMemberPath = "ConfigName"
 
-            # if ($configs.Count -gt 0) { & $Log "$($configs.Count) configurations disponibles." "Info" }
+            if ($configs.Count -gt 0) { & $Log "$($configs.Count) configurations disponibles." "Info" }
         }
         catch {
             & $Log "Erreur chargement configurations : $($_.Exception.Message)" "Error"

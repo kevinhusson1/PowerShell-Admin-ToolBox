@@ -149,17 +149,32 @@ function Register-TemplateEvents {
                         }
 
                         if ($elem.Type -eq "Label") {
-                            $l = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $elem.Content; Tag = "Static"; VerticalAlignment = "Center"; Margin = "0,0,5,0"; FontWeight = "Bold" }
+                            $tagObj = @{ Type = "Static"; IsMeta = $elem.IsMetadata; Key = $elem.Name }
+                            $l = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $elem.Content; Tag = $tagObj; VerticalAlignment = "Center"; Margin = "0,0,5,0"; FontWeight = "Bold" }
                             $Ctrl.PanelForm.Children.Add($l)
                         }
                         elseif ($elem.Type -eq "TextBox") {
-                            $t = New-Object System.Windows.Controls.TextBox -Property @{ Text = $defaultValue; Width = $elem.Width; Style = $Window.FindResource("StandardTextBoxStyle"); Margin = "0,0,5,0" }
+                            $t = New-Object System.Windows.Controls.TextBox -Property @{ 
+                                Name   = "Input_$($elem.Name)"
+                                Text   = $defaultValue
+                                Width  = $elem.Width
+                                Style  = $Window.FindResource("StandardTextBoxStyle")
+                                Margin = "0,0,5,0"
+                                Tag    = @{ IsMeta = $elem.IsMetadata; Key = $elem.Name }
+                            }
                             if ($elem.IsUppercase) { $t.CharacterCasing = [System.Windows.Controls.CharacterCasing]::Upper }
                             $t.Add_TextChanged($PreviewLogic) 
                             $Ctrl.PanelForm.Children.Add($t)
                         }
                         elseif ($elem.Type -eq "ComboBox") {
-                            $c = New-Object System.Windows.Controls.ComboBox -Property @{ ItemsSource = $elem.Options; Width = $elem.Width; Style = $Window.FindResource("StandardComboBoxStyle"); Margin = "0,0,5,0" }
+                            $c = New-Object System.Windows.Controls.ComboBox -Property @{ 
+                                Name        = "Input_$($elem.Name)"
+                                ItemsSource = $elem.Options
+                                Width       = $elem.Width
+                                Style       = $Window.FindResource("StandardComboBoxStyle")
+                                Margin      = "0,0,5,0"
+                                Tag         = @{ IsMeta = $elem.IsMetadata; Key = $elem.Name }
+                            }
                         
                             if ($defaultValue -and $elem.Options -contains $defaultValue) { $c.SelectedItem = $defaultValue }
                             else { $c.SelectedIndex = 0 }

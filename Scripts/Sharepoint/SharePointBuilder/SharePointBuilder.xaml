@@ -195,7 +195,8 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="*"/>
-                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     <StackPanel Grid.Row="0" Margin="15">
                                         <Grid Margin="0,0,0,15">
@@ -241,6 +242,20 @@
                                             <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
                                                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="8,4" BorderThickness="0">
                                                     <TextBlock x:Name="FolderNamePreviewText" Text="..." FontFamily="Consolas" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                                                </ScrollViewer>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Résultat Métadonnées -->
+                                        <Grid Grid.Row="4" Margin="0,10,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="##loc:sp_builder.label_metadata##" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                                            <Border Grid.Column="1" Background="{DynamicResource BackgroundMediumBrush}" CornerRadius="4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="8,4" BorderThickness="0">
+                                                    <TextBlock x:Name="FolderNameMetaPreview" Text="..." FontFamily="Consolas" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" FontStyle="Italic" VerticalAlignment="Center"/>
                                                 </ScrollViewer>
                                             </Border>
                                         </Grid>
@@ -576,8 +591,26 @@
                                                 <TextBlock Text="##loc:sp_builder.label_column_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdTagNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom interne de la colonne SharePoint"/>
 
-                                                <TextBlock Text="##loc:sp_builder.label_value_term##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Valeur par défaut ou Terme de taxonomie"/>
+                                                <!-- Dynamic Option (NEW) -->
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                                    <CheckBox x:Name="EdTagDynamicCheck" Style="{DynamicResource ToggleSwitchStyle}"/>
+                                                    <TextBlock Text="Tag Dynamique (Variable Formulaire)" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="SemiBold"/>
+                                                </StackPanel>
+
+                                                <!-- Source Form (Dynamic Only) -->
+                                                <StackPanel x:Name="EdTagDynamicPanel" Visibility="Collapsed" Margin="0,0,0,15">
+                                                    <TextBlock Text="Règle (Formulaire source) :" Style="{DynamicResource H4Style}"/>
+                                                    <ComboBox x:Name="EdTagSourceFormBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,10" DisplayMemberPath="RuleId"/>
+                                                    
+                                                    <TextBlock Text="Variable :" Style="{DynamicResource H4Style}"/>
+                                                    <ComboBox x:Name="EdTagSourceVarBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,10"/>
+                                                </StackPanel>
+
+                                                <!-- Source Static (Not Dynamic) -->
+                                                <StackPanel x:Name="EdTagStaticPanel">
+                                                    <TextBlock Text="##loc:sp_builder.label_value_term##" Style="{DynamicResource H4Style}"/>
+                                                    <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Valeur par défaut ou Terme de taxonomie"/>
+                                                </StackPanel>
 
                                                 <Button x:Name="EdTagDeleteButton" Content="##loc:sp_builder.btn_delete_tag##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
@@ -643,7 +676,8 @@
                                                 <TextBlock Text="Chemin Cible (Bibliothèque/Dossier) :" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdPubPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,5" ToolTip="Ex: /Documents Partages/Public"/>
 
-                                                <CheckBox x:Name="EdPubUseModelNameChk" Content="Ajouter le nom du dossier racine déployé ?" Margin="0,0,0,15" IsChecked="True"/>
+                                                <CheckBox x:Name="EdPubUseModelNameChk" Content="Ajouter le nom du dossier racine déployé ?" Margin="0,0,0,5" IsChecked="True"/>
+                                                <CheckBox x:Name="EdPubUseFormMetaChk" Content="Appliquer les métadonnées du formulaire ?" Margin="0,0,0,15" IsChecked="False" ToolTip="Applique les métadonnées définies dans le formulaire sur ce dossier distant"/>
 
                                                 <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,0,0,15"/>
                                                 <TextBlock Text="Droits Source requis (Grant Access) :" Style="{DynamicResource H4Style}" Foreground="{DynamicResource InfoBrush}"/>
@@ -859,10 +893,16 @@
                                                 <TextBox x:Name="PropWidthBox" Style="{DynamicResource StandardTextBoxStyle}" Width="80" HorizontalAlignment="Left" Margin="0,5,0,20"/>
                                             </StackPanel>
 
-                                            <!-- 6. Majuscules -->
+            <!-- 6. Majuscules -->
                                             <StackPanel x:Name="PanelPropForceUpper" Orientation="Horizontal" Margin="0,0,0,20">
                                                 <CheckBox x:Name="PropForceUpperCheck" Style="{DynamicResource ToggleSwitchStyle}"/>
                                                 <TextBlock Text="##loc:sp_builder.label_force_upper##" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- 7. Metadonnée (NEW) -->
+                                            <StackPanel x:Name="PanelPropIsMetadata" Orientation="Horizontal" Margin="0,0,0,20">
+                                                <CheckBox x:Name="PropIsMetadataCheck" Style="{DynamicResource ToggleSwitchStyle}"/>
+                                                <TextBlock Text="Appliquer comme métadonnée ?" VerticalAlignment="Center" Margin="10,0,0,0" ToolTip="Applique automatiquement cette valeur comme colonne SharePoint sur le dossier racine"/>
                                             </StackPanel>
 
                                         </StackPanel>

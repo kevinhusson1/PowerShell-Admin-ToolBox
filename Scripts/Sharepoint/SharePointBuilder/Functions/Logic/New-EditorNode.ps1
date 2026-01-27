@@ -114,6 +114,7 @@ function Global:New-EditorPubNode {
         TargetSiteUrl    = ""
         TargetFolderPath = "/Partage"
         UseModelName     = $true
+        UseFormMetadata  = $false
         GrantUser        = ""
         GrantLevel       = "Read"
         Tags             = [System.Collections.Generic.List[psobject]]::new()
@@ -154,33 +155,36 @@ function Global:Update-EditorBadges {
 
     if (-not $TreeItem -or -not $TreeItem.Tag) { return }
     
-    $data = $TreeItem.Tag
-    # REMOVED: Si c'est un Lien (Type = Link), on autorise maintenant les BADGES (Tags)
-    # if ($data.Type -eq "Link") { return }
-
     $header = $TreeItem.Header
     if ($header -isnot [System.Windows.Controls.StackPanel]) { return }
+
+    # DÉTERMINATION DE L'INDEX DE DÉPART DES BADGES
+    # La plupart des noeuds ont [Icone, Texte] (Index 0, 1) -> Start = 2
+    # InternalLink a [Icone, BadgeArrow, Texte] (Index 0, 1, 2) -> Start = 3
+    $badgeStartIndex = 2
+    if ($TreeItem.Tag.Type -eq "InternalLink") {
+        $badgeStartIndex = 3
+    }
 
     # Compter les éléments (Enfants VISUELS)
     $cntP = 0
     $cntT = 0
     $cntPub = 0
+    $cntLink = 0
     
     foreach ($child in $TreeItem.Items) {
         if ($child.Tag) {
             if ($child.Tag.Type -eq "Permission") { $cntP++ }
             elseif ($child.Tag.Type -eq "Tag") { $cntT++ }
             elseif ($child.Tag.Type -eq "Publication") { $cntPub++ }
+            elseif ($child.Tag.Type -eq "Link" -or $child.Tag.Type -eq "InternalLink") { $cntLink++ }
         }
     }
     
-    # ⭐ MÉTHODE ROBUSTE : Supprimer tous les badges existants (indices 2+)
-    $toRemove = @()
-    for ($i = $header.Children.Count - 1; $i -ge 2; $i--) {
-        $toRemove += $header.Children[$i]
-    }
-    foreach ($item in $toRemove) {
-        $header.Children.Remove($item)
+    # ⭐ NETTOYAGE ROBUSTE : Supprimer tout ce qui est après le contenu fixe
+    # On itère à l'envers pour ne pas casser les index
+    for ($i = $header.Children.Count - 1; $i -ge $badgeStartIndex; $i--) {
+        $header.Children.RemoveAt($i)
     }
 
     # ⭐ RECRÉER les badges
@@ -213,7 +217,7 @@ function Global:Update-EditorBadges {
         $header.Children.Add($bdgTag) | Out-Null
     }
     
-    # Badge Publications (NEW)
+    # Badge Publications (Dossiers enfants de type Pub)
     if ($cntPub -gt 0) {
         $bdgPub = New-Object System.Windows.Controls.Border -Property @{
             Background        = "#FFF3E0"
@@ -226,19 +230,11 @@ function Global:Update-EditorBadges {
         $bdgPub.Child = $txtPub
         $header.Children.Add($bdgPub) | Out-Null
     }
-    
-    # ==========================================================================
-    # GESTION DES SOUS-ÉLÉMENTS : DÉSACTIVÉ (Mode TreeView Strict)
-    # Les Permissions et Tags sont désormais des vrais Noeuds gérés manuellement.
-    # Update-EditorBadges ne s'occupe plus que des Badges.
-    # ==========================================================================
 
     # ⭐ Force le refresh visuel
     try {
         $header.InvalidateVisual()
         $TreeItem.InvalidateVisual()
-        $header.UpdateLayout()
-        $TreeItem.UpdateLayout()
     }
     catch { }
 }
@@ -261,8 +257,8 @@ function Global:New-EditorPermNode {
         Tags        = $null # Leaf node
     }
     
-    # Negative margin to reduce indentation for "Leaf" metadata nodes
-    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal"; Margin = "-18,0,0,0" }
+    # Standard indentation
+    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
     
     # Icon Key (EMOJI - Robust)
     $mIcon = New-Object System.Windows.Controls.TextBlock
@@ -294,12 +290,15 @@ function Global:New-EditorTagNode {
         Type        = "Tag"
         Name        = $Name
         Value       = $Value
+        IsDynamic   = $false
+        SourceForm  = ""
+        SourceVar   = ""
         Permissions = $null
         Tags        = $null # Leaf node
     }
     
-    # Negative margin to reduce indentation for "Leaf" metadata nodes
-    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal"; Margin = "-18,0,0,0" }
+    # Standard indentation
+    $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
     
     # Icon Tag (EMOJI - Robust)
     $mIcon = New-Object System.Windows.Controls.TextBlock

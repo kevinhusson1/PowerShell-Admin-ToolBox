@@ -427,7 +427,7 @@ function Register-SiteEvents {
     $PopulateNodeBlock = {
         param($ParentNode, $FolderRelativeUrl, $SiteUrl)
         
-        Write-Host "DEBUG: [PopulateNode] Demande reçue. URL Dossier='$FolderRelativeUrl' | Site='$SiteUrl'"
+        Write-Verbose "[PopulateNode] Demande reçue. URL Dossier='$FolderRelativeUrl' | Site='$SiteUrl'"
         
         # UI Feedback
         $overlay = $Window.FindName("ExplorerLoadingOverlay")
@@ -493,7 +493,7 @@ function Register-SiteEvents {
         } -ArgumentList $expArgs
 
         $jId = $jobExp.Id
-        Write-Host "DEBUG: [PopulateNode] Job lancé (ID=$jId). Attente..."
+        Write-Verbose "[PopulateNode] Job lancé (ID=$jId). Attente..."
         
         # Capture explicite pour le Timer
         $capturedBatch = $RenderBatchBlock
@@ -511,13 +511,13 @@ function Register-SiteEvents {
                     $safeOverlay = $Window.FindName("ExplorerLoadingOverlay")
                     if ($safeOverlay) { $safeOverlay.Visibility = "Collapsed" }
                     
-                    Write-Host "DEBUG: [Timer] Job terminé (State=$($j.State)). Récupération resultats..."
+                    Write-Verbose "[Timer] Job terminé (State=$($j.State)). Récupération resultats..."
                     $results = Receive-Job $j -Wait -AutoRemoveJob
                     
                     # Traitement des erreurs fatales du Job
                     if ($j.State -eq 'Failed') {
                         $err = $j.ChildJobs[0].Error
-                        Write-Host "DEBUG: [Timer] ERROR JOB: $err"
+                        Write-Verbose "[Timer] ERROR JOB: $err"
                         $safeLog = $Window.FindName("LogRichTextBox")
                         if ($safeLog) { Write-AppLog -Message "Erreur Explorateur : $err" -Level Error -RichTextBox $safeLog }
                     } 
@@ -526,7 +526,7 @@ function Register-SiteEvents {
                         $realFolders = @()
                         foreach ($item in $results) {
                             if ($item -is [string]) {
-                                Write-Host "   >> JOB LOG: $item"
+                                Write-Verbose "   >> JOB LOG: $item"
                             }
                             elseif ($item.Type -eq "FolderData") {
                                 $realFolders += $item
@@ -539,7 +539,7 @@ function Register-SiteEvents {
                             }
                         }
                         
-                        Write-Host "DEBUG: [Timer] Dossiers valides extraits : $($realFolders.Count)"
+                        Write-Verbose "[Timer] Dossiers valides extraits : $($realFolders.Count)"
 
                         # UPDATE UI (Avec Pagination via Helper)
                         if ($ParentNode) {
@@ -565,17 +565,17 @@ function Register-SiteEvents {
                                 & $capturedBatch $ParentNode
                             }
                             else {
-                                Write-Host "Erreur : RenderBatchBlock toujours introuvable."
+                                Write-Warning "Erreur : RenderBatchBlock toujours introuvable."
                             }
                         }
                         else {
-                            Write-Host "DEBUG: [Timer] ERREUR : ParentNode est null !"
+                            Write-Warning "[Timer] ERREUR : ParentNode est null !"
                         }
                     }
                 }
             }
             catch {
-                Write-Host "CRITICAL TIMER ERROR: $_"
+                Write-Warning "CRITICAL TIMER ERROR: $_"
                 # On évite de propager l'erreur pour ne pas tuer ShowDialog
             }
         }.GetNewClosure() 
@@ -622,13 +622,13 @@ function Register-SiteEvents {
                             & $LocalPopulateBlock -ParentNode $tv -FolderRelativeUrl $lib.RootFolder.ServerRelativeUrl -SiteUrl $safeSiteCb.SelectedItem.Url
                         }
                         else {
-                            Write-Host "Erreur CRITIQUE : PopulateNodeBlock est null dans SelectionChanged."
+                            Write-Warning "Erreur CRITIQUE : PopulateNodeBlock est null dans SelectionChanged."
                         }
                     }
                 }
                 if ($null -ne $PreviewLogic) { & $PreviewLogic } 
             }
-            catch { Write-Host "Erreur SelectionChanged: $_" }
+            catch { Write-Warning "Erreur SelectionChanged: $_" }
         }.GetNewClosure())
 
     # 3. Event GLOBAL : Expansion d'un noeud (Lazy Loading)
@@ -670,7 +670,7 @@ function Register-SiteEvents {
                     }
                 }
             }
-            catch { Write-Host "Erreur OnExpanded interne : $_" }
+            catch { Write-Verbose "Erreur OnExpanded interne : $_" }
         }.GetNewClosure()
 
         # Attachement CORRECT de l'événement Bubbled
@@ -679,7 +679,7 @@ function Register-SiteEvents {
             $exTV.AddHandler([System.Windows.Controls.TreeViewItem]::ExpandedEvent, [System.Windows.RoutedEventHandler]$ActionExpand)
         }
         catch {
-            Write-Host "Warning: Echec AddHandler Expanded: $_"
+            Write-Verbose "Warning: Echec AddHandler Expanded: $_"
         }
 
         # 4. Event : Sélection Dossier

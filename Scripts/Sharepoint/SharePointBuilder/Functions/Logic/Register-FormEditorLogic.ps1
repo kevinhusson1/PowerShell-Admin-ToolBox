@@ -184,6 +184,13 @@ function Register-FormEditorLogic {
             $txtDesc.Foreground = [System.Windows.Media.Brushes]::Orange
         }
 
+        # Indicateur Visuel [META]
+        if ($Data.IsMetadata) {
+            $txtDesc.Text += " [META]"
+            $txtDesc.Foreground = [System.Windows.Media.Brushes]::Teal
+            $txtDesc.FontWeight = "Bold"
+        }
+
         $stack.Children.Add($border) | Out-Null
         $stack.Children.Add($txtDesc) | Out-Null
         
@@ -198,17 +205,17 @@ function Register-FormEditorLogic {
     # 3. BOUTONS D'AJOUT
     # ==========================================================================
     $Ctrl.FormBtnAddLbl.Add_Click({
-            $obj = [PSCustomObject]@{ Type = "Label"; Content = "-"; Width = ""; Name = ""; DefaultValue = ""; Options = @() }
+            $obj = [PSCustomObject]@{ Type = "Label"; Content = "-"; Width = ""; Name = ""; DefaultValue = ""; Options = @(); IsMetadata = $false }
             & $RenderListItem -Data $obj
         }.GetNewClosure())
 
     $Ctrl.FormBtnAddTxt.Add_Click({
-            $obj = [PSCustomObject]@{ Type = "TextBox"; Name = "Variable"; DefaultValue = ""; Width = "100"; Content = ""; Options = @(); IsUppercase = $false }
+            $obj = [PSCustomObject]@{ Type = "TextBox"; Name = "Variable"; DefaultValue = ""; Width = "100"; Content = ""; Options = @(); IsUppercase = $false; IsMetadata = $false }
             & $RenderListItem -Data $obj
         }.GetNewClosure())
 
     $Ctrl.FormBtnAddCmb.Add_Click({
-            $obj = [PSCustomObject]@{ Type = "ComboBox"; Name = "Choix"; DefaultValue = ""; Width = "120"; Options = @("A", "B"); Content = "" }
+            $obj = [PSCustomObject]@{ Type = "ComboBox"; Name = "Choix"; DefaultValue = ""; Width = "120"; Options = @("A", "B"); Content = ""; IsMetadata = $false }
             & $RenderListItem -Data $obj
         }.GetNewClosure())
 
@@ -263,7 +270,7 @@ function Register-FormEditorLogic {
                 $Ctrl.PropDefault.Text = if ($data.DefaultValue) { $data.DefaultValue } else { "" }
                 $Ctrl.PropOptions.Text = if ($data.Options) { $data.Options -join "," } else { "" }
 
-                $visName = if ($data.Type -eq "Label") { "Collapsed" } else { "Visible" }
+                $visName = "Visible" # Always allow Name (useful for Metadata key even for Label)
                 $visContent = if ($data.Type -eq "Label") { "Visible" } else { "Collapsed" }
                 $visDefault = if ($data.Type -eq "Label") { "Collapsed" } else { "Visible" }
                 $visOptions = if ($data.Type -eq "ComboBox") { "Visible" } else { "Collapsed" }
@@ -276,9 +283,17 @@ function Register-FormEditorLogic {
                 if ($Ctrl.PanelWidth) { $Ctrl.PanelWidth.Visibility = "Visible" } 
                 if ($Ctrl.PanelForceUpper) { $Ctrl.PanelForceUpper.Visibility = $visUpper }
                 
+                # Metadata available for ALL types (including Label)
+                if ($Ctrl.PanelIsMetadata) { 
+                    $Ctrl.PanelIsMetadata.Visibility = "Visible"
+                }
+                
                 # Binding Valeur Checkbox
                 if ($Ctrl.PropForceUpper) {
                     $Ctrl.PropForceUpper.IsChecked = if ($data.IsUppercase) { $true } else { $false }
+                }
+                if ($Ctrl.PropIsMetadataCheck) {
+                    $Ctrl.PropIsMetadataCheck.IsChecked = if ($data.IsMetadata) { $true } else { $false }
                 }
             }
             $Ctrl.FormPropPanel.Tag = "Ready"
@@ -294,17 +309,28 @@ function Register-FormEditorLogic {
             $d = $sel.Tag
             $stack = $sel.Content
             $txt = $stack.Children[1]
-            if ($d.Type -eq "Label") { $txt.Text = "'$($d.Content)'" }
+            if ($d.Type -eq "Label") { 
+                $txt.Text = "'$($d.Content)'" 
+            }
             else { 
                 $txt.Text = "$($d.Name) (Def: '$($d.DefaultValue)')" 
-                if ($d.IsUppercase) { 
-                    $txt.Text += " [MAJ]" 
-                    $txt.Foreground = [System.Windows.Media.Brushes]::Orange 
-                }
-                else {
-                    $txt.Foreground = [System.Windows.Media.Brushes]::Black
-                }
             }
+            
+            $color = [System.Windows.Media.Brushes]::Black
+
+            if ($d.IsUppercase) { 
+                $txt.Text += " [MAJ]" 
+                $color = [System.Windows.Media.Brushes]::Orange 
+            }
+            if ($d.IsMetadata) { 
+                $txt.Text += " [META]" 
+                $color = [System.Windows.Media.Brushes]::Teal 
+            }
+            
+            # Gestion de la couleur : Si les deux, on peut vouloir distinguer.
+            if ($d.IsUppercase -and $d.IsMetadata) { $color = [System.Windows.Media.Brushes]::DarkViolet }
+            
+            $txt.Foreground = $color
             & $UpdateLivePreview
         }
     }.GetNewClosure()
@@ -322,6 +348,7 @@ function Register-FormEditorLogic {
         }.GetNewClosure())
 
     $Ctrl.PropForceUpper.Add_Checked({ 
+            if ($Ctrl.FormPropPanel.Tag -eq "Loading") { return }
             if ($Ctrl.FormList.SelectedItem) { 
                 # Ensure propery exists
                 $t = $Ctrl.FormList.SelectedItem.Tag
@@ -331,11 +358,13 @@ function Register-FormEditorLogic {
                 else {
                     $t.IsUppercase = $true
                 }
+                $Ctrl.FormList.SelectedItem.Tag = $t
                 & $RefreshListItem 
             } 
         }.GetNewClosure())
 
     $Ctrl.PropForceUpper.Add_Unchecked({ 
+            if ($Ctrl.FormPropPanel.Tag -eq "Loading") { return }
             if ($Ctrl.FormList.SelectedItem) { 
                 $t = $Ctrl.FormList.SelectedItem.Tag
                 if ($null -eq $t.PSObject.Properties["IsUppercase"]) {
@@ -344,8 +373,43 @@ function Register-FormEditorLogic {
                 else {
                     $t.IsUppercase = $false
                 }
+                $Ctrl.FormList.SelectedItem.Tag = $t
                 & $RefreshListItem 
             } 
+        }.GetNewClosure())
+
+
+
+    $Ctrl.PropIsMetadataCheck.Add_Checked({ 
+            if ($Ctrl.FormPropPanel.Tag -eq "Loading") { return }
+            if ($Ctrl.FormList.SelectedItem) {
+                $t = $Ctrl.FormList.SelectedItem.Tag
+
+                if ($null -eq $t.PSObject.Properties["IsMetadata"]) {
+                    $t | Add-Member -MemberType NoteProperty -Name "IsMetadata" -Value $true -Force
+                }
+                else {
+                    $t.IsMetadata = $true
+                }
+                $Ctrl.FormList.SelectedItem.Tag = $t
+                & $RefreshListItem 
+            }
+        }.GetNewClosure())
+        
+    $Ctrl.PropIsMetadataCheck.Add_Unchecked({ 
+            if ($Ctrl.FormPropPanel.Tag -eq "Loading") { return }
+            if ($Ctrl.FormList.SelectedItem) {
+                $t = $Ctrl.FormList.SelectedItem.Tag
+
+                if ($null -eq $t.PSObject.Properties["IsMetadata"]) {
+                    $t | Add-Member -MemberType NoteProperty -Name "IsMetadata" -Value $false -Force
+                }
+                else {
+                    $t.IsMetadata = $false
+                }
+                $Ctrl.FormList.SelectedItem.Tag = $t
+                & $RefreshListItem 
+            }
         }.GetNewClosure())
 
     # ==========================================================================
@@ -360,7 +424,6 @@ function Register-FormEditorLogic {
     }.GetNewClosure()
     & $LoadFormList
 
-    # B. NOUVEAU
     # B. NOUVEAU
     $Ctrl.FormBtnNew.Add_Click({
             if ($Ctrl.FormList.Items.Count -gt 0) {
@@ -440,6 +503,7 @@ function Register-FormEditorLogic {
                         Width        = if ($field.Width) { $field.Width }else { "100" }
                         Options      = if ($field.Options) { $field.Options }else { @() }
                         IsUppercase  = if ($field.IsUppercase) { $field.IsUppercase } else { $false }
+                        IsMetadata   = if ($field.IsMetadata) { $field.IsMetadata } else { $false }
                     }
                     & $RenderListItem -Data $obj
                 }
