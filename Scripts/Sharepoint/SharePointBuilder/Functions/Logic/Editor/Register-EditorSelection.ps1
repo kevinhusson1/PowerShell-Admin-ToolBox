@@ -55,50 +55,103 @@ function Global:Register-EditorSelectionHandler {
                 }
                 # B. TAG
                 elseif ($data.Type -eq "Tag") {
-                    if ($Ctrl.EdPropPanelTag) {
-                        $Ctrl.EdPropPanelTag.Visibility = "Visible"
-                        $Ctrl.EdPropPanelTag.DataContext = $selectedItem
-                        if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = $data.Name }
-                        if ($Ctrl.EdTagValueBox) { $Ctrl.EdTagValueBox.Text = $data.Value }
-                        
-                        # Dynamic/Static Logic
-                        if ($Ctrl.EdTagDynamicCheck) { $Ctrl.EdTagDynamicCheck.IsChecked = if ($data.IsDynamic) { $true }else { $false } }
-                        
-                        # Populate Sources (List of Rules)
-                        if ($Ctrl.EdTagSourceFormBox) {
-                            $rules = Get-AppNamingRules
-                            $Ctrl.EdTagSourceFormBox.ItemsSource = $rules
-                            if ($data.SourceForm) {
-                                $found = $rules | Where-Object { $_.RuleId -eq $data.SourceForm } | Select-Object -First 1
-                                $Ctrl.EdTagSourceFormBox.SelectedItem = $found
-                            }
-                        }
-                        
-                        # Populate Vars (If Form Selected)
-                        if ($Ctrl.EdTagSourceVarBox -and $data.SourceForm) {
-                            $r = Get-AppNamingRules | Where-Object { $_.RuleId -eq $data.SourceForm } | Select-Object -First 1
-                            if ($r) {
-                                try {
-                                    $json = $r.DefinitionJson | ConvertFrom-Json
-                                    $vars = $json.Layout | Where-Object { $_.Type -ne "Label" } | Select-Object -ExpandProperty Name
-                                    $Ctrl.EdTagSourceVarBox.ItemsSource = $vars
-                                    $Ctrl.EdTagSourceVarBox.Text = $data.SourceVar
+                    
+                    if ($data.IsDynamic) {
+                        # --- DYNAMIC PANEL ---
+                        if ($Ctrl.EdPropPanelDynamicTag) {
+                            $Ctrl.EdPropPanelDynamicTag.Visibility = "Visible"
+                            $Ctrl.EdPropPanelDynamicTag.DataContext = $selectedItem
+                            
+                            # Name (Removed Box)
+                            # if ($Ctrl.EdDynamicTagNameBox) { $Ctrl.EdDynamicTagNameBox.Text = $data.Name }
+                            
+                            # Source Form (Rule)
+                            if ($Ctrl.EdDynamicTagSourceFormBox) {
+                                $rules = Get-AppNamingRules
+                                
+                                # RELOAD IF EMPTY (Data Sync Fix)
+                                if ($rules.Count -eq 0 -and (Get-Command "Get-AppNamingRule" -ErrorAction SilentlyContinue)) {
+                                    # Try fetching from DB directly if Global is empty
+                                    try { 
+                                        $rules = @(Get-AppNamingRule) 
+                                        if ($Global:AppConfig) {
+                                            if ($Global:AppConfig.PSObject.Properties.Match("namingRules").Count -eq 0) {
+                                                $Global:AppConfig | Add-Member -MemberType NoteProperty -Name "namingRules" -Value $rules -Force
+                                            }
+                                            else {
+                                                $Global:AppConfig.namingRules = $rules
+                                            }
+                                        }
+                                    }
+                                    catch {}
                                 }
-                                catch {}
+                                
+                                # --- INITIALIZATION (Safe Populating) ---
+                                $Script:IsPopulating = $true
+                                
+                                # 1. Populate Form List (Filtered)
+                                $filteredRules = [System.Collections.Generic.List[psobject]]::new()
+                                if ($rules) {
+                                    foreach ($r in $rules) {
+                                        try {
+                                            if (-not [string]::IsNullOrWhiteSpace($r.DefinitionJson)) {
+                                                $j = $r.DefinitionJson | ConvertFrom-Json
+                                                if ($j.Layout) {
+                                                    $hasMeta = $j.Layout | Where-Object { $_.IsMetadata -eq $true } | Select-Object -First 1
+                                                    if ($hasMeta) { $filteredRules.Add($r) }
+                                                }
+                                            }
+                                        }
+                                        catch {}
+                                    }
+                                }
+                                $Ctrl.EdDynamicTagSourceFormBox.DisplayMemberPath = "RuleId"
+                                $Ctrl.EdDynamicTagSourceFormBox.ItemsSource = $filteredRules
+                                
+                                # 2. Select Current Form
+                                if ($data.SourceForm) {
+                                    $found = $filteredRules | Where-Object { $_.RuleId -eq $data.SourceForm } | Select-Object -First 1
+                                    $Ctrl.EdDynamicTagSourceFormBox.SelectedItem = $found
+                                }
+                                else {
+                                    $Ctrl.EdDynamicTagSourceFormBox.SelectedItem = $null
+                                }
+
+                                # 3. Populate Variable List (Cascading)
+                                $Ctrl.EdDynamicTagSourceVarBox.ItemsSource = $null
+                                if ($found) {
+                                    try {
+                                        $json = $found.DefinitionJson | ConvertFrom-Json
+                                        $vars = @($json.Layout | Where-Object { $_.IsMetadata -eq $true } | Select-Object -ExpandProperty Name)
+                                        $Ctrl.EdDynamicTagSourceVarBox.ItemsSource = $vars
+                                        
+                                        # 4. Select Current Variable
+                                        if ($data.SourceVar) {
+                                            $Ctrl.EdDynamicTagSourceVarBox.SelectedItem = $data.SourceVar
+                                        }
+                                    }
+                                    catch {}
+                                }
+                                
+                                $Script:IsPopulating = $false
                             }
                         }
-                        
-                        # Visibility
-                        if ($data.IsDynamic) {
-                            if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Visible" }
-                            if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Collapsed" }
+                        # Hide Static
+                        if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                    }
+                    else {
+                        # --- STATIC PANEL ---
+                        if ($Ctrl.EdPropPanelTag) {
+                            $Ctrl.EdPropPanelTag.Visibility = "Visible"
+                            $Ctrl.EdPropPanelTag.DataContext = $selectedItem
+                            if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = $data.Name }
+                            if ($Ctrl.EdTagValueBox) { $Ctrl.EdTagValueBox.Text = $data.Value }
                         }
-                        else {
-                            if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Collapsed" }
-                            if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Visible" }
-                        }
+                        # Hide Dynamic
+                        if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                     }
                 }
+            
                 # C. LINK
                 elseif ($data.Type -eq "Link") {
                     if ($Ctrl.EdPropPanelLink) {
@@ -107,6 +160,7 @@ function Global:Register-EditorSelectionHandler {
                         if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = $data.Name }
                         if ($Ctrl.EdLinkUrlBox) { $Ctrl.EdLinkUrlBox.Text = $data.Url }
                     }
+                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
                 # D. INTERNAL LINK
                 elseif ($data.Type -eq "InternalLink") {
@@ -116,6 +170,7 @@ function Global:Register-EditorSelectionHandler {
                         if ($Ctrl.EdInternalLinkNameBox) { $Ctrl.EdInternalLinkNameBox.Text = $data.Name }
                         if ($Ctrl.EdInternalLinkIdBox) { $Ctrl.EdInternalLinkIdBox.Text = $data.TargetNodeId }
                     }
+                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
                 # E. PUBLICATION
                 elseif ($data.Type -eq "Publication") {
@@ -141,6 +196,7 @@ function Global:Register-EditorSelectionHandler {
                         if ($Ctrl.EdPubGrantUserBox) { $Ctrl.EdPubGrantUserBox.Text = $data.GrantUser }
                         if ($Ctrl.EdPubGrantLevelBox) { $Ctrl.EdPubGrantLevelBox.Text = $data.GrantLevel }
                     }
+                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
                 # F. FOLDER (Standard)
                 else {
@@ -149,6 +205,7 @@ function Global:Register-EditorSelectionHandler {
                     if ($data -and $Ctrl.EdFolderIdBox) { $Ctrl.EdFolderIdBox.Text = $data.Id }
                 
                     # Note: No longer populating ListBoxes for Permissions/Tags here.
+                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
             
                 # --- BUTTON STATES ---
@@ -552,6 +609,139 @@ function Global:Register-EditorSelectionHandler {
                         $sel.Header.Children[2].Text = $this.Text 
                     }
                 } 
+            }.GetNewClosure())
+    }
+    # ==================================================================================
+    # NEW: DYNAMIC TAG HANDLERS
+    # ==================================================================================
+    # REMOVED: Name Box logic (User request)
+
+    if ($Ctrl.EdDynamicTagSourceFormBox) {
+        # EVENT: Selection Changed (Logic)
+        $Ctrl.EdDynamicTagSourceFormBox.Add_SelectionChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Tag") { 
+                    if ($this.SelectedItem) {
+                        # Save ID (Stable) instead of Name
+                        $sel.Tag.SourceForm = $this.SelectedItem.RuleId 
+                    
+                        # Trigger Cascading Update for Variable Box
+                        if ($Ctrl.EdDynamicTagSourceVarBox) {
+                            $Ctrl.EdDynamicTagSourceVarBox.ItemsSource = $null
+                            try {
+                                $json = $this.SelectedItem.DefinitionJson | ConvertFrom-Json
+                                $vars = @($json.Layout | Where-Object { $_.IsMetadata -eq $true } | Select-Object -ExpandProperty Name)
+                                $Ctrl.EdDynamicTagSourceVarBox.ItemsSource = $vars
+                            }
+                            catch {}
+                        }
+                    }
+                }
+            }.GetNewClosure())
+
+        # EVENT: DropDownOpened (Refresh List)
+        $Ctrl.EdDynamicTagSourceFormBox.Add_DropDownOpened({
+                # Explicit Log for User Debugging (WARNING = Visible)
+                Write-Warning "[DynamicTag] Opening DropDown - Fetching Naming Rules from Database..."
+                
+                # Fetch directly from DB (Module)
+                $rules = @()
+                if (Get-Command "Get-AppNamingRules" -ErrorAction SilentlyContinue) {
+                    $rules = @(Get-AppNamingRules)
+                }
+                else {
+                    Write-Warning "[DynamicTag] ERROR: Command 'Get-AppNamingRules' not found! Check Database module."
+                }
+                
+                Write-Warning "[DynamicTag] Found $($rules.Count) raw rules. Starting analysis..."
+
+                # FILTER: Only Forms containing Metadata Variables
+                $filteredRules = [System.Collections.Generic.List[psobject]]::new()
+                foreach ($r in $rules) {
+                    try {
+                        Write-Warning " > Analyzing Rule: $($r.RuleId)"
+                        if (-not [string]::IsNullOrWhiteSpace($r.DefinitionJson)) {
+                            # Log JSON start
+                            $sub = if ($r.DefinitionJson.Length -gt 50) { $r.DefinitionJson.Substring(0, 50) + "..." } else { $r.DefinitionJson }
+                            Write-Warning "   JSON: $sub"
+
+                            $j = $r.DefinitionJson | ConvertFrom-Json
+                            
+                            # Log Object Type
+                            Write-Warning "   Type: $($j.GetType().Name)"
+                            if ($j.PSObject.Properties['Layout']) {
+                                # FIX: Property Name is "IsMetadata" in FormEditor, not "IsMeta"
+                                $hasMeta = $j.Layout | Where-Object { $_.IsMetadata -eq $true } | Select-Object -First 1
+                                if ($hasMeta) { 
+                                    $filteredRules.Add($r)
+                                    Write-Warning "   [KEEP] Contains IsMetadata=true."
+                                }
+                                else {
+                                    Write-Warning "   [SKIP] No IsMetadata=true in Layout tags."
+                                }
+                            }
+                            else {
+                                Write-Warning "   [SKIP] JSON property 'Layout' missing."
+                            }
+                        }
+                        else {
+                            Write-Warning "   [SKIP] DefinitionJson is empty."
+                        }
+                    }
+                    catch {
+                        Write-Warning "   [ERROR] Parsing failed: $($_.Exception.Message)"
+                    }
+                }
+                Write-Warning "[DynamicTag] Filtered result: $($filteredRules.Count) rules retained."
+
+                $this.DisplayMemberPath = "RuleId"
+                $this.ItemsSource = $filteredRules
+            }.GetNewClosure())
+    }
+
+
+    if ($Ctrl.EdDynamicTagSourceVarBox) {
+        $Ctrl.EdDynamicTagSourceVarBox.Add_SelectionChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Tag") { 
+                    if ($this.SelectedItem) {
+                        $sel.Tag.SourceVar = $this.SelectedItem 
+                        
+                        # UPDATE: Auto-set Name = SourceVar
+                        $sel.Tag.Name = $this.SelectedItem
+
+                        # Update Visual Value to "Dynamic: [VarName]"
+                        $sel.Tag.Value = "🎯 $($this.SelectedItem)"
+                        
+                        # Update Visual Text (Header)
+                        # Re-using Update-EditorChildNode logic or direct visual update
+                        if ($sel.Header -is [System.Windows.Controls.StackPanel]) {
+                            # Index 1 is TextBlock
+                            if ($sel.Header.Children.Count -ge 2) {
+                                # FIX: User requests removing redundant "Black Bolt" and Value
+                                # Result: [YellowIcon] [Name]
+                                $sel.Header.Children[1].Text = $sel.Tag.Name
+                            }
+                        }
+                    }
+                }
+            }.GetNewClosure())
+    }
+
+    if ($Ctrl.EdDynamicTagDeleteButton) {
+        $Ctrl.EdDynamicTagDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Tag") {
+                    $parent = $sel.Parent
+                    if ($parent -is [System.Windows.Controls.TreeViewItem]) {
+                        $parent.Items.Remove($sel)
+                        Update-EditorBadges -TreeItem $parent
+                    }
+                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
             }.GetNewClosure())
     }
 }

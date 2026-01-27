@@ -449,8 +449,35 @@ function Global:Register-EditorActionHandlers {
                     return
                 }
             
-                # Création NOEUD Tag
-                $newNode = New-EditorTagNode -Name "NomColonne" -Value "Valeur"
+                # Création NOEUD Tag (STATIC)
+                $newNode = New-EditorTagNode -Name "NomColonne" -Value "Valeur" -IsDynamic $false
+            
+                # Ajout à l'arbre
+                $sel.Items.Add($newNode) | Out-Null
+                $sel.IsExpanded = $true
+                $newNode.IsSelected = $true
+            
+                # Update Badges Parent
+                Update-EditorBadges -TreeItem $sel
+            }.GetNewClosure())
+    }
+
+    if ($Ctrl.EdBtnGlobalAddDynamicTag) {
+        $Ctrl.EdBtnGlobalAddDynamicTag.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if (-not $sel) { [System.Windows.MessageBox]::Show("Sélectionnez un élément dans l'arbre.", "Info", "OK", "Information"); return }
+            
+                # Validation Meta
+                if ($sel.Tag.Type -eq "Permission" -or $sel.Tag.Type -eq "Tag" -or $sel.Name -eq "MetaItem") {
+                    [System.Windows.MessageBox]::Show("Impossible d'ajouter un tag à ce niveau.", "Info", "OK", "Information")
+                    return
+                }
+            
+                # Création NOEUD Tag (DYNAMIC)
+                $newNode = New-EditorTagNode -Name "NomColonne" -Value "DYNAMIC" -IsDynamic $true
+                # $newNode.Tag.IsDynamic = $true # Déjà fait par paramètre
+                $newNode.Tag.SourceForm = ""
+                $newNode.Tag.SourceVar = ""
             
                 # Ajout à l'arbre
                 $sel.Items.Add($newNode) | Out-Null

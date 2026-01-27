@@ -120,7 +120,7 @@ function Global:New-BuilderTreeItem {
             }
 
             # Ajout Visuel
-            $tNode = New-EditorTagNode -Name $n -Value $v
+            $tNode = New-EditorTagNode -Name $n -Value $v -IsDynamic ($t.IsDynamic -eq $true)
             
             # Hydration Dynamic Props
             if ($t.IsDynamic) {
@@ -128,11 +128,7 @@ function Global:New-BuilderTreeItem {
                 $tNode.Tag.SourceForm = $t.SourceForm
                 $tNode.Tag.SourceVar = $t.SourceVar
                 
-                # Update visual text for dynamic tags
-                if ($tNode.Header -is [System.Windows.Controls.StackPanel] -and $tNode.Header.Children.Count -ge 2) { 
-                    $tNode.Header.Children[1].Text = "$n : [$($t.SourceVar)]"
-                    $tNode.Header.Children[1].Foreground = [System.Windows.Media.Brushes]::Teal
-                }
+                # Visual text is now handled by New-EditorTagNode
             }
             
             $item.Items.Add($tNode) | Out-Null

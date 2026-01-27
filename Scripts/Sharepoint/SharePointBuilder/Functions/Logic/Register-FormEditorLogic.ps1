@@ -470,6 +470,21 @@ function Register-FormEditorLogic {
             try {
                 # APPEL PROPRE MODULE DATABASE
                 Set-AppNamingRule -RuleId $currentId -DefinitionJson $json
+                
+                # REFRESH GLOBAL CONFIG (CRITICAL for Dynamic Tag Selector)
+                if (Get-Command "Get-AppNamingRules" -ErrorAction SilentlyContinue) {
+                    $rules = @(Get-AppNamingRules)
+                    if ($Global:AppConfig -and $Global:AppConfig.PSObject.Properties.Match("namingRules").Count -eq 0) {
+                        $Global:AppConfig | Add-Member -MemberType NoteProperty -Name "namingRules" -Value $rules -Force
+                    }
+                    elseif ($Global:AppConfig) {
+                        $Global:AppConfig.namingRules = $rules
+                    }
+                } 
+                elseif (Get-Command "Get-AppConfig" -ErrorAction SilentlyContinue) {
+                    # Fallback reload
+                    $Global:AppConfig = Get-AppConfig
+                }
             
                 & $SetFormStatus -Msg "Règle '$currentId' sauvegardée avec succès." -Type "Success"
             

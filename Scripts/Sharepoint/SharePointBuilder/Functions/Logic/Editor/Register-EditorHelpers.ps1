@@ -7,17 +7,36 @@
 
 # --- TRI ARBORESCENCE ---
 function Global:Sort-EditorTreeRecursive {
-    param($ItemCollection)
+    param(
+        $ItemCollection,
+        [int]$Level = 0
+    )
     if ($null -eq $ItemCollection -or $ItemCollection.Count -eq 0) { return }
 
     $items = @($ItemCollection)
     $ItemCollection.Clear()
 
-    # Tri : Dossier (0) < Pub (1) < Lien (2), puis Alpha
+    # ROOT LEVEL (Level 0): Folders Top, Root Links Bottom
+    # CHILD LEVEL (Level > 0): Meta Top, Content Middle, SubFolders Bottom
+    
     $sortedItems = $items | Sort-Object `
     @{Expression     = { 
             $t = if ($_.Tag.Type) { $_.Tag.Type } else { "Folder" }
-            if ($t -eq "Link") { 2 } elseif ($t -eq "Publication") { 1 } else { 0 } 
+            
+            if ($Level -eq 0) {
+                # ROOT
+                if ($t -eq "Folder") { 10 }
+                else { 90 } # Root Links at Bottom
+            }
+            else {
+                # CHILDREN
+                if ($t -eq "Permission") { 10 }
+                elseif ($t -eq "Tag") { if ($_.Tag.IsDynamic) { 21 } else { 20 } }
+                elseif ($t -eq "Link" -or $t -eq "InternalLink") { 30 }
+                elseif ($t -eq "Publication") { 40 }
+                elseif ($t -eq "Folder") { 50 } # SubFolders at Bottom
+                else { 100 }
+            }
         }; Ascending = $true
     }, 
     @{Expression = { $_.Tag.Name }; Ascending = $true }
@@ -25,7 +44,8 @@ function Global:Sort-EditorTreeRecursive {
     foreach ($item in $sortedItems) {
         $ItemCollection.Add($item) | Out-Null
         if ($item -is [System.Windows.Controls.TreeViewItem]) {
-            Sort-EditorTreeRecursive -ItemCollection $item.Items
+            # Recurse with Level + 1
+            Sort-EditorTreeRecursive -ItemCollection $item.Items -Level ($Level + 1)
         }
     }
 }
@@ -160,3 +180,5 @@ function Global:New-EditorTagRow {
     [System.Windows.Controls.Grid]::SetColumn($b1, 2); $row.Children.Add($b1) | Out-Null
     $ParentList.Items.Add($row) | Out-Null
 }
+
+

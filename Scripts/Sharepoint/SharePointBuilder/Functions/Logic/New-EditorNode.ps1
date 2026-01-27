@@ -280,7 +280,8 @@ function Global:New-EditorPermNode {
 function Global:New-EditorTagNode {
     param(
         [string]$Name = "Nom",
-        [string]$Value = "Valeur"
+        [string]$Value = "Valeur",
+        [bool]$IsDynamic = $false
     )
 
     $mItem = New-Object System.Windows.Controls.TreeViewItem
@@ -290,7 +291,7 @@ function Global:New-EditorTagNode {
         Type        = "Tag"
         Name        = $Name
         Value       = $Value
-        IsDynamic   = $false
+        IsDynamic   = $IsDynamic
         SourceForm  = ""
         SourceVar   = ""
         Permissions = $null
@@ -300,15 +301,29 @@ function Global:New-EditorTagNode {
     # Standard indentation
     $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
     
-    # Icon Tag (EMOJI - Robust)
+    # Icon Key (EMOJI - Robust)
     $mIcon = New-Object System.Windows.Controls.TextBlock
-    $mIcon.Text = "🏷️"
-    $mIcon.SetResourceReference([System.Windows.Controls.TextBlock]::StyleProperty, "TagIconStyle")
+    
+    if ($mItem.Tag.IsDynamic) {
+        $mIcon.Text = "⚡"
+        $mIcon.Foreground = [System.Windows.Media.Brushes]::Orange
+    }
+    else {
+        $mIcon.Text = "🏷️"
+        $mIcon.Foreground = "#689F38" # Green
+    }
+
     $mIcon.FontSize = 14
     $mIcon.Margin = "0,0,5,0"
     
-    $display = "$Name : $Value"
-    $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $display; FontSize = 12; VerticalAlignment = "Center"; Foreground = "#00695C" }
+    if ($mItem.Tag.IsDynamic) {
+        $display = "$Name"
+    }
+    else {
+        $display = "$Name : $Value"
+    }
+
+    $mText = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $display; VerticalAlignment = "Center"; Foreground = "#555" }
     
     $mStack.Children.Add($mIcon) | Out-Null
     $mStack.Children.Add($mText) | Out-Null

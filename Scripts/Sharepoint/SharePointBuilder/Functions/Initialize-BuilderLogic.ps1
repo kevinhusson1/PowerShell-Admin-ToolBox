@@ -45,6 +45,7 @@ function Initialize-BuilderLogic {
             
             "IconAddPerm"         = "key.png"
             "IconAddTag"          = "tag.png"
+            "IconAddDynamicTag"   = "light.png"
         }
 
         foreach ($key in $maps.Keys) {

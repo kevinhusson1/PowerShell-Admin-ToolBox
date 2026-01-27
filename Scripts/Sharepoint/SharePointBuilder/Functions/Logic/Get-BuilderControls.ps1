@@ -53,6 +53,7 @@ function Get-BuilderControls {
         # --- CONFIG DOSSIER ---
         ChkCreateFolder            = $Window.FindName("CreateFolderCheckBox")
         CbFolderTemplates          = $Window.FindName("FolderTemplateComboBox")
+        ChkApplyMeta               = $Window.FindName("DeployApplyMetaChk")
         
         # --- FORMULAIRE ---
         TxtDesc                    = $Window.FindName("TemplateDescText")
@@ -112,6 +113,7 @@ function Get-BuilderControls {
         # --- NEW TOOLBAR ICONS ---
         IconAddPerm                = $Window.FindName("IconAddPerm")
         IconAddTag                 = $Window.FindName("IconAddTag")
+        IconAddDynamicTag          = $Window.FindName("IconAddDynamicTag")
 
         # --- EDITEUR (Props) ---
         # --- EDITEUR (Props Panels) ---
@@ -123,6 +125,7 @@ function Get-BuilderControls {
         EdPropPanelInternalLink    = & $Find "EdPanelInternalLink"
         EdPropPanelPub             = & $Find "EdPanelPub"
         EdPanelGlobalTags          = & $Find "EdPanelGlobalTags"
+        EdPropPanelDynamicTag      = & $Find "EdPanelDynamicTag"
 
         EdNoSelPanel               = & $Find "EdPanelNoSel"
         
@@ -140,6 +143,11 @@ function Get-BuilderControls {
         EdTagNameBox               = $Window.FindName("EdTagNameBox")
         EdTagValueBox              = $Window.FindName("EdTagValueBox")
         EdTagDeleteButton          = $Window.FindName("EdTagDeleteButton")
+        
+        # Dynamic Tag Inputs
+        EdDynamicTagSourceFormBox  = $Window.FindName("EdDynamicTagSourceFormBox")
+        EdDynamicTagSourceVarBox   = $Window.FindName("EdDynamicTagSourceVarBox")
+        EdDynamicTagDeleteButton   = $Window.FindName("EdDynamicTagDeleteButton")
 
         # Link Inputs
         EdLinkNameBox              = $Window.FindName("EdLinkNameBox")
@@ -171,6 +179,7 @@ function Get-BuilderControls {
         # --- TOOLBAR GLOBAL ACTIONS ---
         EdBtnGlobalAddPerm         = $Window.FindName("EditorGlobalAddPermButton")
         EdBtnGlobalAddTag          = $Window.FindName("EditorGlobalAddTagButton")
+        EdBtnGlobalAddDynamicTag   = $Window.FindName("EditorGlobalAddDynamicTagButton")
 
 
 

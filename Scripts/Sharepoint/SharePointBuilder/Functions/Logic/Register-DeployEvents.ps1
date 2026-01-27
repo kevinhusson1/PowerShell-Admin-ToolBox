@@ -240,6 +240,12 @@ function Register-DeployEvents {
                     }
                 }
             }
+            
+            # Feature Toggle: Apply Metadata to Destination
+            if ($Ctrl.ChkApplyMeta.IsChecked -eq $false) {
+                # Clear metadata so Apply-AppSPMetadata skips the root folder
+                $rootMetadata.Clear()
+            }
 
             # --- CONFIGURATION JOB (LOCALISATION) ---
             $lang = if ($Global:AppConfig.defaultLanguage) { $Global:AppConfig.defaultLanguage } else { "fr-FR" }
