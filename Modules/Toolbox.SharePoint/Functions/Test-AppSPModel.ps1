@@ -117,32 +117,7 @@ function Test-AppSPModel {
                         })
                 }
             }
-            if ([string]::IsNullOrWhiteSpace($node.GrantUser)) {
-                $results.Add([PSCustomObject]@{
-                        Id       = $node.Id
-                        NodeName = $node.Name
-                        Path     = $path
-                        Status   = "Warning"
-                        Message  = (Loc "validation_err_no_grant_user" $null)
-                        Level    = "Static"
-                    })
-            }
-            # Validation User Publication (Connected)
-            if ($Connection -and $node.GrantUser) {
-                try {
-                    $u = New-PnPUser -LoginName $node.GrantUser -Connection $Connection -ErrorAction Stop
-                }
-                catch {
-                    $results.Add([PSCustomObject]@{
-                            Id       = $node.Id
-                            NodeName = $node.Name
-                            Path     = $path
-                            Status   = "Error"
-                            Message  = (Loc "validation_err_user_not_found" $node.GrantUser)
-                            Level    = "Connected"
-                        })
-                }
-            }
+
         }
 
         # 3. Validation Permissions

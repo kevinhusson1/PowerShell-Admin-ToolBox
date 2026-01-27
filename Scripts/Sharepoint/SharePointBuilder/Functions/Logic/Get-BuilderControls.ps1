@@ -166,8 +166,7 @@ function Get-BuilderControls {
         EdPubPathBox               = $Window.FindName("EdPubPathBox")
         EdPubUseModelNameChk       = $Window.FindName("EdPubUseModelNameChk")
         EdPubUseFormMetaChk        = $Window.FindName("EdPubUseFormMetaChk")
-        EdPubGrantUserBox          = $Window.FindName("EdPubGrantUserBox")
-        EdPubGrantLevelBox         = $Window.FindName("EdPubGrantLevelBox")
+
         EdPubDeleteButton          = $Window.FindName("EdPubDeleteButton")
 
         EdStatusText               = $Window.FindName("EditorStatusText")

@@ -492,26 +492,6 @@ function New-AppSPStructure {
                             catch { Log "  ⚠️ Erreur Meta Pub : $($_.Exception.Message)" "WARNING" }
                         }
 
-                        # D. ATTRIBUTION DROITS SOURCE (GRANT)
-                        if ($pub.GrantUser) {
-                            $spRole = switch ($pub.GrantLevel) { "Contribute" { "Contribute" } Default { "Read" } }
-                            Log (Loc "log_deploy_pub_grant" @($pub.GrantUser, $spRole)) "DEBUG"
-                            try {
-                                Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $pub.GrantUser -AddRole $spRole -Connection $conn -ErrorAction Stop
-                                Log (Loc "log_deploy_pub_rights_ok") "INFO"
-                            }
-                            catch {
-                                # Retry User
-                                try {
-                                    New-PnPUser -LoginName $pub.GrantUser -Connection $conn -ErrorAction SilentlyContinue | Out-Null
-                                    Set-PnPListItemPermission -List $TargetLibraryName -Identity $folderItem.Id -User $pub.GrantUser -AddRole $spRole -Connection $conn -ErrorAction Stop
-                                    Log (Loc "log_deploy_pub_rights_ok") "INFO"
-                                }
-                                catch {
-                                    Log "  ⚠️ Erreur droits : $($_.Exception.Message)" "WARNING"
-                                }
-                            }
-                        }
 
                     }
                     catch {

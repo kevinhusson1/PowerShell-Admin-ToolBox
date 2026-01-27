@@ -193,8 +193,7 @@ function Global:Register-EditorSelectionHandler {
                             $Ctrl.EdPubUseFormMetaChk.IsEnabled = [bool]$data.UseModelName
                         }
                     
-                        if ($Ctrl.EdPubGrantUserBox) { $Ctrl.EdPubGrantUserBox.Text = $data.GrantUser }
-                        if ($Ctrl.EdPubGrantLevelBox) { $Ctrl.EdPubGrantLevelBox.Text = $data.GrantLevel }
+
                     }
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
@@ -565,20 +564,7 @@ function Global:Register-EditorSelectionHandler {
                 }
             }.GetNewClosure())
     }
-    if ($Ctrl.EdPubGrantUserBox) {
-        $Ctrl.EdPubGrantUserBox.Add_TextChanged({
-                if ($Script:IsPopulating) { return }
-                $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Publication") { $sel.Tag.GrantUser = $this.Text }
-            }.GetNewClosure())
-    }
-    if ($Ctrl.EdPubGrantLevelBox) {
-        $Ctrl.EdPubGrantLevelBox.Add_SelectionChanged({
-                if ($Script:IsPopulating) { return }
-                $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Publication") { $sel.Tag.GrantLevel = $this.SelectedItem }
-            }.GetNewClosure())
-    }
+
     if ($Ctrl.EdPubDeleteButton) {
         $Ctrl.EdPubDeleteButton.Add_Click({
                 $sel = $Ctrl.EdTree.SelectedItem
