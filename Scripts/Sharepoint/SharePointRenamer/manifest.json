@@ -1,0 +1,15 @@
+{
+  "id": "SharePointRenamer-v1",
+  "scriptFile": "SharePointRenamer.ps1",
+  "lockFile": "SharePointRenamer.lock",
+  "name": "scripts.sharepoint_renamer.name",
+  "description": "scripts.sharepoint_renamer.description",
+  "version": "1.0.0",
+  "category": "SharePoint",
+  "author": "Service IT",
+  "icon": {
+    "type": "png",
+    "value": "edit.png",
+    "backgroundColor": "#FF9747"
+  }
+}

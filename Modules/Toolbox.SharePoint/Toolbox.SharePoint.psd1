@@ -29,6 +29,8 @@
         'Set-AppSPMetadata',
         'Add-AppSPFile',
         'Get-AppSPFile',
+        'Rename-AppSPFolder',
+        'Repair-AppSPLinks',
         'New-AppSPStructure'
     )
 }
