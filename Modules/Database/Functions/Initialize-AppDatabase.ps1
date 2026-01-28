@@ -132,7 +132,8 @@ function Initialize-AppDatabase {
                     OverwritePermissions INTEGER, -- 0 or 1
                     TemplateId          TEXT,
                     DateModified        TEXT,
-                    AuthorizedRoles     TEXT  -- Comma separated roles (e.g. "ADMIN,DP")
+                    AuthorizedRoles     TEXT,
+                    Options             TEXT -- JSON Options (Toggle Meta, etc.)
                 );
 "@
         }
@@ -184,6 +185,10 @@ function Initialize-AppDatabase {
             if ('AuthorizedRoles' -notin $cols) {
                 Write-Verbose "Migration Schéma : Ajout de 'AuthorizedRoles' à 'sp_deploy_configs'"
                 Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_deploy_configs ADD COLUMN AuthorizedRoles TEXT;"
+            }
+            if ('Options' -notin $cols) {
+                Write-Verbose "Migration Schéma : Ajout de 'Options' à 'sp_deploy_configs'"
+                Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_deploy_configs ADD COLUMN Options TEXT;"
             }
         }
 

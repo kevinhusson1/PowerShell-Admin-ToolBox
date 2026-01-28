@@ -39,40 +39,61 @@ function Register-ActionEvents {
                 $cfg = $Ctrl.ListBox.SelectedItem
                 if (-not $cfg) { return }
 
-                # 1. Récupération des données
-                $formData = @{}
-                
-                function Get-FormDataRecursive {
-                    param($root)
-                    $data = @{}
-                    if ($root -is [System.Windows.Controls.Panel]) {
-                        foreach ($child in $root.Children) {
-                            $childData = Get-FormDataRecursive -root $child
-                            foreach ($k in $childData.Keys) { $data[$k] = $childData[$k] }
-                        }
-                    }
-                    elseif ($root -is [System.Windows.Controls.ContentControl] -and $root.Content -is [System.Windows.UIElement]) {
-                        $childData = Get-FormDataRecursive -root $root.Content
-                        foreach ($k in $childData.Keys) { $data[$k] = $childData[$k] }
-                    }
-                    elseif ($root -is [System.Windows.Controls.Decorator]) {
-                        $childData = Get-FormDataRecursive -root $root.Child
-                        foreach ($k in $childData.Keys) { $data[$k] = $childData[$k] }
-                    }
-                    
-                    if ($root -is [System.Windows.UIElement] -and $root.Tag) {
-                        $val = $null
-                        if ($root -is [System.Windows.Controls.TextBox]) { $val = $root.Text }
-                        elseif ($root -is [System.Windows.Controls.ComboBox]) { $val = $root.SelectedItem }
-                        if ($val) { $data[$root.Tag] = $val }
-                    }
-                    return $data
+                # 1. Récupération des données & Métadonnées
+                $allData = @{
+                    FormValues   = @{}
+                    RootMetadata = @{}
                 }
                 
-                $formData = Get-FormDataRecursive -root $Ctrl.DynamicFormPanel
+                function Get-FormDataRecursive {
+                    param($root, $accum)
+                    
+                    # Recursion Containers
+                    if ($root -is [System.Windows.Controls.Panel]) {
+                        foreach ($child in $root.Children) { Get-FormDataRecursive -root $child -accum $accum }
+                    }
+                    elseif ($root -is [System.Windows.Controls.ContentControl] -and $root.Content -is [System.Windows.UIElement]) {
+                        Get-FormDataRecursive -root $root.Content -accum $accum
+                    }
+                    elseif ($root -is [System.Windows.Controls.Decorator]) {
+                        Get-FormDataRecursive -root $root.Child -accum $accum
+                    }
+                    
+                    # Capture Values
+                    if ($root -is [System.Windows.UIElement] -and $root.Tag) {
+                        $key = $null
+                        $isMeta = $false
+                        
+                        # Handle String (Legacy/Containers) vs Hashtable (New Inputs)
+                        if ($root.Tag -is [System.Collections.IDictionary]) {
+                            $key = $root.Tag.Key
+                            $isMeta = $root.Tag.IsMeta
+                        }
+                        elseif ($root.Tag -is [string]) {
+                            $key = $root.Tag
+                        }
+
+                        if (-not [string]::IsNullOrWhiteSpace($key)) {
+                            $val = $null
+                            if ($root -is [System.Windows.Controls.TextBox]) { $val = $root.Text }
+                            elseif ($root -is [System.Windows.Controls.ComboBox]) { $val = $root.SelectedItem }
+                            elseif ($root -is [System.Windows.Controls.TextBlock]) { $val = $root.Text }
+                            
+                            if ($val) { 
+                                $accum.FormValues[$key] = $val
+                                if ($isMeta) { $accum.RootMetadata[$key] = $val }
+                            }
+                        }
+                    }
+                }
+                
+                Get-FormDataRecursive -root $Ctrl.DynamicFormPanel -accum $allData
+                $formData = $allData.FormValues # For compatibility with existing logic below
+                $rootMetadata = $allData.RootMetadata
 
                 # 2. Validation Formulaire Vide (Warning)
                 $targetRule = $null
+                # ... (Logic preserved below) ...
                 if ($cfg.TargetFolder) {
                     $rules = Get-AppNamingRules
                     $targetRule = $rules | Where-Object { $_.RuleId -eq $cfg.TargetFolder } | Select-Object -First 1
@@ -88,7 +109,8 @@ function Register-ActionEvents {
                             }
                         }
                         if ($hasEmptyField) {
-                            $msg = "Le formulaire n'est pas complètement renseigné.`nCertaines parties du nom du dossier seront manquantes.`n`nVoulez-vous tout de même lancer le déploiement ?"
+                            $msg = (Get-AppLocalizedString -Key "sp_deploy.warning_empty_fields" -ErrorAction SilentlyContinue)
+                            if (-not $msg) { $msg = "Le formulaire n'est pas complètement renseigné.`nCertaines parties du nom du dossier seront manquantes.`n`nVoulez-vous tout de même lancer le déploiement ?" }
                             $res = [System.Windows.MessageBox]::Show($msg, "Attention", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning)
                             if ($res -eq 'No') { return }
                         }
@@ -123,7 +145,21 @@ function Register-ActionEvents {
                     else { $folderName = "$optSubFolder/$folderName" }
                 }
 
+                # --- 3b. OPTIONS (Apply Metadata?) ---
+                $applyMeta = $false
+                if ($cfg.Options) {
+                    try {
+                        $opts = $cfg.Options | ConvertFrom-Json
+                        if ($opts.ApplyMetadata) { $applyMeta = $true }
+                    }
+                    catch {}
+                }
+                
+                # Filter Metadata if option disabled
+                if (-not $applyMeta) { $rootMetadata.Clear() }
+
                 & $Log "Cible : $($cfg.SiteUrl) / $($cfg.LibraryName) / $folderName" "Info"
+                if ($applyMeta) { & $Log "Métadonnée(s) racine à appliquer : $($rootMetadata.Keys -join ', ')" "Info" }
 
                 # 3. Lancement JOB
                 # Définition du fichier de langue pour le Job
@@ -141,6 +177,8 @@ function Register-ActionEvents {
                     StructureJson = ($null)
                     TemplateId    = $cfg.TemplateId
                     LocFilePath   = $locFile
+                    FormValues    = $formData      # V3: For Dynamic Tags
+                    RootMetadata  = $rootMetadata  # V3: For Root Folder tagging
                 }
 
                 # Chargement Structure JSON
@@ -177,7 +215,9 @@ function Register-ActionEvents {
                             -ClientId $ArgsMap.ClientId `
                             -Thumbprint $ArgsMap.Thumb `
                             -TenantName $ArgsMap.Tenant `
-                            -TargetFolderUrl $ArgsMap.LibRelUrl
+                            -TargetFolderUrl $ArgsMap.LibRelUrl `
+                            -FormValues     $ArgsMap.FormValues `
+                            -RootMetadata   $ArgsMap.RootMetadata
                     }
                     catch { throw $_ }
                 } -ArgumentList $jobArgs

@@ -27,8 +27,11 @@ function Initialize-DeployerLogic {
         param($parent, $tagName)
         if (-not $parent) { return $null }
 
-        # 1. Direct match
-        if ("$($parent.Tag)" -eq $tagName) { return $parent }
+        # 1. Direct match (Compatible String & Hashtable)
+        if ($parent.Tag -is [System.Collections.IDictionary]) {
+            if ($parent.Tag.Key -eq $tagName) { return $parent }
+        }
+        elseif ("$($parent.Tag)" -eq $tagName) { return $parent }
         
         # 2. Children (Panel)
         if ($parent -is [System.Windows.Controls.Panel]) {

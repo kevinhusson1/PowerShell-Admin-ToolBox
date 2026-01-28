@@ -1,3 +1,25 @@
+<#
+.SYNOPSIS
+    Valide l'intégrité d'un modèle de structure SharePoint avant déploiement.
+
+.DESCRIPTION
+    Effectue une validation à 3 niveaux :
+    1. Statique : Syntaxe, caractères interdits, longueurs.
+    2. Connectée : Existence de la bibliothèque cible et des utilisateurs (Permissions).
+    3. Métadonnées : Existence des colonnes (Tags) sur la cible.
+
+.PARAMETER StructureData
+    L'objet ou tableau représentant la structure à valider.
+
+.PARAMETER Connection
+    (Optionnel) La connexion PnP active pour les vérifications connectées.
+
+.PARAMETER TargetLibraryName
+    (Optionnel) Le nom de la bibliothèque cible.
+
+.OUTPUTS
+    [List[PSCustomObject]] Une liste d'erreurs/warnings.
+#>
 function Test-AppSPModel {
     [CmdletBinding()]
     param(
@@ -10,117 +32,82 @@ function Test-AppSPModel {
 
     # Liste caractères interdits SharePoint (Folders)
     # ~ " # % & * : < > ? / \ { | }
-    # + Leading/Trailing dots or spaces (géré souvent par PnP mais à éviter)
     $forbiddenChars = '[~"#%&*:<>?/\\{|}]'
     
     # Helper Localisation Safe
     function Loc($key, $fArgs) {
         if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
             $s = Get-AppLocalizedString -Key ("sp_builder." + $key)
-            if ($s.StartsWith("MISSING:")) { return $key } # Pas trouvé
+            if ($s.StartsWith("MISSING:")) { return $key }
             if ($null -ne $fArgs) { return $s -f $fArgs }
             return $s
         }
-        return $key # Fallback simple
+        return $key 
     }
 
+    # ... (Connexion Logic preserved) ...
     # --- LEVEL 2 : Validation Connectée ---
     if ($Connection) {
-        Write-Verbose "Mode Connecté activé"
-        
-        # 1. Vérification Bibliothèque
+        # ... (Library check preserved) ...
         if (-not [string]::IsNullOrWhiteSpace($TargetLibraryName)) {
-            try {
-                $lib = Get-PnPList -Identity $TargetLibraryName -Connection $Connection -ErrorAction Stop
-            }
+            try { $lib = Get-PnPList -Identity $TargetLibraryName -Connection $Connection -ErrorAction Stop }
             catch {
-                $results.Add([PSCustomObject]@{
-                        Id       = "ROOT"
-                        NodeName = "Racine"
-                        Path     = "/"
-                        Status   = "Error"
-                        Message  = (Loc "validation_err_lib_not_found" $TargetLibraryName)
-                        Level    = "Connected"
-                    })
+                $results.Add([PSCustomObject]@{ Id = "ROOT"; NodeName = "Racine"; Path = "/"; Status = "Error"; Message = (Loc "validation_err_lib_not_found" $TargetLibraryName); Level = "Connected" })
             }
         }
     }
 
+    # ... (Metadata Cache Logic preserved) ...
     # --- LEVEL 3 : Validation Métadonnées (Cache) ---
     $knownFields = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    
     if ($Connection -and -not [string]::IsNullOrWhiteSpace($TargetLibraryName)) {
         try {
-            Write-Verbose "Niveau 3 : Chargement des colonnes de la bibliothèque..."
             $fields = Get-PnPField -List $TargetLibraryName -Connection $Connection -ErrorAction Stop
-            if ($fields) {
-                foreach ($f in $fields) {
-                    $knownFields.Add($f.InternalName) | Out-Null
-                    $knownFields.Add($f.Title) | Out-Null
-                    $knownFields.Add($f.StaticName) | Out-Null
-                }
-            }
+            if ($fields) { foreach ($f in $fields) { $knownFields.Add($f.InternalName) | Out-Null; $knownFields.Add($f.Title) | Out-Null; $knownFields.Add($f.StaticName) | Out-Null } }
         }
-        catch {
-            Write-Verbose "Impossible de charger les colonnes : $_"
-        }
+        catch {}
     }
 
     function Validate-Node {
         param($node, $path)
 
-        # 1. Validation Nom Dossier / Publication
+        # 1. Validation Nom Dossier / Publication / Lien
         if (-not [string]::IsNullOrWhiteSpace($node.Name)) {
             if ($node.Name -match $forbiddenChars) {
-                $results.Add([PSCustomObject]@{
-                        Id       = $node.Id
-                        NodeName = $node.Name
-                        Path     = $path
-                        Status   = "Error"
-                        Message  = (Loc "validation_err_forbidden_chars" $null)
-                        Level    = "Static"
-                    })
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_forbidden_chars" $null); Level = "Static" })
             }
             if ($node.Name.Length -gt 128) {
-                $results.Add([PSCustomObject]@{
-                        Id       = $node.Id
-                        NodeName = $node.Name
-                        Path     = $path
-                        Status   = "Warning"
-                        Message  = (Loc "validation_err_name_length" $null)
-                        Level    = "Static"
-                    })
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Warning"; Message = (Loc "validation_err_name_length" $null); Level = "Static" })
             }
         }
         else {
-            $results.Add([PSCustomObject]@{
-                    Id       = $node.Id
-                    NodeName = "???"
-                    Path     = $path
-                    Status   = "Error"
-                    Message  = (Loc "validation_err_empty_name" $null)
-                    Level    = "Static"
-                })
+            $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = (Loc "validation_err_empty_name" $null); Level = "Static" })
         }
 
-        # 2. Validation Publication
+        # 2. Validation Types Spécifiques
+        
+        # A. PUBLICATION
         if ($node.Type -eq "Publication") {
             if ($node.TargetSiteMode -eq "Url") {
                 if (-not ([Uri]::IsWellFormedUriString($node.TargetSiteUrl, [UriKind]::Absolute))) {
-                    $results.Add([PSCustomObject]@{
-                            Id       = $node.Id
-                            NodeName = $node.Name
-                            Path     = $path
-                            Status   = "Error"
-                            Message  = (Loc "validation_err_invalid_url" $null)
-                            Level    = "Static"
-                        })
+                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_invalid_url" $null); Level = "Static" })
                 }
             }
-
         }
-
-        # 3. Validation Permissions
+        
+        # B. LIEN (Link)
+        if ($node.Type -eq "Link") {
+            if (-not ([Uri]::IsWellFormedUriString($node.Url, [UriKind]::Absolute))) {
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = "URL invalide pour le lien"; Level = "Static" })
+            }
+        }
+        
+        # C. LIEN INTERNE (InternalLink)
+        if ($node.Type -eq "InternalLink") {
+            if ([string]::IsNullOrWhiteSpace($node.TargetNodeId)) {
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = "Cible du lien interne manquante"; Level = "Static" })
+            }
+        }    # 3. Validation Permissions
         if ($node.Permissions) {
             foreach ($perm in $node.Permissions) {
                 if ([string]::IsNullOrWhiteSpace($perm.Email)) {

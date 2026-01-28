@@ -1,3 +1,55 @@
+# Modules/Toolbox.SharePoint/Functions/New-AppSPStructure.ps1
+
+<#
+.SYNOPSIS
+    Déploie une structure documentaire complète (Dossiers, Liens, Pubs) sur SharePoint.
+
+.DESCRIPTION
+    Moteur principal de déploiement qui interprète le JSON de structure pour créer
+    l'arborescence correspondante sur le site cible.
+    
+    Fonctionnalités gérées :
+    - Création récursive de Dossiers.
+    - Création de Liens (.url) et Liens Internes (Raccourcis vers dossiers).
+    - Gestion des Publications (Dossiers partagés vers d'autres sites/libs).
+    - Application des permissions (Utilisateurs/Groupes).
+    - Application des métadonnées (Tags), y compris les **Tags Dynamiques** via 'FormValues'.
+    - Tagging du dossier racine (via 'RootMetadata').
+
+.PARAMETER TargetSiteUrl
+    L'URL du site SharePoint cible.
+
+.PARAMETER TargetLibraryName
+    Le nom de la bibliothèque documentaire.
+
+.PARAMETER RootFolderName
+    (Optionnel) Nom du dossier racine à créer (si applicable).
+
+.PARAMETER StructureJson
+    La définition JSON complète de l'arborescence (Serialisée depuis le Builder).
+
+.PARAMETER ClientId
+    ID Client de l'App Registration (Auth Certificat).
+
+.PARAMETER Thumbprint
+    Empreinte du certificat pour l'authentification Application (Graph/PnP).
+
+.PARAMETER TenantName
+    Nom du tenant (ex: contoso.onmicrosoft.com).
+
+.PARAMETER TargetFolderUrl
+    (Optionnel) Url relative du dossier parent existant (pour déploiement dans un sous-dossier).
+
+.PARAMETER FormValues
+    (Optionnel) Hashtable des valeurs saisies dans le formulaire (Clé=Variable, Val=Valeur).
+    Utilisé pour résoudre les Tags Dynamiques ({IsDynamic: true}).
+
+.PARAMETER RootMetadata
+    (Optionnel) Hashtable des métadonnées à appliquer spécifiquement au dossier racine.
+
+.OUTPUTS
+    [Hashtable] Résultat { Success, Logs, Errors }.
+#>
 function New-AppSPStructure {
     [CmdletBinding()]
     param(

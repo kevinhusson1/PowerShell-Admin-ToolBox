@@ -197,7 +197,18 @@
     "opt_site_other": "Autre Site (URL)",
     "label_pub_target_path": "Chemin (Bibliothèque/Dossier) :",
     "label_pub_grant_user": "Utilisateur Source (Grant) :",
-    "btn_delete_pub": "Supprimer cette publication"
+    "btn_delete_pub": "Supprimer cette publication",
+
+    "validation_name_mandatory": "Le nom de la configuration est obligatoire.",
+    "dialog_config_exists": "La configuration '{0}' existe déjà.\nVoulez-vous l'écraser ?",
+    "title_confirmation": "Confirmation",
+    "err_save_dialog_load": "Impossible de charger le dialogue de sauvegarde.",
+    "err_save_config": "Erreur lors de la sauvegarde : {0}",
+    "msg_config_saved": "Configuration '{0}' sauvegardée avec succès.",
+    "title_success": "Succès",
+    "title_error": "Erreur",
+    "msg_confirm_delete_config": "Voulez-vous vraiment supprimer la configuration '{0}' ?",
+    "msg_config_deleted": "Configuration '{0}' supprimée."
   },
   "form_editor": {
     "load_tooltip": "Charger la règle sélectionnée",

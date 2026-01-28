@@ -139,7 +139,7 @@ function Register-FormEvents {
                             $optPanel.Children.Add($optLabel)
                             
                             $optTxt = New-Object System.Windows.Controls.TextBox
-                            $optTxt.Tag = "OptionalSubFolder"
+                            $optTxt.Tag = @{ Key = "OptionalSubFolder"; IsMeta = $false }
                             $optTxt.Width = 300
                             $optTxt.HorizontalAlignment = "Left"
                             $optTxt.Style = $Window.FindResource("StandardTextBoxStyle")
@@ -168,6 +168,10 @@ function Register-FormEvents {
                                 if ($elem.Type -eq "Label") {
                                     $t = New-Object System.Windows.Controls.TextBlock
                                     $t.Text = $elem.Content
+                                    # V3: Tag allow value extraction for Dynamic Tags if Name is present
+                                    if ($elem.Name) {
+                                        $t.Tag = @{ Key = $elem.Name; IsMeta = $elem.IsMetadata }
+                                    }
                                     $t.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFrom("#00AEEF")
                                     $t.FontWeight = "Bold"
                                     $t.VerticalAlignment = "Center"
@@ -176,7 +180,7 @@ function Register-FormEvents {
                                 }
                                 elseif ($elem.Type -eq "TextBox") {
                                     $t = New-Object System.Windows.Controls.TextBox
-                                    $t.Tag = $elem.Name
+                                    $t.Tag = @{ Key = $elem.Name; IsMeta = $elem.IsMetadata }
                                     $t.Text = $elem.DefaultValue
                                     $t.Width = $width 
                                     $t.VerticalAlignment = "Center"
@@ -188,7 +192,7 @@ function Register-FormEvents {
                                 }
                                 elseif ($elem.Type -eq "ComboBox") {
                                     $c = New-Object System.Windows.Controls.ComboBox
-                                    $c.Tag = $elem.Name
+                                    $c.Tag = @{ Key = $elem.Name; IsMeta = $elem.IsMetadata }
                                     $c.Width = $width
                                     $c.VerticalAlignment = "Center"
                                     $c.ItemsSource = $elem.Options

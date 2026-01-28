@@ -1,4 +1,4 @@
-# Documentation Technique - SharePoint Builder v3.1
+# Documentation Technique - SharePoint Builder v3.2
 
 ## 📋 Présentation
 
@@ -54,12 +54,12 @@ Permet de manipuler des structures JSON complexes sans éditer le texte manuelle
 - **Toolbar Modernisée** : Remplacement des boutons textes par des icônes explicites avec Tooltips localisés.
 - **Nouveaux Types de Nœuds** :
   - **Liens Internes** : Navigation intra-site.
-  - **Publications** : Raccourcis ou copies vers d'autres sites.
+  - **Publications** : Raccourcis vers d'autres collections de sites.
 - **Configuration Avancée** :
-  - **Permissions** : Gestion fine des droits (Utilisateurs/Groupes Azure AD).
-  - **Tags** : Métadonnées SharePoint (Taxonomie/Managed Metadata ou Champs Texte).
+  - **Permissions** : Gestion fine des droits sur les Dossiers.
+  - **Tags** : Métadonnées SharePoint (Statiques ou Dynamiques).
 
-### 4. Liens Internes & Navigation (Nouveau v3.1)
+### 4. Liens Internes & Navigation
 
 Le Builder supporte désormais la création de **Liens Internes**, permettant de créer des raccourcis de navigation au sein même de la structure déployée.
 
@@ -71,23 +71,22 @@ Le Builder supporte désormais la création de **Liens Internes**, permettant de
 
 Le moteur d'application des tags (`New-AppSPStructure`) a été entièrement réécrit pour garantir l'intégrité des données existantes :
 
-- **Mode "Append" (Non-Destructif)** : Le moteur lit les tags déjà présents sur un élément (ex: "RH"), les fusionne avec les nouveaux tags du modèle (ex: "Direction"), et réapplique l'ensemble ("RH;Direction").
-- **Support Multi-Valeurs (Arrays)** : Les tags multiples sont passés sous forme de vecteurs (`Array`) à PnP PowerShell, garantissant leur reconnaissance correcte comme valeurs distinctes dans les colonnes Choix ou Taxonomie.
-- **Récupération d'Identité Robuste** : Utilisation systématique de `Get-PnPFile -AsListItem` pour manipuler les fichiers complexes (comme les `.url`), résolvant les erreurs d'ID introuvable.
-- **Vérification "Set-Based"** : La validation compare les *ensembles* de tags (Sets) en ignorant la casse et les espaces, éliminant les faux positifs.
+- **Mode "Append" (Non-Destructif)** : Le moteur lit les tags déjà présents sur un élément, les fusionne avec les nouveaux tags du modèle, et réapplique l'ensemble.
+- **Support Multi-Valeurs (Arrays)** : Les tags multiples sont passés sous forme de vecteurs (`Array`) à PnP PowerShell.
+- **Récupération d'Identité Robuste** : Utilisation de `Get-PnPFile -AsListItem` pour manipuler les fichiers complexes.
 
 ### 6. Authentification Hybride
 
 L'application gère deux contextes d'authentification parallèles :
 
-- **Microsoft Graph** (via `Connect-AppGraph`) : Pour la récupération de l'identité utilisateur et les opérations transverses Azure AD.
-- **PnP PowerShell** (via `Connect-AppSharePoint`) : Pour toutes les opérations SharePoint. Supporte l'authentification **App-Only** (Certificat) pour les opérations "Sadmin" et **Interactive** pour l'accès standard.
+- **Microsoft Graph** (via `Connect-AppGraph`) : Pour la récupération de l'identité utilisateur.
+- **PnP PowerShell** (via `Connect-AppSharePoint`) : Pour toutes les opérations SharePoint.
 
 ### 7. Système de Logging Centralisé
 
 - Module `Logging` avec la fonction `Write-AppLog`.
-- Supporte l'écriture multiple : Console (Verbose), Interface UI (RichTextBox), et Collection (Listes.
-- Format standardisé `[HH:mm:ss] [LEVEL] Message` garantissant une traçabilité uniforme entre le lanceur, l'application et les jobs enfants.
+- Supporte l'écriture multiple : Console (Verbose), Interface UI (RichTextBox), et Collection.
+- Format standardisé `[HH:mm:ss] [LEVEL] Message`.
 
 ### 8. Validation Avancée (Multi-Niveaux)
 
@@ -96,13 +95,78 @@ Le Builder intègre un moteur de validation pré-déploiement (`Test-AppSPModel`
 - **Niveau 1 (Statique)** : Analyse syntaxique, longueur des noms, caractères interdits.
 - **Niveau 2 (Connecté)** : Vérification de l'existence des users/groupes Azure AD et de la bibliothèque cible.
 - **Niveau 3 (Métadonnées)** : Validation des colonnes et termes taxonomiques sur le site cible.
-Les résultats sont présentés avec localisation précise des erreurs (Node Path).
 
 ---
+
+## ⚡ Nouveautés v3.2
+
+### 9. Tags Dynamiques (Dynamic Metadata)
+
+Les Tags Dynamiques permettent de définir une métadonnée dont la **valeur** ne sera connue qu'au moment du déploiement (saisie via formulaire).
+
+- **Concept** : Associe une Colonne SharePoint (ex: `CodeClient`) à une Variable de Formulaire (ex: `NumDossier`).
+- **Fonctionnement** :
+    1. Dans l'éditeur, ajoutez un Tag Dynamique (Icône ⚡).
+    2. Sélectionnez la Règle de Nommage source.
+    3. Sélectionnez la variable (ex: `Annee`).
+    4. Lors du déploiement, l'utilisateur saisit "2024" dans le formulaire.
+    5. Le dossier créé reçoit le Tag `Annee` = "2024".
+
+### 10. Options de Déploiement
+
+- **Activation Métadonnées Racine** : Une nouvelle case à cocher "Appliquer les métadonnées sur ce dossier ?" permet de décider si le dossier racine (conteneur global) doit recevoir les tags ou rester neutre.
+- **Support Multi-Utilisateurs (Publications)** : Le champ "Grant Access" des publications supporte désormais une liste d'emails séparés par virgule (ex: `user1@domaine.com, user2@domaine.com`), avec tentative de création de compte si l'utilisateur est inconnu.
+
+### 11. Gestion Simplifiée des Publications
+
+- La gestion des droits, auparavant intégrée aux nœuds "Publication", a été retirée pour plus de clarté.
+- **Bonne pratique** : Les permissions doivent être définies explicitement sur le **dossier** cible lui-même, garantissant une lecture immédiate et sans équivoque de la sécurité dans l'arborescence.
+
+---
+
+## 📝 Exemple de Scénario Complet
+
+Voici un exemple de structure JSON typique supportée par le Builder v3.2 :
+
+```json
+{
+  "Name": "Dossier Projet",
+  "Folders": [
+    {
+      "Name": "01. Administratif",
+      "Permissions": [
+        { "Email": "direction@entreprise.com", "Level": "Full Control" }
+      ],
+      "Tags": [
+        { "Name": "Confidence", "Value": "High" },       // Tag statique
+        { "IsDynamic": true, "SourceVar": "CodeProjet" } // Tag dynamique
+      ]
+    },
+    {
+        "Name": "02. Technique",
+        "Folders": [
+            { "Name": "Plans", "Id": "PLANS_ROOT" },
+            { "Name": "Rapports" }
+        ]
+    },
+    {
+        "Type": "InternalLink",
+        "Name": "Accès Rapide Plans",
+        "TargetNodeId": "PLANS_ROOT"
+    },
+    {
+        "Type": "Publication",
+        "Name": "Liens vers Archive 2023",
+        "TargetSiteUrl": "https://tenant.sharepoint.com/sites/Archives",
+        "TargetFolderPath": "/Documents Partages/2023"
+    }
+  ]
+}
+```
 
 ## ⚠️ Points d'Attention pour la Maintenance
 
 1. **Thread UI & Dispatcher** : Toute modification de l'interface depuis un thread secondaire (ex: retour de timer ou event async) doit passer par le Dispatcher WPF.
 2. **Localisation** : Ne pas coder de texte en dur dans le XAML. Ajouter une entrée dans `fr-FR.json` et utiliser `##loc:sp_builder.ma_cle##`.
 3. **Module PnP** : Le module `Toolbox.SharePoint` charge dynamiquement le module `Logging`. En cas de modification des dépendances, vérifier `Toolbox.SharePoint.psm1`.
-4. **Schema Database** : Si vous ajoutez des colonnes aux tables SQLite, pensez à ajouter une étape de migration dans `Initialize-AppDatabase.ps1` (pattern "Check if column exists, if not ADD COLUMN").
+4. **Schema Database** : Si vous ajoutez des colonnes aux tables SQLite, pensez à ajouter une étape de migration dans `Initialize-AppDatabase.ps1`.

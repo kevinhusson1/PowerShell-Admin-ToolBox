@@ -630,7 +630,7 @@ function Register-DeployEvents {
                     }
                 }
                 catch {
-                    [System.Windows.MessageBox]::Show("Impossible de charger le dialogue de sauvegarde.`n$($_.Exception.Message)", "Erreur interne", "OK", "Error")
+                    [System.Windows.MessageBox]::Show((Get-AppLocalizedString -Key "sp_builder.err_save_dialog_load") + "`n$($_.Exception.Message)", (Get-AppLocalizedString -Key "sp_builder.title_error"), "OK", "Error")
                     return
                 }
 
@@ -749,7 +749,7 @@ function Register-DeployEvents {
 
                         # 1. Validation Nom
                         if ([string]::IsNullOrWhiteSpace($finalName)) {
-                            [System.Windows.MessageBox]::Show("Le nom est obligatoire.", "Validation", "OK", "Warning")
+                            [System.Windows.MessageBox]::Show((Get-AppLocalizedString -Key "sp_builder.validation_name_mandatory"), (Get-AppLocalizedString -Key "sp_builder.title_error"), "OK", "Warning")
                             return
                         }
 
@@ -760,7 +760,8 @@ function Register-DeployEvents {
                                 $isSame = ($Ctrl.CbDeployConfigs.SelectedItem -and $Ctrl.CbDeployConfigs.SelectedItem.ConfigName -eq $finalName)
                                 
                                 if (-not $isSame) {
-                                    $res = [System.Windows.MessageBox]::Show("La configuration '$finalName' existe déjà.`nVoulez-vous l'écraser ?", "Confirmation", "YesNo", "Warning")
+                                    $msg = (Get-AppLocalizedString -Key "sp_builder.dialog_config_exists") -f $finalName
+                                    $res = [System.Windows.MessageBox]::Show($msg, (Get-AppLocalizedString -Key "sp_builder.title_confirmation"), "YesNo", "Warning")
                                     if ($res -ne "Yes") { return }
                                 }
                             }
@@ -785,6 +786,12 @@ function Register-DeployEvents {
                         # Capture du dossier cible sélectionné (Step 1)
                         $selPath = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { "" }
                         
+                        # Capture Options v3.2
+                        $opts = @{
+                            ApplyMetadata = $Ctrl.ChkApplyMeta.IsChecked
+                        }
+                        $optsJson = $opts | ConvertTo-Json -Compress
+
                         Set-AppDeployConfig -ConfigName $confName `
                             -SiteUrl $siteUrl `
                             -LibraryName $libName `
@@ -792,14 +799,17 @@ function Register-DeployEvents {
                             -OverwritePermissions $overwrite `
                             -TemplateId $tplId `
                             -TargetFolderPath $selPath `
-                            -AuthorizedRoles $rolesString
+                            -AuthorizedRoles $rolesString `
+                            -Options $optsJson
                         
                         # Refresh UI
                         & $LoadDeployConfigs
-                        [System.Windows.MessageBox]::Show("Configuration '$confName' sauvegardée avec succès.", "Succès", "OK", "Information")
+                        $msg = (Get-AppLocalizedString -Key "sp_builder.msg_config_saved") -f $confName
+                        [System.Windows.MessageBox]::Show($msg, (Get-AppLocalizedString -Key "sp_builder.title_success"), "OK", "Information")
                     }
                     catch {
-                        [System.Windows.MessageBox]::Show("Erreur sauvegarde : $($_.Exception.Message)", "Erreur", "OK", "Error")
+                        $msg = (Get-AppLocalizedString -Key "sp_builder.err_save_config") -f $_.Exception.Message
+                        [System.Windows.MessageBox]::Show($msg, (Get-AppLocalizedString -Key "sp_builder.title_error"), "OK", "Error")
                     }
                 }
                 # Si Cancel, on ne fait rien.
@@ -911,10 +921,27 @@ function Register-DeployEvents {
                         if ($StartAutoExpand) { & $StartAutoExpand $path }
                     }
                     else {
-                        # Reset si pas de cible sauvegardée
-                        $Global:SelectedTargetFolder = $null
-                        $st = $Window.FindName("TargetFolderStatusText")
                         if ($st) { $st.Text = "" }
+                    }
+
+                    # G. Options (v3.2)
+                    if ($cfg.PSObject.Properties['Options'] -and -not [string]::IsNullOrWhiteSpace($cfg.Options)) {
+                        try {
+                            $opts = $cfg.Options | ConvertFrom-Json
+                            if ($opts.ApplyMetadata) {
+                                $Ctrl.ChkApplyMeta.IsChecked = $true
+                            }
+                            else {
+                                $Ctrl.ChkApplyMeta.IsChecked = $false
+                            }
+                        }
+                        catch {
+                            & $Log "Erreur chargement options : $_" "Warning"
+                        }
+                    }
+                    else {
+                        # Default
+                        $Ctrl.ChkApplyMeta.IsChecked = $false
                     }
 
                     & $Log "Configuration chargée." "Success"
@@ -931,12 +958,14 @@ function Register-DeployEvents {
                 $cfg = $Ctrl.CbDeployConfigs.SelectedItem
                 if (-not $cfg) { return }
 
-                if ([System.Windows.MessageBox]::Show("Supprimer la configuration '$($cfg.ConfigName)' ?", "Confirmer", "YesNo", "Warning") -eq 'Yes') {
+                $msgConfirm = (Get-AppLocalizedString -Key "sp_builder.msg_confirm_delete_config") -f $cfg.ConfigName
+                if ([System.Windows.MessageBox]::Show($msgConfirm, (Get-AppLocalizedString -Key "sp_builder.title_confirmation"), "YesNo", "Warning") -eq 'Yes') {
                     try {
                         Remove-AppDeployConfig -ConfigName $cfg.ConfigName
                     
                         # Log
-                        & $Log "Configuration '$($cfg.ConfigName)' supprimée." "Info"
+                        $msgDel = (Get-AppLocalizedString -Key "sp_builder.msg_config_deleted") -f $cfg.ConfigName
+                        & $Log $msgDel "Info"
                     
                         # Reset UI partiel
                         $Ctrl.CbDeployConfigs.SelectedItem = $null

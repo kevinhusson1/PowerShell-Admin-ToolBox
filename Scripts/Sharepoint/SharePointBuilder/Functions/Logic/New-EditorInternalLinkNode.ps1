@@ -1,5 +1,22 @@
-# Scripts/SharePoint/SharePointBuilder/Functions/Logic/New-EditorInternalLinkNode.ps1
+# scripts/SharePoint/SharePointBuilder/Functions/Logic/New-EditorInternalLinkNode.ps1
 
+<#
+.SYNOPSIS
+    Crée un nouvel élément visuel (Node) de type "Lien Interne" pour l'arbre d'édition.
+
+.DESCRIPTION
+    Génère un TreeViewItem stylisé représentant une navigation interne.
+    Le lien interne pointe vers un autre noeud de l'arborescence via son ID.
+
+.PARAMETER Name
+    Le nom d'affichage du lien.
+
+.PARAMETER TargetNodeId
+    L'ID unique du noeud cible (Dossier) vers lequel ce lien pointe.
+
+.OUTPUTS
+    [TreeViewItem] L'élément prêt à être ajouté au TreeView.
+#>
 function Global:New-EditorInternalLinkNode {
     param(
         [string]$Name = "Nouveau lien interne",

@@ -1,5 +1,3 @@
-# Scripts/SharePoint/SharePointBuilder/Functions/Logic/Get-PreviewLogic.ps1
-
 <#
 .SYNOPSIS
     Génère le bloc de logique de prévisualisation et de validation.
@@ -18,8 +16,9 @@
     La fenêtre WPF principale.
 
 .OUTPUTS
-    [ScriptBlock] Le bloc de code à exécuter lors des changements d'entrée.
+    [scriptblock] Le bloc de code à exécuter pour rafraîchir la preview.
 #>
+
 function Get-PreviewLogic {
     param(
         $Ctrl,
