@@ -5,43 +5,75 @@
 function Get-RenamerControls {
     param([System.Windows.Window]$Window)
 
-    # Helper for deep search (Robustness against NameScope)
+    # Helper: Iterative Deep Search (Stack-Based DFS)
     function Find-ControlByName {
         param($Parent, $Name)
         if (-not $Parent) { return $null }
-        if ($Parent.Name -eq $Name) { return $Parent }
-        
-        $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($Parent)
-        for ($i = 0; $i -lt $count; $i++) {
-            $child = [System.Windows.Media.VisualTreeHelper]::GetChild($Parent, $i)
-            # Check visual child
-            if ($child -is [System.Windows.FrameworkElement] -and $child.Name -eq $Name) { return $child }
+
+        $nodes = [System.Collections.Generic.Stack[System.Windows.DependencyObject]]::new()
+        $nodes.Push($Parent)
+
+        while ($nodes.Count -gt 0) {
+            $current = $nodes.Pop()
             
-            # Recursive
-            $res = Find-ControlByName -Parent $child -Name $Name
-            if ($res) { return $res }
+            # Check Name match
+            if ($current -is [System.Windows.FrameworkElement] -and $current.Name -eq $Name) {
+                return $current
+            }
+
+            # Get Children (Logical Tree)
+            try {
+                $children = [System.Windows.LogicalTreeHelper]::GetChildren($current)
+                if ($children) {
+                    foreach ($child in $children) {
+                        if ($child -is [System.Windows.DependencyObject]) {
+                            $nodes.Push($child)
+                        }
+                    }
+                }
+            }
+            catch {}
         }
         return $null
     }
 
     $Ctrl = @{
-        ListBox              = $Window.FindName("ConfigListBox")
-        TargetPanel          = $Window.FindName("TargetPanel")
-        TargetFolderBox      = $Window.FindName("TargetFolderBox")
-        CurrentMetaText      = $Window.FindName("CurrentMetaText")
-        BtnPickFolder        = $Window.FindName("BtnPickFolder")
+        ListBox              = Find-ControlByName -Parent $Window -Name "ConfigListBox"
         
-        FormPanel            = $Window.FindName("FormPanel")
-        DynamicFormPanel     = $Window.FindName("DynamicFormPanel")
-        FolderNamePreview    = $Window.FindName("FolderNamePreviewText")
-        BtnRename            = $Window.FindName("BtnRename")
+        # Main Panels
+        PlaceholderPanel     = Find-ControlByName -Parent $Window -Name "PlaceholderPanel"
+        DetailGrid           = Find-ControlByName -Parent $Window -Name "DetailGrid"
+        ConfigTitleText      = Find-ControlByName -Parent $Window -Name "ConfigTitleText"
         
-        LogBox               = $Window.FindName("LogRichTextBox")
-        AuthOverlay          = $Window.FindName("AuthOverlay")
-        OverlayBtn           = $Window.FindName("OverlayConnectButton")
+        # Detail Content
+        TargetPanel          = Find-ControlByName -Parent $Window -Name "TargetPanel"
+        TargetFolderBox      = Find-ControlByName -Parent $Window -Name "TargetFolderBox"
+        CurrentMetaText      = Find-ControlByName -Parent $Window -Name "CurrentMetaText"
+        BtnPickFolder        = Find-ControlByName -Parent $Window -Name "BtnPickFolder"
         
-        # Header Auth Button (pour simulation click)
-        ScriptAuthTextButton = $Window.FindName("ScriptAuthTextButton")
+        FormPanel            = Find-ControlByName -Parent $Window -Name "FormPanel"
+        DynamicFormPanel     = Find-ControlByName -Parent $Window -Name "DynamicFormPanel"
+        FolderNamePreview    = Find-ControlByName -Parent $Window -Name "FolderNamePreviewText"
+        BtnRename            = Find-ControlByName -Parent $Window -Name "BtnRename"
+        
+        LogBox               = Find-ControlByName -Parent $Window -Name "LogRichTextBox"
+        AuthOverlay          = Find-ControlByName -Parent $Window -Name "AuthOverlay"
+        OverlayBtn           = Find-ControlByName -Parent $Window -Name "OverlayConnectButton"
+        
+        # Header Auth Button
+        ScriptAuthTextButton = Find-ControlByName -Parent $Window -Name "ScriptAuthTextButton"
+    }
+
+    # Critial Check
+    $missing = @()
+    foreach ($k in $Ctrl.Keys) {
+        if (-not $Ctrl[$k]) { $missing += $k }
+    }
+
+    if ($missing.Count -gt 0) {
+        $msg = "ERREUR CRITIQUE UI: Des contrôles sont introuvables lors de l'initialisation :`n" + ($missing -join ", ")
+        $msg += "`n`nL'application risque ne pas fonctionner."
+        [System.Windows.MessageBox]::Show($msg, "Erreur UI", "OK", "IconExclamation")
     }
 
     return $Ctrl

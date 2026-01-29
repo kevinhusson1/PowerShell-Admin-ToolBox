@@ -13,36 +13,24 @@ function Register-RenamerConfigEvents {
         param($UserAuth)
         
         # 1. Update UI Auth
-        if ($Ctrl.UserBadge) {
-            if ($UserAuth) { 
-                $Ctrl.UserBadge.Text = "Connecté : $($UserAuth.DisplayName)"
-                $Ctrl.UserBadge.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFrom("#0078D4")
-                $Ctrl.AuthOverlay.Visibility = "Collapsed"
-            }
-            else {
-                $Ctrl.UserBadge.Text = "Non connecté"
-                $Ctrl.UserBadge.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFrom("#CCCCCC")
-                $Ctrl.AuthOverlay.Visibility = "Visible"
-            }
+        if ($UserAuth -and $UserAuth.Connected) { 
+            if ($Ctrl.AuthOverlay) { $Ctrl.AuthOverlay.Visibility = "Collapsed" }
+        }
+        else {
+            if ($Ctrl.AuthOverlay) { $Ctrl.AuthOverlay.Visibility = "Visible" }
         }
 
         # 2. Load Configs
         try {
-            # Récupération des configs depuis DB
-            # Get-AppDeployConfigs est dans le module Database
             $allConfigs = Get-AppDeployConfigs
-            
-            # Filtre par groupes (si UserAuth présent)
             $filtered = [System.Collections.Generic.List[psobject]]::new()
             
             foreach ($cfg in $allConfigs) {
                 $allowed = $false
-                # Si pas de groupe défini -> Public (Autorisé)
                 if ([string]::IsNullOrWhiteSpace($cfg.AllowedGroups)) {
                     $allowed = $true
                 }
                 elseif ($UserAuth) {
-                    # Check MemberOf
                     $groups = $cfg.AllowedGroups -split ";"
                     foreach ($g in $groups) {
                         if ($UserAuth.MemberOf -contains $g.Trim()) {
@@ -55,7 +43,6 @@ function Register-RenamerConfigEvents {
             }
             
             if ($Ctrl.ListBox) {
-                # UI Thread Update
                 $Ctrl.ListBox.ItemsSource = $filtered
             }
         }
@@ -70,30 +57,64 @@ function Register-RenamerConfigEvents {
         & $Global:RenamerLoadAction $Global:UserAuthContext
     }
     else {
-        # Active Overlay
         if ($Ctrl.AuthOverlay) { $Ctrl.AuthOverlay.Visibility = "Visible" }
     }
 
     # Overlay Button
     if ($Ctrl.OverlayBtn) {
         $Ctrl.OverlayBtn.Add_Click({
-                # On trouve le bouton de connexion principal et on simule un clic
                 if ($Ctrl.ScriptAuthTextButton) { 
                     $Ctrl.ScriptAuthTextButton.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent))) 
                 }
             }.GetNewClosure())
     }
     
-    # Selection Change (Reset Steps)
+    # Selection Change (Switch Panels)
     if ($Ctrl.ListBox) {
         $Ctrl.ListBox.Add_SelectionChanged({
                 param($sender, $e)
-                # Reset UI Steps
-                $Ctrl.TargetFolderBox.Text = "Aucun dossier sélectionné..."
-                $Ctrl.TargetFolderBox.Tag = $null # Clears selected info
-                $Ctrl.CurrentMetaText.Text = "Métadonnées actuelles : -"
-                $Ctrl.FormPanel.Visibility = "Collapsed"
-                $Ctrl.DynamicFormPanel.Children.Clear()
-            })
+                
+                # Dynamic Find Attempt (Keep logic as fallback, remove debug msg)
+                $dynGrid = $null
+                try { $dynGrid = $Window.FindName("DetailGrid") } catch {}
+                
+                $sel = $Ctrl.ListBox.SelectedItem
+                
+                if (-not $sel) {
+                    # Show Placeholder
+                    if ($Ctrl.PlaceholderPanel) { $Ctrl.PlaceholderPanel.Visibility = "Visible" }
+                    elseif ($dynPl = $Window.FindName("PlaceholderPanel")) { $dynPl.Visibility = "Visible" }
+                    
+                    if ($Ctrl.DetailGrid) { $Ctrl.DetailGrid.Visibility = "Collapsed" }
+                    elseif ($dynGrid) { $dynGrid.Visibility = "Collapsed" }
+                }
+                else {
+                    # Show Details
+                    if ($Ctrl.PlaceholderPanel) { $Ctrl.PlaceholderPanel.Visibility = "Collapsed" }
+                    elseif ($dynPl = $Window.FindName("PlaceholderPanel")) { $dynPl.Visibility = "Collapsed" }
+
+                    if ($Ctrl.DetailGrid) { $Ctrl.DetailGrid.Visibility = "Visible" }
+                    elseif ($dynGrid) { $dynGrid.Visibility = "Visible" }
+                    
+                    # Update Title
+                    if ($Ctrl.ConfigTitleText) { 
+                        $Ctrl.ConfigTitleText.Text = $sel.ConfigName 
+                    } 
+                    
+                    # Reset Target / Form
+                    if ($Ctrl.TargetFolderBox) { 
+                        $Ctrl.TargetFolderBox.Text = "Aucun dossier sélectionné..."
+                        $Ctrl.TargetFolderBox.Tag = $null 
+                    }
+                    if ($Ctrl.CurrentMetaText) { $Ctrl.CurrentMetaText.Text = "Métadonnées actuelles : -" }
+                    if ($Ctrl.FormPanel) { $Ctrl.FormPanel.Visibility = "Collapsed" }
+                    if ($Ctrl.DynamicFormPanel) { $Ctrl.DynamicFormPanel.Children.Clear() }
+                    
+                    # Reset Preview
+                    if ($Ctrl.FolderNamePreview) { $Ctrl.FolderNamePreview.Text = "..." }
+                }
+            }.GetNewClosure())
+    }
+    else {
     }
 }

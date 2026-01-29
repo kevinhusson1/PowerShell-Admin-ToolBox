@@ -167,8 +167,8 @@ try {
         Set-AppWindowIdentity -Window $window -UserSession $newIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
         
         # --- SPÉCIFIQUE DEPLOYER : Rafraîchissement des données ---
-        if ($newIdentity.Connected -and $Global:DeployerLoadAction) { 
-            & $Global:DeployerLoadAction -UserAuth $newIdentity
+        if ($newIdentity.Connected -and $Global:RenamerLoadAction) { 
+            & $Global:RenamerLoadAction -UserAuth $newIdentity
         }
     }
 
@@ -183,9 +183,9 @@ try {
 
     # [CORRECTION] Chargement initial des données si déjà authentifié (Secure Token)
     if ($userIdentity.Connected) {
-        if ($Global:DeployerLoadAction) {
+        if ($Global:RenamerLoadAction) {
             Write-Verbose "[Renamer] Identité pré-établie. Lancement du chargement des données..."
-            & $Global:DeployerLoadAction -UserAuth $userIdentity
+            & $Global:RenamerLoadAction -UserAuth $userIdentity
         }
     }
 }

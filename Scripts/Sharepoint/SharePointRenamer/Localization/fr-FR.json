@@ -1,0 +1,22 @@
+{
+    "default_ui": {
+        "window_title": "SharePoint Renamer"
+    },
+    "sp_deploy": {
+        "placeholder_select": "Maintenance des dossiers et réparation des liens",
+        "status_disconnected": "Déconnecté",
+        "configs_title": "MODÈLES DISPONIBLES",
+        "placeholder_msg": "Sélectionnez un modèle pour commencer.",
+        "auth_required_title": "Connexion Requise",
+        "auth_required_message": "Veuillez vous connecter pour accéder aux configurations.",
+        "auth_connect_button": "Se Connecter"
+    },
+    "renamer": {
+        "target_folder_label": "Dossier Cible (Existant)",
+        "meta_current_label": "Métadonnées actuelles",
+        "preview_label": "Nouveau Nom (Aperçu) : ",
+        "execution_log_title": "Journal d'exécution",
+        "btn_apply": "Appliquer Renommage",
+        "btn_pick": "Choisir..."
+    }
+}

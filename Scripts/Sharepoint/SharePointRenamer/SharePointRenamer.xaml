@@ -135,12 +135,12 @@
                 </Grid>
             </Border>
 
-            <!-- Main Panel -->
+                <!-- Main Panel -->
             <Grid Grid.Column="1" Background="{DynamicResource WhiteBrush}">
                 <!-- Placeholder (Aucune sélection) -->
                 <StackPanel x:Name="PlaceholderPanel" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Visible">
                     <TextBlock Text="⬅️" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
-                    <TextBlock x:Name="PlaceholderText" Text="Sélectionnez un modèle pour commencer." FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,20,0,0"/>
+                    <TextBlock x:Name="PlaceholderText" Text="##loc:sp_deploy.placeholder_msg##" FontSize="16" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,20,0,0"/>
                 </StackPanel>
 
                 <!-- Detail Panel (RENAMER SPECIFIC) -->
@@ -160,21 +160,21 @@
                     <!-- Renamer Target Picker -->
                     <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Padding="15" Margin="0,0,0,20" x:Name="TargetPanel">
                          <StackPanel>
-                             <TextBlock Text="Dossier Cible (Existant)" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                             <TextBlock Text="##loc:renamer.target_folder_label##" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                              <Grid>
                                  <Grid.ColumnDefinitions>
                                      <ColumnDefinition Width="*"/>
                                      <ColumnDefinition Width="Auto"/>
                                  </Grid.ColumnDefinitions>
-                                 <TextBox x:Name="TargetFolderBox" IsReadOnly="True" Padding="8" VerticalContentAlignment="Center" Background="#F9F9F9" Text="Aucun dossier..."/>
-                                 <Button x:Name="BtnPickFolder" Grid.Column="1" Content="Choisir..." Margin="10,0,0,0" Width="100" Style="{DynamicResource SecondaryButtonStyle}"/>
+                                 <TextBox x:Name="TargetFolderBox" IsReadOnly="True" Padding="8" VerticalContentAlignment="Center" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderLightBrush}" Text="Aucun dossier..."/>
+                                 <Button x:Name="BtnPickFolder" Grid.Column="1" Content="##loc:renamer.btn_pick##" Margin="10,0,0,0" Width="100" Style="{DynamicResource SecondaryButtonStyle}"/>
                              </Grid>
                              <TextBlock x:Name="CurrentMetaText" Text="-" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" TextWrapping="Wrap"/>
                          </StackPanel>
                     </Border>
 
                     <!-- Formulaire (Hydrated) -->
-                    <Border Grid.Row="2" x:Name="FormPanel" Background="#FAFAFA" BorderBrush="#EEEEEE" BorderThickness="1" CornerRadius="4" Padding="10">
+                    <Border Grid.Row="2" x:Name="FormPanel" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Padding="10">
                          <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="DynamicFormPanel"> <!-- Name separation: Border is FormPanel (Visibility), StackPanel is DynamicFormPanel (Content) -->
                                 <!-- Injected inputs -->
@@ -185,24 +185,24 @@
                     <!-- Preview Box -->
                     <Border Grid.Row="3" Background="{DynamicResource PrimaryLightBrush}" CornerRadius="4" Padding="15" Margin="0,20,0,20">
                          <StackPanel Orientation="Horizontal">
-                             <TextBlock Text="Nouveau Nom (Aperçu) : " FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
+                             <TextBlock Text="##loc:renamer.preview_label##" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
                              <TextBlock x:Name="FolderNamePreviewText" Text="..." Foreground="{DynamicResource PrimaryBrush}"/>
                          </StackPanel>
                     </Border>
 
                     <!-- Boutons Action -->
                     <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,20">
-                        <Button x:Name="BtnRename" Content="Appliquer Renommage" Width="200" Height="40" Style="{DynamicResource PrimaryButtonStyle}"/>
+                        <Button x:Name="BtnRename" Content="##loc:renamer.btn_apply##" Width="200" Height="40" Style="{DynamicResource PrimaryButtonStyle}"/>
                     </StackPanel>
 
                     <!-- Logs -->
                     <StackPanel Grid.Row="5">
-                        <TextBlock Text="Journal d'exécution" FontWeight="Bold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="##loc:renamer.execution_log_title##" FontWeight="Bold" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Height="150">
                             <RichTextBox x:Name="LogRichTextBox" IsReadOnly="True" VerticalScrollBarVisibility="Auto" BorderThickness="0" Padding="10" FontFamily="Consolas">
                                 <FlowDocument>
                                     <Paragraph>
-                                        <Run Text="En attente..." Foreground="#888"/>
+                                        <Run Text="En attente..." Foreground="{DynamicResource TextSecondaryBrush}"/>
                                     </Paragraph>
                                 </FlowDocument>
                             </RichTextBox>
@@ -216,9 +216,9 @@
         <Grid x:Name="AuthOverlay" Grid.Row="1" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="🔒" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-                <TextBlock Text="Connexion Requise" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                <TextBlock Text="Veuillez vous connecter pour accéder aux configurations." FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,20" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"/>
-                <Button x:Name="OverlayConnectButton" Content="Se Connecter" Style="{DynamicResource PrimaryButtonStyle}" Width="200" Height="40" Cursor="Hand"/>
+                <TextBlock Text="##loc:sp_deploy.auth_required_title##" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="##loc:sp_deploy.auth_required_message##" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,20" TextWrapping="Wrap" MaxWidth="300" TextAlignment="Center"/>
+                <Button x:Name="OverlayConnectButton" Content="##loc:sp_deploy.auth_connect_button##" Style="{DynamicResource PrimaryButtonStyle}" Width="200" Height="40" Cursor="Hand"/>
             </StackPanel>
         </Grid>
     </Grid>
