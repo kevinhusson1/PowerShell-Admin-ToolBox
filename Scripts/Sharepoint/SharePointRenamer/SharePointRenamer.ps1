@@ -81,8 +81,10 @@ try {
     $xamlPath = Join-Path $scriptRoot "SharePointRenamer.xaml"
     $window = Import-AppXamlTemplate -XamlPath $xamlPath
     
+    if (-not $window) { throw "Impossible de charger la fenêtre XAML (Resultat null)." }
+    
     # Injection Styles
-    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'ProfileButton', 'Colors', 'Typography'
+    Initialize-AppUIComponents -Window $window -ProjectRoot $projectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'ProfileButton'
 
     Send-Progress 80 "Configuration visuelle..."
 

@@ -1,5 +1,13 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="SharePoint Renamer" Height="880" Width="1200" WindowStartupLocation="CenterScreen" Background="{DynamicResource WhiteBrush}">
+    <!-- 
+        SYNOPSIS: Interface graphique du SharePoint Renamer.
+        DESCRIPTION:
+        - Layout principal avec Sidebar (Liste Modèles) et Content (Détails).
+        - Contient les styles dynamiques pour les boutons et champs.
+        - Définit la RichTextBox pour les logs d'exécution.
+        - Utilise des Panel "Placeholder" et "AuthOverlay" pour les états vides/déconnectés.
+    -->
 
     <Grid>
         <Grid.RowDefinitions>
@@ -185,13 +193,14 @@
                     <!-- Preview Box -->
                     <Border Grid.Row="3" Background="{DynamicResource PrimaryLightBrush}" CornerRadius="4" Padding="15" Margin="0,20,0,20">
                          <StackPanel Orientation="Horizontal">
-                             <TextBlock Text="##loc:renamer.preview_label##" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
-                             <TextBlock x:Name="FolderNamePreviewText" Text="..." Foreground="{DynamicResource PrimaryBrush}"/>
+                             <TextBlock Text="##loc:renamer.preview_label##" FontWeight="Bold" Foreground="{DynamicResource WhiteBrush}"/>
+                             <TextBlock x:Name="FolderNamePreviewText" Text="..." Foreground="{DynamicResource WhiteBrush}" FontWeight="SemiBold"/>
                          </StackPanel>
                     </Border>
 
                     <!-- Boutons Action -->
                     <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,20">
+                        <Button x:Name="BtnOpenDest" Content="Ouvrir destination" Width="160" Height="40" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" IsEnabled="False"/>
                         <Button x:Name="BtnRename" Content="##loc:renamer.btn_apply##" Width="200" Height="40" Style="{DynamicResource PrimaryButtonStyle}"/>
                     </StackPanel>
 

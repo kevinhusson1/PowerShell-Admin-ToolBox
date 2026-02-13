@@ -40,8 +40,8 @@ function Rename-AppSPFolder {
     try {
         Write-Verbose "[Rename] Cible : $TargetFolderUrl"
         
-        # 1. Récupération Item
-        $folder = Get-PnPFolder -Url $TargetFolderUrl -Includes ListItemAllFields, ServerRelativeUrl -Connection $Connection -ErrorAction Stop
+        # 1. Récupération Item with explicit ParentList loading to avoid "Property not initialized"
+        $folder = Get-PnPFolder -Url $TargetFolderUrl -Includes ListItemAllFields.ParentList, ListItemAllFields.Id, ServerRelativeUrl -Connection $Connection -ErrorAction Stop
         if (-not $folder) { throw "Dossier introuvable : $TargetFolderUrl" }
         
         $item = $folder.ListItemAllFields

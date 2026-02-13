@@ -2,6 +2,15 @@
 .SYNOPSIS
     Récupère les références des contrôles UI XAML de la fenêtre Renamer.
 #>
+<#
+.SYNOPSIS
+    Mappe les contrôles XAML vers une Hashtable PowerShell.
+    
+.DESCRIPTION
+    Parcourt l'arbre visuel ou utilise FindName pour récupérer les références
+    aux boutons, listbox, textblocks, etc.
+    Retourne une Hashtable $Ctrl utilisable par les autres scripts logiques.
+#>
 function Get-RenamerControls {
     param([System.Windows.Window]$Window)
 

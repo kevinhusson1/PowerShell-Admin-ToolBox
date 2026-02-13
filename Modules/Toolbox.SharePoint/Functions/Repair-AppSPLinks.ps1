@@ -64,53 +64,45 @@ function Repair-AppSPLinks {
         $items = Get-PnPFolderItem -FolderServerRelativeUrl $RootFolderUrl -ItemType File -Recursive -Connection $Connection -ErrorAction Stop
         
         foreach ($file in $items) {
-            if ($file.Name -like "*.url") {
-                $result.ProcessedCount++
-                $fileUrl = $file.ServerRelativeUrl
-                
-                try {
-                    # 2. Lire le contenu du fichier .url
-                    # Format standard .url :
-                    # [InternetShortcut]
-                    # URL=http://...
+            try {
+                if ($file.Name -like "*.url") {
+                    $result.ProcessedCount++
+                    $fileUrl = $file.ServerRelativeUrl
                     
-                    # On le télécharge en mémoire
-                    $content = Get-PnPFile -Url $fileUrl -AsString -Connection $Connection -ErrorAction Stop
-                    
-                    if ($content -match "URL=(.+)") {
-                        $currentTarget = $matches[1].Trim()
+                    try {
+                        # 2. Lire le contenu du fichier .url
+                        $content = Get-PnPFile -Url $fileUrl -AsString -Connection $Connection -ErrorAction Stop
                         
-                        # Check si match OldRoot
-                        # On compare en Case Insensitive
-                        if ($currentTarget.StartsWith($cleanOld, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+                        if ($content -match "URL=(.+)") {
+                            $currentTarget = $matches[1].Trim()
                             
-                            # 3. Remplacement
-                            $newTarget = $currentTarget -replace [regex]::Escape($cleanOld), $cleanNew
-                            
-                            # Reconstruction contenu
-                            $newContent = $content -replace "URL=.+", "URL=$newTarget"
-                            
-                            # 4. Upload (Overwrite)
-                            # On re-upload le fichier au même endroit.
-                            # Set-PnPFileContent n'existe pas direct, on utilise Add-PnPFile -Stream
-                            
-                            $stream = [System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($newContent))
-                            
-                            # Il faut le Folder Parent du fichier
-                            $parentFolder = $fileUrl.Substring(0, $fileUrl.LastIndexOf('/'))
-                            
-                            Add-PnPFile -Folder $parentFolder -FileName $file.Name -Stream $stream -Connection $Connection -ErrorAction Stop | Out-Null
-                            
-                            $result.FixedCount++
-                            Write-Verbose "[Repair] Fixed '$($file.Name)' -> $newTarget"
+                            if ($currentTarget.StartsWith($cleanOld, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+                                $newTarget = $currentTarget -replace [regex]::Escape($cleanOld), $cleanNew
+                                $newContent = $content -replace "URL=.+", "URL=$newTarget"
+                                
+                                $stream = [System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($newContent))
+                                $parentFolder = $fileUrl.Substring(0, $fileUrl.LastIndexOf('/'))
+                                
+                                Add-PnPFile -Folder $parentFolder -FileName $file.Name -Stream $stream -Connection $Connection -ErrorAction Stop | Out-Null
+                                
+                                $result.FixedCount++
+                                Write-Verbose "[Repair] Fixed '$($file.Name)' -> $newTarget"
+                            }
                         }
                     }
+                    catch {
+                        $err = "Erreur lecture/écriture fichier '$($file.Name)': $_"
+                        Write-Warning $err
+                        $result.Errors.Add($err)
+                    }
                 }
-                catch {
-                    $err = "Erreur lecture/écriture fichier '$($file.Name)': $_"
-                    Write-Warning $err
-                    $result.Errors.Add($err)
-                }
+            }
+            catch [Microsoft.SharePoint.Client.PropertyOrFieldNotInitializedException] {
+                # Ignore this specific error as it often triggers on 'Title' access for some file types/views
+                Write-Verbose "Ignored 'Title' initialization error on item."
+            }
+            catch {
+                Write-Warning "Error processing item: $_"
             }
         }
     

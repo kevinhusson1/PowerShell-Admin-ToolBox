@@ -1,6 +1,13 @@
 <#
 .SYNOPSIS
     Gère le chargement des configurations et l'overlay d'authentification.
+
+.DESCRIPTION
+    Ce script gère :
+    1. L'affichage ou le masquage de l'overlay de connexion (AuthOverlay).
+    2. Le chargement des configurations de déploiement (Get-AppDeployConfigs) avec filtrage par groupe AD.
+    3. La gestion de la sélection dans la ListBox (Affichage des détails, Masquage du Placeholder).
+    4. La réinitialisation des champs du formulaire lors du changement de sélection.
 #>
 function Register-RenamerConfigEvents {
     param(

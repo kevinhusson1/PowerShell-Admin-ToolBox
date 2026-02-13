@@ -1,6 +1,13 @@
 <#
 .SYNOPSIS
     Gère la génération dynamique du formulaire et son hydratation.
+
+.DESCRIPTION
+    Ce script est responsable de :
+    1. Lire la règle de nommage associée à la configuration sélectionnée via son ID.
+    2. Générer dynamiquement les contrôles UI (TextBox, ComboBox, Label) basés sur le JSON de la règle.
+    3. Hydrater ces contrôles avec les métadonnées existantes du dossier cible (si disponibles).
+    4. Gérer la logique de "Prévisualisation" en temps réel (mise à jour du nom calculé lors de la saisie).
 #>
 function Register-RenamerFormEvents {
     param(
@@ -40,49 +47,90 @@ function Register-RenamerFormEvents {
         if ($folder.ListItemAllFields) {
             $existingMeta = $folder.ListItemAllFields.FieldValues
         }
-        # Hydrate Name also? No, Name is calculated. But we can parse? 
-        # Too hard to reverse engineer Name. Better rely on Metadata.
         
-        $dynamicStack = New-Object System.Windows.Controls.StackPanel
-        
-        # Preview Action Closure
+        # --- LOGIQUE PREVIEW (Style Robust) ---
+        # --- LOGIQUE PREVIEW (Style Robust) ---
         $UpdatePreviewAction = {
-            # Recalculer le nom
-            $builtName = ""
-            $data = $Ctrl.DynamicFormPanel # StackPanel
-            
-            # Simple Scanner (Non-Recursive for flat layout)
-            # Layout items match UI children index? Mostly yes if we process sequentially.
-            # But better verify tags.
-            
-            # Re-read inputs
-            $inputs = @{}
-            foreach ($child in $dynamicStack.Children) {
-                # Find input inside the child stack or direct
-                # The children added below are TextBlocks, TextBoxes etc directly in DynamicStack?
-                # No, standard layout adds them flat.
+            param($s, $e)
+            try {
+                Write-Host "DEBUG: UpdatePreviewAction Triggered"
+                $root = $Ctrl.DynamicFormPanel
+                if (-not $root -and $Window) { $root = $Window.FindName("DynamicFormPanel") }
                 
-                # Using Helper
-                $key = $null
-                $val = $null
+                if (-not (Get-Command "Find-ControlRecursive" -ErrorAction SilentlyContinue)) { 
+                    Write-Host "DEBUG: Find-ControlRecursive CMD NOT FOUND"
+                    return 
+                }
+
+                $dynStack = Find-ControlRecursive -parent $root -tagName "FormDynamicStack"
+                if (-not $dynStack) { 
+                    Write-Host "DEBUG: FormDynamicStack NOT FOUND in Root: $root"
+                    return 
+                }
+
+                # 1. Scan Values
+                $values = @{}
+                foreach ($child in $dynStack.Children) {
+                    $key = $null
+                    if ($child.Tag -is [System.Collections.IDictionary]) { $key = $child.Tag.Key }
+                    elseif ($child.Tag -is [string]) { $key = $child.Tag }
+                    
+                    if ($key) {
+                        $val = ""
+                        if ($child -is [System.Windows.Controls.TextBox]) { $val = $child.Text }
+                        elseif ($child -is [System.Windows.Controls.ComboBox]) { $val = "$($child.SelectedItem)" }
+                        elseif ($child -is [System.Windows.Controls.TextBlock]) { $val = $child.Text }
+                        $values[$key] = $val
+                    }
+                }
+                # Write-Host "DEBUG: Values Captured: $($values | Out-String)"
+
+                # 2. Reconstruct from Layout
+                $dynName = ""
+                foreach ($elem in $layout) {
+                    if ($elem.Type -eq "Label") { $dynName += $elem.Content }
+                    elseif ($values.ContainsKey($elem.Name)) { $dynName += $values[$elem.Name] }
+                }
                 
-                if ($child.Tag -is [System.Collections.IDictionary]) { $key = $child.Tag.Key }
-                elseif ($child.Tag -is [string]) { $key = $child.Tag }
-                
-                if ($key) {
-                    if ($child -is [System.Windows.Controls.TextBox]) { $val = $child.Text }
-                    elseif ($child -is [System.Windows.Controls.ComboBox]) { $val = $child.SelectedItem }
-                    if ($val) { $inputs[$key] = $val }
+                Write-Host "DEBUG: NewName Calculated: '$dynName'"
+
+                # Update UI
+                $previewBox = $Ctrl.FolderNamePreview
+                if (-not $previewBox -and $Window) {
+                     # Fallback Retrieval
+                     $previewBox = $Window.FindName("FolderNamePreviewText")
+                }
+
+                if ($previewBox) { 
+                    $previewBox.Dispatcher.Invoke([Action] {
+                            $previewBox.Text = if ($dynName) { $dynName } else { "..." }
+                        })
+                }
+                else {
+                    Write-Host "DEBUG: Control FolderNamePreview NOT FOUND (Even with Fallback)"
+                    # Try to log children of DetailGrid to understand why
+                    if ($Ctrl.DetailGrid) {
+                        Write-Host "DEBUG: DetailGrid Children Count: $([System.Windows.LogicalTreeHelper]::GetChildren($Ctrl.DetailGrid).Count)"
+                    }
                 }
             }
-            
-            # Build
-            foreach ($elem in $layout) {
-                if ($elem.Type -eq "Label") { $builtName += $elem.Content }
-                elseif ($inputs[$elem.Name]) { $builtName += $inputs[$elem.Name] }
+            catch {
+                Write-Host "Preview Error: $($_.Exception.Message)"
             }
-            if ($Ctrl.FolderNamePreview) { $Ctrl.FolderNamePreview.Text = $builtName }
         }.GetNewClosure()
+
+        # --- GÉNÉRATION UI ---
+        
+        # ScrollViewer Container
+        $scroll = New-Object System.Windows.Controls.ScrollViewer
+        $scroll.HorizontalScrollBarVisibility = "Auto"
+        $scroll.VerticalScrollBarVisibility = "Disabled"
+        $scroll.Margin = [System.Windows.Thickness]::new(0, 0, 0, 20)
+        
+        $dynamicStack = New-Object System.Windows.Controls.StackPanel
+        $dynamicStack.Orientation = "Horizontal"
+        $dynamicStack.Tag = "FormDynamicStack" # Tag Essentiel pour le repérage
+        $scroll.Content = $dynamicStack
 
         foreach ($elem in $layout) {
             # Width
@@ -92,7 +140,6 @@ function Register-RenamerFormEvents {
             if ($elem.Type -eq "Label") {
                 $t = New-Object System.Windows.Controls.TextBlock
                 $t.Text = $elem.Content
-                # Tagging for consistency/future scan
                 if ($elem.Name) { $t.Tag = @{ Key = $elem.Name; IsMeta = $elem.IsMetadata } }
                 $t.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFrom("#00AEEF")
                 $t.FontWeight = "Bold"
@@ -105,6 +152,9 @@ function Register-RenamerFormEvents {
                 $t.Tag = @{ Key = $elem.Name; IsMeta = $elem.IsMetadata }
                 $t.Width = $width
                 $t.VerticalAlignment = "Center"
+                
+                # Style Standard (si dispo)
+                try { $t.Style = $Window.FindResource("StandardTextBoxStyle") } catch {}
                  
                 # HYDRATION
                 if ($existingMeta.ContainsKey($elem.Name)) {
@@ -114,7 +164,7 @@ function Register-RenamerFormEvents {
                     $t.Text = $elem.DefaultValue
                 }
                  
-                $t.Add_TextChanged({ & $UpdatePreviewAction })
+                $t.Add_TextChanged($UpdatePreviewAction)
                 $dynamicStack.Children.Add($t)
             }
             elseif ($elem.Type -eq "ComboBox") {
@@ -123,24 +173,27 @@ function Register-RenamerFormEvents {
                 $c.Width = $width
                 $c.VerticalAlignment = "Center"
                 $c.ItemsSource = $elem.Options
-                 
+                
+                # Style Standard
+                try { $c.Style = $Window.FindResource("StandardComboBoxStyle") } catch {}
+
                 # HYDRATION
                 if ($existingMeta.ContainsKey($elem.Name)) {
                     $found = $null
                     foreach ($opt in $elem.Options) { if ($opt -eq $existingMeta[$elem.Name]) { $found = $opt } }
                     if ($found) { $c.SelectedItem = $found }
-                    else { $c.Text = $existingMeta[$elem.Name] } # Editable?
+                    else { $c.Text = $existingMeta[$elem.Name] }
                 }
                  
-                $c.Add_SelectionChanged({ & $UpdatePreviewAction })
+                $c.Add_SelectionChanged($UpdatePreviewAction)
                 $dynamicStack.Children.Add($c)
             }
         }
         
-        $Ctrl.DynamicFormPanel.Children.Add($dynamicStack)
+        $Ctrl.DynamicFormPanel.Children.Add($scroll)
         
         # Initial Preview
-        & $UpdatePreviewAction
+        $UpdatePreviewAction.Invoke($Ctrl.DynamicFormPanel, $null)
 
     }.GetNewClosure() # End Global Function
 

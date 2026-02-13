@@ -3,10 +3,13 @@
     Point d'entrée de la logique métier du Renamer (Orchestrateur).
 
 .DESCRIPTION
-    Charge les sous-fonctions logiques.
-    Définit les Helpers Globaux.
-    Initialise la localisation.
-    Récupère les contrôles et lance l'enregistrement des événements.
+    Fonction principale appelée par le script maître 'SharePointRenamer.ps1'.
+    Son rôle est de :
+    1. Charger dynamiquement tous les scripts du dossier 'Functions/Logic'.
+    2. Définir des Helpers globaux (comme Find-ControlRecursive).
+    3. Charger la localisation spécifique au plugin.
+    4. Initialiser la Hashtable des contrôles UI ($Ctrl).
+    5. Appeler les fonctions d'enregistrement d'événements (Configs, Forms, Actions).
 #>
 function Initialize-RenamerLogic {
     param(
@@ -22,7 +25,7 @@ function Initialize-RenamerLogic {
 
     # 2. Helpers Globaux
     # Helper pour la recherche récursive de Tag (Compatible String & Hashtable)
-    function Find-ControlRecursive {
+    function Global:Find-ControlRecursive {
         param($parent, $tagName)
         if (-not $parent) { return $null }
 
