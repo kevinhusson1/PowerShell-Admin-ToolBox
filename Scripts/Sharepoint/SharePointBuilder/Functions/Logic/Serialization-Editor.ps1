@@ -91,6 +91,26 @@ function Global:Convert-EditorTreeToJson {
             return $iLinkHash
         }
 
+        # 2.7 CAS FICHIER
+        if ($data.Type -eq "File") {
+            $fileHash = @{
+                Type      = "File"
+                Name      = $data.Name
+                SourceUrl = $data.SourceUrl
+                Tags      = @()
+            }
+            # Capture Tags (Optional but supported by model)
+            foreach ($child in $Item.Items) {
+                if ($child.Tag.Type -eq "Tag") {
+                    $fileHash.Tags += @{ 
+                        Name = $child.Tag.Name; Value = $child.Tag.Value 
+                        IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar
+                    }
+                }
+            }
+            return $fileHash
+        }
+
         # 3. CAS DOSSIER
         # On construit une Hashtable propre pour le JSON
         $nodeHash = @{

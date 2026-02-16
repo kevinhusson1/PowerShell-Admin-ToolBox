@@ -35,6 +35,7 @@ function Global:Sort-EditorTreeRecursive {
                 elseif ($t -eq "Link" -or $t -eq "InternalLink") { 30 }
                 elseif ($t -eq "Publication") { 40 }
                 elseif ($t -eq "Folder") { 50 } # SubFolders at Bottom
+                elseif ($t -eq "File") { 110 } # Files at very bottom
                 else { 100 }
             }
         }; Ascending = $true

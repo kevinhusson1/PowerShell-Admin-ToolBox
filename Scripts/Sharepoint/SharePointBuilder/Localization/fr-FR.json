@@ -125,6 +125,8 @@
     "validation_err_name_length": "Le nom est très long (>128 chars), risque de dépassement de limite URL.",
     "validation_err_empty_name": "Le nom du dossier est vide.",
     "validation_err_invalid_url": "L'URL du site cible est invalide.",
+    "validation_err_invalid_source_url": "L'URL source est invalide.",
+    "validation_err_url_unreachable": "L'URL est inaccessible (Code: {0}).",
     "validation_err_no_grant_user": "Aucun utilisateur défini pour les droits source.",
     "validation_err_user_not_found": "Utilisateur source '{0}' introuvable dans l'annuaire.",
     "validation_err_perm_no_email": "Permission sans email configurée.",

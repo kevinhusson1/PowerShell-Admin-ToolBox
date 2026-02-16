@@ -102,7 +102,8 @@ function Global:Register-EditorActionHandlers {
                 $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
                 if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
                 $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
-                Sort-EditorTreeRecursive -ItemCollection $p.Items
+                $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
+                Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
             }.GetNewClosure())
     }
 
@@ -115,7 +116,9 @@ function Global:Register-EditorActionHandlers {
                 
                 $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
                 $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
-                Sort-EditorTreeRecursive -ItemCollection $p.Items
+                $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
+                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
+                Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
             }.GetNewClosure())
     }
 
@@ -360,7 +363,10 @@ function Global:Register-EditorActionHandlers {
                         # Important : Refresh UI du parent (StackPanel) pour afficher le lien correctement
                         $p.UpdateLayout()
                         
-                        Sort-EditorTreeRecursive -ItemCollection $p.Items
+                        # Important : Refresh UI du parent (StackPanel) pour afficher le lien correctement
+                        $p.UpdateLayout()
+                        
+                        Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
                     }
                     catch {
                         [System.Windows.MessageBox]::Show("Erreur CRITIQUE création noeud : $_", "Error", "OK", "Error")
@@ -376,11 +382,122 @@ function Global:Register-EditorActionHandlers {
                 if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier parent.", "Info", "OK", "Information"); return }
                 if ($p.Tag.Type -eq "Link") { [System.Windows.MessageBox]::Show("Impossible d'ajouter une publication dans un lien.", "Info", "OK", "Warning"); return }
                 if ($p.Tag.Type -eq "Publication") { [System.Windows.MessageBox]::Show("Impossible d'imbriquer des publications.", "Info", "OK", "Warning"); return }
+                if ($p.Tag.Type -eq "File") { [System.Windows.MessageBox]::Show("Impossible d'ajouter un élément dans un fichier.", "Info", "OK", "Warning"); return }
             
                 $n = New-EditorPubNode -Name "Vers Site..."
                 $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
                 Update-EditorBadges -TreeItem $p
-                Sort-EditorTreeRecursive -ItemCollection $p.Items
+                $n = New-EditorPubNode -Name "Vers Site..."
+                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
+                Update-EditorBadges -TreeItem $p
+                Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
+            }.GetNewClosure())
+    }
+
+    if ($Ctrl.EdBtnAddFile) {
+        $Ctrl.EdBtnAddFile.Add_Click({
+                # FIX: Force Reload Function ALWAYS
+                $f = Join-Path $Context.ScriptRoot "Functions\Logic\Editor\New-EditorFileNode.ps1"
+                if (Test-Path $f) { . $f }
+
+                $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
+                if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier parent.", "Info", "OK", "Information"); return }
+                
+                # Validation Nesting
+                $forbiddenTypes = @("Link", "InternalLink", "Publication", "File")
+                if ($forbiddenTypes -contains $p.Tag.Type) { 
+                    [System.Windows.MessageBox]::Show("Impossible d'ajouter un fichier dans ce type d'élément ($($p.Tag.Type)).", "Stop", "OK", "Warning")
+                    return 
+                }
+
+                $n = New-EditorFileNode -Name "Nouveau Fichier" -SourceUrl ""
+                $p.Items.Add($n) | Out-Null
+                $p.IsExpanded = $true
+                
+                # Apply Sort first (Level 1 for Children)
+                Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
+                
+                # Force Layout Update to ensure container generation
+                $p.UpdateLayout()
+                
+                # Select and Focus
+                $n.IsSelected = $true
+                $n.Focus()
+                
+                # Force Panel Update (Selection Logic) if needed
+                # The SelectionChanged event should trigger principally
+            }.GetNewClosure())
+    }
+
+    # Helper Fetch Info URL
+    if ($Ctrl.EdFileFetchInfoButton) {
+        $Ctrl.EdFileFetchInfoButton.Add_Click({
+                $url = $Ctrl.EdFileUrlBox.Text
+                if ([string]::IsNullOrWhiteSpace($url)) { return }
+
+                try {
+                    $req = [System.Net.WebRequest]::Create($url)
+                    $req.Method = "HEAD"
+                    $req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PowerShell/SharePointBuilder"
+                    $resp = $req.GetResponse()
+                    
+                    # 1. Try Content-Disposition
+                    $filename = ""
+                    $cd = $resp.Headers["Content-Disposition"]
+                    if ($cd) {
+                        if ($cd -match 'filename="?([^"]+)"?') { $filename = $matches[1] }
+                    }
+
+                    # 2. Try URL Segments
+                    if (-not $filename) {
+                        $uri = $resp.ResponseUri
+                        $seg = $uri.Segments
+                        if ($seg.Count -gt 0) {
+                            $filename = $seg[$seg.Count - 1]
+                        }
+                    }
+
+                    $resp.Close()
+
+                    if ($filename) {
+                        # FIX: Check for Auth/Login pages redirect
+                        if ($filename -match "authorize|login|signin|oauth") {
+                            # Fallback to original URL last segment if response was a redirect to login
+                            $rawUri = [System.Uri]$url
+                            $rawSeg = $rawUri.Segments
+                            if ($rawSeg.Count -gt 0) {
+                                $candidate = $rawSeg[$rawSeg.Count - 1]
+                                if (-not ($candidate -match "authorize|login|signin|oauth")) {
+                                    $filename = $candidate
+                                }
+                            }
+                        }
+
+                        # Final Decode to ensure clean text (e.g. %20 -> Space)
+                        $filename = [System.Web.HttpUtility]::UrlDecode($filename)
+
+                        $Ctrl.EdFileNameBox.Text = $filename
+                        & $SetStatus -Msg "Nom de fichier récupéré : $filename" -Type "Success"
+                    }
+                    else {
+                        & $SetStatus -Msg "Impossible de déterminer le nom du fichier." -Type "Warning"
+                    }
+                }
+                catch {
+                    & $SetStatus -Msg "Erreur lors de la vérification URL : $($_.Exception.Message)" -Type "Error"
+                }
+            }.GetNewClosure())
+    }
+    
+    if ($Ctrl.EdFileDeleteButton) {
+        $Ctrl.EdFileDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "File") {
+                    if ([System.Windows.MessageBox]::Show("Supprimer ce fichier ?", "Confirmation", "YesNo", "Question") -eq 'Yes') {
+                        $p = $sel.Parent
+                        if ($p) { $p.Items.Remove($sel) }
+                    }
+                }
             }.GetNewClosure())
     }
 
@@ -516,7 +633,9 @@ function Global:Register-EditorActionHandlers {
             if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
+            if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
+            if ($Ctrl.EdPanelFile) { $Ctrl.EdPanelFile.Visibility = "Collapsed" }
             if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                 
             $Ctrl.EdLoadCb.Tag = $selectedTpl.TemplateId

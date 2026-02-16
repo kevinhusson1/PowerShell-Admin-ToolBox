@@ -333,6 +333,69 @@ function New-AppSPStructure {
                 else { Err "Erreur lien interne '$linkName' : $($resLink.Message)" }
                 return
             }
+
+            # 0-QUATER. GESTION TYPE = FILE (NOUVEAU)
+            if ($FolderObj.Type -eq "File") {
+                $fileName = $FolderObj.Name
+                $sourceUrl = $FolderObj.SourceUrl
+                
+                Log "Traitement fichier '$fileName' depuis '$sourceUrl'..." "INFO"
+                
+                if ([string]::IsNullOrWhiteSpace($sourceUrl)) {
+                    Err "URL source manquante pour le fichier '$fileName'. Ignoré."
+                    return
+                }
+
+                # 1. IMPORT FICHIER via Helper (Gère Auth SP & Web)
+                try {
+                    # On passe les infos d'auth pour que le helper puisse se connecter à la source si c'est du SharePoint
+                    $uploadedFile = Import-AppSPFile `
+                        -SourceUrl $sourceUrl `
+                        -TargetConnection $conn `
+                        -TargetFolderServerRelativeUrl $CurrentPath `
+                        -TargetFileName $fileName `
+                        -ClientId $ClientId `
+                        -Thumbprint $Thumbprint `
+                        -TenantName $TenantName
+
+                    Log "Fichier '$fileName' importé avec succès." "SUCCESS"
+                        
+                    # 2. METADONNÉES & PERMISSIONS (Item)
+                    if ($uploadedFile) {
+                        $fileItem = $null
+                        try {
+                            $fileItem = Get-PnPFile -Url $uploadedFile.ServerRelativeUrl -AsListItem -Connection $conn -ErrorAction Stop
+                        }
+                        catch { Log "  ⚠️ Erreur récupération Item fichier : $_" "WARNING" }
+
+                        if ($fileItem) {
+                            # Permissions
+                            if ($FolderObj.Permissions) {
+                                foreach ($perm in $FolderObj.Permissions) {
+                                    # Logique identique Permission Dossier
+                                    $email = $perm.Email; $role = $perm.Level
+                                    $spRole = switch ($role.ToLower()) { "read" { "Read" } "contribute" { "Contribute" } "full" { "Full Control" } "full control" { "Full Control" } Default { "Read" } }
+                                    try {
+                                        Set-PnPListItemPermission -List $TargetLibraryName -Identity $fileItem.Id -User $email -AddRole $spRole -Connection $conn -ErrorAction Stop
+                                        Log "  > Permission ajoutée : $email ($spRole)" "INFO"
+                                    }
+                                    catch { Log "  ⚠️ Erreur permission fichier : $($_.Exception.Message)" "WARNING" }
+                                }
+                            }
+
+                            # Tags
+                            if ($FolderObj.Tags) {
+                                Update-SPTags -Item $fileItem -TagsConfig $FolderObj.Tags -List $TargetLibraryName -Connection $conn
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Err "Erreur import fichier '$fileName' : $($_.Exception.Message)"
+                }
+
+                return # Stop ici pour un fichier
+            }
             
             # 0-TER. GESTION TYPE = PUBLICATION (Déporté ici ou traité plus bas ?)
             # Pour l'instant traité dans le bloc Folders, mais on pourrait l'uniformiser ici.

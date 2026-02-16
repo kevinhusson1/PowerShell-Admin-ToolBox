@@ -119,11 +119,17 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0">
-                                                <TextBlock Text="##loc:sp_builder.label_site##" Style="{DynamicResource H4Style}"/>
+                                                <Grid>
+                                                    <TextBlock Text="##loc:sp_builder.label_site##" Style="{DynamicResource H4Style}"/>
+                                                    <ProgressBar x:Name="SiteLoadingBar" Width="60" Height="4" HorizontalAlignment="Right" VerticalAlignment="Center" IsIndeterminate="True" Visibility="Collapsed" BorderThickness="0"/>
+                                                </Grid>
                                                 <ComboBox x:Name="SiteComboBox" Style="{DynamicResource StandardEditableComboBoxStyle}" Margin="0,5,0,10"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2">
-                                                <TextBlock Text="##loc:sp_builder.label_library##" Style="{DynamicResource H4Style}"/>
+                                                <Grid>
+                                                    <TextBlock Text="##loc:sp_builder.label_library##" Style="{DynamicResource H4Style}"/>
+                                                    <ProgressBar x:Name="LibLoadingBar" Width="60" Height="4" HorizontalAlignment="Right" VerticalAlignment="Center" IsIndeterminate="True" Visibility="Collapsed" BorderThickness="0"/>
+                                                </Grid>
                                                 <ComboBox x:Name="LibraryComboBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,0"/>
                                             </StackPanel>
                                         </Grid>
@@ -137,11 +143,9 @@
                                                 <TreeViewItem Header="##loc:sp_builder.msg_select_library##" Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
                                             </TreeView>
 
-                                            <Grid x:Name="ExplorerLoadingOverlay" Background="#80FFFFFF" Visibility="Collapsed" IsHitTestVisible="True">
-                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <TextBlock Text="⏳" FontSize="24" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="##loc:sp_builder.msg_loading##" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                </StackPanel>
+                                            <!-- Overlay de chargement (discret) -->
+                                            <Grid x:Name="ExplorerLoadingOverlay" Background="#40FFFFFF" Visibility="Collapsed" IsHitTestVisible="True">
+                                                <ProgressBar Width="100" Height="4" IsIndeterminate="True" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Grid>
                                     </Border>
@@ -539,6 +543,11 @@
                                             <Button x:Name="EditorGlobalAddDynamicTagButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#E0F2F1" BorderBrush="#80CBC4" Margin="0,0,15,5" ToolTip="Ajouter un tag dynamique (issu d'un formulaire)">
                                                 <Image x:Name="IconAddDynamicTag" Stretch="Uniform"/>
                                             </Button>
+
+                                            <!-- NEW: FILE COPY (Indigo/Blue Grey Pastel) -->
+                                            <Button x:Name="EditorAddFileButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#E8EAF6" BorderBrush="#9FA8DA" Margin="0,0,15,5" ToolTip="Copier un fichier depuis une URL">
+                                                <Image x:Name="IconAddFile" Stretch="Uniform"/>
+                                            </Button>
                                             
                                             <!-- SUPPRIMER (Rouge Pastel) -->
                                             <Button x:Name="EditorDeleteButton" Style="{StaticResource ToolbarIconButtonStyle}" Background="#FFEBEE" BorderBrush="#FFCDD2" ToolTip="##loc:sp_builder.tooltip_delete_item##">
@@ -675,6 +684,33 @@
                                                 <TextBlock Text="Pour changer la cible, supprimez ce lien et recréez-le." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
 
                                                 <Button x:Name="EdInternalLinkDeleteButton" Content="Supprimer ce lien" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- G. MODE FILE COPY (NEW) -->
+                                            <StackPanel x:Name="EdPanelFile" Visibility="Collapsed">
+                                                <Border Background="#E8EAF6" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="📄" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Copier un Fichier" FontWeight="SemiBold" Foreground="#3F51B5"/>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <TextBlock Text="URL du Fichier Source :" Style="{DynamicResource H4Style}"/>
+                                                <Grid Margin="0,5,0,20">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox x:Name="EdFileUrlBox" Grid.Column="0" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,10,0" ToolTip="URL directe vers le fichier à copier"/>
+                                                    <Button x:Name="EdFileFetchInfoButton" Grid.Column="1" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Padding="0" ToolTip="Récupérer le nom du fichier depuis l'URL">
+                                                        <TextBlock Text="⬇" FontWeight="Bold"/>
+                                                    </Button>
+                                                </Grid>
+
+                                                <TextBlock Text="Nom du Fichier Cible :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdFileNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du fichier tel qu'il apparaîtra dans SharePoint"/>
+
+                                                <Button x:Name="EdFileDeleteButton" Content="Supprimer ce fichier" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
 
                                             <!-- E. MODE PUBLICATION (NEW) -->

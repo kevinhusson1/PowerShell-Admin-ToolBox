@@ -68,6 +68,29 @@ function Test-AppSPModel {
         catch {}
     }
 
+    function Test-Url($u) {
+        if ([string]::IsNullOrWhiteSpace($u)) { return $false }
+        try { [void][System.Uri]::new($u); return $true } catch { return $false }
+    }
+
+    function Test-UrlReachability($u) {
+        if ([string]::IsNullOrWhiteSpace($u)) { return $true } # Déjà géré par Empty Check
+        try {
+            $req = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+            return @{ K = $true; C = $req.StatusCode }
+        }
+        catch {
+            # Retry GET si HEAD échoue (certains serveurs bloquent HEAD)
+            try {
+                $req = Invoke-WebRequest -Uri $u -Method Get -UseBasicParsing -TimeoutSec 5 -Range 0-10 -ErrorAction Stop
+                return @{ K = $true; C = $req.StatusCode }
+            }
+            catch {
+                return @{ K = $false; E = $_.Exception.Message }
+            }
+        }
+    }
+
     function Validate-Node {
         param($node, $path)
 
@@ -89,16 +112,29 @@ function Test-AppSPModel {
         # A. PUBLICATION
         if ($node.Type -eq "Publication") {
             if ($node.TargetSiteMode -eq "Url") {
-                if (-not ([Uri]::IsWellFormedUriString($node.TargetSiteUrl, [UriKind]::Absolute))) {
+                if (-not (Test-Url $node.TargetSiteUrl)) {
                     $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_invalid_url" $null); Level = "Static" })
+                }
+                elseif ($Connection) {
+                    $st = Test-UrlReachability $node.TargetSiteUrl
+                    if (-not $st.K) {
+                        $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
+                    }
                 }
             }
         }
         
         # B. LIEN (Link)
         if ($node.Type -eq "Link") {
-            if (-not ([Uri]::IsWellFormedUriString($node.Url, [UriKind]::Absolute))) {
+            if (-not (Test-Url $node.Url)) {
                 $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = "URL invalide pour le lien"; Level = "Static" })
+            }
+            elseif ($Connection) {
+                # Warning pour les liens (ça peut être interne/intranet non accessible depuis ici)
+                $st = Test-UrlReachability $node.Url
+                if (-not $st.K) {
+                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Warning"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
+                }
             }
         }
         
@@ -107,7 +143,30 @@ function Test-AppSPModel {
             if ([string]::IsNullOrWhiteSpace($node.TargetNodeId)) {
                 $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = "Cible du lien interne manquante"; Level = "Static" })
             }
-        }    # 3. Validation Permissions
+        }
+        
+        # D. FICHIER (File)
+        if ($node.Type -eq "File") {
+            if ([string]::IsNullOrWhiteSpace($node.Name)) {
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = (Loc "validation_err_empty_name" $null); Level = "Static" })
+            }
+            
+            if ([string]::IsNullOrWhiteSpace($node.SourceUrl)) {
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_file_no_sourceurl" $null); Level = "Static" })
+            }
+            elseif (-not (Test-Url $node.SourceUrl)) {
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_invalid_source_url" $null); Level = "Static" })
+            }
+            elseif ($Connection) {
+                # Validation stricte car nécessaire pour le déploiement
+                $st = Test-UrlReachability $node.SourceUrl
+                if (-not $st.K) {
+                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
+                }
+            }
+        }
+        
+        # 3. Validation Permissions
         if ($node.Permissions) {
             foreach ($perm in $node.Permissions) {
                 if ([string]::IsNullOrWhiteSpace($perm.Email)) {

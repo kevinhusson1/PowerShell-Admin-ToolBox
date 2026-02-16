@@ -15,6 +15,25 @@ function Global:Register-EditorSelectionHandler {
     # INIT STATIC SOURCES
     if ($Ctrl.EdPubGrantLevelBox) { $Ctrl.EdPubGrantLevelBox.ItemsSource = @("Read", "Contribute"); $Ctrl.EdPubGrantLevelBox.SelectedIndex = 0 }
 
+    $Script:PubPathHandler = {
+        if ($Ctrl.EdTree.SelectedItem) {
+            $Ctrl.EdTree.SelectedItem.Tag.SourceUrl = $Ctrl.EdPubPathBox.Text # Re-use property
+        }
+    }
+
+    $Script:FileNameHandler = {
+        if ($Ctrl.EdTree.SelectedItem) {
+            $Ctrl.EdTree.SelectedItem.Tag.Name = $Ctrl.EdFileNameBox.Text
+            Update-EditorChildNode -ParentItem $Ctrl.EdTree.SelectedItem.Parent -DataObject $Ctrl.EdTree.SelectedItem.Tag
+        }
+    }
+
+    $Script:FileUrlHandler = {
+        if ($Ctrl.EdTree.SelectedItem) {
+            $Ctrl.EdTree.SelectedItem.Tag.SourceUrl = $Ctrl.EdFileUrlBox.Text
+        }
+    }
+    
     if ($Ctrl.EdTree) {
         $Ctrl.EdTree.Add_SelectedItemChanged({
                 $selectedItem = $Ctrl.EdTree.SelectedItem
@@ -28,6 +47,7 @@ function Global:Register-EditorSelectionHandler {
                 if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
+                if ($Ctrl.EdPanelFile) { $Ctrl.EdPanelFile.Visibility = "Collapsed" }
                 if ($Ctrl.EdPanelGlobalTags) { $Ctrl.EdPanelGlobalTags.Visibility = "Collapsed" } # Deprecated/Removed
 
                 if ($null -eq $selectedItem) {
@@ -197,7 +217,18 @@ function Global:Register-EditorSelectionHandler {
                     }
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
-                # F. FOLDER (Standard)
+                # F. FILE
+                elseif ($data.Type -eq "File") {
+                    if ($Ctrl.EdPanelFile) { 
+                        $Ctrl.EdPanelFile.Visibility = "Visible" 
+                        $Ctrl.EdPanelFile.DataContext = $selectedItem
+                    }
+                    if ($Ctrl.EdFileNameBox) { $Ctrl.EdFileNameBox.Text = $data.Name }
+                    if ($Ctrl.EdFileUrlBox) { $Ctrl.EdFileUrlBox.Text = $data.SourceUrl }
+                    
+                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
+                }
+                # G. FOLDER (Standard)
                 else {
                     if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Visible" }
                     if ($data -and $Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = $data.Name }
@@ -593,6 +624,32 @@ function Global:Register-EditorSelectionHandler {
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 3) { 
                         # FIX: Target Index 2 (Name) - Index 0=Icon, 1=Arrow, 2=Name
                         $sel.Header.Children[2].Text = $this.Text 
+                    }
+                } 
+            }.GetNewClosure())
+    }
+
+    # File URL Handler
+    if ($Ctrl.EdFileUrlBox) {
+        $Ctrl.EdFileUrlBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "File") {
+                    $sel.Tag.SourceUrl = $this.Text
+                } 
+            }.GetNewClosure())
+    }
+
+    # File Name Handler
+    if ($Ctrl.EdFileNameBox) {
+        $Ctrl.EdFileNameBox.Add_TextChanged({
+                if ($Script:IsPopulating) { return }
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "File") {
+                    $sel.Tag.Name = $this.Text
+                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                        # Index 1 is TextBlock (Name)
+                        $sel.Header.Children[1].Text = $this.Text 
                     }
                 } 
             }.GetNewClosure())

@@ -78,6 +78,17 @@ function Global:New-BuilderTreeItem {
     elseif ($NodeData.Type -eq "InternalLink") {
         $item = New-EditorInternalLinkNode -Name $finalName -TargetNodeId $NodeData.TargetNodeId
     }
+    elseif ($NodeData.Type -eq "File") {
+        $finalSourceUrl = if ($NodeData.SourceUrl) { $NodeData.SourceUrl } else { "" }
+        if ($Replacements) {
+            foreach ($key in $Replacements.Keys) {
+                if ($finalSourceUrl -match "\{$key\}") { 
+                    $finalSourceUrl = $finalSourceUrl -replace "\{$key\}", $Replacements[$key] 
+                }
+            }
+        }
+        $item = New-EditorFileNode -Name $finalName -SourceUrl $finalSourceUrl
+    }
     else {
         # Default: Folder
         $item = New-EditorNode -Name $finalName

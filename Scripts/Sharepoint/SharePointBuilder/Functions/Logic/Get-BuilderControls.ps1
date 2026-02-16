@@ -114,11 +114,14 @@ function Get-BuilderControls {
         IconAddPerm                = $Window.FindName("IconAddPerm")
         IconAddTag                 = $Window.FindName("IconAddTag")
         IconAddDynamicTag          = $Window.FindName("IconAddDynamicTag")
+        EdBtnAddFile               = $Window.FindName("EditorAddFileButton")
+        IconAddFile                = $Window.FindName("IconAddFile")
 
         # --- EDITEUR (Props) ---
         # --- EDITEUR (Props Panels) ---
         # USE ROBUST FIND
         EdPropPanel                = & $Find "EdPanelFolder"
+        EdPanelFile                = & $Find "EdPanelFile"
         EdPropPanelPerm            = & $Find "EdPanelPerm"
         EdPropPanelTag             = & $Find "EdPanelTag"
         EdPropPanelLink            = & $Find "EdPanelLink"
@@ -159,7 +162,13 @@ function Get-BuilderControls {
         EdInternalLinkIdBox        = $Window.FindName("EdInternalLinkIdBox")
         EdInternalLinkDeleteButton = $Window.FindName("EdInternalLinkDeleteButton")
 
-        # Publication Inputs (NEW)
+        # --- CONTROLES FILE ---
+        EdFileUrlBox               = $Window.FindName("EdFileUrlBox")
+        EdFileFetchInfoButton      = $Window.FindName("EdFileFetchInfoButton")
+        EdFileNameBox              = $Window.FindName("EdFileNameBox")
+        EdFileDeleteButton         = $Window.FindName("EdFileDeleteButton")
+
+        # --- CONTROLES PUB ---ublication Inputs (NEW)
         EdPubNameBox               = $Window.FindName("EdPubNameBox")
         EdPubSiteModeBox           = $Window.FindName("EdPubSiteModeBox")
         EdPubSiteUrlBox            = $Window.FindName("EdPubSiteUrlBox")
