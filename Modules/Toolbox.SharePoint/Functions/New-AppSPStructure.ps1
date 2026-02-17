@@ -599,7 +599,7 @@ function New-AppSPStructure {
                                     }
                                     
                                     Update-SPTags -Item $targetFolderItem -TagsConfig $metaTags -List $TargetLibraryName -Connection $targetCtx
-                                    Log "    Metadonnées appliquées sur le dossier '$($targetFolderItem.Name)'." "INFO"
+                                    Log "    Metadonnées appliquées sur le dossier '$rawDestPath'." "INFO"
                                 }
                                 else {
                                     Log "  ⚠️ Erreur Meta Pub : Impossible de récupérer l'Item du dossier cible." "WARNING"
@@ -711,6 +711,7 @@ function New-AppSPStructure {
                             "TemplateJson"       = $StructureJson
                             "FormValuesJson"     = ($FormValues | ConvertTo-Json -Depth 5 -Compress)
                             "FormDefinitionJson" = $TrackingInfo["FormDefinitionJson"] # Schema
+                            "DeployedDate"       = (Get-Date)
                         }
                         Add-PnPListItem -List "App_DeploymentHistory" -Values $itemValues -Connection $conn -ErrorAction Stop | Out-Null
                         Log "Historique de déploiement archivé dans 'App_DeploymentHistory'." "SUCCESS"

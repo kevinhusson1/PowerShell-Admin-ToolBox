@@ -54,6 +54,8 @@
     "log_deploy_pub_remote_conn": "  > Connexion cible distante : {0}",
     "log_deploy_finished": "Déploiement terminé.",
     "log_deploy_create_link": "Création lien (Noeud) : {0} ({1})",
-    "log_deploy_link_ok": "Lien créé avec succès."
+    "log_deploy_link_ok": "Lien créé avec succès.",
+    "log_deploy_root_meta": "Application des métadonnées Racine (Formulaire)...",
+    "log_deploy_create_internal_link": "Création d'un lien interne..."
   }
 }

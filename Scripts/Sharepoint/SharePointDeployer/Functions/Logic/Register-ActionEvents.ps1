@@ -161,6 +161,20 @@ function Register-ActionEvents {
                 & $Log "Cible : $($cfg.SiteUrl) / $($cfg.LibraryName) / $folderName" "Info"
                 if ($applyMeta) { & $Log "Métadonnée(s) racine à appliquer : $($rootMetadata.Keys -join ', ')" "Info" }
 
+                # --- 3c. TRACKING INFO (V3.3) ---
+                $currUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+                $trackRuleId = if ($targetRule) { $targetRule.RuleId } else { "" }
+                $trackDefJson = if ($targetRule) { $targetRule.DefinitionJson } else { "" }
+                
+                $trackingInfo = @{
+                    TemplateId         = $cfg.TemplateId
+                    TemplateVersion    = [DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    NamingRuleId       = $trackRuleId
+                    ConfigName         = $cfg.ConfigName
+                    DeployedBy         = $currUser
+                    FormDefinitionJson = $trackDefJson
+                }
+
                 # 3. Lancement JOB
                 # Définition du fichier de langue pour le Job
                 $locFile = Join-Path $Global:ProjectRoot "Scripts\Sharepoint\SharePointDeployer\Localization\$($Global:AppConfig.defaultLanguage).json"
@@ -179,6 +193,7 @@ function Register-ActionEvents {
                     LocFilePath   = $locFile
                     FormValues    = $formData      # V3: For Dynamic Tags
                     RootMetadata  = $rootMetadata  # V3: For Root Folder tagging
+                    TrackingInfo  = $trackingInfo  # V3.3: Persistence
                 }
 
                 # Chargement Structure JSON
@@ -217,7 +232,8 @@ function Register-ActionEvents {
                             -TenantName $ArgsMap.Tenant `
                             -TargetFolderUrl $ArgsMap.LibRelUrl `
                             -FormValues     $ArgsMap.FormValues `
-                            -RootMetadata   $ArgsMap.RootMetadata
+                            -RootMetadata   $ArgsMap.RootMetadata `
+                            -TrackingInfo   $ArgsMap.TrackingInfo
                     }
                     catch { throw $_ }
                 } -ArgumentList $jobArgs

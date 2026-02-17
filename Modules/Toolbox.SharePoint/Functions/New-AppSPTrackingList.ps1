@@ -49,7 +49,8 @@ function New-AppSPTrackingList {
             @{ Name = "DeployedBy"; Type = "Text" },
             @{ Name = "TemplateJson"; Type = "Note" }, # Multi-line
             @{ Name = "FormValuesJson"; Type = "Note" }, # Multi-line
-            @{ Name = "FormDefinitionJson"; Type = "Note" } # Multi-line - Form Schema
+            @{ Name = "FormDefinitionJson"; Type = "Note" }, # Multi-line - Form Schema
+            @{ Name = "DeployedDate"; Type = "DateTime" }
         )
 
         foreach ($f in $fields) {
@@ -63,6 +64,9 @@ function New-AppSPTrackingList {
                     $fXml = "<Field Type='Note' Name='$($f.Name)' DisplayName='$($f.Name)' NumLines='6' RichText='FALSE' Sortable='FALSE' />"
                     Add-PnPFieldFromXml -List $ListName -FieldXml $fXml -Connection $Connection | Out-Null
                 }
+                elseif ($f.Type -eq "DateTime") {
+                    Add-PnPField -List $ListName -DisplayName $f.Name -InternalName $f.Name -Type DateTime -Connection $Connection | Out-Null
+                }
                 else {
                     # Standard Creation
                     Add-PnPField -List $ListName -DisplayName $f.Name -InternalName $f.Name -Type Text -Connection $Connection | Out-Null
@@ -70,7 +74,7 @@ function New-AppSPTrackingList {
             }
         }
         $list.Update()
-        $Connection.ExecuteQuery()
+        $Connection.Context.ExecuteQuery()
 
         return $true
     }
