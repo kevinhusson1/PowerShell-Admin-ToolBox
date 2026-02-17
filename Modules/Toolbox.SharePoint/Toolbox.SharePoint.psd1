@@ -28,7 +28,9 @@
         'New-AppSPFolder',
         'New-AppSPLink',
         'New-AppSPStructure'
+        'New-AppSPTrackingList',
         'Rename-AppSPFolder',
+        'Rename-AppSPPublications',
         'Repair-AppSPLinks',
         'Set-AppSPMetadata',
         'Set-AppSPPermission',

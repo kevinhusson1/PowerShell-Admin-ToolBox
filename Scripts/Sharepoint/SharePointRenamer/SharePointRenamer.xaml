@@ -152,33 +152,73 @@
                 </StackPanel>
 
                 <!-- Detail Panel (RENAMER SPECIFIC) -->
-                <Grid x:Name="DetailGrid" Visibility="Collapsed" Margin="30">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/> <!-- Title -->
-                        <RowDefinition Height="Auto"/> <!-- Renamer Target Picker -->
-                        <RowDefinition Height="*"/>    <!-- Form -->
-                        <RowDefinition Height="Auto"/> <!-- Preview Box -->
-                        <RowDefinition Height="Auto"/> <!-- Buttons -->
-                        <RowDefinition Height="Auto"/> <!-- Logs -->
-                    </Grid.RowDefinitions>
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" BorderThickness="0" Margin="0">
+                    <Grid x:Name="DetailGrid" Visibility="Collapsed" Margin="30">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/> <!-- Title -->
+                            <RowDefinition Height="Auto"/> <!-- Renamer Target Picker -->
+                            <RowDefinition Height="Auto"/> <!-- Form (was *) -->
+                            <RowDefinition Height="Auto"/> <!-- Preview Box -->
+                            <RowDefinition Height="Auto"/> <!-- Buttons -->
+                            <RowDefinition Height="Auto"/> <!-- Logs -->
+                        </Grid.RowDefinitions>
 
                     <!-- Titre Config -->
                     <TextBlock x:Name="ConfigTitleText" Text="TITRE CONFIG" FontSize="20" Grid.Row="0" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,15"/>
 
-                    <!-- Renamer Target Picker -->
                     <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1" CornerRadius="4" Padding="15" Margin="0,0,0,20" x:Name="TargetPanel">
-                         <StackPanel>
-                             <TextBlock Text="##loc:renamer.target_folder_label##" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
-                             <Grid>
-                                 <Grid.ColumnDefinitions>
-                                     <ColumnDefinition Width="*"/>
-                                     <ColumnDefinition Width="Auto"/>
-                                 </Grid.ColumnDefinitions>
-                                 <TextBox x:Name="TargetFolderBox" IsReadOnly="True" Padding="8" VerticalContentAlignment="Center" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderLightBrush}" Text="Aucun dossier..."/>
-                                 <Button x:Name="BtnPickFolder" Grid.Column="1" Content="##loc:renamer.btn_pick##" Margin="10,0,0,0" Width="100" Style="{DynamicResource SecondaryButtonStyle}"/>
+                         <Grid>
+                             <Grid.ColumnDefinitions>
+                                 <ColumnDefinition Width="2*"/>
+                                 <ColumnDefinition Width="1*"/>
+                             </Grid.ColumnDefinitions>
+                             
+                             <!-- Left Col: Picker & Tree -->
+                             <Grid Grid.Column="0" Margin="0,0,15,0">
+                                 <Grid.RowDefinitions>
+                                     <RowDefinition Height="Auto"/>
+                                     <RowDefinition Height="*"/>
+                                 </Grid.RowDefinitions>
+
+                                 <StackPanel Grid.Row="0">
+                                     <TextBlock Text="##loc:renamer.target_folder_label##" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                                     <Grid>
+                                         <Grid.ColumnDefinitions>
+                                             <ColumnDefinition Width="*"/>
+                                             <ColumnDefinition Width="Auto"/>
+                                         </Grid.ColumnDefinitions>
+                                         <TextBox x:Name="TargetFolderBox" IsReadOnly="True" Padding="8" VerticalContentAlignment="Center" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderLightBrush}" Text="Aucun dossier..."/>
+                                         <Button x:Name="BtnPickFolder" Grid.Column="1" Content="##loc:renamer.btn_pick##" Margin="10,0,0,0" Width="100" Style="{DynamicResource SecondaryButtonStyle}"/>
+                                     </Grid>
+                                 </StackPanel>
+
+                                 <!-- TreeView Picker (Inline) -->
+                                 <Border Grid.Row="1" x:Name="TargetExplorerBorder" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Visibility="Collapsed" Height="300">
+                                    <Grid>
+                                        <TreeView x:Name="TargetExplorerTreeView" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Padding="5">
+                                            <!-- Sera rempli dynamiquement -->
+                                            <TreeViewItem Header="Chargement..." Foreground="{DynamicResource TextDisabledBrush}" FontStyle="Italic" IsEnabled="False"/>
+                                        </TreeView>
+
+                                        <!-- Overlay de chargement (discret) -->
+                                        <Grid x:Name="ExplorerLoadingOverlay" Background="#40FFFFFF" Visibility="Collapsed" IsHitTestVisible="True">
+                                            <ProgressBar Width="100" Height="4" IsIndeterminate="True" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Grid>
+                                 </Border>
                              </Grid>
-                             <TextBlock x:Name="CurrentMetaText" Text="-" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                         </StackPanel>
+
+                             <!-- Right Col: Metadata -->
+                             <Border Grid.Column="1" Background="{DynamicResource BackgroundBrush}" CornerRadius="4" Padding="10">
+                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                     <StackPanel>
+                                        <TextBlock Text="MÉTADONNÉES" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextDisabledBrush}" Margin="0,0,0,5"/>
+                                        <TextBlock x:Name="CurrentMetaText" Text="Aucune sélection." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                     </StackPanel>
+                                 </ScrollViewer>
+                             </Border>
+
+                         </Grid>
                     </Border>
 
                     <!-- Formulaire (Hydrated) -->
@@ -218,6 +258,7 @@
                         </Border>
                     </StackPanel>
                 </Grid>
+                </ScrollViewer>
             </Grid>
         </Grid>
         

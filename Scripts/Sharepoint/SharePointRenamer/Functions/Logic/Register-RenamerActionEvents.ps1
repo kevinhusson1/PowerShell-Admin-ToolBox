@@ -118,10 +118,123 @@ function Register-RenamerActionEvents {
                     return 
                 }
             
-                # Confirm
-                $msg = "Vous allez renommer le dossier :`n'$($folder.Name)'`n`nVers :`n'$newName'`n`nCette opération modifiera également les métadonnées et tentera de réparer les liens internes.`nConfirmer ?"
-                $res = [System.Windows.MessageBox]::Show($msg, "Confirmation", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning)
-                if ($res -ne "Yes") { return }
+                # Confirm (Custom Window)
+                $ConfirmBlock = {
+                    param($OldName, $NewName, $TargetUrl, $MetaChanges)
+                   
+                    # Create Dynamic Window
+                    $w = New-Object System.Windows.Window
+                    $w.Title = "Confirmation de Renommage"
+                    $w.Width = 600
+                    $w.Height = 500
+                    $w.WindowStartupLocation = "CenterOwner"
+                    if ($Window) { $w.Owner = $Window }
+                    $w.ResizeMode = "NoResize"
+                    $w.Background = [System.Windows.Media.BrushConverter]::new().ConvertFrom("#F9FAFB")
+
+                    $grid = New-Object System.Windows.Controls.Grid
+                    $grid.Margin = [System.Windows.Thickness]::new(20)
+                    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" })) # Header
+                    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "*" }))    # Content
+                    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = "Auto" })) # Buttons
+                    $w.Content = $grid
+                   
+                    # Header
+                    $h = New-Object System.Windows.Controls.TextBlock
+                    $h.Text = "Résumé des modifications"
+                    $h.FontSize = 18
+                    $h.FontWeight = "Bold"
+                    $h.Margin = [System.Windows.Thickness]::new(0, 0, 0, 20)
+                    $grid.Children.Add($h); [System.Windows.Controls.Grid]::SetRow($h, 0)
+                   
+                    # Summary Stack
+                    $stack = New-Object System.Windows.Controls.StackPanel
+                   
+                    # Helper Row
+                    $AddRow = { param($Label, $Value, $IsHighlight = $false)
+                        $p = New-Object System.Windows.Controls.StackPanel
+                        $p.Margin = [System.Windows.Thickness]::new(0, 0, 0, 10)
+                        
+                        $l = New-Object System.Windows.Controls.TextBlock
+                        $l.Text = $Label
+                        $l.Foreground = [System.Windows.Media.Brushes]::Gray
+                        $l.FontSize = 12
+                        
+                        $v = New-Object System.Windows.Controls.TextBlock
+                        $v.Text = $Value
+                        $v.FontSize = 14
+                        $v.TextWrapping = "Wrap"
+                        if ($IsHighlight) { 
+                            $v.Foreground = [System.Windows.Media.Brushes]::DodgerBlue 
+                            $v.FontWeight = "Bold"
+                        }
+                        
+                        [void]$p.Children.Add($l)
+                        [void]$p.Children.Add($v)
+                        return $p
+                    }
+                   
+                    $stack.Children.Add((& $AddRow "Emplacement Actuel" $TargetUrl))
+                    $stack.Children.Add((& $AddRow "Nom Actuel" $OldName))
+                    $stack.Children.Add((& $AddRow "Nouveau Nom" $NewName $true))
+                   
+                    # Metadata Table
+                    $metaGroup = New-Object System.Windows.Controls.GroupBox
+                    $metaGroup.Header = "Mise à jour des métadonnées"
+                    $metaGroup.Margin = [System.Windows.Thickness]::new(0, 10, 0, 0)
+                    $mgStack = New-Object System.Windows.Controls.StackPanel
+                   
+                    if ($MetaChanges.Count -gt 0) {
+                        foreach ($k in $MetaChanges.Keys) {
+                            $mgStack.Children.Add((& $AddRow $k $MetaChanges[$k]))
+                        }
+                    }
+                    else {
+                        $txt = New-Object System.Windows.Controls.TextBlock; $txt.Text = "Aucun changement de métadonnée."; $mgStack.Children.Add($txt)
+                    }
+                    $metaGroup.Content = $mgStack
+                    $stack.Children.Add($metaGroup)
+
+                    # Warning Text
+                    $warn = New-Object System.Windows.Controls.TextBlock
+                    $warn.Text = "⚠️ Cette action est irréversible et peut prendre du temps."
+                    $warn.Foreground = [System.Windows.Media.Brushes]::DarkOrange
+                    $warn.Margin = [System.Windows.Thickness]::new(0, 20, 0, 0)
+                    $stack.Children.Add($warn)
+
+                    $scroll = New-Object System.Windows.Controls.ScrollViewer
+                    $scroll.Content = $stack
+                    $grid.Children.Add($scroll); [System.Windows.Controls.Grid]::SetRow($scroll, 1)
+
+                    # Buttons
+                    $btnPanel = New-Object System.Windows.Controls.StackPanel
+                    $btnPanel.Orientation = "Horizontal"
+                    $btnPanel.HorizontalAlignment = "Right"
+                    $btnPanel.Margin = [System.Windows.Thickness]::new(0, 20, 0, 0)
+                   
+                    $btnCancel = New-Object System.Windows.Controls.Button
+                    $btnCancel.Content = "Annuler"
+                    $btnCancel.Width = 100
+                    $btnCancel.Height = 35
+                    $btnCancel.Margin = [System.Windows.Thickness]::new(0, 0, 10, 0)
+                    $btnCancel.Add_Click({ $w.DialogResult = $false; $w.Close() })
+                   
+                    $btnOk = New-Object System.Windows.Controls.Button
+                    $btnOk.Content = "Confirmer"
+                    $btnOk.Width = 120
+                    $btnOk.Height = 35
+                    $btnOk.Style = $Window.FindResource("PrimaryButtonStyle")
+                    $btnOk.Add_Click({ $w.DialogResult = $true; $w.Close() })
+                   
+                    $btnPanel.Children.Add($btnCancel)
+                    $btnPanel.Children.Add($btnOk)
+                    $grid.Children.Add($btnPanel); [System.Windows.Controls.Grid]::SetRow($btnPanel, 2)
+                   
+                    return $w.ShowDialog()
+                }
+
+                $confirmed = & $ConfirmBlock -OldName $folder.Name -NewName $newName -TargetUrl $folder.ServerRelativeUrl -MetaChanges $rootMetadata
+                if (-not $confirmed) { return }
             
                 # 3. Preparation Job & Publications Logic
                 $Ctrl.BtnRename.IsEnabled = $false
@@ -187,10 +300,14 @@ function Register-RenamerActionEvents {
                         Import-Module "Logging" -Force
                         Import-Module "Toolbox.SharePoint" -Force
                     
-                        # Helper Log Local
-                        function Log { param($m, $l = "Info") Write-AppLog -Message $m -Level $l }
+                        # Helper Log Local (PassThru for UI Streaming)
+                        function Log { param($m, $l = "Info") Write-AppLog -Message $m -Level $l -PassThru }
 
                         try {
+                            # Fix: Ensure specific new logic is loaded if module cache is stale
+                            $pubFunc = Join-Path $ArgsMap.ModPath "Toolbox.SharePoint\Functions\Rename-AppSPPublications.ps1"
+                            if (Test-Path $pubFunc) { . $pubFunc }
+
                             Log "Connexion PnP..." "Info"
                             $conn = Connect-PnPOnline -Url $ArgsMap.SiteUrl -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -Tenant $ArgsMap.Tenant -ReturnConnection -ErrorAction Stop
                             Log "Connexion établie." "Success"
@@ -222,6 +339,26 @@ function Register-RenamerActionEvents {
                         
                             Log "Réparation terminée. Corrigés: $($resRepair.FixedCount)" "Info"
                             
+                            # 2.5. RENOMMAGE DES PUBLICATIONS DISTANTES (Miroirs)
+                            if (-not [string]::IsNullOrWhiteSpace($ArgsMap.StructureJson)) {
+                                Log "Vérification des publications externes (Miroirs)..." "Info"
+                                
+                                # Extract Old Name from TargetUrl
+                                $oldName = $ArgsMap.TargetUrl.TrimEnd('/').Split('/')[-1]
+                                
+                                $resPubs = Rename-AppSPPublications `
+                                    -StructureJson $ArgsMap.StructureJson `
+                                    -OldRootName $oldName `
+                                    -NewRootName $ArgsMap.NewName `
+                                    -ClientId $ArgsMap.ClientId `
+                                    -Thumbprint $ArgsMap.Thumb `
+                                    -TenantName $ArgsMap.Tenant `
+                                    -DefaultTargetSiteUrl $ArgsMap.SiteUrl
+                                    
+                                if ($resPubs.Logs) { $resPubs.Logs | Where-Object { $_ } | ForEach-Object { Log $_.replace("AppLog: ", "") "Info" } }
+                                if ($resPubs.Errors) { $resPubs.Errors | Where-Object { $_ } | ForEach-Object { Log $_ "Error" } }
+                            }
+
                             # 3. DEEP UPDATE
                             if (-not [string]::IsNullOrWhiteSpace($ArgsMap.StructureJson)) {
                                 Log "Lancement de la mise à jour structurelle (Deep Update)..." "Info"
@@ -291,48 +428,29 @@ function Register-RenamerActionEvents {
                     if ($newItems) {
                         $logBox.Dispatcher.Invoke([Action] {
                                 foreach ($item in $newItems) {
-                                    $msg = ""
-                                    $level = "Info"
-                                    
-                                    if ($item.LogType -eq 'AppLog') {
-                                        $msg = $item.Message
-                                        $level = $item.Level
+                                    # A. LOG STRUCTURE (Write-AppLog -PassThru)
+                                    if ($item.PSObject.Properties['LogType'] -and $item.LogType -eq 'AppLog') {
+                                        # Re-inject into UI Log
+                                        Write-AppLog -Message $item.Message -Level $item.Level -RichTextBox $logBox
                                     }
-                                    elseif ($item -is [string]) {
-                                        if ($item -match "^RESULT_DATA:(.*)") {
-                                            # Special Data Handling
-                                            try {
-                                                $jsonResult = $matches[1] | ConvertFrom-Json
-                                                if ($btnOpen -and $jsonResult.Params.NewUrlHTML) {
-                                                    $btnOpen.IsEnabled = $true
-                                                    $btnOpen.Tag = $jsonResult.Params.NewUrlHTML
-                                                }
+                                    # B. RESULT_DATA (JSON)
+                                    elseif ($item -is [string] -and $item -match "RESULT_DATA:(.*)") {
+                                        try {
+                                            $jsonResult = $matches[1] | ConvertFrom-Json
+                                            if ($btnOpen -and $jsonResult.Params.NewUrlHTML) {
+                                                $btnOpen.IsEnabled = $true
+                                                $btnOpen.Tag = $jsonResult.Params.NewUrlHTML
                                             }
-                                            catch {}
-                                            continue 
                                         }
-                                        $msg = $item
+                                        catch {}
                                     }
+                                    # C. ERROR RECORD
                                     elseif ($item -is [System.Management.Automation.ErrorRecord]) {
-                                        $msg = $item.Exception.Message
-                                        $level = "Error"
+                                        Write-AppLog -Message $item.Exception.Message -Level Error -RichTextBox $logBox
                                     }
-                                    else {
-                                        $msg = $item.ToString()
-                                    }
-
-                                    if (-not [string]::IsNullOrWhiteSpace($msg)) {
-                                        # Emoji Mapping
-                                        $emoji = switch ($level) {
-                                            "Success" { "✅" }
-                                            "Warning" { "⚠️" }
-                                            "Error" { "❌" }
-                                            default { "ℹ️" }
-                                        }
-                                        
-                                        $timestamp = [DateTime]::Now.ToString('HH:mm:ss')
-                                        $finalLine = "[$timestamp] $emoji $msg`r`n"
-                                        $logBox.AppendText($finalLine)
+                                    # D. STRING FALLBACK
+                                    elseif ($item -is [string] -and -not [string]::IsNullOrWhiteSpace($item)) {
+                                        Write-AppLog -Message $item -Level Info -RichTextBox $logBox
                                     }
                                 }
                                 $logBox.ScrollToEnd()

@@ -122,7 +122,25 @@ Les Tags Dynamiques permettent de définir une métadonnée dont la **valeur** n
 - La gestion des droits, auparavant intégrée aux nœuds "Publication", a été retirée pour plus de clarté.
 - **Bonne pratique** : Les permissions doivent être définies explicitement sur le **dossier** cible lui-même, garantissant une lecture immédiate et sans équivoque de la sécurité dans l'arborescence.
 
+
+### 12. Système de Tracking & Persistance (v3.3)
+
+Le SharePoint Builder intègre désormais un système complet de traçabilité des déploiements ("Tracking").
+
+- **Objectif** : Historiser chaque création de dossier et permettre la maintenance future (Renommage, Drift Detection).
+- **Fonctionnement** :
+    - Chaque dossier déployé est marqué avec un **GUID Unique** dans son Property Bag (`_AppDeploymentId`).
+    - Une liste cachée **`App_DeploymentHistory`** est créée sur chaque site cible.
+    - Cette liste stocke un **Snapshot Complet** du déploiement :
+        - Le JSON de la structure (Arborescence).
+        - Le JSON du formulaire (Structure des champs).
+        - Les valeurs saisies par l'utilisateur.
+- **Bénéfice** : Permet de reconstruire intégralement le contexte d'un dossier sans dépendre de la base de données locale de l'application.
+
+> Pour plus de détails techniques, consulter : [Docs/SharePointBuilder-TrackingSystem.md](Docs/SharePointBuilder-TrackingSystem.md)
+
 ---
+
 
 ## 📝 Exemple de Scénario Complet
 

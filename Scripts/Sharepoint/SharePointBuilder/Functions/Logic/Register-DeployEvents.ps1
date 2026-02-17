@@ -247,6 +247,30 @@ function Register-DeployEvents {
                 $rootMetadata.Clear()
             }
 
+            # --- TRACKING INFO (NOUVEAU) ---
+            $trackTemplateId = if ($Ctrl.CbTemplates.SelectedItem) { $Ctrl.CbTemplates.SelectedItem.TemplateId } else { "UNKNOWN" }
+            $trackRuleId = if ($Ctrl.CbFolderTemplates.SelectedItem) { $Ctrl.CbFolderTemplates.SelectedItem.RuleId } else { "" }
+            # Capture du JSON de la règle (Formulaire) pour reconstruction future
+            $trackRuleJson = if ($Ctrl.CbFolderTemplates.SelectedItem) { $Ctrl.CbFolderTemplates.SelectedItem.DefinitionJson } else { "" }
+            
+            $trackConfig = if ($Ctrl.CbDeployConfigs.SelectedItem) { $Ctrl.CbDeployConfigs.SelectedItem.ConfigName } else { "" }
+            
+            $trackUser = "System (App)"
+            if ($Global:AppAzureActiveUser -and $Global:AppAzureActiveUser.DisplayName) {
+                $trackUser = $Global:AppAzureActiveUser.DisplayName
+            }
+            elseif ($env:USERNAME) { $trackUser = $env:USERNAME }
+            
+            $trackingInfo = @{
+                TemplateId         = $trackTemplateId
+                TemplateVersion    = [DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss")
+                ConfigName         = $trackConfig
+                NamingRuleId       = $trackRuleId
+                FormDefinitionJson = $trackRuleJson # Schema du formulaire
+                DeployedBy         = $trackUser
+                FormValues         = $formValues
+            }
+
             # --- CONFIGURATION JOB (LOCALISATION) ---
             $lang = if ($Global:AppConfig.defaultLanguage) { $Global:AppConfig.defaultLanguage } else { "fr-FR" }
             $locFile = Join-Path $Global:ProjectRoot "Scripts\Sharepoint\SharePointBuilder\Localization\$lang.json"
@@ -264,6 +288,7 @@ function Register-DeployEvents {
                 LocFilePath   = $locFile
                 FormValues    = $formValues
                 RootMetadata  = $rootMetadata
+                TrackingInfo  = $trackingInfo
             }
 
             $job = Start-Job -ScriptBlock {
@@ -290,7 +315,8 @@ function Register-DeployEvents {
                         -TenantName $ArgsMap.Tenant `
                         -TargetFolderUrl $ArgsMap.LibRelUrl `
                         -FormValues $ArgsMap.FormValues `
-                        -RootMetadata $ArgsMap.RootMetadata
+                        -RootMetadata $ArgsMap.RootMetadata `
+                        -TrackingInfo $ArgsMap.TrackingInfo
                 }
                 catch { throw $_ }
             } -ArgumentList $jobArgs

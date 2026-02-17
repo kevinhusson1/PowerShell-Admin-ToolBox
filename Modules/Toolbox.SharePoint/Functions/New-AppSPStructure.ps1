@@ -62,7 +62,8 @@ function New-AppSPStructure {
         [Parameter(Mandatory)] [string]$TenantName,
         [Parameter(Mandatory = $false)] [string]$TargetFolderUrl,
         [Parameter(Mandatory = $false)] [hashtable]$FormValues,
-        [Parameter(Mandatory = $false)] [hashtable]$RootMetadata
+        [Parameter(Mandatory = $false)] [hashtable]$RootMetadata,
+        [Parameter(Mandatory = $false)] [hashtable]$TrackingInfo
     )
 
     $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new() }
@@ -668,6 +669,57 @@ function New-AppSPStructure {
                     }
                     catch { Log "⚠️ Erreur application métadonnées racine : $($_.Exception.Message)" "WARNING" }
                 }
+
+                # =========================================================================================
+                # PERSISTENCE & TRACKING (NOUVEAU)
+                # =========================================================================================
+                if ($TrackingInfo -and $TrackingInfo.Count -gt 0) {
+                    Log "Initialization du suivi de déploiement (Tracking)..." "DEBUG"
+                    try {
+                        # 1. Provisionning de la liste cachée (Une fois par site)
+                        # On charge le helper à la volée si besoin (normalement importé via Module)
+                        if (Get-Command "New-AppSPTrackingList" -ErrorAction SilentlyContinue) {
+                            New-AppSPTrackingList -Connection $conn | Out-Null
+                        }
+
+                        # 2. Génération Deployment ID
+                        $deployId = [Guid]::NewGuid().ToString()
+                        
+                        # 3. Marquage du Dossier (Property Bag)
+                        # Fix: EnsureProperties n'est pas toujours dispo sur l'objet Folder wrapper.
+                        # On utilise CSOM Standard.
+                        
+                        $ctx = $rootFolder.Context
+                        $ctx.Load($rootFolder.Properties)
+                        $ctx.ExecuteQuery()
+                        
+                        $rootFolder.Properties["_AppDeploymentId"] = $deployId
+                        $rootFolder.Update()
+                        $ctx.ExecuteQuery()
+                        
+                        Log "Dossier marqué avec ID: $deployId" "DEBUG"
+
+                        # 4. Enregistrement Historique dans la Liste
+                        $itemValues = @{
+                            "Title"              = $deployId
+                            "TargetUrl"          = $startPath
+                            "TemplateId"         = $TrackingInfo["TemplateId"]
+                            "TemplateVersion"    = $TrackingInfo["TemplateVersion"]
+                            "NamingRuleId"       = $TrackingInfo["NamingRuleId"]
+                            "ConfigName"         = $TrackingInfo["ConfigName"]
+                            "DeployedBy"         = $TrackingInfo["DeployedBy"]
+                            "TemplateJson"       = $StructureJson
+                            "FormValuesJson"     = ($FormValues | ConvertTo-Json -Depth 5 -Compress)
+                            "FormDefinitionJson" = $TrackingInfo["FormDefinitionJson"] # Schema
+                        }
+                        Add-PnPListItem -List "App_DeploymentHistory" -Values $itemValues -Connection $conn -ErrorAction Stop | Out-Null
+                        Log "Historique de déploiement archivé dans 'App_DeploymentHistory'." "SUCCESS"
+                    }
+                    catch {
+                        Log "⚠️ Erreur Tracking : $($_.Exception.Message)" "WARNING"
+                    }
+                }
+
             }
             catch {
                 Err "Erreur racine : $($_.Exception.Message)"
