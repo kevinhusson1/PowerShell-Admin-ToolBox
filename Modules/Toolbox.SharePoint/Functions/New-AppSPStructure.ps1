@@ -711,7 +711,7 @@ function New-AppSPStructure {
                             "TemplateJson"       = $StructureJson
                             "FormValuesJson"     = ($FormValues | ConvertTo-Json -Depth 5 -Compress)
                             "FormDefinitionJson" = $TrackingInfo["FormDefinitionJson"] # Schema
-                            "DeployedDate"       = (Get-Date)
+                            "DeployedDate"       = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
                         }
                         Add-PnPListItem -List "App_DeploymentHistory" -Values $itemValues -Connection $conn -ErrorAction Stop | Out-Null
                         Log "Historique de déploiement archivé dans 'App_DeploymentHistory'." "SUCCESS"

@@ -22,7 +22,7 @@ function Initialize-RenamerLogic {
     if (Test-Path $logicPath) {
         Get-ChildItem -Path $logicPath -Filter "*.ps1" -Recurse | ForEach-Object { . $_.FullName }
     }
-
+    
     # 2. Helpers Globaux
     # Helper pour la recherche récursive de Tag (Compatible String & Hashtable)
     function Global:Find-ControlRecursive {
@@ -70,12 +70,21 @@ function Initialize-RenamerLogic {
     # 4. Initialisation Contrôles & Events
     $Ctrl = Get-RenamerControls -Window $Window
     
-    # Masquer panels par défaut
-    $Ctrl.FormPanel.Visibility = "Collapsed"
+    # [FIX] Global Reference for Timer/Jobs scope safety
+    $Global:RenamerV2Ctrl = $Ctrl
     
-    # Enregistrement des événements
-    Register-RenamerConfigEvents -Ctrl $Ctrl -Window $Window
-    Register-RenamerPickerEvents -Ctrl $Ctrl -Window $Window
-    Register-RenamerFormEvents -Ctrl $Ctrl -Window $Window
-    Register-RenamerActionEvents -Ctrl $Ctrl -Window $Window
+    # Verification Controls Critiques
+    if (-not $Ctrl.BtnAnalyze) {
+        [System.Windows.MessageBox]::Show("INIT: BtnAnalyze introuvable. Vérifiez le XAML.", "Erreur Critique")
+    }
+
+    # Enregistrement des événements (V2 Dashboard)
+    if (Get-Command Register-RenamerDashboard -ErrorAction SilentlyContinue) {
+        Register-RenamerDashboard -Ctrl $Ctrl -Window $Window
+    }
+    else {
+        # Fallback / Debug
+        [System.Windows.MessageBox]::Show("ERREUR: Commande Register-RenamerDashboard introuvable !", "Erreur Fatale")
+        Write-Warning "Register-RenamerDashboard introuvable."
+    }
 }

@@ -178,6 +178,11 @@ try {
         Disconnect-AppAzureUser
         $nullIdentity = @{ Connected = $false }
         Set-AppWindowIdentity -Window $window -UserSession $nullIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
+        
+        # [CORRECTION] Mise à jour UI Renamer
+        if ($Global:RenamerLoadAction) { 
+            & $Global:RenamerLoadAction -UserAuth $nullIdentity
+        }
     }
 
     # Application Visuelle (Module UI)
