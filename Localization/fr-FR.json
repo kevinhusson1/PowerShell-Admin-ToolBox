@@ -25,9 +25,9 @@
     "stopScriptFailure2": "Il s'est peut-être déjà terminé.",
     "deleteSessionFile1": "Fichier de session",
     "deleteSessionFile2": "nettoyé.",
-    "bringToFrontButtonFail1" : "La fenêtre du script",
-    "bringToFrontButtonFail2" : "n'est pas encore prête ou est invisible.",
-    "bringToFrontButtonError" : "Impossible de trouver le processus pour le script"
+    "bringToFrontButtonFail1": "La fenêtre du script",
+    "bringToFrontButtonFail2": "n'est pas encore prête ou est invisible.",
+    "bringToFrontButtonError": "Impossible de trouver le processus pour le script"
   },
   "messages": {
     "settings_saved_success": "Les paramètres ont été enregistrés avec succès dans la base de données.",
@@ -44,9 +44,9 @@
     "settings_saved_log": "Les paramètres de l'application ont été sauvegardés.",
     "script_list_refreshed_1": "Liste des scripts mise à jour.",
     "script_list_refreshed_2": "scripts maintenant visibles.",
-    "timerPIDclose1" : "Le script",
-    "timerPIDclose2" : "a été détecté comme terminé.",
-    "timerProgressStop" : "[TIMER] Le suivi de progression est arrêté (plus aucun script à surveiller)."
+    "timerPIDclose1": "Le script",
+    "timerPIDclose2": "a été détecté comme terminé.",
+    "timerProgressStop": "[TIMER] Le suivi de progression est arrêté (plus aucun script à surveiller)."
   },
   "confirmation": {
     "title": "Confirmation",
@@ -174,13 +174,13 @@
     "progressUpdate": "Chargement en cours..."
   },
   "modules": {
-     "azure": {
+    "azure": {
       "auth_error": "Échec de l'authentification utilisateur",
       "disconnect_error": "Erreur lors de la déconnexion",
       "get_groups_error": "Impossible de récupérer les groupes Azure de l'utilisateur",
-      "get_groups_success1": "Récupération de", 
+      "get_groups_success1": "Récupération de",
       "get_groups_success2": "groupes Azure AD pour l'utilisateur actuel.",
-      "get_groups_failure": "L'utilisateur n'est membre d'aucun groupe ou la réponse est vide." 
+      "get_groups_failure": "L'utilisateur n'est membre d'aucun groupe ou la réponse est vide."
     },
     "core": {
       "scripts_folder_not_found": "Le dossier des scripts est introuvable",
@@ -203,7 +203,7 @@
       "int_parse_error_2": "en entier pour la clé",
       "bool_parse_error_1": "Impossible de convertir la valeur",
       "bool_parse_error_2": "en booléen pour la clé",
-      
+
       "db_not_found": "Base de données introuvable",
       "db_creating": "Création et initialisation du schéma complet.",
       "schema_init_success": "Schéma de base de données initialisé.",
@@ -214,12 +214,12 @@
       "table_created_2": "créée avec succès.",
       "schema_check_done": "Vérification du schéma terminée.",
       "schema_error": "Impossible de créer ou de valider le schéma de la base de données",
-      
+
       "set_setting_error": "Erreur lors de la sauvegarde du paramètre",
       "setting_saved_1": "Paramètre",
       "setting_saved_2": "sauvegardé avec la valeur",
       "setting_saved_3": "Type",
-      
+
       "lock_check_1": "Vérification du verrou pour le script",
       "lock_check_2": "Limite de concurrence",
       "lock_check_3": "Instances actuellement en cours pour le script",
@@ -227,7 +227,7 @@
       "lock_limit_reached_2": "pour le script",
       "lock_limit_reached_3": "a été atteint.",
       "lock_check_error": "Erreur lors de la vérification du verrou pour le script",
-      
+
       "lock_release_error": "Impossible de libérer la session pour le PID",
       "lock_released_1": "Session pour le PID",
       "lock_released_2": "libérée de la base de données."
@@ -239,14 +239,14 @@
       "manifest_incomplete_1": "Le manifeste",
       "manifest_incomplete_2": "est incomplet (id, scriptFile, ou name manquant) et sera ignoré.",
       "scan_filter_error": "Erreur lors du scan ou du filtrage des scripts",
-      
+
       "admin_mode_detected": "Mode Administrateur détecté. Affichage des paramètres complets.",
       "non_admin_mode_detected": "Mode Non-Administrateur détecté. Masquage des paramètres.",
-            
+
       "stop_process_error": "Impossible d'arrêter le processus",
       "stop_attempt_1": "Tentative d'arrêt forcé du processus",
       "stop_attempt_2": "pour le script",
-      
+
       "admin_check_start": "--- Début de la vérification des droits d'administration ---",
       "admin_check_system_mode": "Aucun utilisateur Azure connecté (mode Système). Accès Admin accordé par défaut.",
       "admin_check_user_connected": "Utilisateur Azure connecté",
@@ -255,10 +255,10 @@
       "admin_check_success": "CORRESPONDANCE TROUVÉE ! L'utilisateur est membre du groupe admin. Accès accordé.",
       "admin_check_failure": "Aucune correspondance trouvée. L'utilisateur n'est pas membre du groupe admin. Accès refusé.",
       "admin_check_error": "Erreur lors de la vérification des droits d'administration",
-      
+
       "auth_tooltip_connected": "Connecté en tant que",
       "auth_tooltip_system": "Connecté en tant que : Système",
-      
+
       "updating_script_list_ui_1": "Mise à jour de l'interface avec",
       "updating_script_list_ui_2": "scripts."
     },
@@ -270,12 +270,15 @@
 
       "key_not_found": "Clé de traduction introuvable",
       "key_lookup_error": "Erreur lors de la recherche de la clé",
-      
+
       "lang_file_not_found_1": "Fichier de langue",
       "lang_file_not_found_2": "introuvable. Le système de traduction risque de ne pas fonctionner correctement.",
       "lang_file_loaded_1": "Traduction",
       "lang_file_loaded_2": "chargée avec succès.",
-      "lang_file_error": "Erreur lors du chargement du fichier de langue"      
+      "lang_file_error": "Erreur lors du chargement du fichier de langue"
+    },
+    "sp_builder": {
+      "auth_not_connected": "Non connecté"
     },
     "ui": {
       "xaml_file_not_found": "Le fichier XAML est introuvable",
@@ -291,7 +294,7 @@
       "style_file_not_found_2": "est introuvable.",
       "component_init_error": "Une erreur est survenue lors de l'initialisation des composants UI",
       "rtb_target_not_found": "Cible de log RichTextBox introuvable. Le log UI sera ignoré.",
-      "progressUpdate": "Chargement en cours..." 
+      "progressUpdate": "Chargement en cours..."
     }
   }
 }

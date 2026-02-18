@@ -13,6 +13,7 @@ function Get-AppProjectStatus {
         DeploymentId = $null
         HistoryItem  = $null
         FolderItem   = $null
+        FolderName   = $null
         Drift        = $null
         Error        = $null
     }
@@ -58,6 +59,7 @@ function Get-AppProjectStatus {
         $ctx.ExecuteQuery()
 
         $status.FolderItem = $folder.ListItemAllFields
+        $status.FolderName = $folder.Name
         
         if ($folder.Properties.FieldValues.ContainsKey("_AppDeploymentId")) {
             $guid = $folder.Properties["_AppDeploymentId"]
@@ -128,6 +130,17 @@ function Get-AppProjectStatus {
                     }
                     else {
                         Write-Output "[LOG] Structure conforme."
+                    }
+                    
+                    if ($status.Drift.AuditLog) {
+                        Write-Output "[LOG] --- DÉTAIL ANALYSE STRUCTURE ---"
+                        foreach ($log in $status.Drift.AuditLog) {
+                            $icon = if ($log -match "\[OK\]") { "✅" } elseif ($log -match "\[MISSING\]|\[DRIFT\]") { "❌" } else { "ℹ️" }
+                            # Clean up internal status prefix for cleaner log
+                            $cleanLog = $log -replace "^\[.+?\] ", ""
+                            Write-Output "[LOG] $icon $cleanLog"
+                        }
+                        Write-Output "[LOG] --------------------------------"
                     }
                 }
                 else {

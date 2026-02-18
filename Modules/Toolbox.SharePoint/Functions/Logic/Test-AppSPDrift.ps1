@@ -11,7 +11,12 @@ function Test-AppSPDrift {
         StructureStatus = "Unknown" # OK, DRIFT, IGNORED
         MetaDrifts      = @()
         StructureMisses = @()
+        DebugTrace      = @()
+        AuditLog        = [System.Collections.Generic.List[string]]::new()
     }
+
+    # Helper to add audit check
+    function Add-Audit { param($Status, $Msg) $result.AuditLog.Add("[$Status] $Msg") }
 
     # =========================================================================
     # 1. METADATA CHECK
@@ -83,12 +88,20 @@ function Test-AppSPDrift {
     }
 
     # =========================================================================
-    # 2. STRUCTURE CHECK
+    # 2. STRUCTURE CHECK (Verbose)
     # =========================================================================
     try {
         if (-not [string]::IsNullOrWhiteSpace($TemplateJson)) {
             $structure = $TemplateJson | ConvertFrom-Json
-            $misses = @()
+            
+            # [FIX] Prepare Form Values for Dynamic Tag Resolution
+            $formValuesHash = @{}
+            if (-not [string]::IsNullOrWhiteSpace($FormValuesJson)) {
+                $formValuesHash = $FormValuesJson | ConvertFrom-Json -AsHashtable
+            }
+
+            # [FIX] Use List for Reference-based modification across function scope
+            $misses = [System.Collections.Generic.List[string]]::new()
 
             # Helper for Recursion
             function Test-FolderRecursively {
@@ -100,60 +113,127 @@ function Test-AppSPDrift {
                 $nodeList = if ($Nodes -is [System.Array]) { $Nodes } else { @($Nodes) }
 
                 foreach ($node in $nodeList) {
-                    # We only check Folders and Publications (that are folders), ignoring Links/Files for structure drift for now
-                    if ($node.Type -eq "Link" -or $node.Type -eq "InternalLink" -or $node.Type -eq "File") { continue }
+                    # [Enable] Check everything (Folders, Links, Files)
                     
                     if (-not [string]::IsNullOrWhiteSpace($node.Name)) {
-                        $expectedPath = "$BaseUrl/$($node.Name)"
+                        # Ensure correct path formation
+                        $expectedPath = "$($BaseUrl.TrimEnd('/'))/$($node.Name)"
                         
-                        # Check Existence
-                        # We use Get-PnPFolder to check existence. Resolve-PnPFolder can be tricky with permissions.
-                        # Actually Resolve-PnPFolder is good for checking existence.
+                        $itemFound = $false
+                        $actualItem = $null
+                        $typeLabel = $node.Type; if (-not $typeLabel) { $typeLabel = "Dossier" }
+
                         try {
-                            $null = Resolve-PnPFolder -SiteRelativePath $expectedPath -Connection $Connection -ErrorAction Stop
+                            # Check Existence check based on Type
+                            if ($node.Type -eq "Link" -or $node.Type -eq "InternalLink" -or $node.Type -eq "Publication") {
+                                # For links & publications, we expect a .url file
+                                $linkName = $node.Name
+                                if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
+                                $expectedPath = "$($BaseUrl.TrimEnd('/'))/$linkName"
+                                
+                                # [FIX] Explicit Connection
+                                $actualItem = Get-PnPFile -Url $expectedPath -AsListItem -Connection $Connection -ErrorAction Stop
+                                $itemFound = $true
+                                Add-Audit "OK" "$typeLabel trouvé : $linkName"
+                            }
+                            elseif ($node.Type -eq "File") {
+                                # Generic File
+                                $actualItem = Get-PnPFile -Url $expectedPath -AsListItem -Connection $Connection -ErrorAction Stop
+                                $itemFound = $true
+                                Add-Audit "OK" "Fichier trouvé : $($node.Name)"
+                            }
+                            else {
+                                # Folder (Default)
+                                # [FIX] Explicit Connection
+                                $f = Get-PnPFolder -Url $expectedPath -Includes ListItemAllFields, Properties -Connection $Connection -ErrorAction Stop
+                                $actualItem = $f.ListItemAllFields
+                                $itemFound = $true
+                                Add-Audit "OK" "Dossier trouvé : $($node.Name)"
+                            }
                             
-                            # Recurse
+                            # [RECURSIVE META CHECK]
+                            if ($itemFound -and $node.Tags) {
+                                # Convert Node Tags to Hashtable for comparison
+                                $expectedTags = @{}
+                                foreach ($t in $node.Tags) { 
+                                    # [FIX] Dynamic Tag Resolution
+                                    if ($t.IsDynamic -eq $true -and $t.SourceVar -and $formValuesHash.ContainsKey($t.SourceVar)) {
+                                        $expectedTags[$t.Name] = $formValuesHash[$t.SourceVar]
+                                    }
+                                    elseif ($t.Value) { $expectedTags[$t.Name] = $t.Value }
+                                    elseif ($t.Term) { $expectedTags[$t.Name] = $t.Term }
+                                }
+
+                                foreach ($tagName in $expectedTags.Keys) {
+                                    $expVal = $expectedTags[$tagName]
+                                    if ($tagName -eq "Ref" -or $tagName -eq "RefDate") { continue } # Skip dynamic technical tags if needed
+
+                                    try {
+                                        $actVal = $actualItem[$tagName]
+                                        # Simple check (Stringify)
+                                        $actStr = if ($actVal -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) { $actVal.Label } else { "$actVal" }
+                                        
+                                        if ($actStr -ne $expVal) {
+                                            $msg = "Métadonnée '$tagName' incorrecte sur '$($node.Name)' : '$expVal' vs '$actStr'"
+                                            $misses.Add($msg)
+                                            Add-Audit "DRIFT" $msg
+                                        }
+                                        else {
+                                            Add-Audit "OK" "  > Tag '$tagName' conforme ($actStr)"
+                                        }
+                                    }
+                                    catch {
+                                        # Field might be missing
+                                    }
+                                }
+                            }
+
+                            # Recurse (Folders only)
                             if ($node.Folders) {
                                 Test-FolderRecursively -BaseUrl $expectedPath -Nodes $node.Folders
                             }
                         }
                         catch {
-                            # Folder Missing
-                            $misses += "Dossier manquant : $expectedPath"
+                            # Missing
+                            $msg = "Manquant : '$($node.Name)' ($typeLabel)" # Simplified message for UI
+                            $misses.Add($msg)
+                            Add-Audit "MISSING" "$msg at $expectedPath ($($_.Exception.Message))"
                         }
                     }
                 }
             }
 
-            # Get Project Root URL
-            # FolderItem is a ListItem, we need the Folder URL.
-            # Usually FolderItem["FileRef"] gives the ServerRelativeUrl.
+            # Get Project Root URL (ServerRelative)
             $rootUrl = $FolderItem["FileRef"]
+            Add-Audit "INFO" "Début analyse structure depuis : $rootUrl"
             
             # Start Recursion
             if ($structure.Folders) {
                 Test-FolderRecursively -BaseUrl $rootUrl -Nodes $structure.Folders
             }
-            # Handle case where structure is just a single object without "Folders" root array (unlikely but possible)
             elseif ($structure.Name) {
                 Test-FolderRecursively -BaseUrl $rootUrl -Nodes $structure
             }
 
             if ($misses.Count -eq 0) {
                 $result.StructureStatus = "OK"
+                Add-Audit "SUCCESS" "Structure entièrement conforme."
             }
             else {
                 $result.StructureStatus = "DRIFT"
                 $result.StructureMisses = $misses
+                Add-Audit "WARNING" "Structure non-conforme ($($misses.Count) erreurs)."
             }
         }
         else {
             $result.StructureStatus = "NO_REF"
+            Add-Audit "WARNING" "Pas de TemplateJson disponible pour l'analyse structurelle."
         }
     }
     catch {
         Write-Warning "[Drift] Structure Check Failed: $_"
         $result.StructureStatus = "ERROR"
+        Add-Audit "ERROR" "Crash analyse structure : $_"
     }
 
     return $result

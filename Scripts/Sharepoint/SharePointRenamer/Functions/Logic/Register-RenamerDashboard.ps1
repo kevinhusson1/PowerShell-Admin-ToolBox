@@ -156,7 +156,8 @@ function Register-RenamerDashboard {
                                 else {
                                     # Title Logic
                                     $title = "Dossier Inconnu"
-                                    if ($res.FolderItem) {
+                                    if ($res.FolderName) { $title = $res.FolderName }
+                                    elseif ($res.FolderItem) {
                                         if ($res.FolderItem.Title) { $title = $res.FolderItem.Title }
                                         elseif ($res.FolderItem.FileLeafRef) { $title = $res.FolderItem.FileLeafRef }
                                     }
@@ -165,104 +166,195 @@ function Register-RenamerDashboard {
                                 
                                     # Tracking Logic
                                     if ($res.IsTracked) {
-                                        $ver = if ($res.HistoryItem) { $res.HistoryItem.TemplateVersion } else { "?" }
-                                    
-                                        if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Text = "SUIVI (v$ver)" }
-                                        if ($TickCtrl.BadgeStatus) { $TickCtrl.BadgeStatus.Background = [System.Windows.Media.Brushes]::MintCream }
-                                    
-                                        if ($TickCtrl.TextConfig) { $TickCtrl.TextConfig.Text = "Config: $($res.HistoryItem.ConfigName)" }
-                                        if ($TickCtrl.KpiVersion) { $TickCtrl.KpiVersion.Text = "v$ver" }
-                                    
-                                    
-                                        # [DRIFT] Populate KPI with Real Analysis
-                                        if ($res.Drift) {
-                                            # STRUCTURE
-                                            if ($res.Drift.StructureStatus -eq "OK") {
-                                                $TickCtrl.KpiStructure.Text = "Conforme"
-                                                $TickCtrl.KpiStructure.Foreground = [System.Windows.Media.Brushes]::Green
-                                            }
-                                            else {
-                                                $TickCtrl.KpiStructure.Text = $res.Drift.StructureStatus
-                                                $TickCtrl.KpiStructure.Foreground = [System.Windows.Media.Brushes]::Orange
+                                        try {
+                                            $jsonSafe = $null
+                                            if ($res.HistoryItem.FormValuesJson) {
+                                                $jsonSafe = $res.HistoryItem.FormValuesJson | ConvertFrom-Json
                                             }
 
-                                            # META
-                                            if ($res.Drift.MetaStatus -eq "OK") {
-                                                $TickCtrl.KpiMeta.Text = "Sync"
-                                                $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::Green
-                                            } 
-                                            elseif ($res.Drift.MetaStatus -eq "DRIFT") {
-                                                $TickCtrl.KpiMeta.Text = "Différence"
-                                                $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::OrangeRed
-                                                $TickCtrl.KpiMeta.ToolTip = ($res.Drift.MetaDrifts -join "`n")
+                                            # --- 1. HEADER (Title Drift) ---
+                                            # Check PreviewText vs FolderName
+                                            if ($jsonSafe -and $jsonSafe.PreviewText) {
+                                                $expectedName = $jsonSafe.PreviewText
+                                                $currentName = $res.FolderName
+                                                
+                                                # Normalize for comparison
+                                                if ($expectedName -ne $currentName) {
+                                                    $TickCtrl.ProjectTitle.Text = "$currentName"
+                                                    $TickCtrl.ProjectTitle.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                    # Add specific warning indicating the expected name
+                                                    $TickCtrl.ProjectUrl.Text = "⚠️ Nom attendu : $expectedName`n$($resolveInfo.ServerRelativeUrl)"
+                                                    $TickCtrl.ProjectUrl.Foreground = [System.Windows.Media.Brushes]::Red
+                                                }
                                             }
-                                            else {
-                                                $TickCtrl.KpiMeta.Text = $res.Drift.MetaStatus
-                                                $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::Gray
-                                            }
-                                        }
-                                        else {
-                                            if ($TickCtrl.KpiStructure) { $TickCtrl.KpiStructure.Text = "?" }
-                                            if ($TickCtrl.KpiMeta) { $TickCtrl.KpiMeta.Text = "?" }
-                                        }
 
-                                        if ($TickCtrl.MetaGrid) { $TickCtrl.MetaGrid.Children.Clear() }
-                                    
-                                        if ($res.HistoryItem.FormValuesJson) {
-                                            try {
-                                                $formVals = $res.HistoryItem.FormValuesJson | ConvertFrom-Json
-                                                $row = 0
-                                                $driftKeys = @{}
-                                                if ($res.Drift -and $res.Drift.MetaDrifts) {
-                                                    foreach ($d in $res.Drift.MetaDrifts) {
-                                                        # format: "Key : Expected 'X' but found 'Y'"
-                                                        if ($d -match "^(.+?) :") {
-                                                            $k = $Matches[1].Trim()
-                                                            $driftKeys[$k] = $d
+                                            $ver = if ($res.HistoryItem) { $res.HistoryItem.TemplateVersion } else { "?" }
+                                        
+                                            if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Text = "SUIVI (v$ver)" }
+                                            if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Foreground = [System.Windows.Media.Brushes]::Green }
+                                        
+                                            if ($TickCtrl.TextConfig) { $TickCtrl.TextConfig.Text = "Config: $($res.HistoryItem.ConfigName)" }
+                                            if ($TickCtrl.TextDate) { $TickCtrl.TextDate.Text = "Déployé le: $($res.HistoryItem.DeployedDate)" }
+                                        
+                                            # [DRIFT] Populate KPI
+                                            if ($res.Drift) {
+                                                # STRUCTURE STATUS
+                                                if ($res.Drift.StructureStatus -eq "OK") {
+                                                    $TickCtrl.KpiStructure.Text = "Conforme"
+                                                    $TickCtrl.KpiStructure.Foreground = [System.Windows.Media.Brushes]::Green
+                                                }
+                                                else {
+                                                    $count = if ($res.Drift.StructureMisses) { $res.Drift.StructureMisses.Count } else { 0 }
+                                                    $TickCtrl.KpiStructure.Text = "Non-conforme ($count)"
+                                                    $TickCtrl.KpiStructure.Foreground = [System.Windows.Media.Brushes]::Red
+                                                }
+
+                                                # META STATUS
+                                                if ($res.Drift.MetaStatus -eq "OK") {
+                                                    $TickCtrl.KpiMeta.Text = "Sync"
+                                                    $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::Green
+                                                } 
+                                                elseif ($res.Drift.MetaStatus -eq "DRIFT") {
+                                                    $count = if ($res.Drift.MetaDrifts) { $res.Drift.MetaDrifts.Count } else { 0 }
+                                                    $TickCtrl.KpiMeta.Text = "Divergence ($count)"
+                                                    $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                }
+                                                else {
+                                                    $TickCtrl.KpiMeta.Text = $res.Drift.MetaStatus
+                                                    $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::Gray
+                                                }
+                                            }
+
+                                            # --- POPULATE UI GRIDS ---
+                                            
+                                            # 1. METADATA GRID (Right Column)
+                                            if ($TickCtrl.MetaGrid) { 
+                                                $TickCtrl.MetaGrid.Children.Clear() 
+                                            
+                                                if ($jsonSafe) {
+                                                    $row = 0
+                                                    $driftData = @{}
+                                                    
+                                                    # Parse Drifts to find Expected Values
+                                                    if ($res.Drift -and $res.Drift.MetaDrifts) {
+                                                        foreach ($d in $res.Drift.MetaDrifts) {
+                                                            # Format: "Key : Expected 'X' but found 'Y'"
+                                                            if ($d -match "^(.+?) : Expected '(.+?)' but found '(.+?)'") {
+                                                                $k = $Matches[1].Trim()
+                                                                $exp = $Matches[2]
+                                                                $fnd = $Matches[3]
+                                                                $driftData[$k] = @{ Expected = $exp; Found = $fnd }
+                                                            }
+                                                            elseif ($d -match "^(.+?) :") {
+                                                                # Fallback
+                                                                $k = $Matches[1].Trim()
+                                                                $driftData[$k] = @{ Expected = "N/A"; Found = "Erreur" }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    foreach ($prop in $jsonSafe.PSObject.Properties) {
+                                                        $TickCtrl.MetaGrid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{Height = "Auto" }))
+                                                        
+                                                        $lbl = New-Object System.Windows.Controls.TextBlock
+                                                        $lbl.Text = "$($prop.Name):"
+                                                        $lbl.FontWeight = "SemiBold"
+                                                        $lbl.Foreground = [System.Windows.Media.Brushes]::Gray
+                                                        $lbl.Margin = "0,0,10,5"
+                                                        [System.Windows.Controls.Grid]::SetRow($lbl, $row)
+                                                        [System.Windows.Controls.Grid]::SetColumn($lbl, 0)
+                                                        
+                                                        $val = New-Object System.Windows.Controls.TextBlock
+                                                        $val.TextWrapping = "Wrap"
+                                                        [System.Windows.Controls.Grid]::SetRow($val, $row)
+                                                        [System.Windows.Controls.Grid]::SetColumn($val, 1)
+
+                                                        # Highlight Drift
+                                                        if ($driftData.ContainsKey($prop.Name)) {
+                                                            $dInfo = $driftData[$prop.Name]
+                                                            
+                                                            # Display: "TEST test (Attendu: TEST)"
+                                                            # Use Run for styling mixed content
+                                                            $runFound = New-Object System.Windows.Documents.Run
+                                                            $runFound.Text = $dInfo.Found + " "
+                                                            $runFound.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                            $runFound.FontWeight = "Bold"
+                                                            
+                                                            $runExp = New-Object System.Windows.Documents.Run
+                                                            $runExp.Text = "(Attendu: $($dInfo.Expected))"
+                                                            $runExp.Foreground = [System.Windows.Media.Brushes]::Gray
+                                                            $runExp.FontSize = 10
+                                                            $runExp.FontStyle = "Italic"
+                                                            
+                                                            $val.Inlines.Add($runFound)
+                                                            $val.Inlines.Add($runExp)
+                                                            
+                                                            $lbl.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                        }
+                                                        else {
+                                                            $val.Text = $prop.Value
+                                                        }
+
+                                                        $TickCtrl.MetaGrid.Children.Add($lbl)
+                                                        $TickCtrl.MetaGrid.Children.Add($val)
+                                                        $row++
+                                                    }
+                                                }
+                                            }
+
+                                            # 2. STRUCTURE GRID (Left Column)
+                                            # Using StackPanel (Children.Add)
+                                            if ($TickCtrl.StructureGrid) { 
+                                                $TickCtrl.StructureGrid.Children.Clear() 
+                                            
+                                                if ($res.Drift) {
+                                                    if ($res.Drift.StructureStatus -eq "OK") {
+                                                        $okTxt = New-Object System.Windows.Controls.TextBlock
+                                                        $okTxt.Text = "✅ Structure Complète"
+                                                        $okTxt.Foreground = [System.Windows.Media.Brushes]::Green
+                                                        $TickCtrl.StructureGrid.Children.Add($okTxt)
+                                                    }
+                                                    elseif ($res.Drift.StructureMisses) {
+                                                        if ($Log) { & $Log "Populating StructureGrid with $($res.Drift.StructureMisses.Count) missing items." "Debug" }
+                                                        $head = New-Object System.Windows.Controls.TextBlock
+                                                        $head.Text = "Eléments manquants ou incorrects :"
+                                                        $head.FontWeight = "Bold"
+                                                        $head.Foreground = [System.Windows.Media.Brushes]::Red
+                                                        $head.Margin = "0,0,0,5"
+                                                        $TickCtrl.StructureGrid.Children.Add($head)
+
+                                                        foreach ($miss in $res.Drift.StructureMisses) {
+                                                            # $miss already contains "❌ ..." or similar text
+                                                            if ($miss -notmatch "^❌") { $miss = "❌ $miss" }
+                                                            if ($Log) { & $Log "Adding missing structure item: $miss" "Debug" }
+
+                                                            $errTxt = New-Object System.Windows.Controls.TextBlock
+                                                            $errTxt.Text = $miss
+                                                            $errTxt.Foreground = [System.Windows.Media.Brushes]::Red
+                                                            $errTxt.TextWrapping = "Wrap"
+                                                            $errTxt.Margin = "0,2,0,5"
+                                                            $TickCtrl.StructureGrid.Children.Add($errTxt)
                                                         }
                                                     }
                                                 }
-
-                                                foreach ($prop in $formVals.PSObject.Properties) {
-                                                    $TickCtrl.MetaGrid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{Height = "Auto" }))
-                                                    
-                                                    $lbl = New-Object System.Windows.Controls.TextBlock
-                                                    $lbl.Text = "$($prop.Name):"
-                                                    $lbl.FontWeight = "SemiBold"
-                                                    $lbl.Foreground = [System.Windows.Media.Brushes]::Gray
-                                                    $lbl.Margin = "0,0,10,5"
-                                                    [System.Windows.Controls.Grid]::SetRow($lbl, $row)
-                                                    [System.Windows.Controls.Grid]::SetColumn($lbl, 0)
-                                                    
-                                                    $val = New-Object System.Windows.Controls.TextBlock
-                                                    $val.Text = $prop.Value
-                                                    [System.Windows.Controls.Grid]::SetRow($val, $row)
-                                                    [System.Windows.Controls.Grid]::SetColumn($val, 1)
-
-                                                    # Highlight Drift
-                                                    if ($driftKeys.ContainsKey($prop.Name)) {
-                                                        $val.Foreground = [System.Windows.Media.Brushes]::OrangeRed
-                                                        $val.FontWeight = "Bold"
-                                                        $val.ToolTip = $driftKeys[$prop.Name]
-                                                        $lbl.Foreground = [System.Windows.Media.Brushes]::OrangeRed
-                                                    }
-
-                                                    $TickCtrl.MetaGrid.Children.Add($lbl)
-                                                    $TickCtrl.MetaGrid.Children.Add($val)
-                                                    $row++
-                                                }
                                             }
-                                            catch {}
                                         }
+                                        catch {
+                                            if ($Log) { & $Log "UI Update Exception: $_" "Error" }
+                                            Write-Warning "[Renamer] UI Update Failed: $_"
+                                        }
+
                                     } 
                                     else {
-                                        if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Text = "NON GÉRÉ" }
-                                        if ($TickCtrl.BadgeStatus) { $TickCtrl.BadgeStatus.Background = [System.Windows.Media.Brushes]::MistyRose }
-                                        if ($TickCtrl.TextConfig) { $TickCtrl.TextConfig.Text = "Aucune configuration" }
-                                        if ($TickCtrl.MetaGrid) { $TickCtrl.MetaGrid.Children.Clear() }
-                                        if ($TickCtrl.KpiVersion) { $TickCtrl.KpiVersion.Text = "-" }
-                                        if ($TickCtrl.KpiStructure) { $TickCtrl.KpiStructure.Text = "-" }
-                                        if ($TickCtrl.KpiMeta) { $TickCtrl.KpiMeta.Text = "-" }
+                                        # Not Tracked
+                                        try {
+                                            if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Text = "NON GÉRÉ" }
+                                            if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Foreground = [System.Windows.Media.Brushes]::Gray }
+                                            if ($TickCtrl.TextConfig) { $TickCtrl.TextConfig.Text = "Aucune configuration" }
+                                            if ($TickCtrl.MetaGrid) { $TickCtrl.MetaGrid.Children.Clear() }
+                                            if ($TickCtrl.StructureGrid) { $TickCtrl.StructureGrid.Children.Clear() }
+                                        }
+                                        catch {}
                                     }
                                 }
                             }

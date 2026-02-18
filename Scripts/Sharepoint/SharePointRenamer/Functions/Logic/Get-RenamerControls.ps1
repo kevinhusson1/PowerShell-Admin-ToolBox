@@ -21,13 +21,14 @@ function Get-RenamerControls {
         # 3. Dashboard
         "DashboardPanel", 
         "ProjectIcon", "ProjectTitle", "ProjectUrl",
-        "BadgeStatus", "TextStatus", "BadgeConfig", "TextConfig", "TextDate",
-        "KpiStructure", "KpiMeta", "KpiVersion",
+        "BadgeStatus", "TextStatus", "TextConfig", "TextDate",
+        "KpiStructure", "KpiMeta",
         
-        # 4. Meta Grid
-        "MetaGrid",
+        # 4. Grids
+        "MetaGrid", "StructureGrid",
 
         # 5. Actions
+        "ActionsPanel", "RepairConfigPanel", "BtnCloseRepair", "RepairListPanel", "BtnConfirmRepair",
         "BtnRepair", "BtnRename", "BtnForget",
 
         # 6. Logs
