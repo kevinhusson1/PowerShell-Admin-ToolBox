@@ -77,6 +77,9 @@ function Register-RenamerDashboard {
                     # Chargement dynamique du script si pas dans le module encore
                     $funcPath = Join-Path $ArgsMap.ProjRoot "Modules\Toolbox.SharePoint\Functions\Logic\Get-AppProjectStatus.ps1"
                     if (Test-Path $funcPath) { . $funcPath } else { Write-Output "[LOG] ERROR: Script not found: $funcPath" }
+
+                    $driftPath = Join-Path $ArgsMap.ProjRoot "Modules\Toolbox.SharePoint\Functions\Logic\Test-AppSPDrift.ps1"
+                    if (Test-Path $driftPath) { . $driftPath } else { Write-Output "[LOG] ERROR: Script not found: $driftPath" }
         
                     return Get-AppProjectStatus `
                         -SiteUrl $ArgsMap.SiteUrl `
@@ -115,15 +118,15 @@ function Register-RenamerDashboard {
                     }
 
                     foreach ($item in $newOutput) {
-                        # LOGGING DIRECT
+                        # LOGGING DIRECT (FIX: Use TickCtrl directly)
                         if ($item -is [string] -and $item.StartsWith("[LOG]")) {
                             $msg = $item.Substring(5).Trim()
-                            # Write-Warning "[UI-RECV-LOG] $msg"
-                            if ($Log) { & $Log $msg "Info" }
+                            if ($TickCtrl.LogRichTextBox) {
+                                Write-AppLog -Message $msg -Level "Info" -RichTextBox $TickCtrl.LogRichTextBox
+                            }
                         }
                         # FINAL RESULT OBJECT
                         elseif ($item -is [PSCustomObject] -and $item.PSObject.Properties['Exists']) {
-                            Write-Warning "[UI-RECV-OBJ] Result Object Received! IsTracked=$($item.IsTracked)"
                             
                             $timer.Stop()
                             
@@ -131,7 +134,6 @@ function Register-RenamerDashboard {
                                 # UI Updates
                                 if ($TickCtrl.LoadingPanel) { 
                                     $TickCtrl.LoadingPanel.Visibility = "Collapsed" 
-                                    # Write-Warning "[UI-UPDATE] LoadingPanel Collapsed"
                                 }
 
                                 if ($TickCtrl.BtnAnalyze) { $TickCtrl.BtnAnalyze.IsEnabled = $true }
@@ -144,10 +146,12 @@ function Register-RenamerDashboard {
                                 $res = $item 
                                 
                                 if ($res.Error) {
-                                    Write-Warning "[UI-RECV-OBJ] Error in Result: $($res.Error)"
                                     if ($TickCtrl.ErrorPanel) { $TickCtrl.ErrorPanel.Visibility = "Visible" }
                                     if ($TickCtrl.ErrorText) { $TickCtrl.ErrorText.Text = $res.Error }
-                                    if ($Log) { & $Log "Echec: $($res.Error)" "Error" }
+                                    
+                                    if ($TickCtrl.LogRichTextBox) {
+                                        Write-AppLog -Message "Echec: $($res.Error)" -Level "Error" -RichTextBox $TickCtrl.LogRichTextBox
+                                    }
                                 }
                                 else {
                                     # Title Logic
@@ -161,7 +165,6 @@ function Register-RenamerDashboard {
                                 
                                     # Tracking Logic
                                     if ($res.IsTracked) {
-                                        # Write-Warning "[UI-RECV-OBJ] Project is Tracked."
                                         $ver = if ($res.HistoryItem) { $res.HistoryItem.TemplateVersion } else { "?" }
                                     
                                         if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Text = "SUIVI (v$ver)" }
@@ -169,6 +172,39 @@ function Register-RenamerDashboard {
                                     
                                         if ($TickCtrl.TextConfig) { $TickCtrl.TextConfig.Text = "Config: $($res.HistoryItem.ConfigName)" }
                                         if ($TickCtrl.KpiVersion) { $TickCtrl.KpiVersion.Text = "v$ver" }
+                                    
+                                    
+                                        # [DRIFT] Populate KPI with Real Analysis
+                                        if ($res.Drift) {
+                                            # STRUCTURE
+                                            if ($res.Drift.StructureStatus -eq "OK") {
+                                                $TickCtrl.KpiStructure.Text = "Conforme"
+                                                $TickCtrl.KpiStructure.Foreground = [System.Windows.Media.Brushes]::Green
+                                            }
+                                            else {
+                                                $TickCtrl.KpiStructure.Text = $res.Drift.StructureStatus
+                                                $TickCtrl.KpiStructure.Foreground = [System.Windows.Media.Brushes]::Orange
+                                            }
+
+                                            # META
+                                            if ($res.Drift.MetaStatus -eq "OK") {
+                                                $TickCtrl.KpiMeta.Text = "Sync"
+                                                $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::Green
+                                            } 
+                                            elseif ($res.Drift.MetaStatus -eq "DRIFT") {
+                                                $TickCtrl.KpiMeta.Text = "Différence"
+                                                $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                $TickCtrl.KpiMeta.ToolTip = ($res.Drift.MetaDrifts -join "`n")
+                                            }
+                                            else {
+                                                $TickCtrl.KpiMeta.Text = $res.Drift.MetaStatus
+                                                $TickCtrl.KpiMeta.Foreground = [System.Windows.Media.Brushes]::Gray
+                                            }
+                                        }
+                                        else {
+                                            if ($TickCtrl.KpiStructure) { $TickCtrl.KpiStructure.Text = "?" }
+                                            if ($TickCtrl.KpiMeta) { $TickCtrl.KpiMeta.Text = "?" }
+                                        }
 
                                         if ($TickCtrl.MetaGrid) { $TickCtrl.MetaGrid.Children.Clear() }
                                     
@@ -176,6 +212,17 @@ function Register-RenamerDashboard {
                                             try {
                                                 $formVals = $res.HistoryItem.FormValuesJson | ConvertFrom-Json
                                                 $row = 0
+                                                $driftKeys = @{}
+                                                if ($res.Drift -and $res.Drift.MetaDrifts) {
+                                                    foreach ($d in $res.Drift.MetaDrifts) {
+                                                        # format: "Key : Expected 'X' but found 'Y'"
+                                                        if ($d -match "^(.+?) :") {
+                                                            $k = $Matches[1].Trim()
+                                                            $driftKeys[$k] = $d
+                                                        }
+                                                    }
+                                                }
+
                                                 foreach ($prop in $formVals.PSObject.Properties) {
                                                     $TickCtrl.MetaGrid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{Height = "Auto" }))
                                                     
@@ -192,6 +239,14 @@ function Register-RenamerDashboard {
                                                     [System.Windows.Controls.Grid]::SetRow($val, $row)
                                                     [System.Windows.Controls.Grid]::SetColumn($val, 1)
 
+                                                    # Highlight Drift
+                                                    if ($driftKeys.ContainsKey($prop.Name)) {
+                                                        $val.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                        $val.FontWeight = "Bold"
+                                                        $val.ToolTip = $driftKeys[$prop.Name]
+                                                        $lbl.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                                                    }
+
                                                     $TickCtrl.MetaGrid.Children.Add($lbl)
                                                     $TickCtrl.MetaGrid.Children.Add($val)
                                                     $row++
@@ -201,17 +256,15 @@ function Register-RenamerDashboard {
                                         }
                                     } 
                                     else {
-                                        # Write-Warning "[UI-RECV-OBJ] Project is NOT Tracked."
                                         if ($TickCtrl.TextStatus) { $TickCtrl.TextStatus.Text = "NON GÉRÉ" }
                                         if ($TickCtrl.BadgeStatus) { $TickCtrl.BadgeStatus.Background = [System.Windows.Media.Brushes]::MistyRose }
                                         if ($TickCtrl.TextConfig) { $TickCtrl.TextConfig.Text = "Aucune configuration" }
                                         if ($TickCtrl.MetaGrid) { $TickCtrl.MetaGrid.Children.Clear() }
                                         if ($TickCtrl.KpiVersion) { $TickCtrl.KpiVersion.Text = "-" }
+                                        if ($TickCtrl.KpiStructure) { $TickCtrl.KpiStructure.Text = "-" }
+                                        if ($TickCtrl.KpiMeta) { $TickCtrl.KpiMeta.Text = "-" }
                                     }
                                 }
-                            }
-                            else {
-                                Write-Warning "[UI-FATAL] TickCtrl is NULL even with GLOBAL! This is impossible unless init failed."
                             }
 
                             if ($Window.Resources.Contains("AnalyzeTimer")) { $Window.Resources.Remove("AnalyzeTimer") }
@@ -263,6 +316,29 @@ function Register-RenamerDashboard {
     # --- BINDING EVENTS ---
     if ($Ctrl.BtnAnalyze) {
         $Ctrl.BtnAnalyze.Add_Click($AnalyzeAction)
+    }
+    
+    # [FIX] Action Handlers
+    if ($Ctrl.BtnRepair) {
+        $Ctrl.BtnRepair.Add_Click({
+                [System.Windows.MessageBox]::Show("Fonctionnalité 'Réparer' en cours de développement.", "Info")
+            }.GetNewClosure())
+    }
+    
+    if ($Ctrl.BtnRename) {
+        $Ctrl.BtnRename.Add_Click({
+                [System.Windows.MessageBox]::Show("Fonctionnalité 'Renommer' en cours de développement.", "Info")
+            }.GetNewClosure())
+    }
+
+    # [FIX] Forget Action Handler (Confirmation Only for now)
+    if ($Ctrl.BtnForget) {
+        $Ctrl.BtnForget.Add_Click({
+                $res = [System.Windows.MessageBox]::Show("Êtes-vous sûr de vouloir oublier ce projet ?`n`nCette action supprimera le suivi de déploiement (PropertyBag) mais ne supprimera pas les fichiers.", "Confirmation", "YesNo", "Warning")
+                if ($res -eq "Yes") {
+                    [System.Windows.MessageBox]::Show("Action 'Oublier' non encore implémentée (Phase 3).", "Info")
+                }
+            }.GetNewClosure())
     }
 
     # Overlay & Auth

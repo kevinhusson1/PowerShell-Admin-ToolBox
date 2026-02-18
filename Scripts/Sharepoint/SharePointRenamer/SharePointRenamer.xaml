@@ -117,7 +117,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*"/> <!-- Status & Details -->
                     <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="1*"/> <!-- Actions -->
+                    <ColumnDefinition Width="280"/> <!-- Actions (Fixed Width Reduced) -->
                 </Grid.ColumnDefinitions>
 
                 <!-- LEFT: STATUS & DETAILS -->
@@ -198,44 +198,51 @@
                     <StackPanel>
                         <TextBlock Text="Actions" Style="{DynamicResource HeaderTextStyle}" FontSize="14" Margin="0,0,0,15"/>
 
-                        <!-- Repair -->
-                        <Button x:Name="BtnRepair" Style="{DynamicResource SecondaryButtonStyle}" HorizontalContentAlignment="Left" Height="Auto" Padding="10" Margin="0,0,0,10">
+                        <!-- Repair (Green/Success) -->
+                        <Button x:Name="BtnRepair" Style="{DynamicResource SecondaryButtonStyle}" Background="{DynamicResource SuccessBrush}" HorizontalContentAlignment="Left" Height="Auto" Padding="10" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="🛠️" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Réparer" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Réappliquer Méta &amp; Droits" FontSize="10" Opacity="0.7" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Réparer" FontWeight="SemiBold" Foreground="White"/>
+                                    <TextBlock Text="Réappliquer Méta &amp; Droits" FontSize="10" Opacity="0.8" Foreground="White" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Grid>
                         </Button>
 
-                        <!-- Rename -->
-                        <Button x:Name="BtnRename" Style="{DynamicResource SecondaryButtonStyle}" HorizontalContentAlignment="Left" Height="Auto" Padding="10" Margin="0,0,0,10">
+                        <!-- Rename (Blue/Info) -->
+                        <Button x:Name="BtnRename" Style="{DynamicResource SecondaryButtonStyle}" Background="{DynamicResource InfoBrush}" HorizontalContentAlignment="Left" Height="Auto" Padding="10" Margin="0,0,0,10">
                              <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="✏️" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="&#xE8AC;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Renommer" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Changer code projet/année" FontSize="10" Opacity="0.7" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Renommer" FontWeight="SemiBold" Foreground="White"/>
+                                    <TextBlock Text="Changer code projet/année" FontSize="10" Opacity="0.8" Foreground="White" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Grid>
                         </Button>
                         
                         <Separator Background="{DynamicResource BorderLightBrush}" Margin="0,15"/>
 
-                        <!-- Forget -->
-                        <Button x:Name="BtnForget" Style="{DynamicResource TextButtonStyle}" Foreground="#d32f2f" HorizontalAlignment="Left">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🗑️" Margin="0,0,5,0"/>
-                                <TextBlock Text="Oublier ce projet" FontSize="11"/>
-                            </StackPanel>
+                        <!-- Forget (Red/Danger) -->
+                        <Button x:Name="BtnForget" Style="{DynamicResource SecondaryButtonStyle}" Background="{DynamicResource DangerBrush}" HorizontalContentAlignment="Left" Height="Auto" Padding="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Oublier ce projet" FontWeight="SemiBold" Foreground="White"/>
+                                    <TextBlock Text="Supprimer le suivi (Bdd)" FontSize="10" Opacity="0.8" Foreground="White" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
                         </Button>
 
                     </StackPanel>

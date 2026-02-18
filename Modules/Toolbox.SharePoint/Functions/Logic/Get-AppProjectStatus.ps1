@@ -13,6 +13,7 @@ function Get-AppProjectStatus {
         DeploymentId = $null
         HistoryItem  = $null
         FolderItem   = $null
+        Drift        = $null
         Error        = $null
     }
 
@@ -97,6 +98,40 @@ function Get-AppProjectStatus {
                     DeployedBy      = $h["DeployedBy"]
                     FormValuesJson  = $h["FormValuesJson"]
                     TemplateJson    = $h["TemplateJson"]
+                }
+
+                # --- 5. DRIFT ANALYSIS ---
+                Write-Output "[LOG] Analyse de conformité (Drift)..."
+                
+                # [FIX] Drift Function is now pre-loaded by the Caller (Job) to avoid Path issues.
+                if (Get-Command "Test-AppSPDrift" -ErrorAction SilentlyContinue) {
+                    $status.Drift = Test-AppSPDrift `
+                        -Connection $conn `
+                        -FolderItem $status.FolderItem `
+                        -FormValuesJson $status.HistoryItem.FormValuesJson `
+                        -TemplateJson $status.HistoryItem.TemplateJson
+                        
+                    if ($status.Drift.MetaStatus -eq "DRIFT") {
+                        Write-Output "[LOG] DRIFT DETECTÉ: $($status.Drift.MetaDrifts.Count) divergences."
+                        foreach ($driftItem in $status.Drift.MetaDrifts) {
+                            Write-Output "[LOG] ⚠️ $driftItem"
+                        }
+                    }
+                    else {
+                        Write-Output "[LOG] Métadonnées conformes."
+                    }
+                    if ($status.Drift.StructureStatus -eq "DRIFT") {
+                        Write-Output "[LOG] STRUCTURE INCORRECTE: $($status.Drift.StructureMisses.Count) éléments manquants."
+                        foreach ($miss in $status.Drift.StructureMisses) {
+                            Write-Output "[LOG] ❌ $miss"
+                        }
+                    }
+                    else {
+                        Write-Output "[LOG] Structure conforme."
+                    }
+                }
+                else {
+                    Write-Output "[LOG] WARNING: Test-AppSPDrift introuvable."
                 }
             }
             else {
