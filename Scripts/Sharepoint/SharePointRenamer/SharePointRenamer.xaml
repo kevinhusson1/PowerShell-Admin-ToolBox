@@ -97,10 +97,10 @@
                             
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="URL du dossier (SharePoint ou Teams)" Style="{DynamicResource H4Style}" Margin="0,0,0,5"/>
-                                <TextBox x:Name="TargetUrlBox" Style="{DynamicResource StandardTextBoxStyle}" FontSize="14" Padding="5,8" VerticalContentAlignment="Center" ToolTip="Collez ici l'URL du dossier à analyser"/>
+                                <TextBox x:Name="TargetUrlBox" Style="{DynamicResource StandardTextBoxStyle}" FontSize="14" Padding="2,8" VerticalContentAlignment="Center" ToolTip="Collez ici l'URL du dossier à analyser"/>
                             </StackPanel>
 
-                            <Button x:Name="BtnAnalyze" Grid.Column="2" Style="{DynamicResource PrimaryButtonStyle}" Width="140" Height="40" VerticalAlignment="Bottom" Content="ANALYSER ►" FontWeight="Bold"/>
+                            <Button x:Name="BtnAnalyze" Grid.Column="2" Style="{DynamicResource PrimaryButtonStyle}" Width="160" Height="40" VerticalAlignment="Bottom" Content="ANALYSER ►" FontWeight="Bold"/>
                         </Grid>
                     </StackPanel>
                     
@@ -278,7 +278,7 @@
                             </Grid>
                             
                             <!-- List of checks -->
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,10">
                                 <StackPanel x:Name="RepairListPanel">
                                     <!-- Populated dynamically: CheckBox + TextBlock -->
                                 </StackPanel>

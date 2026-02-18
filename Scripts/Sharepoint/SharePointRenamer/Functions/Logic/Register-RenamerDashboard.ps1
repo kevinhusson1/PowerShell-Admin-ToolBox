@@ -46,6 +46,10 @@ function Register-RenamerDashboard {
             
             $resolveInfo = Resolve-AppSharePointUrl -Url $rawUrl
             
+            # [FIX] Store Context for Actions
+            $Global:CurrentAnalysisSiteUrl = $resolveInfo.SiteUrl
+            $Global:CurrentAnalysisFolderUrl = $resolveInfo.ServerRelativeUrl
+            
             if (-not $resolveInfo.IsValid) {
                 if ($Log) { & $Log "URL Invalide: $($resolveInfo.Error)" "Error" }
                 $Ctrl.ErrorPanel.Visibility = "Visible"
@@ -144,6 +148,7 @@ function Register-RenamerDashboard {
                                 }
 
                                 $res = $item 
+                                $Global:CurrentAnalysisResult = $res # [FIX] Store for Actions 
                                 
                                 if ($res.Error) {
                                     if ($TickCtrl.ErrorPanel) { $TickCtrl.ErrorPanel.Visibility = "Visible" }
@@ -410,28 +415,8 @@ function Register-RenamerDashboard {
         $Ctrl.BtnAnalyze.Add_Click($AnalyzeAction)
     }
     
-    # [FIX] Action Handlers
-    if ($Ctrl.BtnRepair) {
-        $Ctrl.BtnRepair.Add_Click({
-                [System.Windows.MessageBox]::Show("Fonctionnalité 'Réparer' en cours de développement.", "Info")
-            }.GetNewClosure())
-    }
-    
-    if ($Ctrl.BtnRename) {
-        $Ctrl.BtnRename.Add_Click({
-                [System.Windows.MessageBox]::Show("Fonctionnalité 'Renommer' en cours de développement.", "Info")
-            }.GetNewClosure())
-    }
-
-    # [FIX] Forget Action Handler (Confirmation Only for now)
-    if ($Ctrl.BtnForget) {
-        $Ctrl.BtnForget.Add_Click({
-                $res = [System.Windows.MessageBox]::Show("Êtes-vous sûr de vouloir oublier ce projet ?`n`nCette action supprimera le suivi de déploiement (PropertyBag) mais ne supprimera pas les fichiers.", "Confirmation", "YesNo", "Warning")
-                if ($res -eq "Yes") {
-                    [System.Windows.MessageBox]::Show("Action 'Oublier' non encore implémentée (Phase 3).", "Info")
-                }
-            }.GetNewClosure())
-    }
+    # [FIX] Action Handlers delegated to Register-RenamerActionEvents.ps1
+    # Check Initialize-RenamerLogic.ps1 for registration order.
 
     # Overlay & Auth
     if ($Ctrl.OverlayConnectButton) {

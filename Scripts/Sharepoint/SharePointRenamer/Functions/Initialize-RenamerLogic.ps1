@@ -87,4 +87,9 @@ function Initialize-RenamerLogic {
         [System.Windows.MessageBox]::Show("ERREUR: Commande Register-RenamerDashboard introuvable !", "Erreur Fatale")
         Write-Warning "Register-RenamerDashboard introuvable."
     }
+
+    # Enregistrement des Actions (Reparer/Renommer)
+    if (Get-Command Register-RenamerActionEvents -ErrorAction SilentlyContinue) {
+        Register-RenamerActionEvents -Ctrl $Ctrl -Window $Window
+    }
 }
