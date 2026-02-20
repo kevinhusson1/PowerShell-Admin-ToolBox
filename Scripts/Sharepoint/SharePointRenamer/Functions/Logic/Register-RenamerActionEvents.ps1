@@ -21,12 +21,15 @@ function Register-RenamerActionEvents {
     # --- REPAIR UI LOGIC ---
     if ($Ctrl.BtnRepair) {
         $Ctrl.BtnRepair.Add_Click({
-                if (-not $Global:CurrentAnalysisResult -or -not $Global:CurrentAnalysisResult.Drift) {
+                $ctx = Get-RenamerContext
+                $analysis = $ctx.Result
+
+                if (-not $analysis -or -not $analysis.Drift) {
                     [System.Windows.MessageBox]::Show("Aucune analyse disponible ou aucun défaut détecté.", "Info", "OK", "Information")
                     return
                 }
 
-                $drift = $Global:CurrentAnalysisResult.Drift
+                $drift = $analysis.Drift
                 $hasDrift = ($drift.MetaDrifts -and $drift.MetaDrifts.Count -gt 0) -or ($drift.StructureMisses -and $drift.StructureMisses.Count -gt 0)
 
                 if (-not $hasDrift) {
@@ -73,24 +76,18 @@ function Register-RenamerActionEvents {
                 }
 
                 # Add Metadata Drifts
-                if ($drift.MetaDrifts) {
-                    foreach ($md in $drift.MetaDrifts) {
-                        # Parsing "Key : Expected 'X' but found 'Y'"
-                        if ($md -match "^(.+?) : Expected '(.+?)'") {
-                            $k = $Matches[1].Trim()
-                            $v = $Matches[2]
-                            & $AddItem "Métadonnée" "Corriger $k -> '$v'" @{ Type = "Meta"; Key = $k; Value = $v }
-                        }
+                $fmtMeta = Format-RenamerMetadataDrift -MetaDrifts $drift.MetaDrifts
+                foreach ($key in $fmtMeta.Keys) {
+                    $dInfo = $fmtMeta[$key]
+                    if ($dInfo.Expected -ne "N/A") {
+                        & $AddItem "Métadonnée" "Corriger $key -> '$($dInfo.Expected)'" @{ Type = "Meta"; Key = $key; Value = $dInfo.Expected }
                     }
                 }
 
                 # Add Structure Drifts
-                if ($drift.StructureMisses) {
-                    foreach ($sm in $drift.StructureMisses) {
-                        # Parsing "❌ ..."
-                        $clean = $sm -replace "^❌\s*", ""
-                        & $AddItem "Structure" "Restaurer : $clean" @{ Type = "Structure"; Raw = $sm }
-                    }
+                $fmtStruct = Format-RenamerStructureDrift -StructureMisses $drift.StructureMisses
+                foreach ($miss in $fmtStruct) {
+                    & $AddItem "Structure" "Restaurer : $($miss.Clean)" @{ Type = "Structure"; Raw = $miss.Raw }
                 }
 
             }.GetNewClosure())
@@ -119,31 +116,91 @@ function Register-RenamerActionEvents {
 
                 if ($toRepair.Count -eq 0) { return }
 
-                # 2. Start Repair Job
+                # 2. Confirmation Dialog
+                $confirm = [System.Windows.MessageBox]::Show("Êtes-vous sûr de vouloir réparer les $($toRepair.Count) éléments sélectionnés ?", "Confirmation de réparation", "YesNo", "Question")
+                if ($confirm -ne "Yes") { return }
+
+                # 3. Start Repair Job
                 $Ctrl.BtnConfirmRepair.IsEnabled = $false
                 $Ctrl.BtnRepair.IsEnabled = $false 
+                if ($Ctrl.BtnCloseRepair) { $Ctrl.BtnCloseRepair.IsEnabled = $false }
 
-                # ... Job Logic placeholder (Will implement Repair-AppProject call here) ...
-                Write-AppLog -Message "Démarrage réparation de $($toRepair.Count) éléments..." -Level Info -RichTextBox $Ctrl.LogRichTextBox
-
-                # For now, just log what would strictly happen
-                foreach ($item in $toRepair) {
-                    Write-AppLog -Message " >> Planifié : $($item.Type) - $($item.Key)$($item.Raw)" -Level Info -RichTextBox $Ctrl.LogRichTextBox
+                # Job Initialization
+                $ctx = Get-RenamerContext
+                $jobArgs = @{
+                    SiteUrl   = $ctx.SiteUrl
+                    FolderUrl = $ctx.FolderUrl
+                    ToRepair  = $toRepair
+                    ClientId  = $Global:AppConfig.azure.authentication.userAuth.appId
+                    Thumb     = $Global:AppConfig.azure.certThumbprint
+                    Tenant    = $Global:AppConfig.azure.tenantName
+                    ProjRoot  = $Global:ProjectRoot
                 }
-             
-                # TODO: Call actual Repair-AppProject in Job
-             
-                # Unlock UI (Simulated end)
-                Start-Sleep -Seconds 1
-                $Ctrl.BtnConfirmRepair.IsEnabled = $true
-                $Ctrl.BtnRepair.IsEnabled = $true
-             
-                # Switch back?
-                # $Ctrl.RepairConfigPanel.Visibility = "Collapsed"
-                # $Ctrl.ActionsPanel.Visibility = "Visible"
-             
-                # Refresh Analysis
-                # $Ctrl.BtnAnalyze.RaiseEvent((New-Object System.Windows.RoutedEventArgs ([System.Windows.Controls.Button]::ClickEvent)))
+
+                $repairJob = Start-Job -ScriptBlock {
+                    param($ArgsMap)
+                    try {
+                        $env:PSModulePath = "$($ArgsMap.ProjRoot)\Modules;$($ArgsMap.ProjRoot)\Vendor;$($env:PSModulePath)"
+                        Import-Module "PnP.PowerShell" -ErrorAction Stop
+                        Import-Module "Toolbox.SharePoint" -Force -ErrorAction Stop
+
+                        Write-Output "[LOG] Connexion à SharePoint via Toolbox..."
+                        $conn = Connect-AppSharePoint -SiteUrl $ArgsMap.SiteUrl -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -TenantName $ArgsMap.Tenant
+                        
+                        Write-Output "[LOG] Démarrage Repair-AppProject..."
+                        # Exécuter la réparation. En ne stockant pas le résultat dans une variable, PowerShell
+                        # permet aux 'Write-Output' successifs de s'écouler en streaming en temps réel.
+                        # Le dernier élément envoyé sera le PSCustomObject final.
+                        Repair-AppProject -TargetUrl $ArgsMap.FolderUrl -RepairItems $ArgsMap.ToRepair -Connection $conn
+                    }
+                    catch {
+                        Write-Output "[LOG] ERROR: $($_.Exception.Message)"
+                        return [PSCustomObject]@{ Success = $false; Error = $_.Exception.Message }
+                    }
+                } -ArgumentList $jobArgs
+
+                # Job Monitoring
+                $timer = New-Object System.Windows.Threading.DispatcherTimer
+                $timer.Interval = [TimeSpan]::FromMilliseconds(500)
+                $timer.Add_Tick({
+                        $TickCtrl = $Global:RenamerV2Ctrl
+                        $state = $repairJob.State
+                        $out = Receive-Job -Job $repairJob
+                        foreach ($o in $out) {
+                            if ($o -is [string] -and $o.StartsWith("[LOG]")) {
+                                $msg = $o.Substring(5).Trim()
+                                if ($TickCtrl.LogRichTextBox) {
+                                    Write-AppLog -Message $msg -Level Info -RichTextBox $TickCtrl.LogRichTextBox
+                                }
+                            }
+                            elseif ($null -ne $o -and $o -is [PSCustomObject] -and $o.Success) {
+                                $timer.Stop()
+                                Remove-Job $repairJob -Force
+                                [System.Windows.MessageBox]::Show("Réparation terminée avec succès !", "Succès", "OK", "Information")
+                                if ($null -ne $TickCtrl.BtnConfirmRepair) { $TickCtrl.BtnConfirmRepair.IsEnabled = $true }
+                                if ($null -ne $TickCtrl.BtnRepair) { $TickCtrl.BtnRepair.IsEnabled = $true }
+                                if ($null -ne $TickCtrl.BtnCloseRepair) { $TickCtrl.BtnCloseRepair.IsEnabled = $true }
+                                
+                                # Refresh Analysis (Manuel conseillé pour éviter les cross-thread context switch)
+                            }
+                            elseif ($null -ne $o -and $o -is [PSCustomObject] -and $o.Success -eq $false -and $o.Error) {
+                                $timer.Stop()
+                                Remove-Job $repairJob -Force
+                                [System.Windows.MessageBox]::Show("Erreur de réparation : $($o.Error)", "Echec", "OK", "Error")
+                                if ($null -ne $TickCtrl.BtnConfirmRepair) { $TickCtrl.BtnConfirmRepair.IsEnabled = $true }
+                                if ($null -ne $TickCtrl.BtnRepair) { $TickCtrl.BtnRepair.IsEnabled = $true }
+                                if ($null -ne $TickCtrl.BtnCloseRepair) { $TickCtrl.BtnCloseRepair.IsEnabled = $true }
+                            }
+                        }
+                    
+                        if ($state -ne 'Running' -and -not $repairJob.HasMoreData) {
+                            $timer.Stop()
+                            if ($null -ne $TickCtrl.BtnConfirmRepair) { $TickCtrl.BtnConfirmRepair.IsEnabled = $true }
+                            if ($null -ne $TickCtrl.BtnRepair) { $TickCtrl.BtnRepair.IsEnabled = $true }
+                            if ($null -ne $TickCtrl.BtnCloseRepair) { $TickCtrl.BtnCloseRepair.IsEnabled = $true }
+                        }
+                    }.GetNewClosure())
+                $timer.Start()
 
             }.GetNewClosure())
     }
@@ -151,16 +208,16 @@ function Register-RenamerActionEvents {
     if ($Ctrl.BtnRename) {
         $Ctrl.BtnRename.Add_Click({
                 # 1. Validation Context
-                if (-not $Global:CurrentAnalysisResult) {
+                $ctx = Get-RenamerContext
+                $analysis = $ctx.Result
+
+                if (-not $analysis) {
                     [System.Windows.MessageBox]::Show("Veuillez d'abord effectuer une analyse.", "Avertissement", "OK", "Warning")
                     return
                 }
 
-                $analysis = $Global:CurrentAnalysisResult
                 $currentName = $analysis.FolderName
-                $siteUrl = $analysis.SiteUrl # Need to ensure this is passed in result or resolve it
-                # Fallback if SiteUrl missing in object (it is usually in resolution step, might need to store it too)
-                if (-not $siteUrl) { $siteUrl = $Global:LastAnalysisSiteUrl } 
+                $siteUrl = $ctx.SiteUrl 
 
                 # 2. Input Dialog for New Name
                 # Simple VisualBasic InputBox for quick win, or Custom WPF
@@ -178,8 +235,8 @@ function Register-RenamerActionEvents {
                 Write-AppLog -Message "Démarrage renommage : $currentName -> $newName" -Level Info -RichTextBox $Ctrl.LogRichTextBox
 
                 $jobArgs = @{
-                    SiteUrl   = $Global:CurrentAnalysisSiteUrl
-                    FolderUrl = $Global:CurrentAnalysisFolderUrl # ServerRelative
+                    SiteUrl   = $ctx.SiteUrl
+                    FolderUrl = $ctx.FolderUrl # ServerRelative
                     NewName   = $newName
                     OldName   = $currentName
                     Metadata  = @{ "_AppDeployName" = $newName; "Title" = $newName } # Update Identity
@@ -199,40 +256,31 @@ function Register-RenamerActionEvents {
                         # Helper Log
                         function Log { param($m, $l = "Info") Write-Output "[LOG] $m" }
 
-                        Log "Connexion à SharePoint..."
-                        $conn = Connect-PnPOnline -Url $ArgsMap.SiteUrl -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -Tenant $ArgsMap.Tenant -ReturnConnection -ErrorAction Stop
+                        Log "Connexion à SharePoint via Toolbox..."
+                        $conn = Connect-AppSharePoint -SiteUrl $ArgsMap.SiteUrl -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -TenantName $ArgsMap.Tenant
                         
                         # 1. Rename Folder
                         Log "Renommage du dossier racine..."
                         $targetFolder = $ArgsMap.FolderUrl
-                        # PnP Rename logic or CSOM
-                        # Using Rename-PnPFolder from PnP PowerShell or Custom Function
-                        # Rename-PnPFolder -Folder $targetFolder -TargetFolderName $ArgsMap.NewName ...
-                        # Let's use the Toolbox function if available, or direct PnP
                         
-                        $folder = Get-PnPFolder -Url $targetFolder -Connection $conn -Includes ListItemAllFields, ServerRelativeUrl
-                        if (-not $folder) { throw "Dossier introuvable : $targetFolder" }
-                        
-                        # Rename Operation
-                        $folder.MoveTo("$($folder.ParentFolder.ServerRelativeUrl)/$($ArgsMap.NewName)") 
-                        # Note: MoveTo is standard for renaming in SP Client Object Model if just name changes in same parent.
-                        # Actually PnP has Rename-PnPFolder in newer versions, or we use Move-PnPFolder
-                        # Safer: Rename-PnPFolder works on Folder Name.
-                        
-                        # Let's try standard PnP Move which effectively renames if same logic
-                        # Or better invoke `Rename-PnPFolder` if we are sure it exists, otherwise `Item.FileLeafRef` update.
-                        
-                        # Using ListItem update is often cleaner for "Rename"
-                        $item = $folder.ListItemAllFields
-                        if ($item) {
-                            Set-PnPListItem -List ($item.ParentList) -Identity $item.Id -Values @{ "FileLeafRef" = $ArgsMap.NewName; "Title" = $ArgsMap.NewName; "_AppDeployName" = $ArgsMap.NewName } -Connection $conn
+                        # Utilisation de Rename-AppSPFolder du module Toolbox
+                        if (Get-Command Rename-AppSPFolder -ErrorAction SilentlyContinue) {
+                            Rename-AppSPFolder -SiteRelativePath $targetFolder -NewFolderName $ArgsMap.NewName -Connection $conn
+                            Log "Dossier renommé avec succès via Toolbox."
                         }
                         else {
-                            # Fallback if no list item (rare for DocLib folders)
-                            Rename-PnPFolder -Folder $targetFolder -TargetFolderName $ArgsMap.NewName -Connection $conn
+                            # Fallback natif si Rename-AppSPFolder n'est pas chargé
+                            Log "⚠️ Rename-AppSPFolder introuvable, utilisation de PnP natif."
+                            $folder = Get-PnPFolder -Url $targetFolder -Connection $conn -Includes ListItemAllFields, ServerRelativeUrl
+                            if (-not $folder) { throw "Dossier introuvable : $targetFolder" }
+                            $folder.MoveTo("$($folder.ParentFolder.ServerRelativeUrl)/$($ArgsMap.NewName)") 
+                            
+                            $item = $folder.ListItemAllFields
+                            if ($item) {
+                                Set-AppSPMetadata -List ($item.ParentList.Title) -ItemId $item.Id -Values @{ "FileLeafRef" = $ArgsMap.NewName; "Title" = $ArgsMap.NewName; "_AppDeployName" = $ArgsMap.NewName } -Connection $conn
+                            }
+                            Log "Dossier renommé avec succès via PnP/CSOM Fallback."
                         }
-                        
-                        Log "Dossier renommé avec succès."
                         
                         # 2. Repair Links (Stub for now, or call Repair-AppSPLinks)
                         Log "Mise à jour des liens (Simulation)..."
@@ -249,30 +297,34 @@ function Register-RenamerActionEvents {
                 $timer = New-Object System.Windows.Threading.DispatcherTimer
                 $timer.Interval = [TimeSpan]::FromMilliseconds(500)
                 $timer.Add_Tick({
+                        $TickCtrl = $Global:RenamerV2Ctrl
                         $state = $renameJob.State
                         $out = Receive-Job -Job $renameJob
                         foreach ($o in $out) {
-                            if ($o -is [string] -and $o -match "^\[LOG\] (.*)") {
-                                Write-AppLog -Message $Matches[1] -Level Info -RichTextBox $Ctrl.LogRichTextBox
+                            if ($o -is [string] -and $o.StartsWith("[LOG]")) {
+                                $msg = $o.Substring(5).Trim()
+                                if ($TickCtrl.LogRichTextBox) {
+                                    Write-AppLog -Message $msg -Level Info -RichTextBox $TickCtrl.LogRichTextBox
+                                }
                             }
                             elseif ($o.Success) {
                                 $timer.Stop()
                                 Remove-Job $renameJob -Force
                                 [System.Windows.MessageBox]::Show("Renommage terminé !", "Succès")
-                                $Ctrl.BtnRename.IsEnabled = $true
+                                $TickCtrl.BtnRename.IsEnabled = $true
                                 # Optional: Refresh Analysis
                             }
                             elseif ($o.Success -eq $false) {
                                 $timer.Stop()
                                 Remove-Job $renameJob -Force
                                 [System.Windows.MessageBox]::Show("Erreur: $($o.Error)", "Echec")
-                                $Ctrl.BtnRename.IsEnabled = $true
+                                $TickCtrl.BtnRename.IsEnabled = $true
                             }
                         }
                     
                         if ($state -ne 'Running' -and -not $renameJob.HasMoreData) {
                             $timer.Stop()
-                            $Ctrl.BtnRename.IsEnabled = $true
+                            $TickCtrl.BtnRename.IsEnabled = $true
                         }
                     }.GetNewClosure())
                 $timer.Start()

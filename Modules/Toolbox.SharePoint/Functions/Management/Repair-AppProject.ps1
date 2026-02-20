@@ -23,13 +23,24 @@ function Repair-AppProject {
         [PnP.PowerShell.Commands.Base.PnPConnection]$Connection
     )
 
-    $Logs = @()
+    $LogsList = [System.Collections.Generic.List[string]]::new()
     $Errors = @()
 
-    function Log { param($m, $l = "Info") $script:Logs += "AppLog: [$l] $m"; Write-Verbose "[$l] $m" }
+    $TargetUrl = [uri]::UnescapeDataString($TargetUrl)
+
+    function Log { 
+        param($m, $l = "Info") 
+        $LogsList.Add("AppLog: [$l] $m")
+        # On utilise Write-Output avec un préfixe pour le flux standard (Receive-Job)
+        Write-Output "[LOG] AppLog: [$l] $m"
+        Write-Verbose "[$l] $m" 
+    }
 
     try {
         Log "Début de la réparation sur : $TargetUrl"
+        
+        # Pré-chargement des listes pour correspondre aux URLs (Evite l'erreur System.Object[])
+        $allLists = Get-PnPList -Connection $Connection -Includes RootFolder.ServerRelativeUrl, Title
         
         # 1. Repair Metadata
         $metaItems = $RepairItems | Where-Object { $_.Type -eq "Meta" }
@@ -42,15 +53,18 @@ function Repair-AppProject {
             }
             
             # Apply to Folder
-            # Note: We assume TargetUrl is a Folder. Set-PnPListItem works on the item associated with the folder.
             try {
-                $folder = Get-PnPFolder -Url $TargetUrl -Connection $Connection -Includes ListItemAllFields, ServerRelativeUrl -ErrorAction Stop
-                if ($folder.ListItemAllFields) {
-                    Set-PnPListItem -List $folder.ListItemAllFields.ParentList.Title -Identity $folder.ListItemAllFields.Id -Values $hash -Connection $Connection -ErrorAction Stop
+                $list = $allLists | Where-Object { $TargetUrl.StartsWith($_.RootFolder.ServerRelativeUrl, [System.StringComparison]::InvariantCultureIgnoreCase) } | Sort-Object { $_.RootFolder.ServerRelativeUrl.Length } -Descending | Select-Object -First 1
+
+                $folder = Get-PnPFolder -Url $TargetUrl -Connection $Connection -Includes ListItemAllFields -ErrorAction Stop
+                $listItem = $folder.ListItemAllFields
+
+                if ($listItem -and $listItem.Id -and $list) {
+                    Set-AppSPMetadata -List $list.Title -ItemId $listItem.Id -Values $hash -Connection $Connection
                     Log "Métadonnées appliquées avec succès." "Success"
                 }
                 else {
-                    Log "Impossible de récupérer le ListItem du dossier." "Error"
+                    Log "Impossible de récupérer le ListItem du dossier ou la liste parente." "Error"
                 }
             }
             catch {
@@ -84,17 +98,58 @@ function Repair-AppProject {
                     $newPath = "$TargetUrl/$folderName"
                     Log " > Création dossier : $newPath"
                     try {
-                        Resolve-PnPFolder -SiteRelativePath $newPath -Connection $Connection | Out-Null
+                        New-AppSPFolder -SiteRelativePath $newPath -Connection $Connection | Out-Null
                         Log "   OK." "Success"
                     }
                     catch {
                         Log "   Echec création : $($_.Exception.Message)" "Error"
                     }
                 }
-                elseif ($txt -match "Métadonnée '(.+?)' incorrecte sur '(.+?)'") {
-                    # Complex case: Metadata on logic sub-folder.
-                    # Implementation to follow if needed.
-                    Log " > Correction métadonnée sous-dossier non implémentée (TODO): $txt" "Warning"
+                elseif ($txt -match "Métadonnée '(.+?)' incorrecte sur '(.+?)' : '(.+?)' vs '(.+?)'") {
+                    $keyName = $Matches[1]
+                    $itemName = $Matches[2]
+                    $expectedValue = $Matches[3]
+                    
+                    $newPath = "$TargetUrl/$itemName"
+                    Log " > Correction métadonnée $keyName = '$expectedValue' sur : $newPath"
+                    try {
+                        $list = $allLists | Where-Object { $newPath.StartsWith($_.RootFolder.ServerRelativeUrl, [System.StringComparison]::InvariantCultureIgnoreCase) } | Sort-Object { $_.RootFolder.ServerRelativeUrl.Length } -Descending | Select-Object -First 1
+
+                        if (-not $list) { throw "Impossible de déterminer la bibliothèque." }
+
+                        $listItem = $null
+                        try {
+                            $f = Get-PnPFolder -Url $newPath -Connection $Connection -Includes ListItemAllFields -ErrorAction Stop
+                            $listItem = $f.ListItemAllFields
+                        }
+                        catch {
+                            # Fallback : Recherche via requête list PnP robuste (contourne les erreurs Get-File sur les .url)
+                            $safeName1 = $itemName.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
+                            $safeName2 = "$safeName1.url"
+                            
+                            $caml = "<View Scope='RecursiveAll'><Query><Where><Or><Eq><FieldRef Name='FileLeafRef'/><Value Type='Text'>$safeName1</Value></Eq><Eq><FieldRef Name='FileLeafRef'/><Value Type='Text'>$safeName2</Value></Eq></Or></Where></Query></View>"
+                            
+                            $items = Get-PnPListItem -List $list.Title -Query $caml -Connection $Connection -ErrorAction SilentlyContinue
+                            
+                            if ($items) {
+                                # S'il y a plusieurs éléments du même nom dans la liste, on filtre sur celui du bon projet
+                                $listItem = $items | Where-Object { 
+                                    ($_["FileRef"] -as [string]).StartsWith($TargetUrl, [System.StringComparison]::InvariantCultureIgnoreCase) 
+                                } | Select-Object -First 1
+                            }
+                        }
+
+                        if ($listItem -and $listItem.Id) {
+                            Set-AppSPMetadata -List $list.Title -ItemId $listItem.Id -Values @{ $keyName = $expectedValue } -Connection $Connection
+                            Log "   Appliqué avec succès." "Success"
+                        }
+                        else {
+                            Log "   Impossible de récupérer le ListItem de l'élément. La requête n'a trouvé aucun identifiant valide." "Error"
+                        }
+                    }
+                    catch {
+                        Log "   Echec correction métadonnée : $($_.Exception.Message)" "Error"
+                    }
                 }
                 else {
                     Log " > Type de réparation inconnu pour : $txt" "Warning"
@@ -110,7 +165,7 @@ function Repair-AppProject {
 
     return [PSCustomObject]@{
         Success = ($Errors.Count -eq 0)
-        Logs    = $Logs
+        Logs    = $LogsList.ToArray()
         Errors  = $Errors
     }
 }

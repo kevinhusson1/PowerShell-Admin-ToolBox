@@ -1,0 +1,36 @@
+=========================================
+RAPPORT THEORIQUE DE DEPLOIEMENT
+Deployment ID: bc5beae4-eab0-484a-987e-eecfbf42d8fb
+Date: 02/20/2026 16:24:26
+Config: TEST-FINAL (v2026-02-20 16:24:14)
+
+Form Values (Issues de l'UI):
+ - PreviewText = TEST-PPI-1624
+ - YEAR = 1624
+ - RUBRIQUE = PPI
+ - OPERATIONS = TEST
+=========================================
+
+[Folder] /CONCEPTION
+  -> [TAG] Services = 'DP' (Static Value)
+  -> [TAG] Services = 'RH' (Static Value)
+  -> [TAG] OPERATIONS = 'TEST' (Dynamic -> OPERATIONS)
+  -> [TAG] RUBRIQUE = 'PPI' (Dynamic -> RUBRIQUE)
+  -> [TAG] YEAR = '1624' (Dynamic -> YEAR)
+
+[Folder] /CONCEPTION/01.SPS
+  -> [TAG] Services = 'DP' (Static Value)
+
+[Publication] /CONCEPTION/01.SPS/01.SPS
+  -> [TAG] Services = 'RH' (Static Value)
+[File] /CONCEPTION/Test de recup de fichier.docx
+[Folder] /REALISATION
+
+[InternalLink] /REALISATION/01.SPS
+  -> [TAG] Services = 'RH' (Static Value)
+  -> [TAG] OPERATIONS = 'TEST' (Dynamic -> OPERATIONS)
+[Link] /REALISATION/google
+[Publication] /REALISATION/realisation
+[Folder] /REALISATION/test sous dossier
+[Link] /Intranet Vosgelis
+  -> [TAG] Services = 'DSIN' (Static Value)

@@ -17,7 +17,12 @@ function Initialize-RenamerLogic {
         [string]$ScriptRoot
     )
 
-    # 1. Chargement des sous-fonctions Logic
+    # 1. Chargement des sous-fonctions Core & Logic
+    $corePath = Join-Path $ScriptRoot "Functions\Core"
+    if (Test-Path $corePath) {
+        Get-ChildItem -Path $corePath -Filter "*.ps1" -Recurse | ForEach-Object { . $_.FullName }
+    }
+
     $logicPath = Join-Path $ScriptRoot "Functions\Logic"
     if (Test-Path $logicPath) {
         Get-ChildItem -Path $logicPath -Filter "*.ps1" -Recurse | ForEach-Object { . $_.FullName }

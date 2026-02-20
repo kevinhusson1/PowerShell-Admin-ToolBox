@@ -21,19 +21,22 @@
     FunctionsToExport = @(
         'Add-AppSPFile',
         'Connect-AppSharePoint',
+        'Get-AppProjectStatus',
         'Get-AppSPFile',
         'Get-AppSPLibraries',
         'Get-AppSPSites',
         'Import-AppSPFile',
         'New-AppSPFolder',
         'New-AppSPLink',
-        'New-AppSPStructure'
+        'New-AppSPStructure',
         'New-AppSPTrackingList',
         'Rename-AppSPFolder',
         'Rename-AppSPPublications',
+        'Repair-AppProject',
         'Repair-AppSPLinks',
         'Set-AppSPMetadata',
         'Set-AppSPPermission',
+        'Test-AppSPDrift',
         'Test-AppSPModel'
     )
 }

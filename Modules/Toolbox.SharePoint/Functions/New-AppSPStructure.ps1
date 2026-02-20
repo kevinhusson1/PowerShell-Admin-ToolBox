@@ -216,6 +216,11 @@ function New-AppSPStructure {
         
         $structure = $StructureJson | ConvertFrom-Json
         
+        $globalDeployId = $null
+        if ($TrackingInfo -and $TrackingInfo.Count -gt 0) {
+            $globalDeployId = [Guid]::NewGuid().ToString()
+        }
+        
         # 0. PRE-PROCESSING : MAPPING ID -> PATH (Pour Liens Internes)
         Log "Construction de la carte des IDs..." "DEBUG"
         $IdToPathMap = @{}
@@ -608,6 +613,31 @@ function New-AppSPStructure {
                             catch { Log "  ⚠️ Erreur Meta Pub : $($_.Exception.Message)" "WARNING" }
                         }
 
+                        # C-quater. PROPAGATION ID DEPLOIEMENT (PROPERTY BAG)
+                        if ($globalDeployId) {
+                            $folderToTag = $resolvedDest
+                            if (-not $folderToTag) {
+                                try { $folderToTag = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop } catch {}
+                            }
+                            
+                            if ($folderToTag) {
+                                Log "  > Application de l'ID de déploiement principal ($globalDeployId) sur la publication..." "DEBUG"
+                                try {
+                                    $ctxTarget = $folderToTag.Context
+                                    $ctxTarget.Load($folderToTag.Properties)
+                                    $ctxTarget.ExecuteQuery()
+                                    
+                                    $folderToTag.Properties["_AppDeploymentId"] = $globalDeployId
+                                    $folderToTag.Update()
+                                    $ctxTarget.ExecuteQuery()
+                                    
+                                    Log "    Tag ID Déploiement ajouté sur la destination." "INFO"
+                                }
+                                catch {
+                                    Log "  ⚠️ Erreur application ID Déploiement : $($_.Exception.Message)" "WARNING"
+                                }
+                            }
+                        }
 
                     }
                     catch {
@@ -683,7 +713,8 @@ function New-AppSPStructure {
                         }
 
                         # 2. Génération Deployment ID
-                        $deployId = [Guid]::NewGuid().ToString()
+                        $deployId = $globalDeployId
+                        if (-not $deployId) { $deployId = [Guid]::NewGuid().ToString() } # Fallback sécurité
                         
                         # 3. Marquage du Dossier (Property Bag)
                         # Fix: EnsureProperties n'est pas toujours dispo sur l'objet Folder wrapper.

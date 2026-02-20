@@ -131,21 +131,33 @@ function Test-AppSPDrift {
                                 if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
                                 $expectedPath = "$($BaseUrl.TrimEnd('/'))/$linkName"
                                 
-                                # [FIX] Explicit Connection
-                                $actualItem = Get-PnPFile -Url $expectedPath -AsListItem -Connection $Connection -ErrorAction Stop
+                                # Use Get-PnPFile to check existence, it returns $null if not found
+                                $checkFile = Get-PnPFile -Url $expectedPath -Connection $Connection -ErrorAction SilentlyContinue
+                                if ($null -eq $checkFile) { throw "Raccourci introuvable" }
+                                
+                                # To get metadata for .url files reliably, use CAML query like in Repair script
+                                $parentDir = $expectedPath.Substring(0, $expectedPath.LastIndexOf('/'))
+                                $caml = "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FileLeafRef'/><Value Type='Text'>$linkName</Value></Eq></Where></Query></View>"
+                                $listName = $expectedPath.Split('/')[4] # sites/SITE/Shared Documents/...
+                                if ($expectedPath -match "Shared Documents") { $listName = "Documents partagés" }
+                                $items = Get-PnPListItem -List $listName -Query $caml -Connection $Connection -ErrorAction SilentlyContinue
+                                if ($items) { $actualItem = $items[0] } else { $actualItem = $null }
+
                                 $itemFound = $true
                                 Add-Audit "OK" "$typeLabel trouvé : $linkName"
                             }
                             elseif ($node.Type -eq "File") {
                                 # Generic File
-                                $actualItem = Get-PnPFile -Url $expectedPath -AsListItem -Connection $Connection -ErrorAction Stop
+                                $checkFile = Get-PnPFile -Url $expectedPath -Connection $Connection -ErrorAction SilentlyContinue
+                                if ($null -eq $checkFile) { throw "Fichier introuvable" }
+                                $actualItem = Get-PnPFile -Url $expectedPath -AsListItem -Connection $Connection -ErrorAction SilentlyContinue
                                 $itemFound = $true
                                 Add-Audit "OK" "Fichier trouvé : $($node.Name)"
                             }
                             else {
                                 # Folder (Default)
-                                # [FIX] Explicit Connection
-                                $f = Get-PnPFolder -Url $expectedPath -Includes ListItemAllFields, Properties -Connection $Connection -ErrorAction Stop
+                                $f = Get-PnPFolder -Url $expectedPath -Includes ListItemAllFields, Properties -Connection $Connection -ErrorAction SilentlyContinue
+                                if ($null -eq $f -or $null -eq $f.Name) { throw "Dossier introuvable" }
                                 $actualItem = $f.ListItemAllFields
                                 $itemFound = $true
                                 Add-Audit "OK" "Dossier trouvé : $($node.Name)"
@@ -153,37 +165,83 @@ function Test-AppSPDrift {
                             
                             # [RECURSIVE META CHECK]
                             if ($itemFound -and $node.Tags) {
-                                # Convert Node Tags to Hashtable for comparison
+                                # Convert Node Tags to Hashtable of Arrays for comparison (Multi-Value tags)
                                 $expectedTags = @{}
                                 foreach ($t in $node.Tags) { 
+                                    $val = $null
                                     # [FIX] Dynamic Tag Resolution
                                     if ($t.IsDynamic -eq $true -and $t.SourceVar -and $formValuesHash.ContainsKey($t.SourceVar)) {
-                                        $expectedTags[$t.Name] = $formValuesHash[$t.SourceVar]
+                                        $val = $formValuesHash[$t.SourceVar]
                                     }
-                                    elseif ($t.Value) { $expectedTags[$t.Name] = $t.Value }
-                                    elseif ($t.Term) { $expectedTags[$t.Name] = $t.Term }
+                                    elseif ($t.Value) { $val = $t.Value }
+                                    elseif ($t.Term) { $val = $t.Term }
+
+                                    if ($null -ne $val) {
+                                        if (-not $expectedTags.ContainsKey($t.Name)) {
+                                            $expectedTags[$t.Name] = [System.Collections.Generic.List[string]]::new()
+                                        }
+                                        $expectedTags[$t.Name].Add("$val")
+                                    }
                                 }
 
                                 foreach ($tagName in $expectedTags.Keys) {
-                                    $expVal = $expectedTags[$tagName]
+                                    $expVals = $expectedTags[$tagName]
                                     if ($tagName -eq "Ref" -or $tagName -eq "RefDate") { continue } # Skip dynamic technical tags if needed
+
+                                    if ($null -eq $actualItem) {
+                                        $expStr = $expVals -join ' | '
+                                        $msg = "Métadonnées inaccessibles sur '$($node.Name)' (Attendu '$tagName': '$expStr')"
+                                        $misses.Add($msg)
+                                        Add-Audit "DRIFT" $msg
+                                        continue
+                                    }
 
                                     try {
                                         $actVal = $actualItem[$tagName]
-                                        # Simple check (Stringify)
-                                        $actStr = if ($actVal -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) { $actVal.Label } else { "$actVal" }
+
+                                        # Build an array of actual values to compare against
+                                        $actStrArray = @()
+                                        if ($actVal -is [System.Array] -or $actVal -is [System.Collections.IEnumerable] -and $actVal -isnot [string]) {
+                                            foreach ($v in $actVal) {
+                                                if ($v -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) { $actStrArray += $v.Label }
+                                                else { $actStrArray += "$v" }
+                                            }
+                                        }
+                                        elseif ($actVal -is [Microsoft.SharePoint.Client.Taxonomy.TaxonomyFieldValue]) {
+                                            $actStrArray += $actVal.Label
+                                        }
+                                        else {
+                                            $actStrArray += "$actVal"
+                                        }
+
+                                        # Compare logic: check if all expected values are present in the actual item
+                                        $missingTags = @()
+                                        foreach ($ev in $expVals) {
+                                            $foundMatch = $false
+                                            foreach ($av in $actStrArray) {
+                                                if ($av -eq $ev) { $foundMatch = $true; break }
+                                            }
+                                            if (-not $foundMatch) { $missingTags += $ev }
+                                        }
                                         
-                                        if ($actStr -ne $expVal) {
-                                            $msg = "Métadonnée '$tagName' incorrecte sur '$($node.Name)' : '$expVal' vs '$actStr'"
+                                        $expStr = $expVals -join ' | '
+                                        $actStr = if ($actStrArray.Count -gt 0) { $actStrArray -join ' | ' } else { "<Vide>" }
+
+                                        if ($missingTags.Count -gt 0) {
+                                            $msg = "Métadonnée '$tagName' incorrecte sur '$($node.Name)' : attendu '$expStr' vs réel '$actStr'"
                                             $misses.Add($msg)
                                             Add-Audit "DRIFT" $msg
                                         }
                                         else {
-                                            Add-Audit "OK" "  > Tag '$tagName' conforme ($actStr)"
+                                            Add-Audit "OK" "  > Tag '$tagName' conforme ($expStr)"
                                         }
                                     }
                                     catch {
                                         # Field might be missing
+                                        $expStr = $expVals -join ' | '
+                                        $msg = "Champ de métadonnée '$tagName' introuvable sur '$($node.Name)' (Attendu: '$expStr')"
+                                        $misses.Add($msg)
+                                        Add-Audit "DRIFT" $msg
                                     }
                                 }
                             }
