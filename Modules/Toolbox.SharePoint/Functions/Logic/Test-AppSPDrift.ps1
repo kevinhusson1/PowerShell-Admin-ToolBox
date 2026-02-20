@@ -174,7 +174,7 @@ function Test-AppSPDrift {
                                 }
 
                                 # --- VÉRIFICATION CIBLE DISTANTE POUR PUBLICATION ---
-                                if ($DeploymentId -and $node.TargetSiteUrl -and $ClientId) {
+                                if ($DeploymentId) {
                                     $rawDestPath = $node.TargetFolderPath
                                     try {
                                         # Deduce project name from the root folder leaf ref
@@ -183,9 +183,13 @@ function Test-AppSPDrift {
                                             $rawDestPath = "$rawDestPath/$projName"
                                         }
 
-                                        $cleanTenant = $TenantName -replace "\.onmicrosoft\.com$", "" -replace "\.sharepoint\.com$", ""
-                                        $targetCtx = Connect-PnPOnline -Url $node.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
+                                        $targetCtx = $Connection
                                         
+                                        if ($node.TargetSiteMode -eq "Url" -and -not [string]::IsNullOrWhiteSpace($node.TargetSiteUrl) -and $ClientId) {
+                                            $cleanTenant = $TenantName -replace "\.onmicrosoft\.com$", "" -replace "\.sharepoint\.com$", ""
+                                            $targetCtx = Connect-PnPOnline -Url $node.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
+                                        }
+
                                         $resolvedDest = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
                                         
                                         $ctx = $resolvedDest.Context
