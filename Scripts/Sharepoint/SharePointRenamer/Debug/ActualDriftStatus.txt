@@ -11,12 +11,13 @@ RUBRIQUE : Expected 'PPI' but found 'AMELIO DEMOL'
 OPERATIONS : Expected 'TEST' but found 'toto'
 
 --- STRUCTURE MISSES ---
+Métadonnée 'OPERATIONS' incorrecte sur 'CONCEPTION' : attendu 'TEST' vs réel ''
+Métadonnée 'Services' incorrecte sur 'CONCEPTION' : attendu 'DP | RH' vs réel 'Choix 4'
 Métadonnée 'YEAR' incorrecte sur 'CONCEPTION' : attendu '1624' vs réel '2023'
 Métadonnée 'RUBRIQUE' incorrecte sur 'CONCEPTION' : attendu 'PPI' vs réel ''
-Métadonnée 'Services' incorrecte sur 'CONCEPTION' : attendu 'DP | RH' vs réel 'Choix 4'
-Métadonnée 'OPERATIONS' incorrecte sur 'CONCEPTION' : attendu 'TEST' vs réel ''
 Métadonnée 'Services' incorrecte sur '01.SPS' : attendu 'DP' vs réel ''
 Manquant : '01.SPS.url' (Publication Raccourci Local)
+Cible distante de la publication '01.SPS.url' a un _AppDeploymentId incorrect (Attendu 'bc5beae4-eab0-484a-987e-eecfbf42d8fb', trouvé '') à /Shared Documents/PUBLICS/Nouveau nom
 Manquant : 'Test de recup de fichier.docx' (File)
 Manquant : 'REALISATION' (Dossier)
 Manquant : 'Intranet Vosgelis' (Link)
@@ -24,14 +25,15 @@ Manquant : 'Intranet Vosgelis' (Link)
 --- AUDIT LOG (PARCOURS) ---
 [INFO] Début analyse structure depuis : /sites/TEST_PNP/Shared Documents/General/Nouveau nom
 [OK] Dossier trouvé : CONCEPTION
+[DRIFT] Métadonnée 'OPERATIONS' incorrecte sur 'CONCEPTION' : attendu 'TEST' vs réel ''
+[DRIFT] Métadonnée 'Services' incorrecte sur 'CONCEPTION' : attendu 'DP | RH' vs réel 'Choix 4'
 [DRIFT] Métadonnée 'YEAR' incorrecte sur 'CONCEPTION' : attendu '1624' vs réel '2023'
 [DRIFT] Métadonnée 'RUBRIQUE' incorrecte sur 'CONCEPTION' : attendu 'PPI' vs réel ''
-[DRIFT] Métadonnée 'Services' incorrecte sur 'CONCEPTION' : attendu 'DP | RH' vs réel 'Choix 4'
-[DRIFT] Métadonnée 'OPERATIONS' incorrecte sur 'CONCEPTION' : attendu 'TEST' vs réel ''
 [OK] Dossier trouvé : 01.SPS
 [DRIFT] Métadonnée 'Services' incorrecte sur '01.SPS' : attendu 'DP' vs réel ''
 [MISSING] Manquant : '01.SPS.url' (Publication Raccourci Local) at /sites/TEST_PNP/Shared Documents/General/Nouveau nom/CONCEPTION/01.SPS/01.SPS.url
+[DRIFT] Cible distante de la publication '01.SPS.url' a un _AppDeploymentId incorrect (Attendu 'bc5beae4-eab0-484a-987e-eecfbf42d8fb', trouvé '') à /Shared Documents/PUBLICS/Nouveau nom
 [MISSING] Manquant : 'Test de recup de fichier.docx' (File) at /sites/TEST_PNP/Shared Documents/General/Nouveau nom/CONCEPTION/Test de recup de fichier.docx (Fichier introuvable)
 [MISSING] Manquant : 'REALISATION' (Dossier) at /sites/TEST_PNP/Shared Documents/General/Nouveau nom/REALISATION (Dossier introuvable)
 [MISSING] Manquant : 'Intranet Vosgelis' (Link) at /sites/TEST_PNP/Shared Documents/General/Nouveau nom/Intranet Vosgelis.url (Raccourci introuvable)
-[WARNING] Structure non-conforme (9 erreurs).
+[WARNING] Structure non-conforme (10 erreurs).
