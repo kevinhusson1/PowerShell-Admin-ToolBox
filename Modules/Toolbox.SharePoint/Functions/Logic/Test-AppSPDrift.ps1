@@ -3,7 +3,11 @@ function Test-AppSPDrift {
         [Parameter(Mandatory)] [PnP.PowerShell.Commands.Base.PnPConnection]$Connection,
         [Parameter(Mandatory)] [Microsoft.SharePoint.Client.ListItem]$FolderItem,
         [Parameter(Mandatory)] [string]$FormValuesJson,
-        [string]$TemplateJson # Optional for Structure Check
+        [string]$TemplateJson, # Optional for Structure Check
+        [string]$DeploymentId,
+        [string]$ClientId,
+        [string]$Thumbprint,
+        [string]$TenantName
     )
 
     $result = [PSCustomObject]@{
@@ -125,8 +129,8 @@ function Test-AppSPDrift {
 
                         try {
                             # Check Existence check based on Type
-                            if ($node.Type -eq "Link" -or $node.Type -eq "InternalLink" -or $node.Type -eq "Publication") {
-                                # For links & publications, we expect a .url file
+                            if ($node.Type -eq "Link" -or $node.Type -eq "InternalLink") {
+                                # For links, we expect a .url file
                                 $linkName = $node.Name
                                 if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
                                 $expectedPath = "$($BaseUrl.TrimEnd('/'))/$linkName"
@@ -145,6 +149,65 @@ function Test-AppSPDrift {
 
                                 $itemFound = $true
                                 Add-Audit "OK" "$typeLabel trouvé : $linkName"
+                            }
+                            elseif ($node.Type -eq "Publication") {
+                                $linkName = $node.Name
+                                if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
+                                $expectedPath = "$($BaseUrl.TrimEnd('/'))/$linkName"
+                                
+                                $checkFile = Get-PnPFile -Url $expectedPath -Connection $Connection -ErrorAction SilentlyContinue
+                                if ($null -eq $checkFile) { 
+                                    $msg = "Manquant : '$linkName' (Publication Raccourci Local)"
+                                    $misses.Add($msg)
+                                    Add-Audit "MISSING" "$msg at $expectedPath"
+                                }
+                                else {
+                                    $parentDir = $expectedPath.Substring(0, $expectedPath.LastIndexOf('/'))
+                                    $caml = "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FileLeafRef'/><Value Type='Text'>$linkName</Value></Eq></Where></Query></View>"
+                                    $listName = $expectedPath.Split('/')[4]
+                                    if ($expectedPath -match "Shared Documents") { $listName = "Documents partagés" }
+                                    $items = Get-PnPListItem -List $listName -Query $caml -Connection $Connection -ErrorAction SilentlyContinue
+                                    if ($items) { $actualItem = $items[0] } else { $actualItem = $null }
+
+                                    $itemFound = $true
+                                    Add-Audit "OK" "Publication (raccourci local) trouvée : $linkName"
+                                }
+
+                                # --- VÉRIFICATION CIBLE DISTANTE POUR PUBLICATION ---
+                                if ($DeploymentId -and $node.TargetSiteUrl -and $ClientId) {
+                                    $rawDestPath = $node.TargetFolderPath
+                                    try {
+                                        # Deduce project name from the root folder leaf ref
+                                        if ($node.UseModelName -eq $true) {
+                                            $projName = $FolderItem["FileLeafRef"]
+                                            $rawDestPath = "$rawDestPath/$projName"
+                                        }
+
+                                        $cleanTenant = $TenantName -replace "\.onmicrosoft\.com$", "" -replace "\.sharepoint\.com$", ""
+                                        $targetCtx = Connect-PnPOnline -Url $node.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
+                                        
+                                        $resolvedDest = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
+                                        
+                                        $ctx = $resolvedDest.Context
+                                        $ctx.Load($resolvedDest.Properties)
+                                        $ctx.ExecuteQuery()
+                                        
+                                        $remoteDeployId = $resolvedDest.Properties["_AppDeploymentId"]
+                                        if ($remoteDeployId -eq $DeploymentId) {
+                                            Add-Audit "OK"  "  > Dossier Cible distant vérifié (ID de déploiement concordant : $DeploymentId) à $rawDestPath"
+                                        }
+                                        else {
+                                            $msg = "Cible distante de la publication '$linkName' a un _AppDeploymentId incorrect (Attendu '$DeploymentId', trouvé '$remoteDeployId') à $rawDestPath"
+                                            $misses.Add($msg)
+                                            Add-Audit "DRIFT" $msg
+                                        }
+                                    }
+                                    catch {
+                                        $msg = "Dossier cible distant de la publication '$linkName' introuvable ou erreur : $($_.Exception.Message) (Chemin ciblé: $rawDestPath)"
+                                        $misses.Add($msg)
+                                        Add-Audit "MISSING" $msg
+                                    }
+                                }
                             }
                             elseif ($node.Type -eq "File") {
                                 # Generic File

@@ -111,7 +111,11 @@ function Get-AppProjectStatus {
                         -Connection $conn `
                         -FolderItem $status.FolderItem `
                         -FormValuesJson $status.HistoryItem.FormValuesJson `
-                        -TemplateJson $status.HistoryItem.TemplateJson
+                        -TemplateJson $status.HistoryItem.TemplateJson `
+                        -DeploymentId $status.DeploymentId `
+                        -ClientId $ClientId `
+                        -Thumbprint $Thumbprint `
+                        -TenantName $TenantName
                         
                     if ($status.Drift.MetaStatus -eq "DRIFT") {
                         Write-Output "[LOG] DRIFT DETECTÉ: $($status.Drift.MetaDrifts.Count) divergences."
