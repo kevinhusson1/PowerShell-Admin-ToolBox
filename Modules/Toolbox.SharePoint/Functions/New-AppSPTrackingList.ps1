@@ -34,7 +34,7 @@ function New-AppSPTrackingList {
             # Masquer la liste
             $list.Hidden = $true
             $list.Update()
-            $Connection.ExecuteQuery()
+            $Connection.Context.ExecuteQuery()
         }
 
         # 2. Vérification / Création des Champs

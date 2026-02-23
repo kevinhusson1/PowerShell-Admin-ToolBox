@@ -21,75 +21,85 @@ function Register-RenamerActionEvents {
     # --- REPAIR UI LOGIC ---
     if ($Ctrl.BtnRepair) {
         $Ctrl.BtnRepair.Add_Click({
-                $ctx = Get-RenamerContext
-                $analysis = $ctx.Result
+                try {
+                    $ctx = Get-RenamerContext
+                    $analysis = $ctx.Result
 
-                if (-not $analysis -or -not $analysis.Drift) {
-                    [System.Windows.MessageBox]::Show("Aucune analyse disponible ou aucun défaut détecté.", "Info", "OK", "Information")
-                    return
-                }
-
-                $drift = $analysis.Drift
-                $hasDrift = ($drift.MetaDrifts -and $drift.MetaDrifts.Count -gt 0) -or ($drift.StructureMisses -and $drift.StructureMisses.Count -gt 0)
-
-                if (-not $hasDrift) {
-                    [System.Windows.MessageBox]::Show("Le projet est conforme. Aucune réparation nécessaire.", "Bravo", "OK", "Information")
-                    return
-                }
-
-                # 1. Toggle UI
-                $Ctrl.ActionsPanel.Visibility = "Collapsed"
-                $Ctrl.RepairConfigPanel.Visibility = "Visible"
-
-                # 2. Populate List
-                $Ctrl.RepairListPanel.Children.Clear()
-
-                # Helper to add item
-                $AddItem = { param($Type, $Desc, $TagObj)
-                    $p = New-Object System.Windows.Controls.DockPanel
-                    $p.Margin = "0,0,0,5"
-
-                    # 1. CheckBox (Toggle Switch Style)
-                    $cb = New-Object System.Windows.Controls.CheckBox
-                    $cb.IsChecked = $true
-                    $cb.SetResourceReference([System.Windows.Controls.CheckBox]::StyleProperty, "ToggleSwitchStyle")
-                    $cb.Tag = $TagObj 
-                    $cb.ToolTip = "$Type"
-                    $cb.VerticalAlignment = "Center"
-                    
-                    [System.Windows.Controls.DockPanel]::SetDock($cb, [System.Windows.Controls.Dock]::Left)
-                    $p.Children.Add($cb)
-                    
-                    # 2. Description (Separate TextBlock for wrapping)
-                    $tb = New-Object System.Windows.Controls.TextBlock
-                    $tb.Text = $Desc
-                    $tb.TextWrapping = "Wrap"
-                    $tb.VerticalAlignment = "Center"
-                    $tb.Margin = "10,0,0,0" # Space from switch
-                    
-                    # Optional: Make text click check box
-                    $tb.Cursor = "Hand"
-                    $tb.Add_MouseLeftButtonDown({ $cb.IsChecked = -not $cb.IsChecked }.GetNewClosure())
-
-                    $p.Children.Add($tb)
-                    $Ctrl.RepairListPanel.Children.Add($p)
-                }
-
-                # Add Metadata Drifts
-                $fmtMeta = Format-RenamerMetadataDrift -MetaDrifts $drift.MetaDrifts
-                foreach ($key in $fmtMeta.Keys) {
-                    $dInfo = $fmtMeta[$key]
-                    if ($dInfo.Expected -ne "N/A") {
-                        & $AddItem "Métadonnée" "Corriger $key -> '$($dInfo.Expected)'" @{ Type = "Meta"; Key = $key; Value = $dInfo.Expected }
+                    if (-not $analysis -or -not $analysis.Drift) {
+                        [System.Windows.MessageBox]::Show("Aucune analyse disponible ou aucun défaut détecté.", "Info", "OK", "Information")
+                        return
                     }
-                }
 
-                # Add Structure Drifts
-                $fmtStruct = Format-RenamerStructureDrift -StructureMisses $drift.StructureMisses
-                foreach ($miss in $fmtStruct) {
-                    & $AddItem "Structure" "Restaurer : $($miss.Clean)" @{ Type = "Structure"; Raw = $miss.Raw }
-                }
+                    $drift = $analysis.Drift
+                    
+                    # Sécurisation des accès aux propriétés (null-coalescing conditionnel)
+                    $metas = if ($drift.MetaDrifts) { $drift.MetaDrifts } else { @() }
+                    $structs = if ($drift.StructureMisses) { $drift.StructureMisses } else { @() }
+                    
+                    $hasDrift = ($metas.Count -gt 0) -or ($structs.Count -gt 0)
 
+                    if (-not $hasDrift) {
+                        [System.Windows.MessageBox]::Show("Le projet est conforme. Aucune réparation nécessaire.", "Bravo", "OK", "Information")
+                        return
+                    }
+
+                    # 1. Toggle UI
+                    $Ctrl.ActionsPanel.Visibility = "Collapsed"
+                    $Ctrl.RepairConfigPanel.Visibility = "Visible"
+
+                    # 2. Populate List
+                    $Ctrl.RepairListPanel.Children.Clear()
+
+                    # Helper to add item
+                    $AddItem = { param($Type, $Desc, $TagObj)
+                        $p = New-Object System.Windows.Controls.DockPanel
+                        $p.Margin = "0,0,0,5"
+
+                        # 1. CheckBox (Toggle Switch Style)
+                        $cb = New-Object System.Windows.Controls.CheckBox
+                        $cb.IsChecked = $true
+                        $cb.SetResourceReference([System.Windows.Controls.CheckBox]::StyleProperty, "ToggleSwitchStyle")
+                        $cb.Tag = $TagObj 
+                        $cb.ToolTip = "$Type"
+                        $cb.VerticalAlignment = "Center"
+                    
+                        [System.Windows.Controls.DockPanel]::SetDock($cb, [System.Windows.Controls.Dock]::Left)
+                        $p.Children.Add($cb)
+                    
+                        # 2. Description (Separate TextBlock for wrapping)
+                        $tb = New-Object System.Windows.Controls.TextBlock
+                        $tb.Text = $Desc
+                        $tb.TextWrapping = "Wrap"
+                        $tb.VerticalAlignment = "Center"
+                        $tb.Margin = "10,0,0,0" # Space from switch
+                    
+                        # Optional: Make text click check box
+                        $tb.Cursor = "Hand"
+                        $tb.Add_MouseLeftButtonDown({ $cb.IsChecked = -not $cb.IsChecked }.GetNewClosure())
+
+                        $p.Children.Add($tb)
+                        $Ctrl.RepairListPanel.Children.Add($p)
+                    }
+
+                    # Add Metadata Drifts
+                    $fmtMeta = Format-RenamerMetadataDrift -MetaDrifts $drift.MetaDrifts
+                    foreach ($key in $fmtMeta.Keys) {
+                        $dInfo = $fmtMeta[$key]
+                        if ($dInfo.Expected -ne "N/A") {
+                            & $AddItem "Métadonnée" "Corriger $key -> '$($dInfo.Expected)'" @{ Type = "Meta"; Key = $key; Value = $dInfo.Expected }
+                        }
+                    }
+
+                    # Add Structure Drifts
+                    $fmtStruct = Format-RenamerStructureDrift -StructureMisses $structs
+                    foreach ($miss in $fmtStruct) {
+                        & $AddItem "Structure" "Restaurer : $($miss.Clean)" @{ Type = "Structure"; Raw = $miss.Raw }
+                    }
+
+                }
+                catch {
+                    [System.Windows.MessageBox]::Show("Erreur interne lors de la préparation de la réparation : $($_.Exception.Message)", "Erreur UI", "OK", "Error")
+                }
             }.GetNewClosure())
     }
 
@@ -128,13 +138,16 @@ function Register-RenamerActionEvents {
                 # Job Initialization
                 $ctx = Get-RenamerContext
                 $jobArgs = @{
-                    SiteUrl   = $ctx.SiteUrl
-                    FolderUrl = $ctx.FolderUrl
-                    ToRepair  = $toRepair
-                    ClientId  = $Global:AppConfig.azure.authentication.userAuth.appId
-                    Thumb     = $Global:AppConfig.azure.certThumbprint
-                    Tenant    = $Global:AppConfig.azure.tenantName
-                    ProjRoot  = $Global:ProjectRoot
+                    SiteUrl            = $ctx.SiteUrl
+                    FolderUrl          = $ctx.FolderUrl
+                    ToRepair           = $toRepair
+                    ClientId           = $Global:AppConfig.azure.authentication.userAuth.appId
+                    Thumb              = $Global:AppConfig.azure.certThumbprint
+                    Tenant             = $Global:AppConfig.azure.tenantName
+                    ProjRoot           = $Global:ProjectRoot
+                    TemplateJson       = $ctx.Result.HistoryItem.TemplateJson
+                    FormValuesJson     = $ctx.Result.HistoryItem.FormValuesJson
+                    FormDefinitionJson = $ctx.Result.HistoryItem.FormDefinitionJson
                 }
 
                 $repairJob = Start-Job -ScriptBlock {
@@ -147,11 +160,11 @@ function Register-RenamerActionEvents {
                         Write-Output "[LOG] Connexion à SharePoint via Toolbox..."
                         $conn = Connect-AppSharePoint -SiteUrl $ArgsMap.SiteUrl -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -TenantName $ArgsMap.Tenant
                         
-                        Write-Output "[LOG] Démarrage Repair-AppProject..."
+                        Write-Output "[LOG] Démarrage Repair-AppProject (avec Template et FormValues)..."
                         # Exécuter la réparation. En ne stockant pas le résultat dans une variable, PowerShell
                         # permet aux 'Write-Output' successifs de s'écouler en streaming en temps réel.
                         # Le dernier élément envoyé sera le PSCustomObject final.
-                        Repair-AppProject -TargetUrl $ArgsMap.FolderUrl -RepairItems $ArgsMap.ToRepair -Connection $conn
+                        Repair-AppProject -TargetUrl $ArgsMap.FolderUrl -RepairItems $ArgsMap.ToRepair -Connection $conn -TemplateJson $ArgsMap.TemplateJson -FormValuesJson $ArgsMap.FormValuesJson -FormDefinitionJson $ArgsMap.FormDefinitionJson -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb -TenantName $ArgsMap.Tenant
                     }
                     catch {
                         Write-Output "[LOG] ERROR: $($_.Exception.Message)"
@@ -239,7 +252,7 @@ function Register-RenamerActionEvents {
                     FolderUrl = $ctx.FolderUrl # ServerRelative
                     NewName   = $newName
                     OldName   = $currentName
-                    Metadata  = @{ "_AppDeployName" = $newName; "Title" = $newName } # Update Identity
+                    Metadata  = @{ "Title" = $newName } # Update Identity List Fields
                     ClientId  = $Global:AppConfig.azure.authentication.userAuth.appId
                     Thumb     = $Global:AppConfig.azure.certThumbprint
                     Tenant    = $Global:AppConfig.azure.tenantName
@@ -265,20 +278,42 @@ function Register-RenamerActionEvents {
                         
                         # Utilisation de Rename-AppSPFolder du module Toolbox
                         if (Get-Command Rename-AppSPFolder -ErrorAction SilentlyContinue) {
-                            Rename-AppSPFolder -SiteRelativePath $targetFolder -NewFolderName $ArgsMap.NewName -Connection $conn
+                            $resRename = Rename-AppSPFolder -TargetFolderUrl $targetFolder -NewFolderName $ArgsMap.NewName -Metadata $ArgsMap.Metadata -Connection $conn
                             Log "Dossier renommé avec succès via Toolbox."
+
+                            if ($resRename.Success -and $resRename.NewUrl) {
+                                $renamedFolder = Get-PnPFolder -Url $resRename.NewUrl -Includes Properties -Connection $conn -ErrorAction SilentlyContinue
+                                if ($renamedFolder) {
+                                    $ctxTarget = $renamedFolder.Context
+                                    $ctxTarget.Load($renamedFolder.Properties)
+                                    $ctxTarget.ExecuteQuery()
+                                    $renamedFolder.Properties["_AppDeployName"] = $ArgsMap.NewName
+                                    $renamedFolder.Update()
+                                    $ctxTarget.ExecuteQuery()
+                                    Log "Identité système intégrée (PropertyBag) mise à jour."
+                                }
+                            }
                         }
                         else {
                             # Fallback natif si Rename-AppSPFolder n'est pas chargé
                             Log "⚠️ Rename-AppSPFolder introuvable, utilisation de PnP natif."
-                            $folder = Get-PnPFolder -Url $targetFolder -Connection $conn -Includes ListItemAllFields, ServerRelativeUrl
+                            $folder = Get-PnPFolder -Url $targetFolder -Connection $conn -Includes ListItemAllFields, ServerRelativeUrl, Properties
                             if (-not $folder) { throw "Dossier introuvable : $targetFolder" }
                             $folder.MoveTo("$($folder.ParentFolder.ServerRelativeUrl)/$($ArgsMap.NewName)") 
                             
                             $item = $folder.ListItemAllFields
                             if ($item) {
-                                Set-AppSPMetadata -List ($item.ParentList.Title) -ItemId $item.Id -Values @{ "FileLeafRef" = $ArgsMap.NewName; "Title" = $ArgsMap.NewName; "_AppDeployName" = $ArgsMap.NewName } -Connection $conn
+                                Set-AppSPMetadata -List ($item.ParentList.Title) -ItemId $item.Id -Values @{ "FileLeafRef" = $ArgsMap.NewName; "Title" = $ArgsMap.NewName } -Connection $conn
                             }
+
+                            # Mise à jour Property Bag
+                            $ctxTarget = $folder.Context
+                            $ctxTarget.Load($folder.Properties)
+                            $ctxTarget.ExecuteQuery()
+                            $folder.Properties["_AppDeployName"] = $ArgsMap.NewName
+                            $folder.Update()
+                            $ctxTarget.ExecuteQuery()
+
                             Log "Dossier renommé avec succès via PnP/CSOM Fallback."
                         }
                         

@@ -63,7 +63,10 @@ function New-AppSPStructure {
         [Parameter(Mandatory = $false)] [string]$TargetFolderUrl,
         [Parameter(Mandatory = $false)] [hashtable]$FormValues,
         [Parameter(Mandatory = $false)] [hashtable]$RootMetadata,
-        [Parameter(Mandatory = $false)] [hashtable]$TrackingInfo
+        [Parameter(Mandatory = $false)] [hashtable]$TrackingInfo,
+        [Parameter(Mandatory = $false)] [string]$IdMapReferenceJson,
+        [Parameter(Mandatory = $false)] [string]$ProjectModelName,
+        [Parameter(Mandatory = $false)] [string]$ProjectRootUrl
     )
 
     $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new() }
@@ -109,7 +112,7 @@ function New-AppSPStructure {
                     if ($t.IsDynamic -and $FormValues -and $t.SourceVar) {
                         # Valeur depuis le formulaire
                         $dynVal = $FormValues[$t.SourceVar]
-                        if (-not [string]::IsNullOrWhiteSpace($dynVal)) {
+                        if ($null -ne $dynVal -and $dynVal -ne "") {
                             $resolvedValues += $dynVal
                         }
                     }
@@ -252,9 +255,13 @@ function New-AppSPStructure {
         }
 
         # Lancement Mapping (Attention au path de base)
-        # On simule un parcours virtuel
-        if ($structure.Folders) { Build-IdMap -SubStructure $structure.Folders -CurrentPath "" }
-        else { Build-IdMap -SubStructure $structure -CurrentPath "" }
+        # On simule un parcours virtuel avec le full json si référencé, sinon le sub-json
+        $mapRef = $structure
+        if (-not [string]::IsNullOrWhiteSpace($IdMapReferenceJson)) {
+            try { $mapRef = $IdMapReferenceJson | ConvertFrom-Json } catch { Log "⚠️ Erreur parsing IdMapReferenceJson" "WARNING" }
+        }
+        if ($mapRef.Folders) { Build-IdMap -SubStructure $mapRef.Folders -CurrentPath "" }
+        else { Build-IdMap -SubStructure $mapRef -CurrentPath "" }
 
         Log "Mapping IDs terminé ($($IdToPathMap.Count) entrées)." "DEBUG"
 
@@ -307,11 +314,20 @@ function New-AppSPStructure {
                 $relPath = $IdToPathMap[$targetId]
                 # Construction URL absolue cible
                 # $TargetSiteUrl + $TargetLibraryUrl + $relPath
-                # Attention : $libUrl est ServerRelative (ex: /sites/MySite/MyLib)
                 
                 $uri = New-Object Uri($TargetSiteUrl)
                 $baseHost = "$($uri.Scheme)://$($uri.Host)"
-                $fullTargetUrl = "$baseHost$startPath$relPath"
+                
+                # [FIX] Calculate absolute start path (since $startPath is not yet defined here)
+                $absStartPath = $libUrl
+                if (-not [string]::IsNullOrWhiteSpace($ProjectRootUrl)) {
+                    $absStartPath = $ProjectRootUrl
+                }
+                elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
+                    $absStartPath = "$libUrl/$RootFolderName"
+                }
+
+                $fullTargetUrl = "$baseHost$absStartPath$relPath"
                 
                 # B. Création .url
                 if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
@@ -529,8 +545,13 @@ function New-AppSPStructure {
                         if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
                         
                         $rawDestPath = $pub.TargetFolderPath
-                        if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($RootFolderName)) {
-                            $rawDestPath = "$rawDestPath/$RootFolderName"
+                        
+                        $pName = ""
+                        if (-not [string]::IsNullOrWhiteSpace($ProjectModelName)) { $pName = $ProjectModelName }
+                        elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) { $pName = $RootFolderName }
+
+                        if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($pName)) {
+                            $rawDestPath = "$rawDestPath/$pName"
                         }
                         
                         Log (Loc "log_deploy_pub_target_path" $rawDestPath) "DEBUG"

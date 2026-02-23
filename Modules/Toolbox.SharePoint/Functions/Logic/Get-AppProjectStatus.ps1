@@ -93,13 +93,14 @@ function Get-AppProjectStatus {
                 Write-Output "[LOG] Historique trouvé. Chargement des métadonnées..."
                 
                 $status.HistoryItem = [PSCustomObject]@{
-                    Title           = $h["Title"]
-                    ConfigName      = $h["ConfigName"]
-                    TemplateVersion = $h["TemplateVersion"]
-                    DeployedDate    = $h["DeployedDate"]
-                    DeployedBy      = $h["DeployedBy"]
-                    FormValuesJson  = $h["FormValuesJson"]
-                    TemplateJson    = $h["TemplateJson"]
+                    Title              = $h["Title"]
+                    ConfigName         = $h["ConfigName"]
+                    TemplateVersion    = $h["TemplateVersion"]
+                    DeployedDate       = $h["DeployedDate"]
+                    DeployedBy         = $h["DeployedBy"]
+                    FormValuesJson     = $h["FormValuesJson"]
+                    TemplateJson       = $h["TemplateJson"]
+                    FormDefinitionJson = $h["FormDefinitionJson"]
                 }
 
                 # --- 5. DRIFT ANALYSIS ---

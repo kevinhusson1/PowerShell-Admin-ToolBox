@@ -98,6 +98,9 @@ function Test-AppSPDrift {
         if (-not [string]::IsNullOrWhiteSpace($TemplateJson)) {
             $structure = $TemplateJson | ConvertFrom-Json
             
+            # [FIX] Pre-Load Lists for CAML Link queries
+            $allLists = Get-PnPList -Connection $Connection -Includes RootFolder.ServerRelativeUrl, Title -ErrorAction SilentlyContinue
+
             # [FIX] Prepare Form Values for Dynamic Tag Resolution
             $formValuesHash = @{}
             if (-not [string]::IsNullOrWhiteSpace($FormValuesJson)) {
@@ -139,13 +142,8 @@ function Test-AppSPDrift {
                                 $checkFile = Get-PnPFile -Url $expectedPath -Connection $Connection -ErrorAction SilentlyContinue
                                 if ($null -eq $checkFile) { throw "Raccourci introuvable" }
                                 
-                                # To get metadata for .url files reliably, use CAML query like in Repair script
-                                $parentDir = $expectedPath.Substring(0, $expectedPath.LastIndexOf('/'))
-                                $caml = "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FileLeafRef'/><Value Type='Text'>$linkName</Value></Eq></Where></Query></View>"
-                                $listName = $expectedPath.Split('/')[4] # sites/SITE/Shared Documents/...
-                                if ($expectedPath -match "Shared Documents") { $listName = "Documents partagés" }
-                                $items = Get-PnPListItem -List $listName -Query $caml -Connection $Connection -ErrorAction SilentlyContinue
-                                if ($items) { $actualItem = $items[0] } else { $actualItem = $null }
+                                # Load Item with all custom fields
+                                $actualItem = Get-PnPFile -Url $expectedPath -AsListItem -Connection $Connection -ErrorAction SilentlyContinue
 
                                 $itemFound = $true
                                 Add-Audit "OK" "$typeLabel trouvé : $linkName"
@@ -153,25 +151,8 @@ function Test-AppSPDrift {
                             elseif ($node.Type -eq "Publication") {
                                 $linkName = $node.Name
                                 if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
-                                $expectedPath = "$($BaseUrl.TrimEnd('/'))/$linkName"
                                 
-                                $checkFile = Get-PnPFile -Url $expectedPath -Connection $Connection -ErrorAction SilentlyContinue
-                                if ($null -eq $checkFile) { 
-                                    $msg = "Manquant : '$linkName' (Publication Raccourci Local)"
-                                    $misses.Add($msg)
-                                    Add-Audit "MISSING" "$msg at $expectedPath"
-                                }
-                                else {
-                                    $parentDir = $expectedPath.Substring(0, $expectedPath.LastIndexOf('/'))
-                                    $caml = "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FileLeafRef'/><Value Type='Text'>$linkName</Value></Eq></Where></Query></View>"
-                                    $listName = $expectedPath.Split('/')[4]
-                                    if ($expectedPath -match "Shared Documents") { $listName = "Documents partagés" }
-                                    $items = Get-PnPListItem -List $listName -Query $caml -Connection $Connection -ErrorAction SilentlyContinue
-                                    if ($items) { $actualItem = $items[0] } else { $actualItem = $null }
-
-                                    $itemFound = $true
-                                    Add-Audit "OK" "Publication (raccourci local) trouvée : $linkName"
-                                }
+                                $itemFound = $false # Les publications n'existent pas en local. (Vérification ignorée)
 
                                 # --- VÉRIFICATION CIBLE DISTANTE POUR PUBLICATION ---
                                 if ($DeploymentId) {

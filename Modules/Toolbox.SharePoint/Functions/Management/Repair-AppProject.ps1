@@ -20,13 +20,51 @@ function Repair-AppProject {
         [array]$RepairItems,
 
         [Parameter(Mandatory = $true)]
-        [PnP.PowerShell.Commands.Base.PnPConnection]$Connection
+        [PnP.PowerShell.Commands.Base.PnPConnection]$Connection,
+
+        [Parameter(Mandatory = $false)]
+        [string]$TemplateJson,
+
+        [Parameter(Mandatory = $false)]
+        [string]$FormValuesJson,
+
+        [Parameter(Mandatory = $false)]
+        [string]$FormDefinitionJson,
+
+        [Parameter(Mandatory = $false)]
+        [string]$ClientId,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Thumbprint,
+
+        [Parameter(Mandatory = $false)]
+        [string]$TenantName
     )
 
     $LogsList = [System.Collections.Generic.List[string]]::new()
     $Errors = @()
 
     $TargetUrl = [uri]::UnescapeDataString($TargetUrl)
+
+    $ProjectModelName = ""
+    $RootMetadataHash = @{}
+
+    if (-not [string]::IsNullOrWhiteSpace($FormValuesJson)) {
+        try {
+            $fv = $FormValuesJson | ConvertFrom-Json
+            if ($fv.PreviewText) { $ProjectModelName = $fv.PreviewText }
+
+            if (-not [string]::IsNullOrWhiteSpace($FormDefinitionJson)) {
+                $fd = $FormDefinitionJson | ConvertFrom-Json
+                foreach ($field in $fd.Layout) {
+                    if ($field.IsMetadata -and $null -ne $fv."$($field.Name)" -and $fv."$($field.Name)" -ne "") {
+                        $RootMetadataHash[$field.Name] = $fv."$($field.Name)"
+                    }
+                }
+            }
+        }
+        catch {}
+    }
 
     function Log { 
         param($m, $l = "Info") 
@@ -48,8 +86,16 @@ function Repair-AppProject {
             Log "Correction de $($metaItems.Count) métadonnées..."
             $hash = @{}
             foreach ($m in $metaItems) {
-                $hash[$m.Key] = $m.Value
-                Log " > Set $($m.Key) = '$($m.Value)'"
+                # Cas spécial "Nom du Dossier (PreviewText)"
+                if ($m.Key -eq "Nom du Dossier (PreviewText)" -or $m.Key -eq "PreviewText") {
+                    Log " > ACTION REQUISE : Le renommage physique du répertoire (-> $($m.Value)) doit être efféctué via le bouton 'Renommer' de l'interface pour garantir la mise à jour complète de l'identité du projet." "Warning"
+                }
+                else {
+                    $valSet = $m.Value
+                    if ($valSet -match " \| ") { $valSet = $valSet -split " \| " }
+                    $hash[$m.Key] = $valSet
+                    Log " > Set $($m.Key) = '$($m.Value)'"
+                }
             }
             
             # Apply to Folder
@@ -60,8 +106,13 @@ function Repair-AppProject {
                 $listItem = $folder.ListItemAllFields
 
                 if ($listItem -and $listItem.Id -and $list) {
-                    Set-AppSPMetadata -List $list.Title -ItemId $listItem.Id -Values $hash -Connection $Connection
-                    Log "Métadonnées appliquées avec succès." "Success"
+                    if ($hash.Count -gt 0) {
+                        Set-AppSPMetadata -List $list.Title -ItemId $listItem.Id -Values $hash -Connection $Connection
+                        Log "Métadonnées racine appliquées avec succès." "Success"
+                    }
+                    else {
+                        Log "Aucune métadonnée applicable en masse requise sur la racine." "Info"
+                    }
                 }
                 else {
                     Log "Impossible de récupérer le ListItem du dossier ou la liste parente." "Error"
@@ -77,38 +128,123 @@ function Repair-AppProject {
         if ($structItems) {
             Log "Correction de $($structItems.Count) éléments de structure..."
             
-            foreach ($s in $structItems) {
-                # Logic depends on what "Raw" contains. 
-                # Example: "Manquant : 'REALISATION' (Dossier)"
-                # Example: "Métadonnée 'Services' incorrecte sur 'CONCEPTION' ..."
-                
-                $txt = $s.Raw
-                
-                if ($txt -match "Manquant : '(.+?)' \(Dossier\)") {
-                    $folderName = $Matches[1]
-                    # We need to reconstruct full path? 
-                    # Actually Test-Drift usually reports missing items relative to root or deeply?
-                    # If it's just "Manquant : 'REALISATION'", it's likely a direct child of some scanned folder.
-                    # LIMITATION: The current drift report might not contain the FULL relative path of the missing item if strictly text.
-                    # BUT: In Register-RenamerDashboard, "StructureMisses" comes from Test-AppSPDrift. 
-                    
-                    # For V1, we act on Direct Children of Root if name matches, OR we try to resolve.
-                    # Simplest approach for "REALISATION": Try to create it at Root/$folderName
-                    
-                    $newPath = "$TargetUrl/$folderName"
-                    Log " > Création dossier : $newPath"
-                    try {
-                        New-AppSPFolder -SiteRelativePath $newPath -Connection $Connection | Out-Null
-                        Log "   OK." "Success"
+            $baseObj = $null
+            if (-not [string]::IsNullOrWhiteSpace($TemplateJson)) {
+                $baseObj = $TemplateJson | ConvertFrom-Json
+            }
+
+            function Find-StructureNode {
+                param($NodeList, $TargetName, $TargetType, $CurrentPath)
+                if (-not $NodeList) { return $null }
+                $list = if ($NodeList -is [System.Array]) { $NodeList } else { @($NodeList) }
+                foreach ($n in $list) {
+                    $nType = if ($n.Type) { $n.Type } else { "Folder" }
+
+                    if (($n.Name -eq $TargetName -or "$($n.Name).url" -eq $TargetName -or "$($n.Name).docx" -eq $TargetName) -and $nType -eq $TargetType) { 
+                        return @{ Node = $n; ParentPath = $CurrentPath }
                     }
-                    catch {
-                        Log "   Echec création : $($_.Exception.Message)" "Error"
+                    if ($nType -ne "Link" -and $nType -ne "InternalLink" -and $nType -ne "Publication" -and $n.Name) {
+                        if ($n.Folders) {
+                            $found = Find-StructureNode -NodeList $n.Folders -TargetName $TargetName -TargetType $TargetType -CurrentPath "$CurrentPath/$($n.Name)"
+                            if ($found) { return $found }
+                        }
                     }
                 }
-                elseif ($txt -match "Métadonnée '(.+?)' incorrecte sur '(.+?)' : '(.+?)' vs '(.+?)'") {
-                    $keyName = $Matches[1]
-                    $itemName = $Matches[2]
-                    $expectedValue = $Matches[3]
+                return $null
+            }
+
+            foreach ($s in $structItems) {
+                $txt = $s.Raw
+                
+                if ($txt -match "Manquant : '(.+?)' \((Dossier|Link|InternalLink|Publication Raccourci Local|File)\)") {
+                    $itemName = $Matches[1]
+                    $itemTypeStr = $Matches[2]
+                    
+                    # Convert Display Type to JSON Node Type
+                    $mappedType = "Folder"
+                    if ($itemTypeStr -eq "Link") { $mappedType = "Link" }
+                    if ($itemTypeStr -eq "InternalLink") { $mappedType = "InternalLink" }
+                    if ($itemTypeStr -eq "Publication Raccourci Local") { $mappedType = "Publication" }
+                    if ($itemTypeStr -eq "File") { $mappedType = "File" }
+
+                    Log " > Restauration complète requise pour : $itemName ($itemTypeStr)"
+                    if (-not $baseObj) {
+                        Log "   Echec : TemplateJson non fourni. Impossible de recréer l'élément manquant." "Error"
+                        continue
+                    }
+
+                    $resNode = Find-StructureNode -NodeList $baseObj.Folders -TargetName $itemName -TargetType $mappedType -CurrentPath $TargetUrl
+                    if (-not $resNode) {
+                        if ($baseObj.Name -eq $itemName) {
+                            $resNode = @{ Node = $baseObj; ParentPath = $TargetUrl.Substring(0, $TargetUrl.LastIndexOf('/')) }
+                        }
+                        if (-not $resNode) {
+                            Log "   Echec : Noeud '$itemName' introuvable dans le TemplateJson." "Error"
+                            continue
+                        }
+                    }
+
+                    try {
+                        $list = $allLists | Where-Object { $resNode.ParentPath.StartsWith($_.RootFolder.ServerRelativeUrl, [System.StringComparison]::InvariantCultureIgnoreCase) } | Sort-Object { $_.RootFolder.ServerRelativeUrl.Length } -Descending | Select-Object -First 1
+                        
+                        $nodeWrap = @{ Folders = @($resNode.Node) }
+                        $nodeJsonStr = $nodeWrap | ConvertTo-Json -Depth 10 -Compress
+                        
+                        $formHash = $null
+                        if (-not [string]::IsNullOrWhiteSpace($FormValuesJson)) { $formHash = $FormValuesJson | ConvertFrom-Json -AsHashtable }
+
+                        $deployArgs = @{
+                            TargetSiteUrl      = $Connection.Url
+                            TargetLibraryName  = $list.Title
+                            TargetFolderUrl    = $resNode.ParentPath
+                            StructureJson      = $nodeJsonStr
+                            ClientId           = $ClientId
+                            Thumbprint         = $Thumbprint
+                            TenantName         = $TenantName
+                            FormValues         = $formHash
+                            IdMapReferenceJson = $TemplateJson
+                            ProjectModelName   = $ProjectModelName
+                            ProjectRootUrl     = $TargetUrl
+                            RootMetadata       = $RootMetadataHash
+                        }
+
+                        Log "   Lancement du Moteur de Délégation sur cible : $($resNode.ParentPath)..." "Info"
+                        $resDeploy = New-AppSPStructure @deployArgs
+
+                        if ($resDeploy.Success) {
+                            Log "   Appliqué avec succès (Restauration récursive)." "Success"
+                        }
+                        else {
+                            $errStr = $resDeploy.Errors -join " | "
+                            Log "   Echec restauration : $errStr" "Error"
+                        }
+                    }
+                    catch {
+                        Log "   Echec delegation Moteur : $($_.Exception.Message)" "Error"
+                    }
+                }
+                elseif ($txt -match "Métadonnée '(.+?)' incorrecte sur '(.+?)' : attendu '(.+?)' vs réel '.*?'" -or $txt -match "Métadonnées inaccessibles sur '(.+?)' \(Attendu '(.+?)': '(.+?)'\)") {
+                    
+                    $keyName = ""
+                    $itemName = ""
+                    $expectedValue = ""
+
+                    if ($txt -match "Métadonnées inaccessibles sur '(.+?)' \(Attendu '(.+?)': '(.+?)'\)") {
+                        $itemName = $Matches[1]
+                        $keyName = $Matches[2]
+                        $expectedValue = $Matches[3]
+                    }
+                    elseif ($txt -match "Métadonnée '(.+?)' incorrecte sur '(.+?)' : attendu '(.+?)' vs réel '.*?'") {
+                        $keyName = $Matches[1]
+                        $itemName = $Matches[2]
+                        $expectedValue = $Matches[3]
+                    }
+                    
+                    # Détection d'un tableau à valeurs multiples ("Valeur1 | Valeur2")
+                    $actualValueToSet = $expectedValue
+                    if ($expectedValue -match " \| ") {
+                        $actualValueToSet = $expectedValue -split " \| "
+                    }
                     
                     $newPath = "$TargetUrl/$itemName"
                     Log " > Correction métadonnée $keyName = '$expectedValue' sur : $newPath"
@@ -140,7 +276,7 @@ function Repair-AppProject {
                         }
 
                         if ($listItem -and $listItem.Id) {
-                            Set-AppSPMetadata -List $list.Title -ItemId $listItem.Id -Values @{ $keyName = $expectedValue } -Connection $Connection
+                            Set-AppSPMetadata -List $list.Title -ItemId $listItem.Id -Values @{ $keyName = $actualValueToSet } -Connection $Connection
                             Log "   Appliqué avec succès." "Success"
                         }
                         else {
@@ -150,6 +286,12 @@ function Repair-AppProject {
                     catch {
                         Log "   Echec correction métadonnée : $($_.Exception.Message)" "Error"
                     }
+                }
+                elseif ($txt -match "Cible distante de la publication '(.+?)' a un _AppDeploymentId incorrect \(Attendu '(.+?)', trouvé '.*?'\) à (.+)") {
+                    $pubName = $Matches[1]
+                    $expectedId = $Matches[2]
+                    $targetPath = $Matches[3]
+                    Log " > Cible distante ($pubName) ID incorrect (Attendu: $expectedId) : $targetPath. (Une relance complète du déploiement depuis le Dashboard principal est recommandée pour corriger les ID distant)." "Warning"
                 }
                 else {
                     Log " > Type de réparation inconnu pour : $txt" "Warning"

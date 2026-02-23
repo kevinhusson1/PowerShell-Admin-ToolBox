@@ -1,4 +1,10 @@
 {
+    "scripts": {
+        "sharepoint_renamer": {
+            "name": "SharePoint Renamer",
+            "description": "Maintenance des dossiers et réparation des liens."
+        }
+    },
     "default_ui": {
         "window_title": "SharePoint Renamer"
     },
