@@ -92,6 +92,30 @@ function Get-AppProjectStatus {
             if ($h) {
                 Write-Output "[LOG] Historique trouvé. Chargement des métadonnées..."
                 
+                # --- Reconstruct Project Model Name ---
+                $ProjectModelName = ""
+                if (-not [string]::IsNullOrWhiteSpace($h["FormValuesJson"])) {
+                    try {
+                        $fv = $h["FormValuesJson"] | ConvertFrom-Json
+                        if ($fv.PreviewText) { $ProjectModelName = $fv.PreviewText }
+
+                        if (-not [string]::IsNullOrWhiteSpace($h["FormDefinitionJson"])) {
+                            $fd = $h["FormDefinitionJson"] | ConvertFrom-Json
+                            if ($fd.Layout) {
+                                $builtName = ""
+                                foreach ($elem in $fd.Layout) {
+                                    if ($elem.Type -eq "Label") { $builtName += $elem.Content }
+                                    elseif ($fv."$($elem.Name)") { $builtName += $fv."$($elem.Name)" }
+                                }
+                                if (-not [string]::IsNullOrWhiteSpace($builtName)) {
+                                    $ProjectModelName = $builtName
+                                }
+                            }
+                        }
+                    }
+                    catch {}
+                }
+
                 $status.HistoryItem = [PSCustomObject]@{
                     Title              = $h["Title"]
                     ConfigName         = $h["ConfigName"]
@@ -101,6 +125,7 @@ function Get-AppProjectStatus {
                     FormValuesJson     = $h["FormValuesJson"]
                     TemplateJson       = $h["TemplateJson"]
                     FormDefinitionJson = $h["FormDefinitionJson"]
+                    ProjectModelName   = $ProjectModelName
                 }
 
                 # --- 5. DRIFT ANALYSIS ---
@@ -116,7 +141,8 @@ function Get-AppProjectStatus {
                         -DeploymentId $status.DeploymentId `
                         -ClientId $ClientId `
                         -Thumbprint $Thumbprint `
-                        -TenantName $TenantName
+                        -TenantName $TenantName `
+                        -ProjectModelName $status.HistoryItem.ProjectModelName
                         
                     if ($status.Drift.MetaStatus -eq "DRIFT") {
                         Write-Output "[LOG] DRIFT DETECTÉ: $($status.Drift.MetaDrifts.Count) divergences."

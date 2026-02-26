@@ -128,11 +128,13 @@ function Global:Set-RenamerMetadataGrid {
     $formattedDrift = Format-RenamerMetadataDrift -MetaDrifts $Drift.MetaDrifts
     $row = 0
 
-    foreach ($prop in $JsonSafe.PSObject.Properties) {
+    # Fonction locale pour injecter une ligne
+    function Append-GridRow {
+        param($keyName, $baseVal)
         $Ctrl.MetaGrid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{Height = "Auto" }))
         
         $lbl = New-Object System.Windows.Controls.TextBlock
-        $lbl.Text = "$($prop.Name):"
+        $lbl.Text = "${keyName}:"
         $lbl.FontWeight = "SemiBold"
         $lbl.Foreground = [System.Windows.Media.Brushes]::Gray
         $lbl.Margin = "0,0,10,5"
@@ -144,8 +146,8 @@ function Global:Set-RenamerMetadataGrid {
         [System.Windows.Controls.Grid]::SetRow($val, $row)
         [System.Windows.Controls.Grid]::SetColumn($val, 1)
 
-        if ($formattedDrift.ContainsKey($prop.Name)) {
-            $dInfo = $formattedDrift[$prop.Name]
+        if ($formattedDrift.ContainsKey($keyName)) {
+            $dInfo = $formattedDrift[$keyName]
             
             $runFound = New-Object System.Windows.Documents.Run
             $runFound.Text = $dInfo.Found + " "
@@ -164,12 +166,21 @@ function Global:Set-RenamerMetadataGrid {
             $lbl.Foreground = [System.Windows.Media.Brushes]::OrangeRed
         }
         else {
-            $val.Text = $prop.Value
+            $val.Text = $baseVal
         }
 
         $Ctrl.MetaGrid.Children.Add($lbl)
         $Ctrl.MetaGrid.Children.Add($val)
-        $row++
+        Set-Variable -Name row -Value ($row + 1) -Scope 1
+    }
+
+    # Injection forcée du "Nom du Dossier" si en divergence (virtuel)
+    if ($formattedDrift.ContainsKey("Nom du Dossier")) {
+        Append-GridRow -keyName "Nom du Dossier" -baseVal ""
+    }
+
+    foreach ($prop in $JsonSafe.PSObject.Properties) {
+        Append-GridRow -keyName $prop.Name -baseVal $prop.Value
     }
 }
 

@@ -7,7 +7,8 @@ function Test-AppSPDrift {
         [string]$DeploymentId,
         [string]$ClientId,
         [string]$Thumbprint,
-        [string]$TenantName
+        [string]$TenantName,
+        [string]$ProjectModelName
     )
 
     $result = [PSCustomObject]@{
@@ -31,21 +32,20 @@ function Test-AppSPDrift {
             $driftList = @()
             $ignoreKeys = @("TemplateVersion", "ConfigName") # Fields present in JSON but not necessarily in SharePoint Columns
 
+            # [FIX] Root Folder Name Verification (Force Check even if not in keys)
+            $expectedName = if ($ProjectModelName) { $ProjectModelName } elseif ($expected.ContainsKey("PreviewText")) { $expected["PreviewText"] } else { $null }
+            if ($expectedName) {
+                $actualName = $FolderItem["FileLeafRef"]
+                if ($actualName -ne $expectedName) {
+                    $driftList += "Nom du Dossier : Expected '$expectedName' but found '$actualName'"
+                }
+            }
+
             foreach ($key in $expected.Keys) {
                 # Skip internal/special keys
                 if ($key -match "^_") { continue }
                 if ($ignoreKeys -contains $key) { continue }
-
-                # [FIX] Special Handling for Folder Name (PreviewText)
-                if ($key -eq "PreviewText") {
-                    $expectedName = $expected[$key]
-                    $actualName = $FolderItem["FileLeafRef"] # FileLeafRef = Name/LeafName in SharePoint
-
-                    if ($actualName -ne $expectedName) {
-                        $driftList += "Nom du Dossier (PreviewText) : Expected '$expectedName' but found '$actualName'"
-                    }
-                    continue
-                }
+                if ($key -eq "PreviewText") { continue }
 
                 $pnpKey = $key # Assuming internal names match
                 
@@ -98,14 +98,28 @@ function Test-AppSPDrift {
         if (-not [string]::IsNullOrWhiteSpace($TemplateJson)) {
             $structure = $TemplateJson | ConvertFrom-Json
             
-            # [FIX] Pre-Load Lists for CAML Link queries
-            $allLists = Get-PnPList -Connection $Connection -Includes RootFolder.ServerRelativeUrl, Title -ErrorAction SilentlyContinue
-
             # [FIX] Prepare Form Values for Dynamic Tag Resolution
             $formValuesHash = @{}
             if (-not [string]::IsNullOrWhiteSpace($FormValuesJson)) {
                 $formValuesHash = $FormValuesJson | ConvertFrom-Json -AsHashtable
             }
+
+            # [FIX] Build ID to Path Map for InternalLinks
+            $IdToPathMap = @{}
+            function Build-IdMap {
+                param($SubStructure, $CurrentPath)
+                if ($SubStructure -is [System.Array]) {
+                    foreach ($item in $SubStructure) { Build-IdMap -SubStructure $item -CurrentPath $CurrentPath }
+                    return
+                }
+                if ($SubStructure.Type -ne "Link" -and $SubStructure.Type -ne "InternalLink" -and $SubStructure.Type -ne "Publication" -and $SubStructure.Name) {
+                    $myPath = "$CurrentPath/$($SubStructure.Name)"
+                    if ($SubStructure.Id) { $IdToPathMap[$SubStructure.Id] = $myPath }
+                    if ($SubStructure.Folders) { Build-IdMap -SubStructure $SubStructure.Folders -CurrentPath $myPath }
+                }
+            }
+            if ($structure.Folders) { Build-IdMap -SubStructure $structure.Folders -CurrentPath "" }
+            else { Build-IdMap -SubStructure $structure -CurrentPath "" }
 
             # [FIX] Use List for Reference-based modification across function scope
             $misses = [System.Collections.Generic.List[string]]::new()
@@ -147,6 +161,60 @@ function Test-AppSPDrift {
 
                                 $itemFound = $true
                                 Add-Audit "OK" "$typeLabel trouvé : $linkName"
+                                
+                                # --- VÉRIFICATION SPÉCIFIQUE POU INTERNAL LINK ---
+                                if ($node.Type -eq "InternalLink" -and $actualItem) {
+                                    $targetId = $node.TargetNodeId
+                                    if ($IdToPathMap.ContainsKey($targetId)) {
+                                        # Calculate expected Absolute URL
+                                        $relPath = $IdToPathMap[$targetId]
+                                        
+                                        # Fix: Get Absolute URI Host from the connection
+                                        $uri = New-Object Uri($Connection.Url) 
+                                        $baseHost = "$($uri.Scheme)://$($uri.Host)"
+                                        
+                                        # [FIX] Use the FolderItem properties to get the original root project path
+                                        $rootProjectRelPath = $FolderItem["FileRef"]
+                                        if (-not $rootProjectRelPath) { 
+                                            $rootProjectRelPath = $FolderItem["FileDirRef"] + "/" + $FolderItem["FileLeafRef"] 
+                                        }
+                                        $expectedTargetUrl = "$baseHost$rootProjectRelPath$relPath"
+                                        
+                                        # Read actual shortcut URL from ListItem
+                                        $actualTargetUrl = $actualItem["_ShortcutUrl"]
+                                        
+                                        if ([string]::IsNullOrWhiteSpace($actualTargetUrl)) {
+                                            # Try to get it from the file content if ListItem field is empty
+                                            try {
+                                                $fileContent = Get-PnPFile -Url $expectedPath -AsString -Connection $Connection -ErrorAction SilentlyContinue
+                                                if ($fileContent -match "URL=(.+)") {
+                                                    $actualTargetUrl = $Matches[1].Trim()
+                                                }
+                                            }
+                                            catch {}
+                                        }
+
+                                        if ($actualTargetUrl) {
+                                            # Normalize URLs for comparison (decode, lowercase)
+                                            $normExpected = [System.Uri]::UnescapeDataString($expectedTargetUrl).ToLower().Trim('/')
+                                            $normActual = [System.Uri]::UnescapeDataString($actualTargetUrl).ToLower().Trim('/')
+                                            
+                                            if ($normExpected -ne $normActual) {
+                                                $warn = "La destination du lien interne '$linkName' n'est plus la bonne (Attendu: $expectedTargetUrl)."
+                                                $misses.Add($warn)
+                                                Add-Audit "DRIFT" "Le lien interne pointe vers une mauvaise adresse (probablement dû à un renommage parent)."
+                                            }
+                                            else {
+                                                Add-Audit "OK" "  > Cible du lien interne vérifiée : $expectedTargetUrl"
+                                            }
+                                        }
+                                        else {
+                                            $warn = "La destination du lien interne '$linkName' est introuvable."
+                                            $misses.Add($warn)
+                                            Add-Audit "MISSING" $warn
+                                        }
+                                    }
+                                }
                             }
                             elseif ($node.Type -eq "Publication") {
                                 $linkName = $node.Name
@@ -158,9 +226,9 @@ function Test-AppSPDrift {
                                 if ($DeploymentId) {
                                     $rawDestPath = $node.TargetFolderPath
                                     try {
-                                        # Deduce project name from the root folder leaf ref
+                                        # Deduce project name from the TRUE origin model name
+                                        $projName = if ($ProjectModelName) { $ProjectModelName } else { $FolderItem["FileLeafRef"] }
                                         if ($node.UseModelName -eq $true) {
-                                            $projName = $FolderItem["FileLeafRef"]
                                             $rawDestPath = "$rawDestPath/$projName"
                                         }
 
@@ -171,7 +239,7 @@ function Test-AppSPDrift {
                                             $targetCtx = Connect-PnPOnline -Url $node.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
                                         }
 
-                                        $resolvedDest = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
+                                        $resolvedDest = Get-PnPFolder -Url $rawDestPath -Connection $targetCtx -ErrorAction Stop
                                         
                                         $ctx = $resolvedDest.Context
                                         $ctx.Load($resolvedDest.Properties)
@@ -179,16 +247,25 @@ function Test-AppSPDrift {
                                         
                                         $remoteDeployId = $resolvedDest.Properties["_AppDeploymentId"]
                                         if ($remoteDeployId -eq $DeploymentId) {
-                                            Add-Audit "OK"  "  > Dossier Cible distant vérifié (ID de déploiement concordant : $DeploymentId) à $rawDestPath"
+                                            # Validate that local and remote names are identical (Warn if Root Folder was renamed exclusively locally)
+                                            $currName = $FolderItem["FileLeafRef"]
+                                            if ($projName -ne $currName) {
+                                                $warn = "⚠️ Le nom de la publication distante ($projName) n'est plus synchronisé avec le nom du dossier racine local ($currName)."
+                                                $misses.Add($warn)
+                                                Add-Audit "DRIFT" "Le nom du dossier racine ($currName) diffère de la publication distante ($projName). Un renommage via l'outil est requis."
+                                            }
+                                            else {
+                                                Add-Audit "OK"  "  > Dossier Cible distant vérifié (ID de déploiement concordant : $DeploymentId) à $rawDestPath"
+                                            }
                                         }
                                         else {
-                                            $msg = "Cible distante de la publication '$linkName' a un _AppDeploymentId incorrect (Attendu '$DeploymentId', trouvé '$remoteDeployId') à $rawDestPath"
+                                            $msg = "Le dossier de destination du lien de publication '$linkName' n'existe plus ou n'est plus lié."
                                             $misses.Add($msg)
                                             Add-Audit "DRIFT" $msg
                                         }
                                     }
                                     catch {
-                                        $msg = "Dossier cible distant de la publication '$linkName' introuvable ou erreur : $($_.Exception.Message) (Chemin ciblé: $rawDestPath)"
+                                        $msg = "Le dossier de destination du lien de publication '$linkName' n'existe plus."
                                         $misses.Add($msg)
                                         Add-Audit "MISSING" $msg
                                     }
@@ -281,7 +358,23 @@ function Test-AppSPDrift {
                                             Add-Audit "DRIFT" $msg
                                         }
                                         else {
-                                            Add-Audit "OK" "  > Tag '$tagName' conforme ($expStr)"
+                                            # Check for potential extra tags (for purely informational logging)
+                                            $extraTags = @()
+                                            foreach ($av in $actStrArray) {
+                                                $foundMatch = $false
+                                                foreach ($ev in $expVals) {
+                                                    if ($av -eq $ev) { $foundMatch = $true; break }
+                                                }
+                                                if (-not $foundMatch) { $extraTags += $av }
+                                            }
+
+                                            if ($extraTags.Count -gt 0) {
+                                                $extraStr = $extraTags -join ', '
+                                                Add-Audit "INFO" "  > Tag '$tagName' conforme ($expStr) avec ajouts supplémentaires ($extraStr)"
+                                            }
+                                            else {
+                                                Add-Audit "OK" "  > Tag '$tagName' conforme ($expStr)"
+                                            }
                                         }
                                     }
                                     catch {
