@@ -47,7 +47,9 @@ function Connect-AppAzureWithUser {
                     }
                 }
                 catch {
-                    # Token expiré ou invalide
+                    # Token expiré ou invalide : On nettoie le cache avant de réessayer
+                    Write-Verbose "[Auth] Le token semble expiré. Déconnexion préventive."
+                    Disconnect-MgGraph -ErrorAction SilentlyContinue
                     $currentContext = $null
                 }
             }
@@ -94,6 +96,7 @@ function Connect-AppAzureWithUser {
 
     }
     catch {
+        Write-Warning "[Auth] Échec critique lors de la connexion Azure : $($_.Exception.Message)"
         return [PSCustomObject]@{ Success = $false; Connected = $false; ErrorMessage = $_.Exception.Message }
     }
 }

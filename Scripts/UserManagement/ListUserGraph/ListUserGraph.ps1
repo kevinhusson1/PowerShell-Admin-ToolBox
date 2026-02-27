@@ -194,6 +194,12 @@ try {
     $OnConnect = { 
         # En cas de connexion manuelle (Mode Autonome)
         $newId = Connect-AppAzureWithUser -AppId $ClientId -TenantId $TenantId
+        
+        if (-not $newId.Connected) {
+            Write-Warning "[ListUser] Authentification échouée ou annulée : $($newId.ErrorMessage)"
+            [System.Windows.MessageBox]::Show((Get-AppText 'messages.auth_failed' -Default "L'authentification a échoué.`nErreur : $($newId.ErrorMessage)"), "Erreur de Connexion", "OK", "Warning") | Out-Null
+        }
+
         Set-AppWindowIdentity -Window $window -UserSession $newId -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
         
         # Déclenchement du chargement après connexion

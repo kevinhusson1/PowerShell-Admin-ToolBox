@@ -145,9 +145,14 @@ try {
         # Chargement à la volée des configs si nécessaire (si non passé par Launcher)
         if (-not $Global:AppConfig) { $Global:AppConfig = Get-AppConfiguration -ProjectRoot $ProjectRoot }
         
-        $newIdentity = Connect-AppAzureUser -AppId $Global:AppConfig.azure.authentication.userAuth.appId -TenantId $Global:AppConfig.azure.tenantId
+        $newIdentity = Connect-AppAzureWithUser -AppId $Global:AppConfig.azure.authentication.userAuth.appId -TenantId $Global:AppConfig.azure.tenantId
         
-        # Mise à jour immédiate de l'UI après connexion réussie
+        if (-not $newIdentity.Connected) {
+            Write-Warning "[Builder] Authentification échouée ou annulée : $($newIdentity.ErrorMessage)"
+            [System.Windows.MessageBox]::Show((Get-AppText 'messages.auth_failed' -Default "L'authentification a échoué.`nErreur : $($newIdentity.ErrorMessage)"), "Erreur de Connexion", "OK", "Warning") | Out-Null
+        }
+
+        # Mise à jour immédiate de l'UI après tentative de connexion
         Set-AppWindowIdentity -Window $window -UserSession $newIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
     }
 

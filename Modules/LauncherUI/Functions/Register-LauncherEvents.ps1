@@ -271,7 +271,7 @@ function Register-LauncherEvents {
                     -TenantId $Global:AppConfig.azure.tenantId `
                     -Scopes $Global:AppConfig.azure.authentication.userAuth.scopes
                 
-                if ($authResult.Success) {
+                if ($authResult.Connected) {
                     $Global:AppAzureAuth.UserAuth = $authResult
                     
                     # --- CACHE CRITIQUE : On récupère les groupes ICI et une seule fois ---
@@ -283,6 +283,8 @@ function Register-LauncherEvents {
                 }
                 else {
                     $Global:AppAzureAuth.UserAuth = @{ Connected = $false }
+                    Write-LauncherLog -Message "Authentification échouée ou annulée : $($authResult.ErrorMessage)" -Level Warning
+                    [System.Windows.MessageBox]::Show((Get-AppText 'messages.auth_failed' -Default "L'authentification a échoué.`nErreur : $($authResult.ErrorMessage)"), "Erreur de Connexion", "OK", "Warning") | Out-Null
                 }
             }
             finally {

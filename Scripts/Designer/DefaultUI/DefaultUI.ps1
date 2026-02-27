@@ -153,7 +153,12 @@ try {
         
         $newIdentity = Connect-AppAzureWithUser -AppId $Global:AppConfig.azure.authentication.userAuth.appId -TenantId $Global:AppConfig.azure.tenantId
         
-        # Mise à jour immédiate de l'UI après connexion réussie
+        if (-not $newIdentity.Connected) {
+            Write-Warning "[DefaultUI] Authentification échouée ou annulée : $($newIdentity.ErrorMessage)"
+            [System.Windows.MessageBox]::Show((Get-AppText 'messages.auth_failed' -Default "L'authentification a échoué.`nErreur : $($newIdentity.ErrorMessage)"), "Erreur de Connexion", "OK", "Warning") | Out-Null
+        }
+
+        # Mise à jour immédiate de l'UI après tentative de connexion
         Set-AppWindowIdentity -Window $window -UserSession $newIdentity -LauncherPID $LauncherPID -OnConnect $OnConnect -OnDisconnect $OnDisconnect
     }
 
