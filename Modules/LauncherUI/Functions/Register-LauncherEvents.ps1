@@ -179,7 +179,7 @@ function Register-LauncherEvents {
                     $Global:AppControls.mainWindow.Title = "$($Global:AppConfig.companyName) - $(Get-AppText 'app.title')"
                     $Global:AppControls.mainWindow.Width = $Global:AppConfig.ui.launcherWidth
                     $Global:AppControls.mainWindow.Height = $Global:AppConfig.ui.launcherHeight
-                    $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
+    $global:VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
 
                     Write-LauncherLog -Message (Get-AppText 'messages.settings_saved_log') -Level Success
 

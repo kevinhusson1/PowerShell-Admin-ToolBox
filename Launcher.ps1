@@ -16,7 +16,7 @@
 # =====================================================================
 
 # 1. FIX MSAL CRITIQUE : Charger Microsoft Graph AVANT toute interface ou module
-Import-Module Microsoft.Graph.Authentication -ErrorAction SilentlyContinue
+Import-Module Microsoft.Graph.Authentication -MinimumVersion 2.32.0 -ErrorAction SilentlyContinue
 
 try { Add-Type -AssemblyName WindowsBase, PresentationCore, PresentationFramework } catch {}
 
@@ -74,9 +74,6 @@ catch {
 # ÉTAPE 1 : IMPORTATION DES MODULES
 # =====================================================================
 try {
-    # PRÉ-CHARGEMENT CRITIQUE : Évite un conflit de version MSAL
-    Import-Module Microsoft.Graph.Authentication -MinimumVersion 2.32.0 -ErrorAction SilentlyContinue
-
     # On importe d'abord notre dépendance externe embarquée
     Import-Module "$projectRoot\Vendor\PSSQLite" -Force
 
@@ -104,7 +101,7 @@ try {
     $Global:AppConfig = Get-AppConfiguration
     if ($null -eq $Global:AppConfig) { throw "Get-AppConfiguration n'a retourné aucune configuration." }
     
-    $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
+    $global:VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
     
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage
 
@@ -129,8 +126,8 @@ $Global:AppAvailableScripts = Get-FilteredAndEnrichedScripts -ProjectRoot $proje
 # =====================================================================
 try {
     # --- 1. Définition des fonctions locales à l'UI ---
-    # Cette fonction est privée au lanceur car elle dépend de l'existence de l'UI.
-    function Write-LauncherLog {
+    # Cette fonction est définie globalement pour être accessible par les modules et les closures d'événements UI.
+    function Global:Write-LauncherLog {
         param([string]$Message, [string]$Level = 'Info')
         Write-AppLog -Message $Message -Level $Level -LogToUI
     }

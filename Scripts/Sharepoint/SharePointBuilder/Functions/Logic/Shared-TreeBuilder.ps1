@@ -54,6 +54,7 @@ function Global:New-BuilderTreeItem {
     # 2. Création du Noeud selon Type
     if ($NodeData.Type -eq "Link") {
         $item = New-EditorLinkNode -Name $finalName -Url $finalUrl
+        if ($NodeData.Id) { $item.Tag.Id = $NodeData.Id }
     }
     elseif ($NodeData.Type -eq "Publication") {
         $item = New-EditorPubNode -Name $finalName
@@ -61,10 +62,9 @@ function Global:New-BuilderTreeItem {
         $item.Tag.TargetSiteMode = $NodeData.TargetSiteMode
         $item.Tag.TargetSiteUrl = $NodeData.TargetSiteUrl
         $item.Tag.TargetFolderPath = $NodeData.TargetFolderPath
-        $item.Tag.UseModelName = $NodeData.UseModelName
+        $item.Tag.UseFormName = $NodeData.UseFormName
         $item.Tag.UseFormMetadata = if ($NodeData.UseFormMetadata) { $NodeData.UseFormMetadata } else { $false }
-        $item.Tag.GrantUser = $NodeData.GrantUser
-        $item.Tag.GrantLevel = $NodeData.GrantLevel
+        if ($NodeData.Id) { $item.Tag.Id = $NodeData.Id }
         
         # Initial Visual Update for Metadata
         if ($item.Tag.UseFormMetadata) {
@@ -77,6 +77,7 @@ function Global:New-BuilderTreeItem {
     }
     elseif ($NodeData.Type -eq "InternalLink") {
         $item = New-EditorInternalLinkNode -Name $finalName -TargetNodeId $NodeData.TargetNodeId
+        if ($NodeData.Id) { $item.Tag.Id = $NodeData.Id }
     }
     elseif ($NodeData.Type -eq "File") {
         $finalSourceUrl = if ($NodeData.SourceUrl) { $NodeData.SourceUrl } else { "" }
@@ -88,11 +89,16 @@ function Global:New-BuilderTreeItem {
             }
         }
         $item = New-EditorFileNode -Name $finalName -SourceUrl $finalSourceUrl
+        if ($NodeData.Id) { $item.Tag.Id = $NodeData.Id }
     }
     else {
         # Default: Folder
         $item = New-EditorNode -Name $finalName
         if ($NodeData.Id) { $item.Tag.Id = $NodeData.Id }
+    }
+
+    if ($NodeData.RelativePath -and $item.Tag.PSObject.Properties.Match('RelativePath').Count -gt 0) {
+        $item.Tag.RelativePath = $NodeData.RelativePath
     }
 
     # 3. Hydratation Enfants Communs (Permissions, Tags)

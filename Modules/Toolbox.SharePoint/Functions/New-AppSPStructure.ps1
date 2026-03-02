@@ -265,6 +265,180 @@ function New-AppSPStructure {
 
         Log "Mapping IDs terminé ($($IdToPathMap.Count) entrées)." "DEBUG"
 
+        function Invoke-AppPublication {
+            param(
+                [System.Management.Automation.PSCustomObject]$pub,
+                [string]$sourceServerRelativeUrl
+            )
+            Log (Loc "log_deploy_pub_proc" $pub.Name) "INFO"
+            
+            try {
+                # A. RÉCUPÉRATION URL SOURCE
+                $uri = New-Object Uri($TargetSiteUrl)
+                $baseHost = "$($uri.Scheme)://$($uri.Host)"
+                $sourceFullUrl = "$baseHost$sourceServerRelativeUrl"
+                Log (Loc "log_deploy_pub_source" $sourceFullUrl) "DEBUG"
+
+                # B. DÉTERMINATION SITE CIBLE
+                $targetCtx = $conn 
+                
+                if ($pub.TargetSiteMode -eq "Url" -and -not [string]::IsNullOrWhiteSpace($pub.TargetSiteUrl)) {
+                    Log (Loc "log_deploy_pub_remote_conn" $pub.TargetSiteUrl) "DEBUG"
+                    try {
+                        $targetCtx = Connect-PnPOnline -Url $pub.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
+                    }
+                    catch {
+                        Log "  ⚠️ Erreur connexion cible : $($_.Exception.Message)" "WARNING"
+                        return
+                    }
+                }
+
+                # C. CRÉATION DU RACCOURCI SUR LA CIBLE
+                $linkName = $pub.Name
+                if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
+                
+                $rawDestPath = $pub.TargetFolderPath
+                
+                $pName = ""
+                if (-not [string]::IsNullOrWhiteSpace($ProjectModelName)) { $pName = $ProjectModelName }
+                elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) { $pName = $RootFolderName }
+
+                if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($pName)) {
+                    $rawDestPath = "$rawDestPath/$pName"
+                }
+                
+                Log (Loc "log_deploy_pub_target_path" $rawDestPath) "DEBUG"
+
+                # FIX: Résolution du ServerRelativeUrl correct pour PnP
+                # Add-PnPFile (via New-AppSPLink) exige un ServerRelativeUrl (/sites/...)
+                $resolvedDest = $null
+                try {
+                    $resolvedDest = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
+                    $rawDestPath = $resolvedDest.ServerRelativeUrl
+                }
+                catch {
+                    Log "  > Dossier Cible distant '$rawDestPath' introuvable. Tentative de création..." "DEBUG"
+                    try {
+                        if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($pName)) {
+                            # Le parent doit exister dans ce cas
+                            $parentFolder = Resolve-PnPFolder -SiteRelativePath $pub.TargetFolderPath -Connection $targetCtx -ErrorAction Stop
+                            $resolvedDest = Add-PnPFolder -Name $pName -Folder $parentFolder.ServerRelativeUrl -Connection $targetCtx -ErrorAction Stop
+                        }
+                        else {
+                            $parentPath = $rawDestPath.Substring(0, $rawDestPath.LastIndexOf('/'))
+                            $folderName = $rawDestPath.Substring($rawDestPath.LastIndexOf('/') + 1)
+                            $parentFolder = Resolve-PnPFolder -SiteRelativePath $parentPath -Connection $targetCtx -ErrorAction Stop
+                            $resolvedDest = Add-PnPFolder -Name $folderName -Folder $parentFolder.ServerRelativeUrl -Connection $targetCtx -ErrorAction Stop
+                        }
+                        $rawDestPath = $resolvedDest.ServerRelativeUrl
+                        Log "  > Dossier Cible distant '$rawDestPath' créé avec succès." "SUCCESS"
+                    }
+                    catch {
+                        Log "  ⚠️ Erreur fatale : Impossible de résoudre ni de créer le dossier cible '$rawDestPath' : $($_.Exception.Message)" "WARNING"
+                        # On échoue la publication silencieusement (le lien cible n'existera pas)
+                        return
+                    }
+                }
+
+                $resShortcut = New-AppSPLink -Name $linkName -TargetUrl $sourceFullUrl -Folder $rawDestPath -Connection $targetCtx
+                if ($resShortcut.Success) {
+                    Log (Loc "log_deploy_pub_shortcut_ok" $resShortcut.File.ServerRelativeUrl) "SUCCESS"
+                }
+                else {
+                    throw "Echec création raccourci : $($resShortcut.Message)"
+                }
+
+                # C-bis. RÉCUPÉRATION ITEM (ROBUSTE)
+                $pubItem = $null
+                try {
+                    # On tente via UniqueId si dispo, sinon via URL en mode ListItem
+                    if ($resShortcut.File -and $resShortcut.File.UniqueId) {
+                        $pubItem = Get-PnPListItem -List $TargetLibraryName -UniqueId $resShortcut.File.UniqueId -Connection $targetCtx -ErrorAction SilentlyContinue
+                    }
+                    if (-not $pubItem) {
+                        $pubItem = Get-PnPFile -Url $resShortcut.File.ServerRelativeUrl -AsListItem -Connection $targetCtx -ErrorAction Stop
+                    }
+                }
+                catch {
+                    Log "  ⚠️ Impossible de récupérer l'Item de la publication pour les métadonnées : $($_.Exception.Message)" "WARNING"
+                }
+
+                # GESTION TAGS
+                if ($pub.Tags -and $pubItem) {
+                    Update-SPTags -Item $pubItem -TagsConfig $pub.Tags -List $TargetLibraryName -Connection $targetCtx
+                }
+
+                # C-ter. PUBLICATION METADATA (Formulaire -> Dossier Cible)
+                if ($pub.UseFormMetadata -and $RootMetadata -and $RootMetadata.Count -gt 0) {
+                    Log "  > Application des métadonnées du formulaire sur le dossier cible de la publication..." "DEBUG"
+                    try {
+                        $targetFolderItem = $null
+
+                        # 1. On tente d'utiliser le dossier déjà résolu pour la création du raccourci
+                        if ($resolvedDest) {
+                            # Si ListItem manquant, on le recharge
+                            if (-not $resolvedDest.ListItemAllFields -or -not $resolvedDest.ListItemAllFields.Id) {
+                                $resolvedDest = Get-PnPFolder -Url $resolvedDest.ServerRelativeUrl -Includes ListItemAllFields -Connection $targetCtx -ErrorAction SilentlyContinue
+                            }
+                            $targetFolderItem = $resolvedDest.ListItemAllFields
+                        }
+                        
+                        # 2. Fallback si non résolu ou item manquant
+                        if (-not $targetFolderItem) {
+                            $tmpFolder = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
+                            $tmpFolder = Get-PnPFolder -Url $tmpFolder.ServerRelativeUrl -Includes ListItemAllFields -Connection $targetCtx -ErrorAction Stop
+                            $targetFolderItem = $tmpFolder.ListItemAllFields
+                        }
+
+                        if ($targetFolderItem) {
+                            # Conversion Metadata -> Format Tags
+                            $metaTags = @()
+                            foreach ($k in $RootMetadata.Keys) {
+                                $metaTags += [PSCustomObject]@{ Name = $k; Value = $RootMetadata[$k] }
+                            }
+                            
+                            Update-SPTags -Item $targetFolderItem -TagsConfig $metaTags -List $TargetLibraryName -Connection $targetCtx
+                            Log "    Metadonnées appliquées sur le dossier '$rawDestPath'." "INFO"
+                        }
+                        else {
+                            Log "  ⚠️ Erreur Meta Pub : Impossible de récupérer l'Item du dossier cible." "WARNING"
+                        }
+                    }
+                    catch { Log "  ⚠️ Erreur Meta Pub : $($_.Exception.Message)" "WARNING" }
+                }
+
+                # C-quater. PROPAGATION ID DEPLOIEMENT (PROPERTY BAG)
+                if ($globalDeployId) {
+                    $folderToTag = $resolvedDest
+                    if (-not $folderToTag) {
+                        try { $folderToTag = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop } catch {}
+                    }
+                    
+                    if ($folderToTag) {
+                        Log "  > Application de l'ID de déploiement principal ($globalDeployId) sur la publication..." "DEBUG"
+                        try {
+                            $ctxTarget = $folderToTag.Context
+                            $ctxTarget.Load($folderToTag.Properties)
+                            $ctxTarget.ExecuteQuery()
+                            
+                            $folderToTag.Properties["_AppDeploymentId"] = $globalDeployId
+                            $folderToTag.Update()
+                            $ctxTarget.ExecuteQuery()
+                            
+                            Log "    Tag ID Déploiement ajouté sur la destination." "INFO"
+                        }
+                        catch {
+                            Log "  ⚠️ Erreur application ID Déploiement : $($_.Exception.Message)" "WARNING"
+                        }
+                    }
+                }
+
+            }
+            catch {
+                Log "  ❌ Erreur traitement publication : $($_.Exception.Message)" "ERROR"
+            }
+        }
+
 
         function Set-NewFolder {
             param($CurrentPath, $FolderObj)
@@ -419,9 +593,11 @@ function New-AppSPStructure {
                 return # Stop ici pour un fichier
             }
             
-            # 0-TER. GESTION TYPE = PUBLICATION (Déporté ici ou traité plus bas ?)
-            # Pour l'instant traité dans le bloc Folders, mais on pourrait l'uniformiser ici.
-            # On laisse le bloc 6 existant pour ne pas trop perturber.
+            # 0-TER. GESTION TYPE = PUBLICATION
+            if ($FolderObj.Type -eq "Publication") {
+                Invoke-AppPublication -pub $FolderObj -sourceServerRelativeUrl $CurrentPath
+                return
+            }
 
             $folderName = $FolderObj.Name
             $fullPath = "$CurrentPath/$folderName"
@@ -517,153 +693,7 @@ function New-AppSPStructure {
             if ($FolderObj.Folders) {
                 $pubs = $FolderObj.Folders | Where-Object { $_.Type -eq "Publication" }
                 foreach ($pub in $pubs) {
-                    Log (Loc "log_deploy_pub_proc" $pub.Name) "INFO"
-                    
-                    try {
-                        # A. RÉCUPÉRATION URL SOURCE
-                        $uri = New-Object Uri($TargetSiteUrl)
-                        $baseHost = "$($uri.Scheme)://$($uri.Host)"
-                        $sourceFullUrl = "$baseHost$($folder.ServerRelativeUrl)"
-                        Log (Loc "log_deploy_pub_source" $sourceFullUrl) "DEBUG"
-
-                        # B. DÉTERMINATION SITE CIBLE
-                        $targetCtx = $conn 
-                        
-                        if ($pub.TargetSiteMode -eq "Url" -and -not [string]::IsNullOrWhiteSpace($pub.TargetSiteUrl)) {
-                            Log (Loc "log_deploy_pub_remote_conn" $pub.TargetSiteUrl) "DEBUG"
-                            try {
-                                $targetCtx = Connect-PnPOnline -Url $pub.TargetSiteUrl -ClientId $ClientId -Thumbprint $Thumbprint -Tenant "$cleanTenant.onmicrosoft.com" -ReturnConnection -ErrorAction Stop
-                            }
-                            catch {
-                                Log "  ⚠️ Erreur connexion cible : $($_.Exception.Message)" "WARNING"
-                                continue
-                            }
-                        }
-
-                        # C. CRÉATION DU RACCOURCI SUR LA CIBLE
-                        $linkName = $pub.Name
-                        if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
-                        
-                        $rawDestPath = $pub.TargetFolderPath
-                        
-                        $pName = ""
-                        if (-not [string]::IsNullOrWhiteSpace($ProjectModelName)) { $pName = $ProjectModelName }
-                        elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) { $pName = $RootFolderName }
-
-                        if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($pName)) {
-                            $rawDestPath = "$rawDestPath/$pName"
-                        }
-                        
-                        Log (Loc "log_deploy_pub_target_path" $rawDestPath) "DEBUG"
-
-                        # FIX: Résolution du ServerRelativeUrl correct pour PnP
-                        # Add-PnPFile (via New-AppSPLink) exige un ServerRelativeUrl (/sites/...)
-                        try {
-                            $resolvedDest = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
-                            $rawDestPath = $resolvedDest.ServerRelativeUrl
-                        }
-                        catch {
-                            Log "  ⚠️ Erreur résolution dossier cible '$rawDestPath' : $($_.Exception.Message)" "WARNING"
-                            # On continue avec le path brut, qui échouera probablement, mais on aura tracé.
-                        }
-
-                        $resShortcut = New-AppSPLink -Name $linkName -TargetUrl $sourceFullUrl -Folder $rawDestPath -Connection $targetCtx
-                        if ($resShortcut.Success) {
-                            Log (Loc "log_deploy_pub_shortcut_ok" $resShortcut.File.ServerRelativeUrl) "SUCCESS"
-                        }
-                        else {
-                            throw "Echec création raccourci : $($resShortcut.Message)"
-                        }
-
-                        # C-bis. RÉCUPÉRATION ITEM (ROBUSTE)
-                        $pubItem = $null
-                        try {
-                            # On tente via UniqueId si dispo, sinon via URL en mode ListItem
-                            if ($resShortcut.File -and $resShortcut.File.UniqueId) {
-                                $pubItem = Get-PnPListItem -List $TargetLibraryName -UniqueId $resShortcut.File.UniqueId -Connection $targetCtx -ErrorAction SilentlyContinue
-                            }
-                            if (-not $pubItem) {
-                                $pubItem = Get-PnPFile -Url $resShortcut.File.ServerRelativeUrl -AsListItem -Connection $targetCtx -ErrorAction Stop
-                            }
-                        }
-                        catch {
-                            Log "  ⚠️ Impossible de récupérer l'Item de la publication pour les métadonnées : $($_.Exception.Message)" "WARNING"
-                        }
-
-                        # GESTION TAGS
-                        if ($pub.Tags -and $pubItem) {
-                            Update-SPTags -Item $pubItem -TagsConfig $pub.Tags -List $TargetLibraryName -Connection $targetCtx
-                        }
-
-                        # C-ter. PUBLICATION METADATA (Formulaire -> Dossier Cible)
-                        if ($pub.UseFormMetadata -and $RootMetadata -and $RootMetadata.Count -gt 0) {
-                            Log "  > Application des métadonnées du formulaire sur le dossier cible de la publication..." "DEBUG"
-                            try {
-                                $targetFolderItem = $null
-
-                                # 1. On tente d'utiliser le dossier déjà résolu pour la création du raccourci
-                                if ($resolvedDest) {
-                                    # Si ListItem manquant, on le recharge
-                                    if (-not $resolvedDest.ListItemAllFields -or -not $resolvedDest.ListItemAllFields.Id) {
-                                        $resolvedDest = Get-PnPFolder -Url $resolvedDest.ServerRelativeUrl -Includes ListItemAllFields -Connection $targetCtx -ErrorAction SilentlyContinue
-                                    }
-                                    $targetFolderItem = $resolvedDest.ListItemAllFields
-                                }
-                                
-                                # 2. Fallback si non résolu ou item manquant
-                                if (-not $targetFolderItem) {
-                                    $tmpFolder = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop
-                                    $tmpFolder = Get-PnPFolder -Url $tmpFolder.ServerRelativeUrl -Includes ListItemAllFields -Connection $targetCtx -ErrorAction Stop
-                                    $targetFolderItem = $tmpFolder.ListItemAllFields
-                                }
-
-                                if ($targetFolderItem) {
-                                    # Conversion Metadata -> Format Tags
-                                    $metaTags = @()
-                                    foreach ($k in $RootMetadata.Keys) {
-                                        $metaTags += [PSCustomObject]@{ Name = $k; Value = $RootMetadata[$k] }
-                                    }
-                                    
-                                    Update-SPTags -Item $targetFolderItem -TagsConfig $metaTags -List $TargetLibraryName -Connection $targetCtx
-                                    Log "    Metadonnées appliquées sur le dossier '$rawDestPath'." "INFO"
-                                }
-                                else {
-                                    Log "  ⚠️ Erreur Meta Pub : Impossible de récupérer l'Item du dossier cible." "WARNING"
-                                }
-                            }
-                            catch { Log "  ⚠️ Erreur Meta Pub : $($_.Exception.Message)" "WARNING" }
-                        }
-
-                        # C-quater. PROPAGATION ID DEPLOIEMENT (PROPERTY BAG)
-                        if ($globalDeployId) {
-                            $folderToTag = $resolvedDest
-                            if (-not $folderToTag) {
-                                try { $folderToTag = Resolve-PnPFolder -SiteRelativePath $rawDestPath -Connection $targetCtx -ErrorAction Stop } catch {}
-                            }
-                            
-                            if ($folderToTag) {
-                                Log "  > Application de l'ID de déploiement principal ($globalDeployId) sur la publication..." "DEBUG"
-                                try {
-                                    $ctxTarget = $folderToTag.Context
-                                    $ctxTarget.Load($folderToTag.Properties)
-                                    $ctxTarget.ExecuteQuery()
-                                    
-                                    $folderToTag.Properties["_AppDeploymentId"] = $globalDeployId
-                                    $folderToTag.Update()
-                                    $ctxTarget.ExecuteQuery()
-                                    
-                                    Log "    Tag ID Déploiement ajouté sur la destination." "INFO"
-                                }
-                                catch {
-                                    Log "  ⚠️ Erreur application ID Déploiement : $($_.Exception.Message)" "WARNING"
-                                }
-                            }
-                        }
-
-                    }
-                    catch {
-                        Log "  ❌ Erreur traitement publication : $($_.Exception.Message)" "ERROR"
-                    }
+                    Invoke-AppPublication -pub $pub -sourceServerRelativeUrl $folder.ServerRelativeUrl
                 }
             } # Fin Bloc Publication
 

@@ -67,9 +67,23 @@ function Global:Register-EditorSelectionHandler {
                         $Ctrl.EdPropPanelPerm.Visibility = "Visible" 
                         $Ctrl.EdPropPanelPerm.DataContext = $selectedItem 
                         if ($Ctrl.EdPermIdentityBox) { $Ctrl.EdPermIdentityBox.Text = $data.Email }
-                        if ($Ctrl.EdPermLevelBox) { 
+                        if ($Ctrl.EdPermLevelBox -and -not $Ctrl.EdPermLevelBox.ItemsSource) {
                             $Ctrl.EdPermLevelBox.ItemsSource = @("Read", "Contribute", "Full Control")
-                            $Ctrl.EdPermLevelBox.Text = $data.Level
+                        }
+                        if ($Ctrl.EdPermLevelBox) { 
+                            $idx = switch ($data.Level) {
+                                "Read" { 0 }
+                                "Contribute" { 1 }
+                                "Full Control" { 2 }
+                                Default { 0 }
+                            }
+                            $Ctrl.EdPermLevelBox.SelectedIndex = $idx
+                        }
+                        
+                        # Set Parent ID (Attachement)
+                        $pNode = $selectedItem.Parent
+                        if ($pNode -is [System.Windows.Controls.TreeViewItem] -and $Ctrl.EdPermParentIdBox) {
+                            $Ctrl.EdPermParentIdBox.Text = $pNode.Tag.Id
                         }
                     }
                 }
@@ -155,6 +169,11 @@ function Global:Register-EditorSelectionHandler {
                                 
                                 $Script:IsPopulating = $false
                             }
+                            
+                            $pNode = $selectedItem.Parent
+                            if ($pNode -is [System.Windows.Controls.TreeViewItem] -and $Ctrl.EdDynamicTagParentIdBox) {
+                                $Ctrl.EdDynamicTagParentIdBox.Text = $pNode.Tag.Id
+                            }
                         }
                         # Hide Static
                         if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
@@ -166,6 +185,11 @@ function Global:Register-EditorSelectionHandler {
                             $Ctrl.EdPropPanelTag.DataContext = $selectedItem
                             if ($Ctrl.EdTagNameBox) { $Ctrl.EdTagNameBox.Text = $data.Name }
                             if ($Ctrl.EdTagValueBox) { $Ctrl.EdTagValueBox.Text = $data.Value }
+                            
+                            $pNode = $selectedItem.Parent
+                            if ($pNode -is [System.Windows.Controls.TreeViewItem] -and $Ctrl.EdTagParentIdBox) {
+                                $Ctrl.EdTagParentIdBox.Text = $pNode.Tag.Id
+                            }
                         }
                         # Hide Dynamic
                         if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
@@ -179,8 +203,9 @@ function Global:Register-EditorSelectionHandler {
                         $Ctrl.EdPropPanelLink.DataContext = $selectedItem
                         if ($Ctrl.EdLinkNameBox) { $Ctrl.EdLinkNameBox.Text = $data.Name }
                         if ($Ctrl.EdLinkUrlBox) { $Ctrl.EdLinkUrlBox.Text = $data.Url }
+                        if ($Ctrl.EdLinkIdBox) { $Ctrl.EdLinkIdBox.Text = $data.Id }
+                        if ($Ctrl.EdLinkRelativePathBox) { $Ctrl.EdLinkRelativePathBox.Text = $data.RelativePath }
                     }
-                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
                 # D. INTERNAL LINK
                 elseif ($data.Type -eq "InternalLink") {
@@ -189,6 +214,8 @@ function Global:Register-EditorSelectionHandler {
                         $Ctrl.EdPropPanelInternalLink.DataContext = $selectedItem
                         if ($Ctrl.EdInternalLinkNameBox) { $Ctrl.EdInternalLinkNameBox.Text = $data.Name }
                         if ($Ctrl.EdInternalLinkIdBox) { $Ctrl.EdInternalLinkIdBox.Text = $data.TargetNodeId }
+                        if ($Ctrl.EdInternalLinkObjIdBox) { $Ctrl.EdInternalLinkObjIdBox.Text = $data.Id }
+                        if ($Ctrl.EdInternalLinkRelativePathBox) { $Ctrl.EdInternalLinkRelativePathBox.Text = $data.RelativePath }
                     }
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
@@ -199,6 +226,9 @@ function Global:Register-EditorSelectionHandler {
                         $Ctrl.EdPropPanelPub.DataContext = $selectedItem
                     
                         if ($Ctrl.EdPubNameBox) { $Ctrl.EdPubNameBox.Text = $data.Name }
+                        if ($Ctrl.EdPubIdBox) { $Ctrl.EdPubIdBox.Text = $data.Id }
+                        if ($Ctrl.EdPubRelativePathBox) { $Ctrl.EdPubRelativePathBox.Text = $data.RelativePath }
+                        
                         if ($Ctrl.EdPubSiteModeBox) { $Ctrl.EdPubSiteModeBox.SelectedIndex = if ($data.TargetSiteMode -eq "Auto") { 0 } else { 1 } }
                     
                         if ($Ctrl.EdPubSiteUrlBox) { 
@@ -206,11 +236,11 @@ function Global:Register-EditorSelectionHandler {
                             $Ctrl.EdPubSiteUrlBox.Visibility = if ($data.TargetSiteMode -eq "Url") { "Visible" } else { "Collapsed" }
                         }
                         if ($Ctrl.EdPubPathBox) { $Ctrl.EdPubPathBox.Text = $data.TargetFolderPath }
-                        if ($Ctrl.EdPubUseModelNameChk) { $Ctrl.EdPubUseModelNameChk.IsChecked = $data.UseModelName }
+                        if ($Ctrl.EdPubUseFormNameChk) { $Ctrl.EdPubUseFormNameChk.IsChecked = $data.UseFormName }
                         if ($Ctrl.EdPubUseFormMetaChk) { 
                             $Ctrl.EdPubUseFormMetaChk.IsChecked = if ($data.UseFormMetadata) { $true } else { $false } 
-                            # FIX: Metadata only allowed if creating a folder (UseModelName = true)
-                            $Ctrl.EdPubUseFormMetaChk.IsEnabled = [bool]$data.UseModelName
+                            # FIX: Metadata only allowed if creating a folder (UseFormName = true)
+                            $Ctrl.EdPubUseFormMetaChk.IsEnabled = [bool]$data.UseFormName
                         }
                     
 
@@ -219,12 +249,17 @@ function Global:Register-EditorSelectionHandler {
                 }
                 # F. FILE
                 elseif ($data.Type -eq "File") {
+                    # Cacher EdPropPanel (Dossier) ici car on est sur le tag File, pas dossier
+                    if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
+                    
                     if ($Ctrl.EdPanelFile) { 
                         $Ctrl.EdPanelFile.Visibility = "Visible" 
                         $Ctrl.EdPanelFile.DataContext = $selectedItem
                     }
                     if ($Ctrl.EdFileNameBox) { $Ctrl.EdFileNameBox.Text = $data.Name }
                     if ($Ctrl.EdFileUrlBox) { $Ctrl.EdFileUrlBox.Text = $data.SourceUrl }
+                    if ($Ctrl.EdFileIdBox) { $Ctrl.EdFileIdBox.Text = $data.Id }
+                    if ($Ctrl.EdFileRelativePathBox) { $Ctrl.EdFileRelativePathBox.Text = $data.RelativePath }
                     
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
@@ -233,6 +268,7 @@ function Global:Register-EditorSelectionHandler {
                     if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Visible" }
                     if ($data -and $Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = $data.Name }
                     if ($data -and $Ctrl.EdFolderIdBox) { $Ctrl.EdFolderIdBox.Text = $data.Id }
+                    if ($data -and $Ctrl.EdFolderRelativePathBox) { $Ctrl.EdFolderRelativePathBox.Text = $data.RelativePath }
                 
                     # Note: No longer populating ListBoxes for Permissions/Tags here.
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
@@ -543,13 +579,13 @@ function Global:Register-EditorSelectionHandler {
                 if ($sel -and $sel.Tag.Type -eq "Publication") { $sel.Tag.TargetFolderPath = $this.Text }
             }.GetNewClosure())
     }
-    if ($Ctrl.EdPubUseModelNameChk) {
-        $Ctrl.EdPubUseModelNameChk.Add_Click({
+    if ($Ctrl.EdPubUseFormNameChk) {
+        $Ctrl.EdPubUseFormNameChk.Add_Click({
                 if ($Script:IsPopulating) { return }
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Tag.Type -eq "Publication") { 
-                    $isChecked = [bool]$this.IsChecked
-                    $sel.Tag.UseModelName = $isChecked 
+                    $isChecked = [bool]$Ctrl.EdPubUseFormNameChk.IsChecked
+                    $sel.Tag.UseFormName = $isChecked 
                     
                     # FIX: Enforce dependency on Metadata Checkbox
                     if ($Ctrl.EdPubUseFormMetaChk) {

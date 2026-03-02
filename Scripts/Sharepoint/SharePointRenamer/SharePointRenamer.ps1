@@ -63,7 +63,7 @@ try {
 
     # Chargement Config & Langue
     $Global:AppConfig = Get-AppConfiguration
-    $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
+    $global:VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
     
     # Localisation "Mille-Feuille" (Global -> Modules -> Local)
     Initialize-AppLocalization -ProjectRoot $projectRoot -Language $Global:AppConfig.defaultLanguage

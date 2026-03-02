@@ -13,6 +13,7 @@ function Register-RenamerDashboard {
 
     # Capture ProjectRoot strictly for the closure
     $Root = $Global:ProjectRoot
+    $Global:RenamerV2Window = $Window
 
     # --- ACTION D'ANALYSE ---
     $AnalyzeAction = {
@@ -135,10 +136,10 @@ function Register-RenamerDashboard {
                             Set-RenamerContext -Result $item
                             
                             if ($TickCtrl) {
-                                Update-RenamerDashboardUI -Ctrl $TickCtrl -Window $Window -AnalysisResult $item -LogMethod $Log
+                                Update-RenamerDashboardUI -Ctrl $TickCtrl -Window $Global:RenamerV2Window -AnalysisResult $item -LogMethod $Log
                             }
 
-                            if ($Window.Resources.Contains("AnalyzeTimer")) { $Window.Resources.Remove("AnalyzeTimer") }
+                            if ($Global:RenamerV2Window.Resources.Contains("AnalyzeTimer")) { $Global:RenamerV2Window.Resources.Remove("AnalyzeTimer") }
                             return
                         }
                     }
@@ -153,7 +154,7 @@ function Register-RenamerDashboard {
                         if ($TickCtrl.ErrorPanel) { $TickCtrl.ErrorPanel.Visibility = "Visible" }
                         if ($TickCtrl.ErrorText) { $TickCtrl.ErrorText.Text = "Délai d'attente (45s) dépassé." }
                         
-                        if ($Window.Resources.Contains("AnalyzeTimer")) { $Window.Resources.Remove("AnalyzeTimer") }
+                        if ($Global:RenamerV2Window.Resources.Contains("AnalyzeTimer")) { $Global:RenamerV2Window.Resources.Remove("AnalyzeTimer") }
                         return
                     }
 
@@ -165,7 +166,7 @@ function Register-RenamerDashboard {
                         if ($TickCtrl.ErrorPanel) { $TickCtrl.ErrorPanel.Visibility = "Visible" }
                         if ($TickCtrl.ErrorText) { $TickCtrl.ErrorText.Text = "Erreur: Le Job s'est terminé sans résultat." }
                         
-                        if ($Window.Resources.Contains("AnalyzeTimer")) { $Window.Resources.Remove("AnalyzeTimer") }
+                        if ($Global:RenamerV2Window.Resources.Contains("AnalyzeTimer")) { $Global:RenamerV2Window.Resources.Remove("AnalyzeTimer") }
                     }
 
                 }.GetNewClosure())

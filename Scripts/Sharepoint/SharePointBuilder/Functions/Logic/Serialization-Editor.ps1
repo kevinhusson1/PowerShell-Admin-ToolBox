@@ -19,129 +19,185 @@
 function Global:Convert-EditorTreeToJson {
     param([System.Windows.Controls.TreeView]$TreeView)
 
+    # Variables globales au script pour capturer les éléments plats
+    $script:GlobalPubs = @()
+    $script:GlobalLinks = @()
+    $script:GlobalInternalLinks = @()
+    $script:GlobalFiles = @()
+
     function Get-NodeData {
-        param($Item)
+        param($Item, [string]$ParentGuid, [string]$CurrentPath)
         
-        # On récupère les données brutes de l'objet
         $data = $Item.Tag
+        $cleanPath = $CurrentPath.TrimEnd('/')
         
         # 1. CAS LIEN
         if ($data.Type -eq "Link") {
+            $fullPath = "$cleanPath/$($data.Name)".TrimStart('/')
+            $relPath = "/$fullPath.url"
+            if ($data.PSObject.Properties.Match('RelativePath').Count -gt 0) { $data.RelativePath = $relPath }
             $linkHash = @{
-                Type = "Link"
-                Name = $data.Name
-                Url  = $data.Url
-                Tags = @()
+                Type         = "Link"
+                Id           = $data.Id
+                ParentId     = $ParentGuid
+                RelativePath = $relPath
+                Name         = $data.Name
+                Url          = $data.Url
+                Tags         = @()
             }
-            # Capture Tags
             foreach ($child in $Item.Items) {
                 if ($child.Tag.Type -eq "Tag") {
-                    $linkHash.Tags += @{ 
-                        Name = $child.Tag.Name; Value = $child.Tag.Value
-                        IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar
-                    }
+                    $linkHash.Tags += @{ Name = $child.Tag.Name; Value = $child.Tag.Value; IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar }
                 }
             }
-            return $linkHash
+            $script:GlobalLinks += $linkHash
+            return $null # Ne retourne rien pour l'arbre Folders
         }
         
         # 2. CAS PUBLICATION
         if ($data.Type -eq "Publication") {
+            $targetPathPrep = if ($data.TargetFolderPath) { $data.TargetFolderPath.TrimEnd('/') } else { "" }
+            $modelSuffix = if ($data.UseFormName) { "/{FormFolderName}/$($data.Name).url" } else { "/$($data.Name).url" }
+            
+            # Nettoyage à la volée des URLs SharePoint complexes collées par l'utilisateur
+            $cleanSiteUrl = $data.TargetSiteUrl
+            if (-not [string]::IsNullOrWhiteSpace($cleanSiteUrl)) {
+                if ($cleanSiteUrl -match "id=([^&]+)") {
+                    # Cas AllItems.aspx?id=...
+                    try {
+                        $uri = [System.Uri]$cleanSiteUrl
+                        $decodedId = [uri]::UnescapeDataString($matches[1])
+                        $cleanSiteUrl = "https://$($uri.Host)$decodedId"
+                    } catch {}
+                }
+                elseif ($cleanSiteUrl -match "^(https?://[^/]+)/:[a-zA-Z]:/[a-zA-Z]/(.+)") {
+                    # Cas /:f:/r/sites/...
+                    $hostUrl = $matches[1]
+                    $restOfUrl = $matches[2]
+                    if ($restOfUrl -match "^([^?]+)") { $restOfUrl = $matches[1] }
+                    $cleanSiteUrl = [uri]::UnescapeDataString("$hostUrl/$restOfUrl")
+                }
+                elseif ($cleanSiteUrl -match "^(https?://[^?]+)") {
+                    # Regex basique pour virer tous les query ?param=
+                    $cleanSiteUrl = [uri]::UnescapeDataString($matches[1])
+                }
+                
+                # Mise à jour silencieuse de l'objet UI pour conserver la propreté en mémoire
+                $data.TargetSiteUrl = $cleanSiteUrl
+            }
+
+            if ($data.TargetSiteMode -eq "Auto" -or [string]::IsNullOrWhiteSpace($cleanSiteUrl)) {
+                $relPath = "$targetPathPrep$modelSuffix"
+            } else {
+                $sitePrep = $cleanSiteUrl.TrimEnd('/')
+                $relPath = "$sitePrep$targetPathPrep$modelSuffix"
+            }
+            if ($data.PSObject.Properties.Match('RelativePath').Count -gt 0) { $data.RelativePath = $relPath }
             $pubHash = @{
                 Type             = "Publication"
+                Id               = $data.Id
+                ParentId         = $ParentGuid
+                RelativePath     = $relPath
                 Name             = $data.Name
                 TargetSiteMode   = $data.TargetSiteMode
                 TargetSiteUrl    = $data.TargetSiteUrl
                 TargetFolderPath = $data.TargetFolderPath
-                UseModelName     = $data.UseModelName
+                UseFormName      = $data.UseFormName
                 UseFormMetadata  = $data.UseFormMetadata
-                GrantUser        = $data.GrantUser
-                GrantLevel       = $data.GrantLevel
+                Permissions      = @()
                 Tags             = @()
             }
-            # Capture Tags
             foreach ($child in $Item.Items) {
                 if ($child.Tag.Type -eq "Tag") {
-                    $pubHash.Tags += @{ 
-                        Name = $child.Tag.Name; Value = $child.Tag.Value 
-                        IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar
-                    }
+                    $pubHash.Tags += @{ Name = $child.Tag.Name; Value = $child.Tag.Value; IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar }
+                }
+                elseif ($child.Tag.Type -eq "Permission") {
+                    $pubHash.Permissions += @{ Email = $child.Tag.Email; Level = $child.Tag.Level }
                 }
             }
-            return $pubHash
+            $script:GlobalPubs += $pubHash
+            return $null
         }
 
-        # 2.5 CAS LIEN INTERNE (NOUVEAU)
+        # 3. CAS LIEN INTERNE
         if ($data.Type -eq "InternalLink") {
+            $fullPath = "$cleanPath/$($data.Name)".TrimStart('/')
+            $relPath = "/$fullPath.url"
+            if ($data.PSObject.Properties.Match('RelativePath').Count -gt 0) { $data.RelativePath = $relPath }
             $iLinkHash = @{
                 Type         = "InternalLink"
+                Id           = $data.Id
+                ParentId     = $ParentGuid
+                RelativePath = $relPath
                 Name         = $data.Name
                 TargetNodeId = $data.TargetNodeId
                 Tags         = @()
             }
-            # Capture Tags
             foreach ($child in $Item.Items) {
                 if ($child.Tag.Type -eq "Tag") {
-                    $iLinkHash.Tags += @{ 
-                        Name = $child.Tag.Name; Value = $child.Tag.Value 
-                        IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar
-                    }
+                    $iLinkHash.Tags += @{ Name = $child.Tag.Name; Value = $child.Tag.Value; IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar }
                 }
             }
-            return $iLinkHash
+            $script:GlobalInternalLinks += $iLinkHash
+            return $null
         }
 
-        # 2.7 CAS FICHIER
+        # 4. CAS FICHIER
         if ($data.Type -eq "File") {
+            $fullPath = "$cleanPath/$($data.Name)".TrimStart('/')
+            $relPath = "/$fullPath"
+            if ($data.PSObject.Properties.Match('RelativePath').Count -gt 0) { $data.RelativePath = $relPath }
             $fileHash = @{
-                Type      = "File"
-                Name      = $data.Name
-                SourceUrl = $data.SourceUrl
-                Tags      = @()
+                Type         = "File"
+                Id           = $data.Id
+                ParentId     = $ParentGuid
+                RelativePath = $relPath
+                Name         = $data.Name
+                SourceUrl    = $data.SourceUrl
+                Permissions  = @()
+                Tags         = @()
             }
-            # Capture Tags (Optional but supported by model)
             foreach ($child in $Item.Items) {
                 if ($child.Tag.Type -eq "Tag") {
-                    $fileHash.Tags += @{ 
-                        Name = $child.Tag.Name; Value = $child.Tag.Value 
-                        IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar
-                    }
+                    $fileHash.Tags += @{ Name = $child.Tag.Name; Value = $child.Tag.Value; IsDynamic = $child.Tag.IsDynamic; SourceForm = $child.Tag.SourceForm; SourceVar = $child.Tag.SourceVar }
+                }
+                elseif ($child.Tag.Type -eq "Permission") {
+                    $fileHash.Permissions += @{ Email = $child.Tag.Email; Level = $child.Tag.Level }
                 }
             }
-            return $fileHash
+            $script:GlobalFiles += $fileHash
+            return $null
         }
 
-        # 3. CAS DOSSIER
-        # On construit une Hashtable propre pour le JSON
+        # 5. CAS DOSSIER (On retourne le noeud pour construire l'arbre)
+        $newPath = "$cleanPath/$($data.Name)"
+        $relPath = if ($newPath -eq "/") { "/" } else { "/$($newPath.Trim('/'))" }
+        if ($data.PSObject.Properties.Match('RelativePath').Count -gt 0) { $data.RelativePath = $relPath }
+
         $nodeHash = @{
+            Type        = "Folder"
             Name        = $data.Name
             Id          = $data.Id
+            RelativePath = $relPath
             Permissions = @()
             Tags        = @()
             Folders     = @()
         }
 
-        # Récursion sur les enfants visuels
         foreach ($childItem in $Item.Items) {
             $childData = $childItem.Tag
-            
-            # Gestion Types Enfants
             if ($childData.Type -eq "Permission") {
-                $nodeHash.Permissions += @{
-                    Email = $childData.Email
-                    Level = $childData.Level
-                }
+                $nodeHash.Permissions += @{ Email = $childData.Email; Level = $childData.Level }
             }
             elseif ($childData.Type -eq "Tag") {
-                $nodeHash.Tags += @{
-                    Name = $childData.Name
-                    Value = $childData.Value
-                    IsDynamic = $childData.IsDynamic; SourceForm = $childData.SourceForm; SourceVar = $childData.SourceVar
-                }
+                $nodeHash.Tags += @{ Name = $childData.Name; Value = $childData.Value; IsDynamic = $childData.IsDynamic; SourceForm = $childData.SourceForm; SourceVar = $childData.SourceVar }
             }
             else {
-                # Dossier / Lien / Pub / InternalLink -> Folders List
-                $nodeHash.Folders += Get-NodeData -Item $childItem
+                # C'est un sous-noeud (Dossier, Pub, Lien...), on le traite
+                $childObj = Get-NodeData -Item $childItem -ParentGuid $data.Id -CurrentPath $newPath
+                if ($childObj) {
+                    $nodeHash.Folders += $childObj
+                }
             }
         }
         
@@ -149,11 +205,21 @@ function Global:Convert-EditorTreeToJson {
     }
 
     $rootList = @()
+    # "Root" n'a pas de ParentId, le chemin commence à la racine (vide)
     foreach ($rootItem in $TreeView.Items) {
-        $rootList += Get-NodeData -Item $rootItem
+        $node = Get-NodeData -Item $rootItem -ParentGuid "" -CurrentPath ""
+        if ($node) { $rootList += $node }
     }
 
-    $finalObj = @{ Folders = $rootList }
+    $finalObj = [Ordered]@{ 
+        SchemaVersion = "2.0"
+        Folders       = $rootList
+        Publications  = $script:GlobalPubs
+        Links         = $script:GlobalLinks
+        InternalLinks = $script:GlobalInternalLinks
+        Files         = $script:GlobalFiles
+    }
+    
     return $finalObj | ConvertTo-Json -Depth 10 -Compress
 }
 
@@ -168,13 +234,70 @@ function Global:Convert-JsonToEditorTree {
 
     try {
         $structure = $Json | ConvertFrom-Json
+        
+        # Support Rétro-compatibilité (Si pas de SchemaVersion, c'est l'ancien format pur Dossier)
+        $isV2 = [bool]($structure.SchemaVersion -eq "2.0")
+        
         $folders = if ($structure.Folders) { $structure.Folders } else { @($structure) }
 
-        foreach ($f in $folders) {
-            # Utilisation de la logique partagée (Replacements = null car éditeur = brut)
-            $rootNode = New-BuilderTreeItem -NodeData $f
+        # Dictionnaire pour mapper ID -> TreeViewItem Visuel (Passe 1)
+        $nodeMap = @{}
+
+        # --- PASSE 1 : Construction du Squelette (Folders) ---
+        # Fonction récursive pour indexer tous les dossiers visuels
+        function Build-FolderTree {
+            param($NodeData, $ParentUICollection)
+            
+            $rootNode = New-BuilderTreeItem -NodeData $NodeData -Replacements $null
             if ($rootNode) {
-                $TreeView.Items.Add($rootNode) | Out-Null
+                $ParentUICollection.Add($rootNode) | Out-Null
+                
+                # Indexation (Uniquement pour les dossiers dans la passe 1)
+                $nodeId = $rootNode.Tag.Id
+                if ($nodeId) {
+                    $nodeMap[$nodeId] = $rootNode
+                }
+
+                # La récursivité de New-BuilderTreeItem construit déjà les enfants Folders/Perms/Tags
+                # Indexons aussi les dossiers enfants profonds créés par New-BuilderTreeItem
+                function Index-Children($parentItem) {
+                    foreach ($child in $parentItem.Items) {
+                        if ($child.Tag.Type -eq "Folder" -and $child.Tag.Id) {
+                            $nodeMap[$child.Tag.Id] = $child
+                            Index-Children -parentItem $child
+                        }
+                    }
+                }
+                Index-Children -parentItem $rootNode
+            }
+        }
+
+        foreach ($f in $folders) {
+            Build-FolderTree -NodeData $f -ParentUICollection $TreeView.Items
+        }
+
+        # --- PASSE 2 : Habillage (Publications, Links, InternalLinks, Files) ---
+        if ($isV2) {
+            $flatCollections = @($structure.Publications, $structure.Links, $structure.InternalLinks, $structure.Files)
+            
+            foreach ($collection in $flatCollections) {
+                if ($null -ne $collection) {
+                    foreach ($itemData in $collection) {
+                        $leafNode = New-BuilderTreeItem -NodeData $itemData -Replacements $null
+                        if ($leafNode) {
+                            $parentId = $itemData.ParentId
+                            if ([string]::IsNullOrWhiteSpace($parentId)) {
+                                # Racine
+                                $TreeView.Items.Add($leafNode) | Out-Null
+                            } elseif ($nodeMap.ContainsKey($parentId)) {
+                                # Ajout au parent correct
+                                $parentNode = $nodeMap[$parentId]
+                                $parentNode.Items.Add($leafNode) | Out-Null
+                                Update-EditorBadges -TreeItem $parentNode
+                            }
+                        }
+                    }
+                }
             }
         }
     }

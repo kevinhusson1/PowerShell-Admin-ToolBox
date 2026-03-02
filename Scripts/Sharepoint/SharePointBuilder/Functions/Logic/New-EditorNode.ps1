@@ -57,10 +57,12 @@ function Global:New-EditorNode {
 
     # Données
     $dataObject = [PSCustomObject]@{
-        Name        = $Name
-        Id          = [Guid]::NewGuid().ToString() # NOUVEAU : ID Unique pour Liens Internes
-        Permissions = [System.Collections.Generic.List[psobject]]::new()
-        Tags        = [System.Collections.Generic.List[psobject]]::new()
+        Type         = "Folder"
+        Name         = $Name
+        Id           = [Guid]::NewGuid().ToString() # NOUVEAU : ID Unique pour Liens Internes
+        RelativePath = ""
+        Permissions  = [System.Collections.Generic.List[psobject]]::new()
+        Tags         = [System.Collections.Generic.List[psobject]]::new()
     }
     $item.Tag = $dataObject
 
@@ -77,10 +79,12 @@ function Global:New-EditorLinkNode {
     $mItem.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
     # Tag Typé
     $mItem.Tag = [PSCustomObject]@{ 
-        Type = "Link"
-        Name = $Name 
-        Url  = $Url 
-        Tags = [System.Collections.Generic.List[psobject]]::new()
+        Type         = "Link"
+        Id           = [Guid]::NewGuid().ToString()
+        Name         = $Name 
+        Url          = $Url 
+        RelativePath = ""
+        Tags         = [System.Collections.Generic.List[psobject]]::new()
     }
     
     $mStack = New-Object System.Windows.Controls.StackPanel -Property @{ Orientation = "Horizontal" }
@@ -109,14 +113,15 @@ function Global:New-EditorPubNode {
     # Tag Typé Publication
     $mItem.Tag = [PSCustomObject]@{ 
         Type             = "Publication"
+        Id               = [Guid]::NewGuid().ToString()
+        RelativePath     = ""
         Name             = $Name
         TargetSiteMode   = "Auto"       # Auto (=Current) or Url
         TargetSiteUrl    = ""
         TargetFolderPath = "/Partage"
-        UseModelName     = $true
+        UseFormName      = $true
         UseFormMetadata  = $false
-        GrantUser        = ""
-        GrantLevel       = "Read"
+        Permissions      = [System.Collections.Generic.List[psobject]]::new()
         Tags             = [System.Collections.Generic.List[psobject]]::new()
     }
     

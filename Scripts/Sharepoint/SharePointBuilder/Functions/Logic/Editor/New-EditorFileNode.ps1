@@ -46,6 +46,7 @@ function Global:New-EditorFileNode {
         Id          = [Guid]::NewGuid().ToString()
         Name        = $Name
         Type        = "File"
+        RelativePath = ""
         SourceUrl   = $SourceUrl
         Permissions = [System.Collections.Generic.List[psobject]]::new()
         Tags        = [System.Collections.Generic.List[psobject]]::new()

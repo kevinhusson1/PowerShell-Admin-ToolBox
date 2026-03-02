@@ -58,7 +58,7 @@ catch {
 try {
     # --- Étape 1 : Initialisation du contexte et du logging ---
     $Global:AppConfig = Get-AppConfiguration
-    $VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
+    $global:VerbosePreference = if ($Global:AppConfig.enableVerboseLogging) { "Continue" } else { "SilentlyContinue" }
     
     # --- Étape 2 : Détermination du mode et rapport de progression initial ---
     $isLauncherMode = -not ([string]::IsNullOrEmpty($LauncherPID))

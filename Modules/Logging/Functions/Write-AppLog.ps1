@@ -58,7 +58,10 @@ function Write-AppLog {
     $timestamp = Get-Date -Format "HH:mm:ss"
     $formattedMessage = "[$timestamp] [$Level] $Message"
     
-    # 1. Écriture Verbose (Toujours)
+    # 1. Écriture Verbose (Toujours si activé)
+    if ($Global:AppConfig.enableVerboseLogging) {
+        $VerbosePreference = 'Continue'
+    }
     Write-Verbose $formattedMessage
 
     # 2. Ajout à la collection (si fournie)

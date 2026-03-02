@@ -62,6 +62,7 @@ function Global:New-EditorInternalLinkNode {
         Name         = $Name
         Id           = [Guid]::NewGuid().ToString()
         TargetNodeId = $TargetNodeId
+        RelativePath = ""
         Tags         = [System.Collections.Generic.List[psobject]]::new()
     }
 

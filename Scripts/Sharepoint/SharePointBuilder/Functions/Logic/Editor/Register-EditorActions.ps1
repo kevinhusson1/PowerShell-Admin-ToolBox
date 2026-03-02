@@ -91,7 +91,7 @@ function Global:Register-EditorActionHandlers {
         $Ctrl.EdBtnRootLink.Add_Click({
                 $newItem = New-EditorLinkNode -Name "Nouveau Lien" -Url "https://pnp.github.io/"
                 if ($Ctrl.EdTree) { 
-                    $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true; $newItem.Focus() 
+                    $Ctrl.EdTree.Items.Add($newItem) | Out-Null; $newItem.IsSelected = $true; $newItem.BringIntoView(); $newItem.Focus() 
                     Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
                 }
             }.GetNewClosure())
@@ -101,8 +101,7 @@ function Global:Register-EditorActionHandlers {
         $Ctrl.EdBtnChild.Add_Click({
                 $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
                 if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
-                $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
-                $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
+                $n = New-EditorNode -Name "Nouveau dossier"; $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.BringIntoView(); $n.Focus()
                 Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
             }.GetNewClosure())
     }
@@ -115,9 +114,7 @@ function Global:Register-EditorActionHandlers {
                 if ($p.Tag.Type -eq "Publication") { [System.Windows.MessageBox]::Show("Impossible d'ajouter quoi que ce soit dans un nœud de publication.", "Info", "OK", "Warning"); return }
                 
                 $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
-                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
-                $n = New-EditorLinkNode -Name "Nouveau lien" -Url "https://pnp.github.io/"
-                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
+                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.BringIntoView(); $n.Focus()
                 Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
             }.GetNewClosure())
     }
@@ -358,10 +355,8 @@ function Global:Register-EditorActionHandlers {
                         $p.Items.Add($n) | Out-Null
                         $p.IsExpanded = $true
                         $n.IsSelected = $true
+                        $n.BringIntoView()
                         $n.Focus()
-                        
-                        # Important : Refresh UI du parent (StackPanel) pour afficher le lien correctement
-                        $p.UpdateLayout()
                         
                         # Important : Refresh UI du parent (StackPanel) pour afficher le lien correctement
                         $p.UpdateLayout()
@@ -385,10 +380,12 @@ function Global:Register-EditorActionHandlers {
                 if ($p.Tag.Type -eq "File") { [System.Windows.MessageBox]::Show("Impossible d'ajouter un élément dans un fichier.", "Info", "OK", "Warning"); return }
             
                 $n = New-EditorPubNode -Name "Vers Site..."
-                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
-                Update-EditorBadges -TreeItem $p
-                $n = New-EditorPubNode -Name "Vers Site..."
-                $p.Items.Add($n) | Out-Null; $p.IsExpanded = $true; $n.IsSelected = $true; $n.Focus()
+                $p.Items.Add($n) | Out-Null
+                $p.IsExpanded = $true
+                $p.UpdateLayout()
+                $n.IsSelected = $true
+                $n.BringIntoView()
+                $n.Focus()
                 Update-EditorBadges -TreeItem $p
                 Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
             }.GetNewClosure())
@@ -422,6 +419,7 @@ function Global:Register-EditorActionHandlers {
                 
                 # Select and Focus
                 $n.IsSelected = $true
+                $n.BringIntoView()
                 $n.Focus()
                 
                 # Force Panel Update (Selection Logic) if needed
@@ -681,6 +679,13 @@ function Global:Register-EditorActionHandlers {
                 Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description "Modèle personnalisé" -StructureJson $json
             
                 & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
+
+                # Force UI Refresh of current item to show the newly calculated RelativePath
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel) {
+                    $sel.IsSelected = $false
+                    $sel.IsSelected = $true
+                }
             
                 & $LoadTemplateList
                 $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1

@@ -128,52 +128,65 @@ function Get-BuilderControls {
         EdPropPanelInternalLink    = & $Find "EdPanelInternalLink"
         EdPropPanelPub             = & $Find "EdPanelPub"
         EdPanelGlobalTags          = & $Find "EdPanelGlobalTags"
-        EdPropPanelDynamicTag      = & $Find "EdPanelDynamicTag"
+        EdPropPanelDynamicTag      = & $Find "EdPropPanelDynamicTag"
 
         EdNoSelPanel               = & $Find "EdPanelNoSel"
         
         # Folder Inputs
         EdNameBox                  = $Window.FindName("EditorFolderNameTextBox")
+        EdFolderIdBox              = $Window.FindName("EdFolderIdBox")
+        EdFolderRelativePathBox    = $Window.FindName("EdFolderRelativePathBox")
         EdPermissionsListBox       = $Window.FindName("EditorPermissionsListBox")
         EdBtnAddPerm               = $Window.FindName("EditorAddPermButton")
         
         # Permission Inputs
         EdPermIdentityBox          = $Window.FindName("EdPermIdentityBox")
         EdPermLevelBox             = $Window.FindName("EdPermLevelBox")
+        EdPermParentIdBox          = $Window.FindName("EdPermParentIdBox")
         EdPermDeleteButton         = $Window.FindName("EdPermDeleteButton")
 
         # Tag Inputs
         EdTagNameBox               = $Window.FindName("EdTagNameBox")
         EdTagValueBox              = $Window.FindName("EdTagValueBox")
+        EdTagParentIdBox           = $Window.FindName("EdTagParentIdBox")
         EdTagDeleteButton          = $Window.FindName("EdTagDeleteButton")
         
         # Dynamic Tag Inputs
         EdDynamicTagSourceFormBox  = $Window.FindName("EdDynamicTagSourceFormBox")
         EdDynamicTagSourceVarBox   = $Window.FindName("EdDynamicTagSourceVarBox")
+        EdDynamicTagParentIdBox    = $Window.FindName("EdDynamicTagParentIdBox")
         EdDynamicTagDeleteButton   = $Window.FindName("EdDynamicTagDeleteButton")
 
         # Link Inputs
         EdLinkNameBox              = $Window.FindName("EdLinkNameBox")
         EdLinkUrlBox               = $Window.FindName("EdLinkUrlBox")
+        EdLinkIdBox                = $Window.FindName("EdLinkIdBox")
+        EdLinkRelativePathBox      = $Window.FindName("EdLinkRelativePathBox")
         EdLinkDeleteButton         = $Window.FindName("EdLinkDeleteButton")
 
         # Internal Link Inputs
         EdInternalLinkNameBox      = $Window.FindName("EdInternalLinkNameBox")
         EdInternalLinkIdBox        = $Window.FindName("EdInternalLinkIdBox")
+        EdInternalLinkObjIdBox     = $Window.FindName("EdInternalLinkObjIdBox")
+        EdInternalLinkRelativePathBox = $Window.FindName("EdInternalLinkRelativePathBox")
         EdInternalLinkDeleteButton = $Window.FindName("EdInternalLinkDeleteButton")
 
         # --- CONTROLES FILE ---
         EdFileUrlBox               = $Window.FindName("EdFileUrlBox")
         EdFileFetchInfoButton      = $Window.FindName("EdFileFetchInfoButton")
         EdFileNameBox              = $Window.FindName("EdFileNameBox")
+        EdFileIdBox                = $Window.FindName("EdFileIdBox")
+        EdFileRelativePathBox      = $Window.FindName("EdFileRelativePathBox")
         EdFileDeleteButton         = $Window.FindName("EdFileDeleteButton")
 
         # --- CONTROLES PUB ---ublication Inputs (NEW)
         EdPubNameBox               = $Window.FindName("EdPubNameBox")
+        EdPubIdBox                 = $Window.FindName("EdPubIdBox")
+        EdPubRelativePathBox       = $Window.FindName("EdPubRelativePathBox")
         EdPubSiteModeBox           = $Window.FindName("EdPubSiteModeBox")
         EdPubSiteUrlBox            = $Window.FindName("EdPubSiteUrlBox")
         EdPubPathBox               = $Window.FindName("EdPubPathBox")
-        EdPubUseModelNameChk       = $Window.FindName("EdPubUseModelNameChk")
+        EdPubUseFormNameChk        = $Window.FindName("EdPubUseFormNameChk")
         EdPubUseFormMetaChk        = $Window.FindName("EdPubUseFormMetaChk")
 
         EdPubDeleteButton          = $Window.FindName("EdPubDeleteButton")

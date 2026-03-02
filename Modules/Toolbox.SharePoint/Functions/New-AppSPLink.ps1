@@ -28,7 +28,13 @@ function New-AppSPLink {
             $content = "[InternetShortcut]`r`nURL=$TargetUrl"
             Set-Content -Path $tempUrlFile -Value $content -Encoding ASCII -Force
 
-            # 3. Upload SharePoint
+            # 3. Suppression de l'existant & Upload SharePoint
+            # Pour forcer la mise à jour des champs (comme _ShortcutUrl), on supprime l'ancien fichier s'il existe
+            try {
+                $existingPath = "$Folder/$fileName".Replace("//", "/")
+                Remove-PnPFile -ServerRelativeUrl $existingPath -Force -Connection $Connection -ErrorAction SilentlyContinue
+            } catch {}
+
             $params = @{
                 Path        = $tempUrlFile
                 Folder      = $Folder

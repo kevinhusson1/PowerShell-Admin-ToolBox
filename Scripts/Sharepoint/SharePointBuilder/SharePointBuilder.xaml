@@ -586,6 +586,13 @@
                                                 <TextBlock Text="##loc:sp_builder.label_folder_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du dossier dans SharePoint"/>
 
+                                                <!-- Metadata Techniques -->
+                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdFolderIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+                                                
+                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdFolderRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+
                                                 <!-- Permissions moved to TreeView (Child Nodes) -->
 
                                             </StackPanel>
@@ -604,6 +611,9 @@
 
                                                 <TextBlock Text="##loc:sp_builder.label_access_level##" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" ToolTip="Niveau d'autorisation (Read, Contribute, Full Control)"/>
+
+                                                <TextBlock Text="ID Parent (Attaché à) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdPermParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
 
                                                 <Button x:Name="EdPermDeleteButton" Content="##loc:sp_builder.btn_delete_permission##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
@@ -626,22 +636,28 @@
                                                     <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Valeur par défaut ou Terme de taxonomie"/>
                                                 </StackPanel>
 
+                                                <TextBlock Text="ID Parent (Attaché à) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdTagParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+
                                                 <Button x:Name="EdTagDeleteButton" Content="##loc:sp_builder.btn_delete_tag##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
 
                                             <!-- C-bis. MODE DYNAMIC TAG (NEW) -->
-                                            <StackPanel x:Name="EdPanelDynamicTag" Visibility="Collapsed">
-                                                <Border Background="#E0F2F1" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                            <StackPanel x:Name="EdPropPanelDynamicTag" Visibility="Collapsed" Margin="0,0,0,20">
+                                                <Border Background="#FFF3E0" CornerRadius="4" Padding="10" Margin="0,0,0,15">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="⚡" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Tag Dynamique" FontWeight="SemiBold" Foreground="#00695C"/>
+                                                        <TextBlock Text="⚡" Foreground="#E65100" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Propriétés du Tag Dynamique" Foreground="#E65100" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <TextBlock Text="Source (Formulaire) :" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdDynamicTagSourceFormBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,10" DisplayMemberPath="Name"/>
-                                                
-                                                <TextBlock Text="Variable (Champ Méta) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBlock Text="Formulaire Source (ID ou Nom)" Style="{DynamicResource H4Style}"/>
+                                                <ComboBox x:Name="EdDynamicTagSourceFormBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" DisplayMemberPath="Name"/>
+
+                                                <TextBlock Text="ID Parent (Attaché à) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdDynamicTagParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+
+                                                <TextBlock Text="Variable Source (ID Champ)" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="EdDynamicTagSourceVarBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20"/>
 
                                                 <Button x:Name="EdDynamicTagDeleteButton" Content="Supprimer ce tag" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
@@ -658,6 +674,13 @@
 
                                                 <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
+
+                                                <!-- Metadata Techniques -->
+                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdLinkIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+                                                
+                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdLinkRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
 
                                                 <TextBlock Text="##loc:sp_builder.label_target_url##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Adresse URL de destination"/>
@@ -677,6 +700,12 @@
 
                                                 <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdInternalLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
+
+                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdInternalLinkObjIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+                                                
+                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdInternalLinkRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
 
                                                 <TextBlock Text="ID Cible (Read-Only) :" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdInternalLinkIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888"/>
@@ -701,14 +730,21 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBox x:Name="EdFileUrlBox" Grid.Column="0" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,10,0" ToolTip="URL directe vers le fichier à copier"/>
+                                                    <TextBox x:Name="EdFileUrlBox" Grid.Column="0" Text="{Binding SourceUrl, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,10,0" ToolTip="URL directe vers le fichier à copier"/>
                                                     <Button x:Name="EdFileFetchInfoButton" Grid.Column="1" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Padding="0" ToolTip="Récupérer le nom du fichier depuis l'URL">
                                                         <TextBlock Text="⬇" FontWeight="Bold"/>
                                                     </Button>
                                                 </Grid>
 
                                                 <TextBlock Text="Nom du Fichier Cible :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdFileNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du fichier tel qu'il apparaîtra dans SharePoint"/>
+                                                <TextBox x:Name="EdFileNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du fichier tel qu'il apparaîtra dans SharePoint"/>
+
+                                                <!-- Metadata Techniques -->
+                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdFileIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+                                                
+                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdFileRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
 
                                                 <Button x:Name="EdFileDeleteButton" Content="Supprimer ce fichier" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
                                             </StackPanel>
@@ -723,7 +759,14 @@
                                                 </Border>
 
                                                 <TextBlock Text="##loc:sp_builder.label_pub_name##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10"/>
+                                                <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+
+                                                <!-- Metadata Techniques -->
+                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdPubIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
+                                                
+                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
+                                                <TextBox x:Name="EdPubRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
 
                                                 <TextBlock Text="##loc:sp_builder.label_pub_target_site##" Style="{DynamicResource H4Style}"/>
                                                 <ComboBox x:Name="EdPubSiteModeBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,5">
@@ -735,7 +778,7 @@
                                                 <TextBlock Text="Chemin Cible (Bibliothèque/Dossier) :" Style="{DynamicResource H4Style}"/>
                                                 <TextBox x:Name="EdPubPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,5" ToolTip="Ex: /Documents Partages/Public"/>
 
-                                                <CheckBox x:Name="EdPubUseModelNameChk" Content="Ajouter le nom du dossier racine déployé ?" Margin="0,0,0,5" IsChecked="True"/>
+                                                <CheckBox x:Name="EdPubUseFormNameChk" Content="Ajouter le nom du dossier du formulaire sélectionné ?" Margin="0,0,0,5" IsChecked="True"/>
                                                 <CheckBox x:Name="EdPubUseFormMetaChk" Content="Appliquer les métadonnées du formulaire ?" Margin="0,0,0,15" IsChecked="False" ToolTip="Applique les métadonnées définies dans le formulaire sur ce dossier distant"/>
 
 

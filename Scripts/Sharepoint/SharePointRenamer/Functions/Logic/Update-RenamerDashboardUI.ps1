@@ -126,6 +126,7 @@ function Global:Set-RenamerMetadataGrid {
     if (-not $JsonSafe) { return }
 
     $formattedDrift = Format-RenamerMetadataDrift -MetaDrifts $Drift.MetaDrifts
+    if (-not $formattedDrift) { $formattedDrift = @{} }
     $row = 0
 
     # Fonction locale pour injecter une ligne
