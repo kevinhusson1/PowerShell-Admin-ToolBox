@@ -1,0 +1,4 @@
+
+FullName : Azure.Identity, Version=1.13.2.0, Culture=neutral, PublicKeyToken=92742159e12e44c8
+Location : C:\CLOUD\OneDrive\OneDrive - VOSGELIS\Documents\PowerShell\Modules\Microsoft.Graph.Authentication\2.26.1\Dependencies\Azure.Identity.dll
+

@@ -11,6 +11,9 @@ param(
 # =====================================================================
 # 1. PRÉ-CHARGEMENT DES ASSEMBLAGES WPF REQUIS
 # =====================================================================
+# FIX MSAL CRITIQUE
+Import-Module Microsoft.Graph.Authentication -MinimumVersion 2.32.0 -ErrorAction SilentlyContinue
+
 try { 
     Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase 
 }
@@ -156,7 +159,9 @@ try {
         
         if (-not $newIdentity.Connected) {
             Write-Warning "[CreateUser] Authentification échouée ou annulée : $($newIdentity.ErrorMessage)"
-            [System.Windows.MessageBox]::Show((Get-AppText 'messages.auth_failed' -Default "L'authentification a échoué.`nErreur : $($newIdentity.ErrorMessage)"), "Erreur de Connexion", "OK", "Warning") | Out-Null
+            $msg = Get-AppText 'messages.auth_failed'
+            if (-not $msg) { $msg = "L'authentification a échoué." }
+            [System.Windows.MessageBox]::Show("$msg`nErreur : $($newIdentity.ErrorMessage)", "Erreur de Connexion", "OK", "Warning") | Out-Null
         }
 
         # Mise à jour immédiate de l'UI après tentative de connexion

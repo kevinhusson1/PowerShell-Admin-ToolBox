@@ -25,9 +25,9 @@
     "stopScriptFailure2": "It may have already finished.",
     "deleteSessionFile1": "Session file",
     "deleteSessionFile2": "cleaned.",
-    "bringToFrontButtonFail1" : "The script window",
-    "bringToFrontButtonFail2" : "is not yet ready or is invisible.",
-    "bringToFrontButtonError" : "Unable to find the process for the script"
+    "bringToFrontButtonFail1": "The script window",
+    "bringToFrontButtonFail2": "is not yet ready or is invisible.",
+    "bringToFrontButtonError": "Unable to find the process for the script"
   },
   "messages": {
     "settings_saved_success": "Settings have been successfully saved to the database.",
@@ -47,10 +47,10 @@
     "script_list_refreshed_1": "Script list updated.",
     "script_list_refreshed_2": "scripts now visible.",
 
-    "timerPIDclose1" : "The script",
-    "timerPIDclose2" : "has been detected as finished.",
-
-    "timerProgressStop" : "[TIMER] Progress tracking stopped (no more scripts to monitor)."
+    "timerPIDclose1": "The script",
+    "timerPIDclose2": "has been detected as finished.",
+    "timerProgressStop": "[TIMER] Progress tracking stopped (no more scripts to monitor).",
+    "auth_failed": "Authentication failed."
   },
   "confirmation": {
     "title": "Confirmation",
@@ -111,7 +111,7 @@
     "azure_cert_install_button": "Install a certificate (.pfx)...",
     "azure_test_connection_button": "Test Connection",
     "azure_section_security": "Security",
-    
+
     "azure_authbutton_disabled_tooltip": "Please configure and save an 'Application (Client) ID' for user authentication to enable this button."
   },
   "settings_validation": {
@@ -149,7 +149,7 @@
     "adobjects_excluded_not_found": "Groups NOT found: {0}.",
     "adobjects_excluded_all_found": "All excluded groups were validated: {0}.",
     "adobjects_success_all": "The OU and the 'Domain Users' group were successfully validated.",
-    
+
     "cert_install_password_title": "Certificate Password",
     "cert_install_password_message": "Please enter the password for the PFX file:",
     "cert_install_select_file_title": "Select a PFX Certificate File",
@@ -224,7 +224,7 @@
       "int_parse_error_2": "to integer for key",
       "bool_parse_error_1": "Unable to convert value",
       "bool_parse_error_2": "to boolean for key",
-      
+
       "db_not_found": "Database not found",
       "db_creating": "Creating and initializing complete schema.",
       "schema_init_success": "Database schema initialized.",
@@ -235,12 +235,12 @@
       "table_created_2": "created successfully.",
       "schema_check_done": "Schema verification completed.",
       "schema_error": "Unable to create or validate database schema",
-      
+
       "set_setting_error": "Error while saving setting",
       "setting_saved_1": "Setting",
       "setting_saved_2": "saved with value",
       "setting_saved_3": "Type",
-      
+
       "lock_check_1": "Checking lock for the script",
       "lock_check_2": "Concurrency limit",
       "lock_check_3": "Currently running instances for the script",
@@ -248,7 +248,7 @@
       "lock_limit_reached_2": "for the script",
       "lock_limit_reached_3": "has been reached.",
       "lock_check_error": "Error while checking the lock for the script",
-      
+
       "lock_release_error": "Unable to release the session for the PID",
       "lock_released_1": "Session for PID",
       "lock_released_2": "released from the database."
@@ -260,14 +260,14 @@
       "manifest_incomplete_1": "The manifest",
       "manifest_incomplete_2": "is incomplete (id, scriptFile, or name missing) and will be ignored.",
       "scan_filter_error": "Error while scanning or filtering scripts",
-      
+
       "admin_mode_detected": "Administrator mode detected. Displaying full settings.",
       "non_admin_mode_detected": "Non-Administrator mode detected. Hiding settings.",
-      
+
       "stop_process_error": "Unable to stop the process",
       "stop_attempt_1": "Attempting to forcibly stop the process",
       "stop_attempt_2": "for the script",
-      
+
       "admin_check_start": "--- Starting admin rights verification ---",
       "admin_check_system_mode": "No Azure user connected (System mode). Admin access granted by default.",
       "admin_check_user_connected": "Azure user connected",
@@ -276,10 +276,10 @@
       "admin_check_success": "MATCH FOUND! The user is a member of the admin group. Access granted.",
       "admin_check_failure": "No match found. The user is not a member of the admin group. Access denied.",
       "admin_check_error": "Error during admin rights verification",
-      
+
       "auth_tooltip_connected": "Connected as",
       "auth_tooltip_system": "Connected as: System",
-      
+
       "updating_script_list_ui_1": "Updating UI with",
       "updating_script_list_ui_2": "scripts."
     },

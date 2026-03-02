@@ -17,6 +17,9 @@
     # Fichier de script principal du module
     RootModule        = 'Azure.psm1'
 
+    # Pré-chargement explicite de Graph.Authentication pour éviter le conflit de DLL (ex: avec PnP.PowerShell)
+    RequiredModules   = @('Microsoft.Graph.Authentication')
+
     # Liste explicite des fonctions à exporter (bonne pratique)
     FunctionsToExport = @(
         'Add-AppGraphPermission',

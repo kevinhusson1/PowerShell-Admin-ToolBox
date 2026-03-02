@@ -29,18 +29,20 @@ function Initialize-AppLocalization {
     Write-Verbose "--- DÉBUT INITIALISATION TRADUCTION ($Language) ---"
 
     # 1. CHARGEMENT DES TRADUCTIONS GLOBALES
+    # Fichier principal global d'abord (fallback ou principal)
+    $legacyFile = Join-Path -Path $ProjectRoot -ChildPath "Localization\$Language.json"
+    if (Test-Path $legacyFile) {
+        Write-Verbose "Source Globale Principale : $Language.json"
+        Add-AppLocalizationSource -FilePath $legacyFile
+    }
+
+    # Ensuite on charge et on surcharge avec les fichiers scindés (dossier fr-FR par exemple)
     $globalLangFolder = Join-Path -Path $ProjectRoot -ChildPath "Localization\$Language"
     if (Test-Path $globalLangFolder) {
         $globalFiles = Get-ChildItem -Path $globalLangFolder -Filter "*.json"
         foreach ($file in $globalFiles) {
-            Write-Verbose "Source Globale : $($file.Name)"
+            Write-Verbose "Source Globale Fragmentée : $($file.Name)"
             Add-AppLocalizationSource -FilePath $file.FullName
-        }
-    } else {
-        $legacyFile = Join-Path -Path $ProjectRoot -ChildPath "Localization\$Language.json"
-        if (Test-Path $legacyFile) {
-            Write-Verbose "Source Globale (Legacy) : $Language.json"
-            Add-AppLocalizationSource -FilePath $legacyFile
         }
     }
 

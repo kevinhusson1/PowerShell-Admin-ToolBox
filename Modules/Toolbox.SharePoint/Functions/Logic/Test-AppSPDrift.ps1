@@ -259,13 +259,13 @@ function Test-AppSPDrift {
                                             }
                                         }
                                         else {
-                                            $msg = "Le dossier de destination du lien de publication '$linkName' n'existe plus ou n'est plus lié."
+                                            $msg = "Le dossier de destination du lien de publication '$linkName' n'existe plus ou n'est plus lié (Cible espérée: $rawDestPath)."
                                             $misses.Add($msg)
                                             Add-Audit "DRIFT" $msg
                                         }
                                     }
                                     catch {
-                                        $msg = "Le dossier de destination du lien de publication '$linkName' n'existe plus."
+                                        $msg = "Le dossier de destination du lien de publication '$linkName' n'existe plus à l'emplacement attendu ($rawDestPath)."
                                         $misses.Add($msg)
                                         Add-Audit "MISSING" $msg
                                     }

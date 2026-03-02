@@ -143,9 +143,15 @@ function Repair-AppProject {
                     if (($n.Name -eq $TargetName -or "$($n.Name).url" -eq $TargetName -or "$($n.Name).docx" -eq $TargetName) -and $nType -eq $TargetType) { 
                         return @{ Node = $n; ParentPath = $CurrentPath }
                     }
-                    if ($nType -ne "Link" -and $nType -ne "InternalLink" -and $nType -ne "Publication" -and $n.Name) {
+                    if ($nType -ne "Link" -and $nType -ne "InternalLink" -and $nType -ne "Publication" -and $nType -ne "File" -and $n.Name) {
                         if ($n.Folders) {
                             $found = Find-StructureNode -NodeList $n.Folders -TargetName $TargetName -TargetType $TargetType -CurrentPath "$CurrentPath/$($n.Name)"
+                            if ($found) { return $found }
+                        }
+                    }
+                    else {
+                        if ($n.Folders) {
+                            $found = Find-StructureNode -NodeList $n.Folders -TargetName $TargetName -TargetType $TargetType -CurrentPath $CurrentPath
                             if ($found) { return $found }
                         }
                     }
@@ -156,18 +162,34 @@ function Repair-AppProject {
             foreach ($s in $structItems) {
                 $txt = $s.Raw
                 
-                if ($txt -match "Manquant : '(.+?)' \((Dossier|Link|InternalLink|Publication Raccourci Local|File)\)") {
-                    $itemName = $Matches[1]
-                    $itemTypeStr = $Matches[2]
+                if ($txt -match "Manquant : '(.+?)' \((Dossier|Link|InternalLink|Publication Raccourci Local|File)\)" -or
+                    $txt -match "Le dossier de destination du lien de publication '(.+?)' n'existe plus.*?" -or
+                    $txt -match "La destination du lien interne '(.+?)'") {
                     
-                    # Convert Display Type to JSON Node Type
-                    $mappedType = "Folder"
-                    if ($itemTypeStr -eq "Link") { $mappedType = "Link" }
-                    if ($itemTypeStr -eq "InternalLink") { $mappedType = "InternalLink" }
-                    if ($itemTypeStr -eq "Publication Raccourci Local") { $mappedType = "Publication" }
-                    if ($itemTypeStr -eq "File") { $mappedType = "File" }
+                    $itemName = ""
+                    $mappedType = ""
 
-                    Log " > Restauration complète requise pour : $itemName ($itemTypeStr)"
+                    if ($txt -match "Manquant : '(.+?)' \((Dossier|Link|InternalLink|Publication Raccourci Local|File)\)") {
+                        $itemName = $Matches[1]
+                        $itemTypeStr = $Matches[2]
+                        
+                        # Convert Display Type to JSON Node Type
+                        $mappedType = "Folder"
+                        if ($itemTypeStr -eq "Link") { $mappedType = "Link" }
+                        if ($itemTypeStr -eq "InternalLink") { $mappedType = "InternalLink" }
+                        if ($itemTypeStr -eq "Publication Raccourci Local") { $mappedType = "Publication" }
+                        if ($itemTypeStr -eq "File") { $mappedType = "File" }
+                    }
+                    elseif ($txt -match "Le dossier de destination du lien de publication '(.+?)' n'existe plus.*?") {
+                        $itemName = $Matches[1]
+                        $mappedType = "Publication"
+                    }
+                    elseif ($txt -match "La destination du lien interne '(.+?)'") {
+                        $itemName = $Matches[1]
+                        $mappedType = "InternalLink"
+                    }
+
+                    Log " > Restauration complète requise pour : $itemName ($mappedType)"
                     if (-not $baseObj) {
                         Log "   Echec : TemplateJson non fourni. Impossible de recréer l'élément manquant." "Error"
                         continue

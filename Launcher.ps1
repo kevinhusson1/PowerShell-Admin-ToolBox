@@ -14,6 +14,10 @@
 # =====================================================================
 # ÉTAPE 0 : CONFIGURATION DE BASE
 # =====================================================================
+
+# 1. FIX MSAL CRITIQUE : Charger Microsoft Graph AVANT toute interface ou module
+Import-Module Microsoft.Graph.Authentication -ErrorAction SilentlyContinue
+
 try { Add-Type -AssemblyName WindowsBase, PresentationCore, PresentationFramework } catch {}
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -70,6 +74,9 @@ catch {
 # ÉTAPE 1 : IMPORTATION DES MODULES
 # =====================================================================
 try {
+    # PRÉ-CHARGEMENT CRITIQUE : Évite un conflit de version MSAL
+    Import-Module Microsoft.Graph.Authentication -MinimumVersion 2.32.0 -ErrorAction SilentlyContinue
+
     # On importe d'abord notre dépendance externe embarquée
     Import-Module "$projectRoot\Vendor\PSSQLite" -Force
 

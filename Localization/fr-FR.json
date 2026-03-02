@@ -46,7 +46,8 @@
     "script_list_refreshed_2": "scripts maintenant visibles.",
     "timerPIDclose1": "Le script",
     "timerPIDclose2": "a été détecté comme terminé.",
-    "timerProgressStop": "[TIMER] Le suivi de progression est arrêté (plus aucun script à surveiller)."
+    "timerProgressStop": "[TIMER] Le suivi de progression est arrêté (plus aucun script à surveiller).",
+    "auth_failed": "L'authentification a échoué."
   },
   "confirmation": {
     "title": "Confirmation",

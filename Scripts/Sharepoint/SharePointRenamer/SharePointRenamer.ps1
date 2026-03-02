@@ -20,6 +20,9 @@ param(
 # =====================================================================
 # 1. PRÉ-CHARGEMENT
 # =====================================================================
+# PRÉ-CHARGEMENT CRITIQUE : Évite un conflit de version MSAL avec PnP.PowerShell
+Import-Module Microsoft.Graph.Authentication -MinimumVersion 2.32.0 -ErrorAction SilentlyContinue
+
 try {
     Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 }
@@ -39,7 +42,7 @@ function Send-Progress { param([int]$Percent, [string]$Msg) if ($LauncherPID) { 
 
 Send-Progress 10 "Initialisation des modules..."
 try {
-    Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure", "Toolbox.SharePoint" -Force
+    Import-Module "PSSQLite", "Core", "UI", "Localization", "Logging", "Database", "Azure" -Force
 }
 catch {
     [System.Windows.MessageBox]::Show("Erreur critique import modules :`n$($_.Exception.Message)", "Erreur", "OK", "Error"); exit 1
@@ -167,7 +170,9 @@ try {
         
         if (-not $newIdentity.Connected) {
             Write-Warning "[Renamer] Authentification échouée ou annulée : $($newIdentity.ErrorMessage)"
-            [System.Windows.MessageBox]::Show((Get-AppText 'messages.auth_failed' -Default "L'authentification a échoué.`nErreur : $($newIdentity.ErrorMessage)"), "Erreur de Connexion", "OK", "Warning") | Out-Null
+            $msg = Get-AppText 'messages.auth_failed'
+            if (-not $msg) { $msg = "L'authentification a échoué." }
+            [System.Windows.MessageBox]::Show("$msg`nErreur : $($newIdentity.ErrorMessage)", "Erreur de Connexion", "OK", "Warning") | Out-Null
         }
 
         # Mise à jour immédiate de l'UI après tentative de connexion
