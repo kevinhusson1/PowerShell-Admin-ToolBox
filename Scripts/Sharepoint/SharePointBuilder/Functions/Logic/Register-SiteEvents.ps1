@@ -158,46 +158,67 @@ function Register-SiteEvents {
         $timerAuto = New-Object System.Windows.Threading.DispatcherTimer
         $timerAuto.Interval = [TimeSpan]::FromMilliseconds(500)
         
+        $timerAuto.Tag = @{
+            JobId = $autoJobId
+            Window = $Window
+            PreviewLogic = $PreviewLogic
+            AutoLibraryName = $AutoLibraryName
+        }
+
         $timerAutoBlock = {
-            $j = Get-Job -Id $autoJobId -ErrorAction SilentlyContinue
-            if ($j -and $j.State -ne 'Running') {
-                $timerAuto.Stop()
-                
-                $safeCbSites = $Window.FindName("SiteComboBox")
-                $safeCbLibs = $Window.FindName("LibraryComboBox")
-                $safeLog = $Window.FindName("LogRichTextBox")
-                if ($null -eq $safeCbSites) { return }
+            param($sender, $e)
+            try {
+                $ctx = $sender.Tag
+                $j = Get-Job -Id $ctx.JobId -ErrorAction SilentlyContinue
+                if ($j -and $j.State -ne 'Running') {
+                    if ($sender) { $sender.Stop() }
+                    
+                    $safeCbSites = $ctx.Window.FindName("SiteComboBox")
+                    $safeCbLibs = $ctx.Window.FindName("LibraryComboBox")
+                    $safeLog = $ctx.Window.FindName("LogRichTextBox")
+                    if ($null -eq $safeCbSites) { return }
 
-                $res = Receive-Job $j -Wait -AutoRemoveJob
-                
-                if ($j.State -eq 'Failed') {
-                    $err = $j.ChildJobs[0].Error
-                    Write-AppLog -Message "Erreur Autopilot : $err" -Level Error -RichTextBox $safeLog
-                    $safeCbSites.ItemsSource = @("Echec Autopilot")
-                } 
-                else {
-                    $site = $res.Site
-                    $safeCbSites.ItemsSource = @($site)
-                    $safeCbSites.DisplayMemberPath = "Title"
-                    $safeCbSites.SelectedItem = $site
-                    Write-AppLog -Message "Site validé : '$($site.Title)'" -Level Success -RichTextBox $safeLog
-
-                    if ($res.Lib) {
-                        $lib = $res.Lib
-                        $safeCbLibs.ItemsSource = @($lib)
-                        $safeCbLibs.DisplayMemberPath = "Title"
-                        $safeCbLibs.SelectedItem = $lib
-                        $libUrl = "$($site.Url)$($lib.RootFolder.ServerRelativeUrl)"
-                        Write-AppLog -Message "Bibliothèque validée : '$($lib.Title)'" -Level Success -RichTextBox $safeLog
-                    }
+                    $res = Receive-Job $j -Wait -AutoRemoveJob
+                    
+                    if ($j.State -eq 'Failed') {
+                        $err = $j.ChildJobs[0].Error
+                        if ($safeLog) { Write-AppLog -Message "Erreur Autopilot : $err" -Level Error -RichTextBox $safeLog }
+                        $safeCbSites.ItemsSource = @("Echec Autopilot")
+                    } 
                     else {
-                        Write-AppLog -Message "Bibliothèque introuvable : $($Context.AutoLibraryName)" -Level Warning -RichTextBox $safeLog
-                    }
+                        $site = $res.Site
+                        $safeCbSites.ItemsSource = @($site)
+                        $safeCbSites.DisplayMemberPath = "Title"
+                        $safeCbSites.SelectedItem = $site
+                        if ($safeLog) { Write-AppLog -Message "Site validé : '$($site.Title)'" -Level Success -RichTextBox $safeLog }
 
-                    if ($null -ne $PreviewLogic) { & $PreviewLogic }
+                        if ($res.Lib) {
+                            $lib = $res.Lib
+                            $safeCbLibs.ItemsSource = @($lib)
+                            $safeCbLibs.DisplayMemberPath = "Title"
+                            $safeCbLibs.SelectedItem = $lib
+                            $libUrl = "$($site.Url)$($lib.RootFolder.ServerRelativeUrl)"
+                            if ($safeLog) { Write-AppLog -Message "Bibliothèque validée : '$($lib.Title)'" -Level Success -RichTextBox $safeLog }
+                        }
+                        else {
+                            if ($safeLog -and $ctx.AutoLibraryName) { Write-AppLog -Message "Bibliothèque introuvable : $($ctx.AutoLibraryName)" -Level Warning -RichTextBox $safeLog }
+                        }
+
+                        if ($null -ne $ctx.PreviewLogic) { & $ctx.PreviewLogic }
+                    }
+                }
+            } catch {
+                if ($sender) { 
+                    $sender.Stop() 
+                    $ctx = $sender.Tag
+                    if ($ctx -and $ctx.Window) {
+                        Write-Warning "CRASH DANS timerAutoBlock: $($_.Exception.Message)"
+                        $logErr = $ctx.Window.FindName("LogRichTextBox")
+                        if ($logErr) { Write-AppLog -Message "CRASH DANS timerAutoBlock: $($_.Exception.Message)" -Level Error -RichTextBox $logErr }
+                    }
                 }
             }
-        }.GetNewClosure()
+        } # Plus de Capture Closure !
 
         $timerAuto.Add_Tick($timerAutoBlock)
         $timerAuto.Start()
@@ -248,69 +269,89 @@ function Register-SiteEvents {
         $timerSites = New-Object System.Windows.Threading.DispatcherTimer
         $timerSites.Interval = [TimeSpan]::FromMilliseconds(500)
         
+        $timerSites.Tag = @{
+            JobId = $siteJobId
+            Window = $Window
+        }
+
         $timerSitesBlock = {
-            $j = Get-Job -Id $siteJobId -ErrorAction SilentlyContinue
-            
-            # LOG 4 : État du Job à chaque tick
-            if ($j) { Write-Verbose "[TimerTick] Job State: $($j.State)" }
-            else { Write-Verbose "[TimerTick] Job introuvable !" }
-
-            if ($j -and $j.State -ne 'Running') {
-                $timerSites.Stop()
+            param($sender, $e)
+            try {
+                $ctx = $sender.Tag
+                $j = Get-Job -Id $ctx.JobId -ErrorAction SilentlyContinue
                 
-                $safeCb = $Window.FindName("SiteComboBox")
-                $safeLog = $Window.FindName("LogRichTextBox")
-                $siteLoader = $Window.FindName("SiteLoadingBar")
-                if ($siteLoader) { $siteLoader.Visibility = "Collapsed" }
+                # LOG 4 : État du Job à chaque tick
+                if ($j) { Write-Verbose "[TimerTick] Job State: $($j.State)" }
+                else { Write-Verbose "[TimerTick] Job introuvable !" }
 
-                if ($null -eq $safeCb) { return }
-
-                # Récupération de TOUT (Logs + Objets)
-                $rawResults = Receive-Job $j -Wait -AutoRemoveJob
-                
-                # Séparation Logs vs Données
-                $debugLogs = $rawResults | Where-Object { $_ -is [string] -and ($_ -like "JOB_*") }
-                $realData = $rawResults | Where-Object { $_ -isnot [string] -or ($_ -notlike "JOB_*") }
-
-                # Affichage des logs internes du Job dans la console Verbose
-                foreach ($line in $debugLogs) { 
-                    Write-Verbose ">> $line" 
-                    # Optionnel : Afficher aussi les erreurs internes dans la RichTextBox
-                    if ($line -like "JOB_ERROR*") {
-                        Write-AppLog -Message $line -Level Error -RichTextBox $safeLog
-                    }
-                }
-
-                if ($j.State -eq 'Failed') {
-                    $err = $j.ChildJobs[0].Error
-                    $safeCb.ItemsSource = @("Erreur de chargement")
-                    Write-AppLog -Message "JOB FAILED : $err" -Level Error -RichTextBox $safeLog
-                }
-                else {
-                    $sitesArray = @($realData)
-                    $Global:AllSharePointSites = $sitesArray
+                if ($j -and $j.State -ne 'Running') {
+                    if ($sender) { $sender.Stop() }
                     
-                    if ($sitesArray.Count -gt 0) {
-                        $safeCb.ItemsSource = $sitesArray
-                        $safeCb.DisplayMemberPath = "Title"
-                        $safeCb.IsEnabled = $true
-                        Write-AppLog -Message "$($sitesArray.Count) sites chargés." -Level Success -RichTextBox $safeLog
-                        
-                        # UPDATE ETAT BOUTON LOAD CONFIG
-                        # Si une config était déjà sélectionnée pendant le chargement, on active le bouton maintenant
-                        $btnLoad = $Window.FindName("LoadConfigButton")
-                        $cbConfig = $Window.FindName("DeployConfigComboBox")
-                        if ($btnLoad -and $cbConfig -and $cbConfig.SelectedItem) {
-                            $btnLoad.IsEnabled = $true
+                    $safeCb = $ctx.Window.FindName("SiteComboBox")
+                    $safeLog = $ctx.Window.FindName("LogRichTextBox")
+                    $siteLoader = $ctx.Window.FindName("SiteLoadingBar")
+                    if ($siteLoader) { $siteLoader.Visibility = "Collapsed" }
+
+                    if ($null -eq $safeCb) { return }
+
+                    # Récupération de TOUT (Logs + Objets)
+                    $rawResults = Receive-Job $j -Wait -AutoRemoveJob
+                    
+                    # Séparation Logs vs Données
+                    $debugLogs = $rawResults | Where-Object { $_ -is [string] -and ($_ -like "JOB_*") }
+                    $realData = $rawResults | Where-Object { $_ -isnot [string] -or ($_ -notlike "JOB_*") }
+
+                    # Affichage des logs internes du Job dans la console Verbose
+                    foreach ($line in $debugLogs) { 
+                        Write-Verbose ">> $line" 
+                        # Optionnel : Afficher aussi les erreurs internes dans la RichTextBox
+                        if ($line -like "JOB_ERROR*") {
+                            Write-AppLog -Message $line -Level Error -RichTextBox $safeLog
                         }
                     }
+
+                    if ($j.State -eq 'Failed') {
+                        $err = $j.ChildJobs[0].Error
+                        $safeCb.ItemsSource = @("Erreur de chargement")
+                        Write-AppLog -Message "JOB FAILED : $err" -Level Error -RichTextBox $safeLog
+                    }
                     else {
-                        $safeCb.ItemsSource = @("Aucun site trouvé")
-                        Write-AppLog -Message "Résultat vide (0 sites)." -Level Warning -RichTextBox $safeLog
+                        $sitesArray = @($realData)
+                        $Global:AllSharePointSites = $sitesArray
+                        
+                        if ($sitesArray.Count -gt 0) {
+                            $safeCb.ItemsSource = $sitesArray
+                            $safeCb.DisplayMemberPath = "Title"
+                            $safeCb.IsEnabled = $true
+                            Write-AppLog -Message "$($sitesArray.Count) sites chargés." -Level Success -RichTextBox $safeLog
+                            
+                            # UPDATE ETAT BOUTON LOAD CONFIG
+                            # Si une config était déjà sélectionnée pendant le chargement, on active le bouton maintenant
+                            $btnLoad = $ctx.Window.FindName("LoadConfigButton")
+                            $cbConfig = $ctx.Window.FindName("DeployConfigComboBox")
+                            if ($btnLoad -and $cbConfig -and $cbConfig.SelectedItem) {
+                                $btnLoad.IsEnabled = $true
+                            }
+                        }
+                        else {
+                            $safeCb.ItemsSource = @("Aucun site trouvé")
+                            Write-AppLog -Message "Résultat vide (0 sites)." -Level Warning -RichTextBox $safeLog
+                        }
                     }
                 }
             }
-        }.GetNewClosure() # Capture $siteJobId
+            catch {
+                if ($sender) { 
+                    $sender.Stop() 
+                    $ctx = $sender.Tag
+                    if ($ctx -and $ctx.Window) {
+                        Write-Warning "CRASH DANS timerSitesBlock: $($_.Exception.Message) `n$($_.InvocationInfo.PositionMessage)"
+                        $logErr = $ctx.Window.FindName("LogRichTextBox")
+                        if ($logErr) { Write-AppLog -Message "CRASH DANS timerSitesBlock: $($_.Exception.Message)" -Level Error -RichTextBox $logErr }
+                    }
+                }
+            }
+        } # Plus de Capture Closure !
 
         $timerSites.Add_Tick($timerSitesBlock)
         $timerSites.Start()
@@ -321,11 +362,16 @@ function Register-SiteEvents {
         # B. FILTRAGE AVEC DEBOUNCE (Anti-Freeze)
         $searchTimer = New-Object System.Windows.Threading.DispatcherTimer
         $searchTimer.Interval = [TimeSpan]::FromMilliseconds(500)
-        $searchTimer.Tag = "SEARCH_TIMER" # Marker
+        $searchTimer.Tag = @{ Cb = $Ctrl.CbSites }
         
+        # Injection du minuteur dans les ressources WPF natives de la ComboBox (Survit à l'Async)
+        $Ctrl.CbSites.Resources.Add("DebouceTimer", $searchTimer)
+
         $searchAction = {
-            $searchTimer.Stop()
-            $cb = $Ctrl.CbSites
+            param($sender, $e)
+            if ($sender) { $sender.Stop() }
+            $ctx = $sender.Tag
+            $cb = $ctx.Cb
             $filterText = $cb.Text
             
             # Run filtering in background/idle to not block? 
@@ -341,7 +387,7 @@ function Register-SiteEvents {
                 }
                 $cb.IsDropDownOpen = $true
             }
-        }.GetNewClosure()
+        } # End SearchAction without GetNewClosure
 
         $searchTimer.Add_Tick($searchAction)
 
@@ -349,13 +395,17 @@ function Register-SiteEvents {
                 param($sender, $e)
                 if ($e.Key -in 'Up', 'Down', 'Enter', 'Tab', 'Left', 'Right') { return }
                 
-                # Restart Timer
-                $searchTimer.Stop()
-                $searchTimer.Start()
-            }.GetNewClosure())
+                # Récupération sécurisée du Timer dé-bouncing depuis l'arbre WPF
+                $savedTimer = $sender.Resources["DebouceTimer"]
+                if ($null -ne $savedTimer) {
+                    $savedTimer.Stop()
+                    $savedTimer.Start()
+                }
+            })
 
         # --- C. SÉLECTION SITE -> CHARGEMENT LIBS ---
         $Ctrl.CbSites.Add_SelectionChanged({
+            try {
                 $site = $this.SelectedItem
                 if ($site -is [System.Management.Automation.PSCustomObject]) {
                 
@@ -390,10 +440,14 @@ function Register-SiteEvents {
                     $st = $Window.FindName("TargetFolderStatusText")
                     if ($st) { $st.Text = "" }
 
-                    # CLONAGE ARGUMENTS
-                    $libArgs = $baseArgs.Clone()
-                    $libArgs.SiteUrl = $site.Url
-
+                    # SUPPRESSION CLONAGE (BaseArgs peut se perdre dans le scope WPF / Closure)
+                    $libArgs = @{
+                        ModPath  = Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint"
+                        Thumb    = $Global:AppConfig.azure.certThumbprint
+                        ClientId = $Global:AppConfig.azure.authentication.userAuth.appId
+                        Tenant   = $Global:AppConfig.azure.tenantName
+                        SiteUrl  = $site.Url
+                    }
                     $jobLibs = Start-Job -ScriptBlock {
                         param($ArgsMap)
                         Import-Module $ArgsMap.ModPath -Force
@@ -409,45 +463,74 @@ function Register-SiteEvents {
                     $timerLibs = New-Object System.Windows.Threading.DispatcherTimer
                     $timerLibs.Interval = [TimeSpan]::FromMilliseconds(200)
                 
+                    $timerLibs.Tag = @{
+                        JobId = $libJobId
+                        Window = $Window
+                        PreviewLogic = $PreviewLogic
+                    }
+
                     $timerLibsBlock = {
-                        $j = Get-Job -Id $libJobId -ErrorAction SilentlyContinue
+                        param($sender, $e)
+                        try {
+                            $ctx = $sender.Tag
+                            $j = Get-Job -Id $ctx.JobId -ErrorAction SilentlyContinue
 
-                        if ($j -and $j.State -ne 'Running') {
-                            $timerLibs.Stop()
+                            if ($j -and $j.State -ne 'Running') {
+                                if ($sender) { $sender.Stop() }
                         
-                            $finalLibCb = $Window.FindName("LibraryComboBox")
-                            $finalLog = $Window.FindName("LogRichTextBox")
-                            $libLoader = $Window.FindName("LibLoadingBar")
-                            if ($libLoader) { $libLoader.Visibility = "Collapsed" }
-                            if ($null -eq $finalLibCb) { return }
+                                $finalLibCb = $ctx.Window.FindName("LibraryComboBox")
+                                $finalLog = $ctx.Window.FindName("LogRichTextBox")
+                                $libLoader = $ctx.Window.FindName("LibLoadingBar")
+                                if ($libLoader) { $libLoader.Visibility = "Collapsed" }
+                                if ($null -eq $finalLibCb) { return }
 
-                            $libs = Receive-Job $j -Wait -AutoRemoveJob
-                        
-                            if ($j.State -eq 'Failed') {
-                                $errLib = $j.ChildJobs[0].Error
-                                $finalLibCb.ItemsSource = @("Erreur")
-                                if ($finalLog) { Write-AppLog -Message "Erreur Libs : $errLib" -Level Error -RichTextBox $finalLog }
+                                $libs = Receive-Job $j -Wait -AutoRemoveJob
+                            
+                                if ($j.State -eq 'Failed') {
+                                    $errLib = $j.ChildJobs[0].Error
+                                    $finalLibCb.ItemsSource = @("Erreur")
+                                    if ($finalLog) { Write-AppLog -Message "Erreur Libs : $errLib" -Level Error -RichTextBox $finalLog }
+                                }
+                                elseif ($libs) {
+                                    $libArray = @($libs)
+                                    $finalLibCb.ItemsSource = $libArray
+                                    $finalLibCb.DisplayMemberPath = "Title"
+                                    $finalLibCb.IsEnabled = $true
+                                    if ($finalLog) { Write-AppLog -Message "Bibliothèques chargées." -Level Success -RichTextBox $finalLog }
+                                }
+                                else {
+                                    $finalLibCb.ItemsSource = @("Aucune bibliothèque")
+                                    if ($finalLog) { Write-AppLog -Message "Aucune bibliothèque trouvée." -Level Warning -RichTextBox $finalLog }
+                                }
+                            
+                                if ($null -ne $ctx.PreviewLogic) { & $ctx.PreviewLogic } 
                             }
-                            elseif ($libs) {
-                                $libArray = @($libs)
-                                $finalLibCb.ItemsSource = $libArray
-                                $finalLibCb.DisplayMemberPath = "Title"
-                                $finalLibCb.IsEnabled = $true
-                                if ($finalLog) { Write-AppLog -Message "Bibliothèques chargées." -Level Success -RichTextBox $finalLog }
-                            }
-                            else {
-                                $finalLibCb.ItemsSource = @("Aucune bibliothèque")
-                                if ($finalLog) { Write-AppLog -Message "Aucune bibliothèque trouvée." -Level Warning -RichTextBox $finalLog }
-                            }
-                        
-                            if ($null -ne $PreviewLogic) { & $PreviewLogic } 
                         }
-                    }.GetNewClosure()
+                        catch {
+                            if ($sender) { 
+                                $sender.Stop() 
+                                $ctx = $sender.Tag
+                                if ($ctx -and $ctx.Window) {
+                                    $logErr = $ctx.Window.FindName("LogRichTextBox")
+                                    if ($logErr) {
+                                        Write-AppLog -Message "CRASH CbSites_timerLibsBlock : $($_.Exception.Message) `n $($_.InvocationInfo.PositionMessage)" -Level Error -RichTextBox $logErr
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     $timerLibs.Add_Tick($timerLibsBlock)
                     $timerLibs.Start()
                 }
-            }.GetNewClosure())
+            }
+            catch {
+                $logErr = $Window.FindName("LogRichTextBox")
+                if ($logErr) {
+                    Write-AppLog -Message "CRASH CbSites_SelectionChanged : $($_.Exception.Message) `n $($_.InvocationInfo.PositionMessage)" -Level Error -RichTextBox $logErr
+                }
+            }
+        }.GetNewClosure())
     }
 
     # --- D. LOGIQUE EXPLORATEUR (Version Inline & Rapide) ---

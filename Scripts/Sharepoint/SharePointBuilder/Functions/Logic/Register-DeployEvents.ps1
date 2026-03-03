@@ -327,88 +327,111 @@ function Register-DeployEvents {
             # État partagé pour capturer le résultat final à travers les ticks
             $SharedState = @{ FinalResult = $null }
 
+            $timer.Tag = @{
+                Job = $job
+                Window = $Window
+                JobArgs = $jobArgs
+                SharedState = $SharedState
+            }
+
             $timerBlock = {
-                # 1. UI References
-                $fLog = $Window.FindName("LogRichTextBox")
-                $fProg = $Window.FindName("MainProgressBar")
-                $fStat = $Window.FindName("ProgressStatusText")
-                $fBtn = $Window.FindName("DeployButton")
-                $fCopy = $Window.FindName("CopyUrlButton")
-                $fOpen = $Window.FindName("OpenUrlButton")
+                param($sender, $e)
+                try {
+                    $ctx = $sender.Tag
+                    $job = $ctx.Job
+                    $Window = $ctx.Window
+                    $jobArgs = $ctx.JobArgs
+                    $SharedState = $ctx.SharedState
 
-                # 2. Consommation en temps réel (Streaming)
-                $newItems = Receive-Job -Job $job
-                
-                foreach ($item in $newItems) {
-                    # A. LOG STRUCTURE (Write-AppLog -PassThru)
-                    # On détecte la propriété LogType = 'AppLog'
-                    if ($item.PSObject.Properties['LogType'] -and $item.LogType -eq 'AppLog') {
-                        if ($fLog) { Write-AppLog -Message $item.Message -Level $item.Level -RichTextBox $fLog }
-                    }
-                    # B. LOG STRING (Legacy "LEVEL|Message")
-                    elseif ($item -is [string]) {
-                        # Format attendu : "LEVEL|Message"
-                        $parts = $item -split '\|', 2
-                        $lvl = if ($parts.Count -eq 2) { $parts[0] } else { "INFO" }
-                        $msg = if ($parts.Count -eq 2) { $parts[1] } else { $item }
+                    # 1. UI References
+                    $fLog = $Window.FindName("LogRichTextBox")
+                    $fProg = $Window.FindName("MainProgressBar")
+                    $fStat = $Window.FindName("ProgressStatusText")
+                    $fBtn = $Window.FindName("DeployButton")
+                    $fCopy = $Window.FindName("CopyUrlButton")
+                    $fOpen = $Window.FindName("OpenUrlButton")
 
-                        # PROTECTION CRASH : Ignorer message vide
-                        if (-not [string]::IsNullOrWhiteSpace($msg)) {
-                            $color = switch ($lvl) { "DEBUG" { "Debug" } "INFO" { "Info" } "WARNING" { "Warning" } "ERROR" { "Error" } "SUCCESS" { "Success" } Default { "Info" } }
-                            if ($fLog) { Write-AppLog -Message $msg -Level $color -RichTextBox $fLog }
+                    # 2. Consommation en temps réel (Streaming)
+                    $newItems = Receive-Job -Job $job
+                    
+                    foreach ($item in $newItems) {
+                        # A. LOG STRUCTURE (Write-AppLog -PassThru)
+                        # On détecte la propriété LogType = 'AppLog'
+                        if ($item.PSObject.Properties['LogType'] -and $item.LogType -eq 'AppLog') {
+                            if ($fLog) { Write-AppLog -Message $item.Message -Level $item.Level -RichTextBox $fLog }
                         }
-                    }
-                    # C. RESULTAT FINAL (PSCustomObject / Hashtable)
-                    elseif ($item -is [System.Collections.IDictionary] -or $item -is [PSCustomObject]) {
-                        # On s'assure que ce n'est PAS un log
-                        if (-not $item.PSObject.Properties['LogType']) {
-                            $SharedState.FinalResult = $item
-                        }
-                    }
-                }
+                        # B. LOG STRING (Legacy "LEVEL|Message")
+                        elseif ($item -is [string]) {
+                            # Format attendu : "LEVEL|Message"
+                            $parts = $item -split '\|', 2
+                            $lvl = if ($parts.Count -eq 2) { $parts[0] } else { "INFO" }
+                            $msg = if ($parts.Count -eq 2) { $parts[1] } else { $item }
 
-                # 3. Fin du Job
-                if ($job.State -ne 'Running') {
-                    $timer.Stop()
-                    $finalRes = $SharedState.FinalResult
-
-                    if ($fProg) { $fProg.IsIndeterminate = $false; $fProg.Value = 100 }
-
-                    if ($job.State -eq 'Failed') {
-                        $err = $job.ChildJobs[0].Error
-                        if ($fLog) { Write-AppLog -Message "CRASH JOB : $err" -Level Error -RichTextBox $fLog }
-                        if ($fStat) { $fStat.Text = "Erreur critique." }
-                        if ($fBtn) { $fBtn.IsEnabled = $true }
-                    } 
-                    else {
-                        # Succès ou Echec Logique
-                        $success = $false
-                        if ($finalRes -and $finalRes.Success) { $success = $true }
-
-                        if ($success) {
-                            if ($fStat) { $fStat.Text = "Déploiement réussi !" }
-                            
-                            # URL Finale
-                            $uriSite = [Uri]$jobArgs.TargetUrl
-                            $rootHost = "$($uriSite.Scheme)://$($uriSite.Host)"
-                            $pathSuffix = if ($jobArgs.FolderName) { "/$($jobArgs.FolderName)" } else { "" }
-                            # Attention : LibRelUrl commence déjà par /
-                            $finalUrl = "$rootHost$($jobArgs.LibRelUrl)$pathSuffix"
-                        
-                            if ($fCopy) { 
-                                $fCopy.IsEnabled = $true 
-                                $fCopy.Tag = $finalUrl
+                            # PROTECTION CRASH : Ignorer message vide
+                            if (-not [string]::IsNullOrWhiteSpace($msg)) {
+                                $color = switch ($lvl) { "DEBUG" { "Debug" } "INFO" { "Info" } "WARNING" { "Warning" } "ERROR" { "Error" } "SUCCESS" { "Success" } Default { "Info" } }
+                                if ($fLog) { Write-AppLog -Message $msg -Level $color -RichTextBox $fLog }
                             }
-                            if ($fOpen) { $fOpen.IsEnabled = $true }
-                            if ($fBtn) { $fBtn.IsEnabled = $false }
+                        }
+                        # C. RESULTAT FINAL (PSCustomObject / Hashtable)
+                        elseif ($item -is [System.Collections.IDictionary] -or $item -is [PSCustomObject]) {
+                            # On s'assure que ce n'est PAS un log
+                            if (-not $item.PSObject.Properties['LogType']) {
+                                $SharedState.FinalResult = $item
+                            }
+                        }
+                    }
+
+                    # 3. Fin du Job
+                    if ($job.State -ne 'Running') {
+                        if ($sender) { $sender.Stop() }
+                        $finalRes = $SharedState.FinalResult
+
+                        if ($fProg) { $fProg.IsIndeterminate = $false; $fProg.Value = 100 }
+
+                        if ($job.State -eq 'Failed') {
+                            $err = $job.ChildJobs[0].Error
+                            if ($fLog) { Write-AppLog -Message "CRASH JOB : $err" -Level Error -RichTextBox $fLog }
+                            if ($fStat) { $fStat.Text = "Erreur critique." }
+                            if ($fBtn) { $fBtn.IsEnabled = $true }
                         } 
                         else {
-                            if ($fStat) { $fStat.Text = "Terminé avec erreurs." }
-                            if ($fBtn) { $fBtn.IsEnabled = $true }
+                            # Succès ou Echec Logique
+                            $success = $false
+                            if ($finalRes -and $finalRes.Success) { $success = $true }
+
+                            if ($success) {
+                                if ($fStat) { $fStat.Text = "Déploiement réussi !" }
+                                
+                                # URL Finale
+                                $uriSite = [Uri]$jobArgs.TargetUrl
+                                $rootHost = "$($uriSite.Scheme)://$($uriSite.Host)"
+                                $pathSuffix = if ($jobArgs.FolderName) { "/$($jobArgs.FolderName)" } else { "" }
+                                # Attention : LibRelUrl commence déjà par /
+                                $finalUrl = "$rootHost$($jobArgs.LibRelUrl)$pathSuffix"
+                            
+                                if ($fCopy) { 
+                                    $fCopy.IsEnabled = $true 
+                                    $fCopy.Tag = $finalUrl
+                                }
+                                if ($fOpen) { $fOpen.IsEnabled = $true }
+                                if ($fBtn) { $fBtn.IsEnabled = $false }
+                            } 
+                            else {
+                                if ($fStat) { $fStat.Text = "Terminé avec erreurs." }
+                                if ($fBtn) { $fBtn.IsEnabled = $true }
+                            }
                         }
                     }
+                } catch {
+                    if ($sender) { $sender.Stop() }
+                    $ctx = $sender.Tag
+                    if ($ctx -and $ctx.Window) {
+                        $fLog = $ctx.Window.FindName("LogRichTextBox")
+                        if ($fLog) { Write-AppLog -Message "CRASH TIMER DEPLOIEMENT: $($_.Exception.Message)" -Level Error -RichTextBox $fLog }
+                    }
                 }
-            }.GetNewClosure()
+            } # Plus de Capture Closure !
 
             $timer.Add_Tick($timerBlock)
             $timer.Start()
@@ -480,8 +503,8 @@ function Register-DeployEvents {
                 & $Log "Interface réinitialisée." "Info"
                 
                 # Validation update (via event propagation or explicit call)
-                # Les changements de sélection déclenchent déjà les events, mais on force un DoEvents si besoin
-                [System.Windows.Forms.Application]::DoEvents()
+                # Les changements de sélection déclenchent déjà les events, mais on force un rafraichissement UI si besoin
+                [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
 
             }.GetNewClosure())
     }
@@ -880,9 +903,9 @@ function Register-DeployEvents {
                     if ($site) { 
                         $Ctrl.CbSites.SelectedItem = $site 
                         # FORCE UI REFRESH
-                        [System.Windows.Forms.Application]::DoEvents()
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
                         Start-Sleep -Milliseconds 200
-                        [System.Windows.Forms.Application]::DoEvents()
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
                     }
                     else {
                         & $Log "Site introuvable : $($cfg.SiteUrl)" "Warning"
@@ -905,7 +928,7 @@ function Register-DeployEvents {
                         }
 
                         Start-Sleep -Milliseconds 100
-                        [System.Windows.Forms.Application]::DoEvents()
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
                         $maxRetries--
                     }
 
@@ -997,7 +1020,7 @@ function Register-DeployEvents {
                         $Ctrl.CbDeployConfigs.SelectedItem = $null
 
                         # Force UI update (fix for refresh issue)
-                        [System.Windows.Forms.Application]::DoEvents()
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
                     
                         & $LoadDeployConfigs
                     

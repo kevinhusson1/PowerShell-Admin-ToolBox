@@ -179,6 +179,25 @@ catch {
     exit 1
 }
 
+# --- PROTECTION GLOBALE ANTI-CRASH ---
+$window.Dispatcher.add_UnhandledException({
+    param($sender, $e)
+    # Empêche la propagation du crash vers ShowDialog
+    $e.Handled = $true
+    
+    $crashMsg = "CRASH UI INTERCEPTÉ: $($e.Exception.Message) `n$($e.Exception.StackTrace)"
+    Write-Warning $crashMsg
+    
+    # Tentative d'affichage dans la console interne si disponible
+    $logBox = $window.FindName("LogRichTextBox")
+    if ($logBox) {
+        # On invoque le Write-AppLog délicatement, ou on ajoute du texte
+        try {ù
+            Write-AppLog -Message $crashMsg -Level Error -RichTextBox $logBox
+        } catch {}
+    }
+})
+
 # 5. SHOW
 Send-Progress 100 "Prêt."
 try {

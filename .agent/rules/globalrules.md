@@ -42,3 +42,6 @@ Ces règles doivent être impérativement suivies pour garantir la stabilité, l
 *   Utilisez `try/catch` pour toutes les opérations risquées (IO, Réseau, BDD).
 *   Nommez les variables en **CamelCase** (`$maVariable`).
 *   Nommez les fonctions en **PascalCase** avec verbe approuvé (`Get-AppUser`, `Set-AppConf`).
+
+## 7. Utilisation des skills
+*   Utiliser toujours les skills mis à disposition en particulier celui des powershell_rules

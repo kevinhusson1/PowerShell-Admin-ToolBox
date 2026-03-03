@@ -227,6 +227,7 @@ function New-AppSPStructure {
         # 0. PRE-PROCESSING : MAPPING ID -> PATH (Pour Liens Internes)
         Log "Construction de la carte des IDs..." "DEBUG"
         $IdToPathMap = @{}
+        $DeployedFoldersMap = @{} # Ajout Map Passe 1 (Flat JSON v2.0)
 
         function Build-IdMap {
             param($SubStructure, $CurrentPath)
@@ -267,7 +268,7 @@ function New-AppSPStructure {
 
         function Invoke-AppPublication {
             param(
-                [System.Management.Automation.PSCustomObject]$pub,
+                [psobject]$pub,
                 [string]$sourceServerRelativeUrl
             )
             Log (Loc "log_deploy_pub_proc" $pub.Name) "INFO"
@@ -303,7 +304,7 @@ function New-AppSPStructure {
                 if (-not [string]::IsNullOrWhiteSpace($ProjectModelName)) { $pName = $ProjectModelName }
                 elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) { $pName = $RootFolderName }
 
-                if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($pName)) {
+                if (($pub.UseModelName -eq $true -or $pub.UseFormName -eq $true) -and -not [string]::IsNullOrWhiteSpace($pName)) {
                     $rawDestPath = "$rawDestPath/$pName"
                 }
                 
@@ -319,7 +320,7 @@ function New-AppSPStructure {
                 catch {
                     Log "  > Dossier Cible distant '$rawDestPath' introuvable. Tentative de création..." "DEBUG"
                     try {
-                        if ($pub.UseModelName -eq $true -and -not [string]::IsNullOrWhiteSpace($pName)) {
+                        if (($pub.UseModelName -eq $true -or $pub.UseFormName -eq $true) -and -not [string]::IsNullOrWhiteSpace($pName)) {
                             # Le parent doit exister dans ce cas
                             $parentFolder = Resolve-PnPFolder -SiteRelativePath $pub.TargetFolderPath -Connection $targetCtx -ErrorAction Stop
                             $resolvedDest = Add-PnPFolder -Name $pName -Folder $parentFolder.ServerRelativeUrl -Connection $targetCtx -ErrorAction Stop
@@ -480,28 +481,31 @@ function New-AppSPStructure {
                 Log (Loc "log_deploy_create_internal_link" $linkName) "INFO"
                 
                 # A. Résolution Cible
-                if (-not $IdToPathMap.ContainsKey($targetId)) {
+                if ($DeployedFoldersMap.ContainsKey($targetId)) {
+                    $relDestPath = $DeployedFoldersMap[$targetId]
+                    $relPath = $relDestPath
+                    $uri = New-Object Uri($TargetSiteUrl)
+                    $baseHost = "$($uri.Scheme)://$($uri.Host)"
+                    $fullTargetUrl = "$baseHost$relDestPath"
+                }
+                elseif ($IdToPathMap.ContainsKey($targetId)) {
+                    $relPath = $IdToPathMap[$targetId]
+                    $uri = New-Object Uri($TargetSiteUrl)
+                    $baseHost = "$($uri.Scheme)://$($uri.Host)"
+                    
+                    $absStartPath = $libUrl
+                    if (-not [string]::IsNullOrWhiteSpace($ProjectRootUrl)) {
+                        $absStartPath = $ProjectRootUrl
+                    }
+                    elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
+                        $absStartPath = "$libUrl/$RootFolderName"
+                    }
+                    $fullTargetUrl = "$baseHost$absStartPath$relPath"
+                }
+                else {
                     Log "⚠️ Cible introuvable pour le lien '$linkName' (ID: $targetId). Lien ignoré." "WARNING"
                     return
                 }
-                
-                $relPath = $IdToPathMap[$targetId]
-                # Construction URL absolue cible
-                # $TargetSiteUrl + $TargetLibraryUrl + $relPath
-                
-                $uri = New-Object Uri($TargetSiteUrl)
-                $baseHost = "$($uri.Scheme)://$($uri.Host)"
-                
-                # [FIX] Calculate absolute start path (since $startPath is not yet defined here)
-                $absStartPath = $libUrl
-                if (-not [string]::IsNullOrWhiteSpace($ProjectRootUrl)) {
-                    $absStartPath = $ProjectRootUrl
-                }
-                elseif (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
-                    $absStartPath = "$libUrl/$RootFolderName"
-                }
-
-                $fullTargetUrl = "$baseHost$absStartPath$relPath"
                 
                 # B. Création .url
                 if (-not $linkName.EndsWith(".url")) { $linkName += ".url" }
@@ -627,6 +631,7 @@ function New-AppSPStructure {
                     $tempObj = Get-PnPFolder -Url $folder.ServerRelativeUrl -Includes ListItemAllFields -Connection $conn -ErrorAction Stop
                     $folderItem = $tempObj.ListItemAllFields
                     if ($null -eq $folderItem.Id) { throw "ID vide" }
+                    if ($FolderObj.Id) { $DeployedFoldersMap[$FolderObj.Id] = $folder.ServerRelativeUrl } # Mapping v2.0
                 }
                 catch {
                     Start-Sleep -Milliseconds 500
@@ -813,7 +818,10 @@ function New-AppSPStructure {
             Log "Déploiement direct à la racine de la bibliothèque." "INFO"
         }
 
-        # Lancement Récursion
+        # =========================================================================================
+        # PASSE 1 : DOSSIERS (Folder Hierarchique)
+        # =========================================================================================
+        Log "--- DÉBUT DE LA PASSE 1 : DOSSIERS ---" "INFO"
         if ($structure.Folders) {
             foreach ($f in $structure.Folders) { 
                 Set-NewFolder -CurrentPath $startPath -FolderObj $f 
@@ -821,6 +829,31 @@ function New-AppSPStructure {
         }
         else {
             Set-NewFolder -CurrentPath $startPath -FolderObj $structure
+        }
+        
+        # =========================================================================================
+        # PASSE 2 : FLAT JSON (Contenus) - Mode V2.0
+        # =========================================================================================
+        Log "--- DÉBUT DE LA PASSE 2 : CONTENUS (Flat JSON) ---" "INFO"
+        $flatCollections = @(
+            @($structure.Publications),
+            @($structure.Links),
+            @($structure.InternalLinks),
+            @($structure.Files)
+        )
+        
+        foreach ($collection in $flatCollections) {
+            if ($null -ne $collection -and $collection.Count -gt 0) {
+                foreach ($item in $collection) {
+                    $targetPath = $startPath
+                    if (-not [string]::IsNullOrWhiteSpace($item.ParentId) -and $DeployedFoldersMap.ContainsKey($item.ParentId)) {
+                        $targetPath = $DeployedFoldersMap[$item.ParentId]
+                    } elseif (-not [string]::IsNullOrWhiteSpace($item.ParentId)) {
+                        Log "⚠️ Parent (ID: $($item.ParentId)) introuvable pour '$($item.Name)'. Création à la racine." "WARNING"
+                    }
+                    Set-NewFolder -CurrentPath $targetPath -FolderObj $item
+                }
+            }
         }
 
         Log (Loc "log_deploy_finished") "SUCCESS"
