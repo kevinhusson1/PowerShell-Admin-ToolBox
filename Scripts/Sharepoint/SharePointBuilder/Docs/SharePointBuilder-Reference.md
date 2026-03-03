@@ -42,8 +42,8 @@ Sert à créer une passerelle vers un autre emplacement documentaire.
 *   **Target Site URL** : URL absolue du site de destination.
     *   Si vide et Mode=Auto, cible le site courant.
 *   **Target Folder Internal Path** : Chemin relatif dans la bibliothèque cible (ex: `/Dossier/SousDossier`).
-*   **Use Model Name** : Si coché, le dossier final sera `TargetFolderPath` + `NomRacineModele`.
-    *   *Exemple* : Si le modèle déploie "Projet A" et la cible est `/Public/`, le résultat sera `/Public/Projet A`.
+*   **Use Form Name** : Si coché, le chemin cible inclura dynamiquement le nom du dossier généré par le formulaire (`{FormFolderName}`).
+    *   *Exemple* : Si le formulaire génère le dossier "Projet A", que la cible est `/Public/` et que la publication s'appelle "Raccourci", le résultat pointera vers `/Public/Projet A/Raccourci.url`.
 *   **Target Site Mode** :
     *   `Auto (Current)` : Reste sur le site du déploiement.
     *   `Url` : Change de site collection (nécessite auth).
