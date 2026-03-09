@@ -81,51 +81,51 @@ function Global:Invoke-AppSPFormUpdatePreview {
         $finalWidth = [double]$widthVal
         
         if ($data.Type -eq "Label") {
-            $ctrl = New-Object System.Windows.Controls.TextBlock
-            $ctrl.Text = $data.Content
-            $ctrl.VerticalAlignment = "Center"
-            $ctrl.FontWeight = "Bold"
-            $ctrl.Margin = "0,0,5,0"
-            $ctrl.Foreground = $Window.FindResource("TextPrimaryBrush")
-            $panel.Children.Add($ctrl) | Out-Null
+            $uiComponent = New-Object System.Windows.Controls.TextBlock
+            $uiComponent.Text = $data.Content
+            $uiComponent.VerticalAlignment = "Center"
+            $uiComponent.FontWeight = "Bold"
+            $uiComponent.Margin = "0,0,5,0"
+            $uiComponent.Foreground = $Window.FindResource("TextPrimaryBrush")
+            $panel.Children.Add($uiComponent) | Out-Null
         }
         elseif ($data.Type -eq "TextBox") {
-            $ctrl = New-Object System.Windows.Controls.TextBox
-            $ctrl.Text = $data.DefaultValue
-            $ctrl.Width = $finalWidth
-            $ctrl.Margin = "0,0,5,0"
-            $ctrl.Style = $Window.FindResource("StandardTextBoxStyle")
+            $uiComponent = New-Object System.Windows.Controls.TextBox
+            $uiComponent.Text = $data.DefaultValue
+            $uiComponent.Width = $finalWidth
+            $uiComponent.Margin = "0,0,5,0"
+            $uiComponent.Style = $Window.FindResource("StandardTextBoxStyle")
             
             # Event temps réel (TextChanged)
-            $ctrl.add_TextChanged($recalculateSb)
+            $uiComponent.add_TextChanged($recalculateSb)
 
             # Gestion Majuscules
             if ($data.IsUppercase) {
-                $ctrl.CharacterCasing = [System.Windows.Controls.CharacterCasing]::Upper
+                $uiComponent.CharacterCasing = [System.Windows.Controls.CharacterCasing]::Upper
             }
             
-            $panel.Children.Add($ctrl) | Out-Null
+            $panel.Children.Add($uiComponent) | Out-Null
         }
         elseif ($data.Type -eq "ComboBox") {
-            $ctrl = New-Object System.Windows.Controls.ComboBox
-            $ctrl.Width = $finalWidth
-            $ctrl.Margin = "0,0,5,0"
-            $ctrl.Style = $Window.FindResource("StandardComboBoxStyle")
+            $uiComponent = New-Object System.Windows.Controls.ComboBox
+            $uiComponent.Width = $finalWidth
+            $uiComponent.Margin = "0,0,5,0"
+            $uiComponent.Style = $Window.FindResource("StandardComboBoxStyle")
             if ($data.Options) {
-                $ctrl.ItemsSource = $data.Options
+                $uiComponent.ItemsSource = $data.Options
                 # Sélection par défaut
                 if ($data.DefaultValue -and $data.Options -contains $data.DefaultValue) {
-                    $ctrl.SelectedItem = $data.DefaultValue
+                    $uiComponent.SelectedItem = $data.DefaultValue
                 }
                 elseif ($data.Options.Count -gt 0) {
-                    $ctrl.SelectedIndex = 0
+                    $uiComponent.SelectedIndex = 0
                 }
             }
             
             # Event temps réel (SelectionChanged)
-            $ctrl.add_SelectionChanged($recalculateSb)
+            $uiComponent.add_SelectionChanged($recalculateSb)
             
-            $panel.Children.Add($ctrl) | Out-Null
+            $panel.Children.Add($uiComponent) | Out-Null
         }
     }
     

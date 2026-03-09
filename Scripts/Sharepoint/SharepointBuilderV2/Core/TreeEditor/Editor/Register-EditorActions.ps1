@@ -124,7 +124,7 @@ function Global:Register-EditorActionHandlers {
         $Ctrl.EdBtnChildInternalLink.Add_Click({
                 # FIX: Force Reload Function if missing (Just in case, though Global fixes it)
                 if (-not (Get-Command New-EditorInternalLinkNode -ErrorAction SilentlyContinue)) {
-                    $f = Join-Path $Context.ScriptRoot "Functions\Logic\New-EditorInternalLinkNode.ps1"
+                    $f = Join-Path $Context.ScriptRoot "Core\TreeEditor\New-EditorInternalLinkNode.ps1"
                     if (Test-Path $f) { . $f }
                 }
 
@@ -394,7 +394,7 @@ function Global:Register-EditorActionHandlers {
     if ($Ctrl.EdBtnAddFile) {
         $Ctrl.EdBtnAddFile.Add_Click({
                 # FIX: Force Reload Function ALWAYS
-                $f = Join-Path $Context.ScriptRoot "Functions\Logic\Editor\New-EditorFileNode.ps1"
+                $f = Join-Path $Context.ScriptRoot "Core\TreeEditor\Editor\New-EditorFileNode.ps1"
                 if (Test-Path $f) { . $f }
 
                 $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }

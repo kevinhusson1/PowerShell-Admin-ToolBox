@@ -417,19 +417,24 @@ function Register-SiteEvents {
                         $libArgs = @{
                             Thumb       = $Global:AppConfig.azure.certThumbprint
                             ClientId    = $Global:AppConfig.azure.authentication.userAuth.appId
-                            Tenant      = $Global:AppConfig.azure.tenantId
+                            Tenant      = $Global:AppConfig.azure.tenantName # Correction : On utilise le même que pour les sites
                             SiteUrl     = $site.Url
+                            SiteId      = $site.Id # Nouveau : On passe l'ID déjà résolu
                             ProjectRoot = $Global:ProjectRoot
                         }
                         $jobLibs = Start-Job -ScriptBlock {
                             param($ArgsMap)
                             $env:PSModulePath = "$($ArgsMap.ProjectRoot)\Modules;$($ArgsMap.ProjectRoot)\Vendor;$($env:PSModulePath)"
+                            Write-Output "JOB_LOG: Import des modules..."
                             Import-Module Core, Azure -Force
                             try {
+                                Write-Output "JOB_LOG: Connexion Graph..."
                                 Connect-AppAzureCert -TenantId $ArgsMap.Tenant -ClientId $ArgsMap.ClientId -Thumbprint $ArgsMap.Thumb | Out-Null
                             
-                                $siteId = Get-AppGraphSiteId -SiteUrl $ArgsMap.SiteUrl
+                                $siteId = if ($ArgsMap.SiteId) { $ArgsMap.SiteId } else { Get-AppGraphSiteId -SiteUrl $ArgsMap.SiteUrl }
+                                Write-Output "JOB_LOG: Récupération des bibliothèques pour SiteId: $siteId"
                                 $lists = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists?`$expand=drive"
+                                Write-Output "JOB_LOG: $($lists.value.Count) listes brutes reçues de Graph."
                             
                                 $result = New-Object System.Collections.Generic.List[object]
                                 foreach ($l in $lists.value) {
@@ -448,9 +453,14 @@ function Register-SiteEvents {
                                     }
                                     $result.Add($libObj)
                                 }
-                                return $result | Sort-Object Title
+                                $final = $result | Sort-Object Title
+                                Write-Output "JOB_LOG: Fin. $($final.Count) bibliothèques conservées après filtrage."
+                                return $final
                             }
-                            catch { throw $_ }
+                            catch { 
+                                Write-Output "JOB_ERROR: $($_.Exception.Message)"
+                                throw $_ 
+                            }
                         } -ArgumentList $libArgs
 
                         $libJobId = $jobLibs.Id
@@ -480,10 +490,19 @@ function Register-SiteEvents {
                                         if ($sender) { $sender.Stop() }
                                     
                                         # 1. Récupération des données
-                                        $libsRes = @(Receive-Job $j -Wait)
+                                        $rawRes = @(Receive-Job $j -Wait)
                                         if ($j) { Remove-Job $j -ErrorAction SilentlyContinue }
                                     
-                                        Write-Verbose "[timerLibs-V3.2] Job terminé. Objets reçus: $($libsRes.Count)"
+                                        # Séparation Logs vs Données
+                                        $debugLogs = $rawRes | Where-Object { $_ -is [string] -and ($_ -like "JOB_*") }
+                                        $libsData = $rawRes | Where-Object { $_ -isnot [string] -or ($_ -notlike "JOB_*") }
+
+                                        foreach ($line in $debugLogs) { 
+                                            Write-Verbose ">> $line" 
+                                            if ($line -like "JOB_ERROR*") {
+                                                if ($ctx.Ctrl.LogBox) { Write-AppLog -Message $line -Level Error -RichTextBox $ctx.Ctrl.LogBox }
+                                            }
+                                        }
 
                                         # 2. Mise à jour UI forcée (v3.5 - Simplification Draconienne)
                                         $ctx.Window.Dispatcher.Invoke({
@@ -493,7 +512,7 @@ function Register-SiteEvents {
                                             
                                                     if ($c.LibLoadingBar) { $c.LibLoadingBar.Visibility = $vCollapsed }
                                             
-                                                    $libArray = @($libsRes | Where-Object { $_ -isnot [string] -and $_ -notlike "JOB_*" })
+                                                    $libArray = @($libsData)
                                             
                                                     if ($c.CbLibs) {
                                                         if ($libArray.Count -gt 0) {
@@ -506,11 +525,11 @@ function Register-SiteEvents {
                                                                 Write-Verbose "[timerLibs-V3.5] Auto-sélection de l'unique bibliothèque."
                                                             }
                                                     
-                                                            if ($c.LogBox) { Write-AppLog -Message "$($libArray.Count) bibliothèques prêtes (v3.5)." -Level Success -RichTextBox $c.LogBox }
+                                                            if ($c.LogBox) { Write-AppLog -Message "$($libArray.Count) bibliothèques prêtes (v4.2)." -Level Success -RichTextBox $c.LogBox }
                                                         }
                                                         else {
                                                             $c.CbLibs.ItemsSource = @("Aucune")
-                                                            if ($c.LogBox) { Write-AppLog -Message "Liste vide reçue (v3.5)." -Level Warning -RichTextBox $c.LogBox }
+                                                            if ($c.LogBox) { Write-AppLog -Message "Liste vide reçue (v4.2)." -Level Warning -RichTextBox $c.LogBox }
                                                         }
                                                         $c.CbLibs.UpdateLayout()
                                                     }
@@ -665,8 +684,8 @@ function Register-SiteEvents {
                     
                     # LOG DE DIAGNOSTIC WPF (v4.17)
                     $nodeName = if ($item.Tag -and $item.Tag.Name) { $item.Tag.Name } 
-                                elseif ($item.Header -is [System.Windows.Controls.StackPanel]) { "Dossier" }
-                                else { $item.Header }
+                    elseif ($item.Header -is [System.Windows.Controls.StackPanel]) { "Dossier" }
+                    else { $item.Header }
 
                     Write-Verbose "[v4.17] Event Expansion capté sur: $nodeName"
                     
@@ -674,7 +693,8 @@ function Register-SiteEvents {
                         if ($PopulateProxy) { & $PopulateProxy -ParentNode $item }
                     }
                 }
-            } catch { Write-Warning "Crash Expansion v4.2 : $_" }
+            }
+            catch { Write-Warning "Crash Expansion v4.2 : $_" }
         }.GetNewClosure()
 
         $exTV.AddHandler([System.Windows.Controls.TreeViewItem]::ExpandedEvent, [System.Windows.RoutedEventHandler]$ExpansionHandler)
@@ -682,46 +702,48 @@ function Register-SiteEvents {
         # B. Événement Sélection (Diagnostic souhaité par l'utilisateur)
         # C. Événement CLIC DIRECT (v4.5)
         $exTV.Add_PreviewMouseLeftButtonUp({
-            param($sender, $e)
-            try {
-                $item = $e.OriginalSource
-                while ($item -and -not ($item -is [System.Windows.Controls.TreeViewItem])) {
-                    $item = [System.Windows.Media.VisualTreeHelper]::GetParent($item)
-                }
-
-                if ($item -and $item.Tag) {
-                    # 1. CAS BOUTON "LOAD MORE" (v4.10)
-                    if ($item.Tag -eq "ACTION_LOAD_MORE") {
-                        # Remonter au TreeViewItem Parent
-                        $parent = [System.Windows.Media.VisualTreeHelper]::GetParent($item)
-                        while ($parent -and -not ($parent -is [System.Windows.Controls.TreeViewItem])) {
-                            $parent = [System.Windows.Media.VisualTreeHelper]::GetParent($parent)
-                        }
-                        
-                        if ($parent) {
-                            $parentName = if ($parent.Tag -and $parent.Tag.Name) { $parent.Tag.Name } else { $parent.Header }
-                            Write-Verbose "[v4.17] Clic Load More détecté pour : $parentName"
-                            Invoke-AppSPRenderBatch -ParentNode $parent -Ctrl $Ctrl
-                        } else {
-                            Write-Warning "[v4.17] Impossible de trouver le parent de Load More !"
-                        }
-                        return
+                param($sender, $e)
+                try {
+                    $item = $e.OriginalSource
+                    while ($item -and -not ($item -is [System.Windows.Controls.TreeViewItem])) {
+                        $item = [System.Windows.Media.VisualTreeHelper]::GetParent($item)
                     }
 
-                    # 2. CAS DOSSIER STANDARD
-                    if ($item.Tag -is [System.Management.Automation.PSCustomObject]) {
-                        # LOG DE CLIC (Diagnostic)
-                        Write-AppLog -Message "Clic détecté sur : $($item.Tag.FullPath)" -Level Info -RichTextBox $Ctrl.LogBox
+                    if ($item -and $item.Tag) {
+                        # 1. CAS BOUTON "LOAD MORE" (v4.10)
+                        if ($item.Tag -eq "ACTION_LOAD_MORE") {
+                            # Remonter au TreeViewItem Parent
+                            $parent = [System.Windows.Media.VisualTreeHelper]::GetParent($item)
+                            while ($parent -and -not ($parent -is [System.Windows.Controls.TreeViewItem])) {
+                                $parent = [System.Windows.Media.VisualTreeHelper]::GetParent($parent)
+                            }
                         
-                        if ($item.Items.Count -eq 1 -and "$($item.Items[0].Tag)" -eq "DUMMY_TAG") {
-                            Write-AppLog -Message "Chargement Forcé (Dummy détecté) pour : $($item.Tag.Name)" -Level Warning -RichTextBox $Ctrl.LogBox
-                            if ($PopulateProxy) { & $PopulateProxy -ParentNode $item }
-                            $item.IsExpanded = $true
+                            if ($parent) {
+                                $parentName = if ($parent.Tag -and $parent.Tag.Name) { $parent.Tag.Name } else { $parent.Header }
+                                Write-Verbose "[v4.17] Clic Load More détecté pour : $parentName"
+                                Invoke-AppSPRenderBatch -ParentNode $parent -Ctrl $Ctrl
+                            }
+                            else {
+                                Write-Warning "[v4.17] Impossible de trouver le parent de Load More !"
+                            }
+                            return
+                        }
+
+                        # 2. CAS DOSSIER STANDARD
+                        if ($item.Tag -is [System.Management.Automation.PSCustomObject]) {
+                            # LOG DE CLIC (Diagnostic)
+                            Write-AppLog -Message "Clic détecté sur : $($item.Tag.FullPath)" -Level Info -RichTextBox $Ctrl.LogBox
+                        
+                            if ($item.Items.Count -eq 1 -and "$($item.Items[0].Tag)" -eq "DUMMY_TAG") {
+                                Write-AppLog -Message "Chargement Forcé (Dummy détecté) pour : $($item.Tag.Name)" -Level Warning -RichTextBox $Ctrl.LogBox
+                                if ($PopulateProxy) { & $PopulateProxy -ParentNode $item }
+                                $item.IsExpanded = $true
+                            }
                         }
                     }
                 }
-            } catch { Write-Warning "Crash Click v4.5 : $_" }
-        }.GetNewClosure())
+                catch { Write-Warning "Crash Click v4.5 : $_" }
+            }.GetNewClosure())
 
         $exTV.Add_SelectedItemChanged({
                 param($sender, $e)
@@ -750,7 +772,8 @@ function Register-SiteEvents {
                         
                         if ($PreviewLogic) { & $PreviewLogic }
                     }
-                } catch { Write-Warning "Crash Selection v4.4 : $_" }
+                }
+                catch { Write-Warning "Crash Selection v4.4 : $_" }
             }.GetNewClosure())
     }
 }

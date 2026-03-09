@@ -15,12 +15,18 @@ function Initialize-BuilderLogic {
     $Window = $Context.Window
     $ScriptRoot = $Context.ScriptRoot
 
-    # 1. Chargement des sous-fonctions logiques
-    $logicPath = Join-Path $ScriptRoot "Functions\Logic"
-    if (Test-Path $logicPath) {
-        Get-ChildItem -Path $logicPath -Filter "*.ps1" -Recurse | ForEach-Object { 
-            Write-Verbose "Chargement logique : $($_.Name)"
-            . $_.FullName 
+    # 1. Chargement des sous-fonctions logiques (CORE & COMPONENTS)
+    $loadPaths = @(
+        (Join-Path $ScriptRoot "Core"),
+        (Join-Path $ScriptRoot "Components")
+    )
+
+    foreach ($path in $loadPaths) {
+        if (Test-Path $path) {
+            Get-ChildItem -Path $path -Filter "*.ps1" -Recurse | ForEach-Object { 
+                Write-Verbose "Chargement logique : $($_.Name)"
+                . $_.FullName 
+            }
         }
     }
 

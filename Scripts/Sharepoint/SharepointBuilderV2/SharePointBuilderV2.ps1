@@ -95,11 +95,13 @@ try {
     # --- INJECTION DYNAMIQUE DES ONGLETS (TABS) ---
     $tabControl = $window.FindName("MainTabControl")
     if ($tabControl) {
-        $tabsPath = Join-Path $scriptRoot "Templates\Tabs"
-        if (Test-Path $tabsPath) {
-            $tabFiles = Get-ChildItem -Path $tabsPath -Filter "Tab_*.xaml" | Sort-Object Name
+        $componentsPath = Join-Path $scriptRoot "Components"
+        if (Test-Path $componentsPath) {
+            # Recherche de tous les fichiers .xaml dans les sous-dossiers de Components
+            $tabFiles = Get-ChildItem -Path $componentsPath -Filter "*.xaml" -Recurse | Sort-Object Name
             foreach ($tabFile in $tabFiles) {
                 try {
+                    Write-Verbose "[Builder] Chargement de l'onglet : $($tabFile.FullName)"
                     $rawTabXaml = Get-Content $tabFile.FullName -Raw -Encoding UTF8
                     # Remplacement localisation
                     if ($rawTabXaml -match "##loc:(.+?)##") {
