@@ -1,0 +1,725 @@
+# Scripts/SharePoint/SharePointBuilder/Functions/Logic/Register-DeployEvents.ps1
+
+<#
+.SYNOPSIS
+    Enregistre les événements liés au déploiement et à la gestion des configurations.
+
+.DESCRIPTION
+    Configure les actions pour les boutons "Déployer", "Sauvegarder", "Charger", "Supprimer" et "Réinitialiser".
+    Gère la logique d'exécution du Job de déploiement (avec barre de progression et logs),
+    la persistance des configurations dans la base de données, et la validation des actions.
+
+.PARAMETER Ctrl
+    La Hashtable des contrôles UI.
+
+.PARAMETER Window
+    La fenêtre WPF principale.
+#>
+function Register-DeployEvents {
+    param(
+        [hashtable]$Ctrl,
+        [System.Windows.Window]$Window
+    )
+
+    # Helper de log interne pour cette fonction
+    $Log = { param($msg, $lvl = "Info") Write-AppLog -Message $msg -Level $lvl -RichTextBox $Ctrl.LogBox }.GetNewClosure()
+
+    # --- ÉTAT DE VALIDATION ---
+    $ValidationState = @{ IsValid = $false }
+
+    $UpdateSaveState = {
+        $hasSite = ($null -ne $Ctrl.CbSites.SelectedItem -and $Ctrl.CbSites.SelectedItem -isnot [string])
+        $hasLib = ($null -ne $Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string] -and $Ctrl.CbLibs.SelectedItem -ne "Chargement...")
+        $hasTpl = ($null -ne $Ctrl.CbTemplates.SelectedItem)
+        
+        # Le bouton Sauvegarder nécessite que tout soit sélectionné ET validé
+        $Ctrl.BtnSaveConfig.IsEnabled = ($hasSite -and $hasLib -and $hasTpl -and $ValidationState.IsValid)
+    }.GetNewClosure()
+
+    # Invalidation : Si on change quoi que ce soit, on doit re-valider
+    $InvalidateState = {
+        $ValidationState.IsValid = $false
+        $Ctrl.BtnDeploy.IsEnabled = $false
+        
+        # Check des pré-requis pour activer le bouton Vérifier
+        $hasSite = ($null -ne $Ctrl.CbSites.SelectedItem -and $Ctrl.CbSites.SelectedItem -isnot [string])
+        $hasLib = ($null -ne $Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string] -and $Ctrl.CbLibs.SelectedItem -ne "Chargement...")
+        $hasTpl = ($null -ne $Ctrl.CbTemplates.SelectedItem)
+
+        if ($Ctrl.BtnValidate) {
+            $Ctrl.BtnValidate.IsEnabled = ($hasSite -and $hasLib -and $hasTpl)
+        }
+
+        & $UpdateSaveState # Met à jour BtnSaveConfig
+    }.GetNewClosure()
+
+    # --- Branchement Preview sur Métadonnées (NOUVEAU) ---
+    if ($Ctrl.ChkApplyMeta) {
+        $Ctrl.ChkApplyMeta.Add_Click($PreviewLogic)
+    }
+
+    # --- Initialisation de la CbSchemas ---
+    if ($Ctrl.CbFolderSchema) {
+        $schemas = Get-AppSPFolderSchema
+        if ($schemas) {
+            # Option "Aucun schéma" par défaut
+            $nullItem = New-Object System.Windows.Controls.ComboBoxItem
+            $nullItem.Content = "--- Aucun modèle avancé ---"
+            $nullItem.Tag = $null
+            $Ctrl.CbFolderSchema.Items.Add($nullItem) | Out-Null
+            $Ctrl.CbFolderSchema.SelectedIndex = 0
+            
+            foreach ($s in @($schemas)) {
+                $item = New-Object System.Windows.Controls.ComboBoxItem
+                $item.Content = $s.DisplayName
+                # On stocke l'objet complet dans le Tag
+                $item.Tag = $s
+                $item.ToolTip = $s.Description
+                $Ctrl.CbFolderSchema.Items.Add($item) | Out-Null
+            }
+        }
+    }
+
+    # --- LOGIQUE FILTRES EN CASCADE (Schéma -> Architecture -> Formulaire) ---
+    # Déportée dans Invoke-AppSPDeployFilter (Global v4.18)
+    $OnSchemaChanged = {
+        Invoke-AppSPDeployFilter -Ctrl $Ctrl -InvalidateState $InvalidateState
+    }.GetNewClosure()
+
+    if ($Ctrl.CbFolderSchema) {
+        $Ctrl.CbFolderSchema.Add_SelectionChanged($OnSchemaChanged)
+        # Déclenchement initial pour mettre à jour l'état (griser ChkCreateFolder si aucun schéma)
+        & $OnSchemaChanged
+    }
+
+    if ($Ctrl.CbFolderSchema) {
+        $Ctrl.CbFolderSchema.Add_SelectionChanged($OnSchemaChanged)
+        # Déclenchement initial pour mettre à jour l'état (griser ChkCreateFolder si aucun schéma)
+        & $OnSchemaChanged
+    }
+
+    # Initialisation : Désactivé par défaut
+    $Ctrl.BtnDeploy.IsEnabled = $false
+    $Ctrl.BtnSaveConfig.IsEnabled = $false
+    if ($Ctrl.BtnValidate) { $Ctrl.BtnValidate.IsEnabled = $false }
+
+    # On attache l'invalidation aux changements de sélection
+    if ($Ctrl.CbSites) { $Ctrl.CbSites.Add_SelectionChanged($InvalidateState) }
+    if ($Ctrl.CbLibs) { $Ctrl.CbLibs.Add_SelectionChanged($InvalidateState) }
+    if ($Ctrl.CbTemplates) { $Ctrl.CbTemplates.Add_SelectionChanged($InvalidateState) }
+    
+    # --- VALIDATION (DÉPORTÉE v4.18) ---
+    if ($Ctrl.BtnValidate) {
+        $Ctrl.BtnValidate.Add_Click({
+            Invoke-AppSPDeployValidate -Ctrl $Ctrl -Window $Window -ValidationState $ValidationState
+        }.GetNewClosure())
+    }
+
+    # --- EXÉCUTION DU DÉPLOIEMENT (DÉPORTÉ v4.18) ---
+    $Ctrl.BtnDeploy.Add_Click({
+        Invoke-AppSPDeployExecute -Ctrl $Ctrl -Window $Window
+    }.GetNewClosure())
+    
+    $Ctrl.BtnCopyUrl.Add_Click({
+            if ($this.Tag) { Set-Clipboard -Value $this.Tag; Write-AppLog -Message "URL copiée : $($this.Tag)" -Level Info -RichTextBox $Ctrl.LogBox }
+        }.GetNewClosure())
+
+    $Ctrl.BtnOpenUrl.Add_Click({
+            $copyBtn = $Window.FindName("CopyUrlButton")
+            if ($copyBtn -and $copyBtn.Tag) { Start-Process $copyBtn.Tag }
+        }.GetNewClosure())
+
+    # ==========================================================================
+    # BOUTON RESET
+    # ==========================================================================
+    if ($Ctrl.BtnReset) {
+        $Ctrl.BtnReset.Add_Click({
+                # 1. Libérer la cible (Site & Lib)
+                $Ctrl.CbSites.SelectedIndex = -1
+                $Ctrl.CbLibs.SelectedIndex = -1
+                $Ctrl.CbLibs.ItemsSource = @()
+                $Ctrl.CbLibs.IsEnabled = $false
+
+                # 2. Libérer le modèle
+                $Ctrl.CbTemplates.SelectedIndex = -1
+
+                # 3. Décocher création dossier & Reset Règle & Schema
+                if ($Ctrl.CbFolderSchema) { $Ctrl.CbFolderSchema.SelectedIndex = 0 }
+                $Ctrl.ChkCreateFolder.IsChecked = $false
+                # On remet la sélection par défaut pour la règle si possible, ou rien
+                if ($Ctrl.CbFolderTemplates -and $Ctrl.CbFolderTemplates.Items.Count -gt 0) {
+                    $Ctrl.CbFolderTemplates.SelectedIndex = -1 
+                }
+                # Vider le formulaire généré
+                if ($Ctrl.PanelForm) { $Ctrl.PanelForm.Children.Clear() }
+
+                # 4. Décocher Overwrite
+                $Ctrl.ChkOverwrite.IsChecked = $false
+
+                # 5. Deselection Config si active
+                if ($Ctrl.CbDeployConfigs) { $Ctrl.CbDeployConfigs.SelectedIndex = -1 }
+                
+                # 6. Vider le TreeView (Preview) et la Description
+                if ($Ctrl.TreeView) { $Ctrl.TreeView.Items.Clear() }
+                
+                # 7. Vider l'Explorer TreeView (Etape 1) et Reset Selection
+                $safeExpTv = $Window.FindName("TargetExplorerTreeView")
+                if ($safeExpTv) { 
+                    $safeExpTv.Items.Clear() 
+                    # Restaurer le placeholder
+                    $ph = New-Object System.Windows.Controls.TreeViewItem
+                    $ph.Header = "Veuillez sélectionner une bibliothèque..."
+                    $ph.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "TextDisabledBrush")
+                    $ph.FontStyle = 'Italic'
+                    $ph.IsEnabled = $false
+                    $ph.SetResourceReference([System.Windows.Controls.TreeViewItem]::StyleProperty, "ModernTreeViewItemStyle")
+                    $safeExpTv.Items.Add($ph)
+                }
+                $Global:SelectedTargetFolder = $null
+                $st = $Window.FindName("TargetFolderStatusText")
+                if ($st) { $st.Text = "" }
+
+                if ($Ctrl.TxtDesc) { $Ctrl.TxtDesc.Text = "" }
+                if ($Ctrl.TxtPreview) { $Ctrl.TxtPreview.Text = "Aperçu du nom..." }
+                
+                # Feedback
+                & $Log "Interface réinitialisée." "Info"
+                
+                # Validation update (via event propagation or explicit call)
+                # Les changements de sélection déclenchent déjà les events, mais on force un rafraichissement UI si besoin
+                [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+
+            }.GetNewClosure())
+    }
+
+    # ==========================================================================
+    # GESTION DES CONFIGURATIONS
+    # ==========================================================================
+        
+
+    # ==========================================================================
+    # LOGIQUE DISCRÈTE D'AUTO-EXPANSION (RESTAURATION ARBRE)
+    # ==========================================================================
+    $AutoExpandState = [PSCustomObject]@{
+        Timer       = $null
+        TargetUrl   = ""
+        CurrentItem = $null # Null = Racine du TreeView
+    }
+
+    $AutoExpandLogic = {
+        # Sécurité : Si l'interface est fermée ou vide
+        $tv = $Window.FindName("TargetExplorerTreeView")
+        if (-not $tv) { 
+            if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+            return 
+        }
+
+        # Déterminer la collection à scanner
+        $itemsToCheck = if ($AutoExpandState.CurrentItem) { $AutoExpandState.CurrentItem.Items } else { $tv.Items }
+
+        # 1. Vérifier si vide ou chargement
+        if ($itemsToCheck.Count -eq 0) { return } # Attendre
+        
+        $firstChild = $itemsToCheck[0]
+        $isDummy = ($firstChild.Tag -eq "DUMMY_TAG" -or $firstChild.Header -eq "Chargement...")
+        
+        if ($isDummy) { return } # Attendre fin du chargement
+
+        # 2. Chercher la correspondance
+        $foundNext = $false
+        $target = $AutoExpandState.TargetUrl
+
+        foreach ($item in $itemsToCheck) {
+            $data = $item.Tag
+            if ($data -and $data.ServerRelativeUrl) {
+                $url = $data.ServerRelativeUrl
+                
+                # A. C'est la cible exacte !
+                if ($url -eq $target) {
+                    $item.IsSelected = $true
+                    $item.BringIntoView()
+                    $item.Focus()
+                    if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+                    # & $Log "Arborescence restaurée." "Success"
+                    return
+                }
+
+                # B. C'est un parent du chemin cible
+                # On ajoute '/' pour éviter les faux amis (ex: /Site/Gen vs /Site/General)
+                if ($target.StartsWith("$url/")) {
+                    $item.IsExpanded = $true # Déclenche le Lazy Load
+                    $AutoExpandState.CurrentItem = $item # On descend d'un niveau
+                    $foundNext = $true
+                    break # On sort du foreach, on attendra le chargement au prochain tick
+                }
+            }
+        }
+
+        # 3. Si on avait commencé à chercher (CurrentItem n'est pas null) mais qu'on ne trouve rien...
+        # C'est que le chemin n'existe plus. On arrête.
+        if (-not $foundNext -and $AutoExpandState.CurrentItem) {
+            if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+            # & $Log "Impossible de restaurer tout le chemin." "Warning"
+        }
+    }.GetNewClosure()
+
+    $StartAutoExpand = {
+        param($Url)
+        if ([string]::IsNullOrWhiteSpace($Url)) { return }
+
+        # Stop existant
+        if ($AutoExpandState.Timer) { $AutoExpandState.Timer.Stop() }
+
+        # Init
+        $AutoExpandState.TargetUrl = $Url
+        $AutoExpandState.CurrentItem = $null
+
+        # Timer
+        $AutoExpandState.Timer = New-Object System.Windows.Threading.DispatcherTimer
+        $AutoExpandState.Timer.Interval = [TimeSpan]::FromMilliseconds(500)
+        $AutoExpandState.Timer.Add_Tick($AutoExpandLogic)
+        $AutoExpandState.Timer.Start()
+    }.GetNewClosure()
+
+
+    # 1. Helper : Charger la liste des configs
+    $LoadDeployConfigs = {
+        try {
+            & $Log "Chargement des configurations..." "Info"
+            $configs = @(Get-AppDeployConfigs)
+            
+            # Force refresh by nulling first
+            $Ctrl.CbDeployConfigs.ItemsSource = $null
+            $Ctrl.CbDeployConfigs.ItemsSource = $configs
+            $Ctrl.CbDeployConfigs.DisplayMemberPath = "ConfigName"
+
+            if ($configs.Count -gt 0) { & $Log "$($configs.Count) configurations disponibles." "Info" }
+        }
+        catch {
+            & $Log "Erreur chargement configurations : $($_.Exception.Message)" "Error"
+        }
+    }.GetNewClosure()
+
+    # Appel initial différé (Au chargement du contrôle)
+    # Cela garantit que le contrôle est prêt et que le contexte est stable
+    $Ctrl.CbDeployConfigs.Add_Loaded({
+            & $LoadDeployConfigs
+        }.GetNewClosure())
+
+
+
+
+    # --- SAVE CONFIGURATION ---
+    if ($Ctrl.BtnSaveConfig) {
+        $Ctrl.BtnSaveConfig.Add_Click({
+                # A. VALIDATION STRICTE
+                if (-not $Ctrl.BtnSaveConfig.IsEnabled) { return }
+            
+                # B. RECUP DONNEES
+                $siteUrl = $Ctrl.CbSites.SelectedItem.Url
+                $libName = $Ctrl.CbLibs.SelectedItem.Title
+                $tplId = $Ctrl.CbTemplates.SelectedItem.TemplateId
+                $overwrite = $Ctrl.ChkOverwrite.IsChecked
+            
+                $targetFolder = ""
+                if ($Ctrl.ChkCreateFolder.IsChecked) {
+                    if ($Ctrl.CbFolderTemplates.SelectedItem) {
+                        $targetFolder = $Ctrl.CbFolderTemplates.SelectedItem.RuleId
+                    }
+                    else {
+                        [System.Windows.MessageBox]::Show("Aucune règle de nommage sélectionnée.", "Erreur", "OK", "Warning"); return
+                    }
+                }
+
+                # C. NOM & SECURITE (Nouveau Dialogue XAML)
+                $dialogPath = Join-Path $Global:ProjectRoot "Templates\Dialogs\SaveConfigDialog.xaml"
+                
+                # Chargement sécurisé avec Localisation
+                try {
+                    $rawXaml = Get-Content $dialogPath -Raw -Encoding UTF8
+                    
+                    # 1. Remplacement des tokens de localisation
+                    if ($rawXaml -match "##loc:(.+?)##") {
+                        $rawXaml = [System.Text.RegularExpressions.Regex]::Replace($rawXaml, "##loc:(.+?)##", {
+                                param($m) 
+                                $k = $m.Groups[1].Value
+                                # Utilisation commande locale ou fallback
+                                if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
+                                    return (Get-AppLocalizedString -Key $k)
+                                }
+                                return $k
+                            })
+                    }
+
+                    [xml]$xamlContent = $rawXaml
+                    $xamlReader = New-Object System.Xml.XmlNodeReader $xamlContent
+                    $dialogWin = [System.Windows.Markup.XamlReader]::Load($xamlReader)
+
+                    # INJECTION DES STYLES GLOBAUX (Couleurs, Boutons, Typography...)
+                    # Cela permet d'utiliser {DynamicResource PrimaryButtonStyle} dans le dialogue isolé
+                    if (Get-Command "Initialize-AppUIComponents" -ErrorAction SilentlyContinue) {
+                        Initialize-AppUIComponents -Window $dialogWin -ProjectRoot $Global:ProjectRoot -Components 'Buttons', 'Inputs', 'Layouts', 'Display', 'Typography', 'Colors'
+                    }
+                }
+                catch {
+                    [System.Windows.MessageBox]::Show((Get-AppLocalizedString -Key "sp_builder.err_save_dialog_load") + "`n$($_.Exception.Message)", (Get-AppLocalizedString -Key "sp_builder.title_error"), "OK", "Error")
+                    return
+                }
+
+                # Références contrôles
+                $tName = $dialogWin.FindName("ConfigNameBox")
+                $container = $dialogWin.FindName("GroupsContainer")
+                $bSave = $dialogWin.FindName("BtnSave")
+                
+                # Config par défaut
+                $defaultName = "Deploy-$($Ctrl.CbSites.SelectedItem.SiteName)-$libName"
+                
+                # Si on est en train d'éditer une config existante (déjà sélectionnée), on pré-remplit
+                if ($Ctrl.CbDeployConfigs.SelectedItem) {
+                    $defaultName = $Ctrl.CbDeployConfigs.SelectedItem.ConfigName
+                }
+                $tName.Text = $defaultName
+
+                # --- CHARGEMENT DYNAMIQUE DES GROUPES ---
+                # On récupère les groupes connus en BDD
+                $knownGroups = @(Get-AppKnownGroups)
+                
+                # Si aucun groupe en base, on en met par défaut pour ne pas avoir une UI vide
+                if ($knownGroups.Count -eq 0) {
+                    $knownGroups = @(
+                        [PSCustomObject]@{ GroupName = "M365_APPS_SCRIPTS_ADMIN" },
+                        [PSCustomObject]@{ GroupName = "M365_APPS_SCRIPTS_DP" },
+                        [PSCustomObject]@{ GroupName = "M365_APPS_SCRIPTS_USER" }
+                    )
+                }
+
+                # On garde une référence aux CheckBoxes générées
+                $checkBoxes = @()
+
+                foreach ($grp in $knownGroups) {
+                    # Structure : Border > Grid > (Column 0: CheckBox, Column 1: StackPanel(Texts))
+                    
+                    # 1. BORDER CONTAINER
+                    $border = New-Object System.Windows.Controls.Border
+                    $border.BorderThickness = [System.Windows.Thickness]::new(1)
+                    $border.CornerRadius = [System.Windows.CornerRadius]::new(6)
+                    $border.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
+                    $border.Padding = [System.Windows.Thickness]::new(10)
+                    
+                    # Styles - Fallback manuel si ressource introuvable
+                    if ($dialogWin.Resources.Contains("BackgroundLightBrush")) {
+                        $border.Background = $dialogWin.Resources["BackgroundLightBrush"]
+                    }
+                    else {
+                        $border.Background = [System.Windows.Media.Brushes]::GhostWhite
+                    }
+                    if ($dialogWin.Resources.Contains("BorderLightBrush")) {
+                        $border.BorderBrush = $dialogWin.Resources["BorderLightBrush"]
+                    }
+                    else {
+                        $border.BorderBrush = [System.Windows.Media.Brushes]::LightGray
+                    }
+
+                    # 2. GRID layout
+                    $grid = New-Object System.Windows.Controls.Grid
+                    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::Auto })) # CheckBox
+                    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) })) # Texte
+
+                    # 3. CHECKBOX (Toggle Switch)
+                    $chk = New-Object System.Windows.Controls.CheckBox
+                    $chk.Tag = $grp.GroupName  # Stockage de la donnée ici
+                    # $chk.Content = $grp.GroupName # Optionnel si le style ne l'affiche pas
+                    $chk.IsChecked = $true 
+                    $chk.Margin = [System.Windows.Thickness]::new(0, 0, 15, 0)
+                    $chk.VerticalAlignment = "Center"
+                    
+                    # Application du Style Global (Switch)
+                    if ($dialogWin.Resources.Contains("ToggleSwitchStyle")) {
+                        $chk.Style = $dialogWin.Resources["ToggleSwitchStyle"]
+                    }
+
+                    [System.Windows.Controls.Grid]::SetColumn($chk, 0)
+                    $grid.Children.Add($chk)
+
+                    # 4. TEXTES (Layout type Launcher)
+                    $stackText = New-Object System.Windows.Controls.StackPanel
+                    $stackText.VerticalAlignment = "Center"
+                    [System.Windows.Controls.Grid]::SetColumn($stackText, 1)
+
+                    # Titre (Nom du groupe)
+                    $txtName = New-Object System.Windows.Controls.TextBlock
+                    $txtName.Text = $grp.GroupName
+                    $txtName.FontWeight = "SemiBold"
+                    $txtName.FontSize = 12
+                    if ($dialogWin.Resources.Contains("TextPrimaryBrush")) { $txtName.Foreground = $dialogWin.Resources["TextPrimaryBrush"] }
+
+                    # Sous-titre
+                    $txtSub = New-Object System.Windows.Controls.TextBlock
+                    $txtSub.Text = "Groupe Azure AD" 
+                    $txtSub.FontSize = 10
+                    if ($dialogWin.Resources.Contains("TextSecondaryBrush")) { $txtSub.Foreground = $dialogWin.Resources["TextSecondaryBrush"] }
+
+                    $stackText.Children.Add($txtName)
+                    $stackText.Children.Add($txtSub)
+                    $grid.Children.Add($stackText)
+
+                    # Assemblage
+                    $border.Child = $grid
+                    $container.Children.Add($border)
+                    
+                    # Ajout à la liste pour récupération ultérieure
+                    $checkBoxes += $chk
+                }
+
+                # --- LOGIQUE DIALOGUE ---
+                $dialogWin.Owner = $Window
+                $dialogWin.SizeToContent = "Height" # Auto-adjust height
+                
+                # Event Save
+                $bSave.Add_Click({
+                        $finalName = $tName.Text
+
+                        # 1. Validation Nom
+                        if ([string]::IsNullOrWhiteSpace($finalName)) {
+                            [System.Windows.MessageBox]::Show((Get-AppLocalizedString -Key "sp_builder.validation_name_mandatory"), (Get-AppLocalizedString -Key "sp_builder.title_error"), "OK", "Warning")
+                            return
+                        }
+
+                        # 2. Check Overwrite (Sauf si c'est le même nom qu'avant pour une update)
+                        if (Get-Command "Test-AppDeployConfigExists" -ErrorAction SilentlyContinue) {
+                            if (Test-AppDeployConfigExists -ConfigName $finalName) {
+                                # Si c'est le même nom que la config courante, on suppose que c'est une MAJ normale sans warning
+                                $isSame = ($Ctrl.CbDeployConfigs.SelectedItem -and $Ctrl.CbDeployConfigs.SelectedItem.ConfigName -eq $finalName)
+                                
+                                if (-not $isSame) {
+                                    $msg = (Get-AppLocalizedString -Key "sp_builder.dialog_config_exists") -f $finalName
+                                    $res = [System.Windows.MessageBox]::Show($msg, (Get-AppLocalizedString -Key "sp_builder.title_confirmation"), "YesNo", "Warning")
+                                    if ($res -ne "Yes") { return }
+                                }
+                            }
+                        }
+
+                        $dialogWin.DialogResult = $true
+                        $dialogWin.Close()
+                    })
+
+                # Affichage Modal
+                if ($dialogWin.ShowDialog() -eq $true) {
+                    $confName = $tName.Text
+
+                    # Récupération DYNAMIQUE des Rôles cochés
+                    $roles = @()
+                    foreach ($c in $checkBoxes) {
+                        if ($c.IsChecked) { $roles += $c.Tag } # Utilisation du Tag au lieu du Content
+                    }
+                    $rolesString = $roles -join ","
+
+                    try {
+                        # Capture du dossier cible sélectionné (Step 1)
+                        $selPath = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { "" }
+                        
+                        # Capture Options v3.2
+                        $opts = @{
+                            ApplyMetadata = $Ctrl.ChkApplyMeta.IsChecked
+                        }
+                        $optsJson = $opts | ConvertTo-Json -Compress
+
+                        Set-AppDeployConfig -ConfigName $confName `
+                            -SiteUrl $siteUrl `
+                            -LibraryName $libName `
+                            -TargetFolder $targetFolder `
+                            -OverwritePermissions $overwrite `
+                            -TemplateId $tplId `
+                            -TargetFolderPath $selPath `
+                            -AuthorizedRoles $rolesString `
+                            -Options $optsJson
+                        
+                        # Refresh UI
+                        & $LoadDeployConfigs
+                        $msg = (Get-AppLocalizedString -Key "sp_builder.msg_config_saved") -f $confName
+                        [System.Windows.MessageBox]::Show($msg, (Get-AppLocalizedString -Key "sp_builder.title_success"), "OK", "Information")
+                    }
+                    catch {
+                        $msg = (Get-AppLocalizedString -Key "sp_builder.err_save_config") -f $_.Exception.Message
+                        [System.Windows.MessageBox]::Show($msg, (Get-AppLocalizedString -Key "sp_builder.title_error"), "OK", "Error")
+                    }
+                }
+                # Si Cancel, on ne fait rien.
+                return
+            }.GetNewClosure())
+    }
+    
+    # Gestion Etat Boutons (Load / Delete)
+    if ($Ctrl.CbDeployConfigs) {
+        $Ctrl.CbDeployConfigs.Add_SelectionChanged({
+                $curr = $Ctrl.CbDeployConfigs.SelectedItem
+                $hasSel = ($null -ne $curr)
+                
+                # Vérification de l'état des sites (Loaded & Valid)
+                $areSitesReady = ($Ctrl.CbSites.Items.Count -gt 0 -and ($Ctrl.CbSites.Items[0] -isnot [string]))
+
+                # Bouton Charger actif SI config sélectionnée ET sites prêts
+                $Ctrl.BtnLoadConfig.IsEnabled = ($hasSel -and $areSitesReady)
+            
+                # Bouton Supprimer actif UNIQUEMENT si sélectionné
+                $Ctrl.BtnDeleteConfig.IsEnabled = $hasSel
+            }.GetNewClosure())
+    }
+
+    # 2. CHARGER UNE CONFIGURATION
+    if ($Ctrl.BtnLoadConfig) {
+        $Ctrl.BtnLoadConfig.Add_Click({
+                $cfg = $Ctrl.CbDeployConfigs.SelectedItem
+                if (-not $cfg) { return }
+
+                # Vérification : Sites sont-ils chargés ?
+                if ($Ctrl.CbSites.Items.Count -eq 0) {
+                    [System.Windows.MessageBox]::Show("Veuillez attendre le chargement complet des sites SharePoint.", "Attente", "OK", "Warning")
+                    return
+                }
+
+                try {
+                    & $Log "Chargement configuration '$($cfg.ConfigName)'..." "Info"
+
+                    # A. Site
+                    $site = $Ctrl.CbSites.Items | Where-Object { $_.Url -eq $cfg.SiteUrl } | Select-Object -First 1
+                    if ($site) { 
+                        $Ctrl.CbSites.SelectedItem = $site 
+                        # FORCE UI REFRESH
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+                        Start-Sleep -Milliseconds 200
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+                    }
+                    else {
+                        & $Log "Site introuvable : $($cfg.SiteUrl)" "Warning"
+                    }
+
+                    # B. Bibliothèque (WAIT LOOP)
+                    # On attend que la Combo Libs soit active ET contienne autre chose que "Chargement..."
+                    # Le Handler SITES met "Chargement..." et IsEnabled=False
+                    $maxRetries = 50 # 5 secondes
+                    
+                    # Logique d'attente :
+                    # Tant que (EstDésactivé) OU (Vide) OU (Contient "Chargement...")
+                    while ($maxRetries -gt 0) {
+                        $isLoadingItem = ($Ctrl.CbLibs.Items.Count -eq 1 -and $Ctrl.CbLibs.Items[0] -eq "Chargement...")
+                        $isEmpty = ($Ctrl.CbLibs.Items.Count -eq 0)
+                        $isDisabled = (-not $Ctrl.CbLibs.IsEnabled) 
+
+                        if (-not $isDisabled -and -not $isLoadingItem -and -not $isEmpty) {
+                            break 
+                        }
+
+                        Start-Sleep -Milliseconds 100
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+                        $maxRetries--
+                    }
+
+                    $lib = $Ctrl.CbLibs.Items | Where-Object { $_.Title -eq $cfg.LibraryName } | Select-Object -First 1
+                    if ($lib) { $Ctrl.CbLibs.SelectedItem = $lib }
+                    else { & $Log "Bibliothèque introuvable ou non chargée : $($cfg.LibraryName)" "Warning" }
+
+                    # C. Permissions
+                    $Ctrl.ChkOverwrite.IsChecked = ($cfg.OverwritePermissions -eq 1)
+
+                    # D. Modèle
+                    $tpl = $Ctrl.CbTemplates.Items | Where-Object { $_.TemplateId -eq $cfg.TemplateId } | Select-Object -First 1
+                    if ($tpl) { $Ctrl.CbTemplates.SelectedItem = $tpl }
+
+                    # E. Dossier Cible / Règle
+                    if (-not [string]::IsNullOrWhiteSpace($cfg.TargetFolder)) {
+                        $Ctrl.ChkCreateFolder.IsChecked = $true
+                        $rule = $Ctrl.CbFolderTemplates.Items | Where-Object { $_.RuleId -eq $cfg.TargetFolder } | Select-Object -First 1
+                        if ($rule) { $Ctrl.CbFolderTemplates.SelectedItem = $rule }
+                    }
+                    else {
+                        $Ctrl.ChkCreateFolder.IsChecked = $false
+                    }
+
+                    # F. Restauration Dossier Cible (Step 1)
+                    # On vérifie la propriété dynamiquement au cas où la colonne manque (vieux cache ?)
+                    if ($cfg.PSObject.Properties['TargetFolderPath'] -and -not [string]::IsNullOrWhiteSpace($cfg.TargetFolderPath)) {
+                        $path = $cfg.TargetFolderPath
+                        # On simule l'objet dossier pour le déploiement
+                        $Global:SelectedTargetFolder = [PSCustomObject]@{ ServerRelativeUrl = $path }
+                         
+                        # Mise à jour visuelle (Status Text seulement, car TreeView est async)
+                        $st = $Window.FindName("TargetFolderStatusText")
+                        if ($st) { $st.Text = $path }
+                         
+                        & $Log "Cible restaurée : $path" "Info"
+
+                        # Lancement Autopilot Visuel
+                        if ($StartAutoExpand) { & $StartAutoExpand $path }
+                    }
+                    else {
+                        if ($st) { $st.Text = "" }
+                    }
+
+                    # G. Options (v3.2)
+                    if ($cfg.PSObject.Properties['Options'] -and -not [string]::IsNullOrWhiteSpace($cfg.Options)) {
+                        try {
+                            $opts = $cfg.Options | ConvertFrom-Json
+                            if ($opts.ApplyMetadata) {
+                                $Ctrl.ChkApplyMeta.IsChecked = $true
+                            }
+                            else {
+                                $Ctrl.ChkApplyMeta.IsChecked = $false
+                            }
+                        }
+                        catch {
+                            & $Log "Erreur chargement options : $_" "Warning"
+                        }
+                    }
+                    else {
+                        # Default
+                        $Ctrl.ChkApplyMeta.IsChecked = $false
+                    }
+
+                    & $Log "Configuration chargée." "Success"
+                }
+                catch {
+                    [System.Windows.MessageBox]::Show("Erreur chargement : $($_.Exception.Message)", "Erreur", "OK", "Error")
+                }
+            }.GetNewClosure())
+    }
+
+    # 3. SUPPRIMER UNE CONFIGURATION
+    if ($Ctrl.BtnDeleteConfig) {
+        $Ctrl.BtnDeleteConfig.Add_Click({
+                $cfg = $Ctrl.CbDeployConfigs.SelectedItem
+                if (-not $cfg) { return }
+
+                $msgConfirm = (Get-AppLocalizedString -Key "sp_builder.msg_confirm_delete_config") -f $cfg.ConfigName
+                if ([System.Windows.MessageBox]::Show($msgConfirm, (Get-AppLocalizedString -Key "sp_builder.title_confirmation"), "YesNo", "Warning") -eq 'Yes') {
+                    try {
+                        Remove-AppDeployConfig -ConfigName $cfg.ConfigName
+                    
+                        # Log
+                        $msgDel = (Get-AppLocalizedString -Key "sp_builder.msg_config_deleted") -f $cfg.ConfigName
+                        & $Log $msgDel "Info"
+                    
+                        # Reset UI partiel
+                        $Ctrl.CbDeployConfigs.SelectedItem = $null
+
+                        # Force UI update (fix for refresh issue)
+                        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{}, [System.Windows.Threading.DispatcherPriority]::Background)
+                    
+                        & $LoadDeployConfigs
+                    
+                        # Reset Interface global
+                        $Ctrl.CbSites.SelectedIndex = -1
+                        $Ctrl.CbLibs.SelectedIndex = -1
+                        $Ctrl.CbTemplates.SelectedIndex = -1
+                        $Ctrl.ChkOverwrite.IsChecked = $false
+                        $Ctrl.ChkCreateFolder.IsChecked = $false
+
+                        [System.Windows.MessageBox]::Show("Configuration supprimée.", "Succès", "OK", "Information")
+                    }
+                    catch {
+                        [System.Windows.MessageBox]::Show("Erreur suppression : $($_.Exception.Message)", "Erreur", "OK", "Error")
+                    }
+                }
+            }.GetNewClosure())
+    }
+}

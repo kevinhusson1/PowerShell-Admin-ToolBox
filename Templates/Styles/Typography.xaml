@@ -51,4 +51,26 @@
         </Style.Triggers>
     </Style>
 
+    <!-- TEXTE POPUPS & DIALOGUES (PHASE 3) -->
+    <Style TargetType="TextBlock" x:Key="DialogTitleStyle">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#29B6F6"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,0,15"/>
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="DialogSubtitleStyle">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#666666"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Margin" Value="0,0,0,20"/>
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="DialogLabelStyle">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#29B6F6"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+
 </ResourceDictionary>

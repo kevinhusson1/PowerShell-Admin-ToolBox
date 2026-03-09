@@ -37,6 +37,7 @@
         'Set-AppSPMetadata',
         'Set-AppSPPermission',
         'Test-AppSPDrift',
-        'Test-AppSPModel'
+        'Test-AppSPModel',
+        'New-AppGraphSPStructure'
     )
 }

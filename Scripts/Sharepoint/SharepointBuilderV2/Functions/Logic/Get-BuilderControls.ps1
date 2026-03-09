@@ -1,0 +1,291 @@
+# Scripts/SharePoint/SharePointBuilder/Functions/Logic/Get-BuilderControls.ps1
+
+<#
+.SYNOPSIS
+    Récupère et indexe tous les contrôles WPF de l'interface SharePoint Builder.
+
+.DESCRIPTION
+    Parcourt l'arbre visuel de la fenêtre pour trouver et stocker les références aux contrôles clés
+    (ComboBox, Boutons, Panels) dans une Hashtable pour un accès facile dans tout le script.
+    Utilise une recherche récursive robuste pour gérer les NameScopes complexes.
+
+.PARAMETER Window
+    L'objet Window WPF parent à analyser.
+
+.OUTPUTS
+    [Hashtable] Une map conteneur/contrôle nommée $Ctrl.
+#>
+function Get-BuilderControls {
+    param([System.Windows.Window]$Window)
+
+    # Helper for deep search (Robustness against NameScope)
+    function Find-ControlByName {
+        param($Parent, $Name)
+        if (-not $Parent) { return $null }
+        if ($Parent.Name -eq $Name) { return $Parent }
+        
+        $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($Parent)
+        for ($i = 0; $i -lt $count; $i++) {
+            $child = [System.Windows.Media.VisualTreeHelper]::GetChild($Parent, $i)
+            # Check visual child
+            if ($child -is [System.Windows.FrameworkElement] -and $child.Name -eq $Name) { return $child }
+            
+            # Recursive
+            $res = Find-ControlByName -Parent $child -Name $Name
+            if ($res) { return $res }
+        }
+        return $null
+    }
+
+    $Find = { param($n) 
+        $o = $Window.FindName($n)
+        if (-not $o) { 
+            $res = [System.Windows.LogicalTreeHelper]::FindLogicalNode($Window, $n)
+            if ($res -is [array]) { $o = $res[0] } else { $o = $res }
+        }
+        if (-not $o) { 
+            $res = Find-ControlByName -Parent $Window -Name $n
+            if ($res -is [array]) { $o = $res[0] } else { $o = $res }
+        }
+        return $o
+    }
+
+    $Ctrl = @{
+        # --- INPUTS ---
+        CbSites                    = & $Find ("SiteComboBox")
+        SiteLoadingBar             = & $Find ("SiteLoadingBar")
+        CbLibs                     = & $Find ("LibraryComboBox")
+        LibLoadingBar              = & $Find ("LibLoadingBar")
+        ExplorerLoadingOverlay     = & $Find ("ExplorerLoadingOverlay")
+        CbTemplates                = & $Find ("TemplateComboBox")
+        
+        # --- CONFIG DOSSIER ---
+        ChkCreateFolder            = & $Find ("CreateFolderCheckBox")
+        CbFolderTemplates          = & $Find ("FolderTemplateComboBox")
+        CbFolderSchema             = & $Find ("FolderSchemaComboBox")
+        ChkApplyMeta               = & $Find ("DeployApplyMetaChk")
+        
+        # --- FORMULAIRE ---
+        TxtDesc                    = & $Find ("TemplateDescText")
+        FormScrollViewer           = & $Find ("DynamicFormScrollViewer")
+        PanelForm                  = & $Find ("DynamicFormPanel")
+        
+        # --- PREVIEW DESTINATION ---
+        TxtPreview                 = & $Find ("FolderNamePreviewText")
+        PreviewContainer           = & $Find ("FolderNamePreviewContainer")
+        MetaPreviewContainer       = & $Find ("FolderMetaPreviewContainer")
+        MetaPreviewText            = & $Find ("FolderNameMetaPreview")
+        
+        # --- OPTIONS AVANCÉES ---
+        ChkOverwrite               = & $Find ("OverwritePermissionsCheckBox")
+        BtnValidate                = & $Find ("ValidateModelButton")
+        BtnReset                   = & $Find ("ResetUIButton")
+        BtnSaveConfig              = & $Find ("SaveConfigButton")
+        CbDeployConfigs            = & $Find ("DeployConfigComboBox")
+        BtnLoadConfig              = & $Find ("LoadConfigButton")
+        BtnDeleteConfig            = & $Find ("DeleteConfigButton")
+
+        # --- ACTIONS ---
+        BtnDeploy                  = & $Find ("DeployButton")
+        
+        # --- POST DÉPLOIEMENT ---
+        PanelActions               = & $Find ("PostDeployActionsPanel")
+        BtnCopyUrl                 = & $Find ("CopyUrlButton")
+        BtnOpenUrl                 = & $Find ("OpenUrlButton")
+
+        # --- OUTPUTS ---
+        LogBox                     = & $Find ("LogRichTextBox")
+        ProgressBar                = & $Find ("MainProgressBar")
+        TxtStatus                  = & $Find ("ProgressStatusText")
+        TargetTree                 = & $Find ("TargetExplorerTreeView")
+        TreeView                   = & $Find ("PreviewTreeView")
+        CbLogLevel                 = & $Find ("LogLevelComboBox")
+
+        # --- EDITEUR (Toolbar) ---
+        EdLoadCb                   = & $Find ("EditorLoadComboBox")
+        EdBtnLoad                  = & $Find ("EditorLoadButton")
+        EdBtnNew                   = & $Find ("EditorNewButton")
+        EdBtnSave                  = & $Find ("EditorSaveButton")
+        EdBtnDeleteTpl             = & $Find ("EditorDeleteTemplateButton")
+
+        # --- EDITEUR (V3 - LIAISONS) ---
+        EdTargetSchemaDisplay      = & $Find ("EditorTargetSchemaDisplay")
+        EdTargetFormDisplay        = & $Find ("EditorTargetFormDisplay")
+        EdWorkspaceLockOverlay     = & $Find ("EditorWorkspaceLockOverlay")
+        EdNewPopupOverlay          = & $Find ("EditorNewPopupOverlay")
+        EdNewPopupSchemaCb         = & $Find ("EditorNewPopupSchemaCb")
+        EdNewPopupFormCb           = & $Find ("EditorNewPopupFormCb")
+        EdNewPopupCancelBtn        = & $Find ("EditorNewPopupCancelBtn")
+        EdNewPopupConfirmBtn       = & $Find ("EditorNewPopupConfirmBtn")
+
+        # --- EDITEUR (Tree) ---
+        EdTree                     = & $Find ("EditorTreeView")
+        EdBtnRoot                  = & $Find ("EditorAddRootButton")
+        EdBtnRootLink              = & $Find ("EditorAddRootLinkButton")
+        EdBtnChild                 = & $Find ("EditorAddChildButton")
+        EdBtnChildLink             = & $Find ("EditorAddChildLinkButton")
+        EdBtnChildInternalLink     = & $Find ("EditorAddChildInternalLinkButton")
+        EdBtnAddPub                = & $Find ("EditorAddPubButton")
+        EdBtnDel                   = & $Find ("EditorDeleteButton")
+        
+        # --- ICONS ---
+        IconAddRoot                = & $Find ("IconAddRoot")
+        IconAddRootLink            = & $Find ("IconAddRootLink")
+        IconAddChild               = & $Find ("IconAddChild")
+        IconAddChildLink           = & $Find ("IconAddChildLink")
+        IconAddInternalLink        = & $Find ("IconAddInternalLink")
+        IconAddPub                 = & $Find ("IconAddPub")
+        IconDelete                 = & $Find ("IconDelete")
+        
+        # --- NEW TOOLBAR ICONS ---
+        IconAddPerm                = & $Find ("IconAddPerm")
+        IconAddTag                 = & $Find ("IconAddTag")
+        IconAddDynamicTag          = & $Find ("IconAddDynamicTag")
+        EdBtnAddFile               = & $Find ("EditorAddFileButton")
+        IconAddFile                = & $Find ("IconAddFile")
+
+        # --- EDITEUR (Props) ---
+        # --- EDITEUR (Props Panels) ---
+        # USE ROBUST FIND
+        EdPropPanel                = & $Find "EdPanelFolder"
+        EdPanelFile                = & $Find "EdPanelFile"
+        EdPropPanelPerm            = & $Find "EdPanelPerm"
+        EdPropPanelTag             = & $Find "EdPanelTag"
+        EdPropPanelLink            = & $Find "EdPanelLink"
+        EdPropPanelInternalLink    = & $Find "EdPanelInternalLink"
+        EdPropPanelPub             = & $Find "EdPanelPub"
+        EdPanelGlobalTags          = & $Find "EdPanelGlobalTags"
+        EdPropPanelDynamicTag      = & $Find "EdPropPanelDynamicTag"
+
+        EdNoSelPanel               = & $Find "EdPanelNoSel"
+        
+        # Folder Inputs
+        EdNameBox                  = & $Find ("EditorFolderNameTextBox")
+        EdFolderIdBox              = & $Find ("EdFolderIdBox")
+        EdFolderRelativePathBox    = & $Find ("EdFolderRelativePathBox")
+        EdPermissionsListBox       = & $Find ("EditorPermissionsListBox")
+        EdBtnAddPerm               = & $Find ("EditorAddPermButton")
+        
+        # Permission Inputs
+        EdPermIdentityBox          = & $Find ("EdPermIdentityBox")
+        EdPermLevelBox             = & $Find ("EdPermLevelBox")
+        EdPermParentIdBox          = & $Find ("EdPermParentIdBox")
+        EdPermDeleteButton         = & $Find ("EdPermDeleteButton")
+
+        # Tag Inputs
+        EdTagColumnBox             = & $Find ("EdTagColumnBox")
+        EdTagValueBox              = & $Find ("EdTagValueBox")
+        EdTagParentIdBox           = & $Find ("EdTagParentIdBox")
+        EdTagDeleteButton          = & $Find ("EdTagDeleteButton")
+        
+        # Dynamic Tag Inputs
+        EdDynamicTagSourceFormBox  = & $Find ("EdDynamicTagSourceFormBox")
+        EdDynamicTagSourceVarBox   = & $Find ("EdDynamicTagSourceVarBox")
+        EdDynamicTagParentIdBox    = & $Find ("EdDynamicTagParentIdBox")
+        EdDynamicTagDeleteButton   = & $Find ("EdDynamicTagDeleteButton")
+
+        # Link Inputs
+        EdLinkNameBox              = & $Find ("EdLinkNameBox")
+        EdLinkUrlBox               = & $Find ("EdLinkUrlBox")
+        EdLinkIdBox                = & $Find ("EdLinkIdBox")
+        EdLinkRelativePathBox      = & $Find ("EdLinkRelativePathBox")
+        EdLinkDeleteButton         = & $Find ("EdLinkDeleteButton")
+
+        # Internal Link Inputs
+        EdInternalLinkNameBox      = & $Find ("EdInternalLinkNameBox")
+        EdInternalLinkIdBox        = & $Find ("EdInternalLinkIdBox")
+        EdInternalLinkObjIdBox     = & $Find ("EdInternalLinkObjIdBox")
+        EdInternalLinkRelativePathBox = & $Find ("EdInternalLinkRelativePathBox")
+        EdInternalLinkDeleteButton = & $Find ("EdInternalLinkDeleteButton")
+
+        # --- CONTROLES FILE ---
+        EdFileUrlBox               = & $Find ("EdFileUrlBox")
+        EdFileFetchInfoButton      = & $Find ("EdFileFetchInfoButton")
+        EdFileNameBox              = & $Find ("EdFileNameBox")
+        EdFileIdBox                = & $Find ("EdFileIdBox")
+        EdFileRelativePathBox      = & $Find ("EdFileRelativePathBox")
+        EdFileDeleteButton         = & $Find ("EdFileDeleteButton")
+
+        # --- CONTROLES PUB ---ublication Inputs (NEW)
+        EdPubNameBox               = & $Find ("EdPubNameBox")
+        EdPubIdBox                 = & $Find ("EdPubIdBox")
+        EdPubRelativePathBox       = & $Find ("EdPubRelativePathBox")
+        EdPubSiteModeBox           = & $Find ("EdPubSiteModeBox")
+        EdPubSiteUrlBox            = & $Find ("EdPubSiteUrlBox")
+        EdPubPathBox               = & $Find ("EdPubPathBox")
+        EdPubUseFormNameChk        = & $Find ("EdPubUseFormNameChk")
+        EdPubUseFormMetaChk        = & $Find ("EdPubUseFormMetaChk")
+
+        EdPubDeleteButton          = & $Find ("EdPubDeleteButton")
+
+        EdStatusText               = & $Find ("EditorStatusText")
+        
+        # --- EDITEUR --- Tags
+        EdTagsListBox              = & $Find ("EditorTagsListBox")
+        EdBtnAddTag                = & $Find ("EditorAddTagButton") # OLD (To be removed or kept for legacy?)
+        
+        # --- TOOLBAR GLOBAL ACTIONS ---
+        EdBtnGlobalAddPerm         = & $Find ("EditorGlobalAddPermButton")
+        EdBtnGlobalAddTag          = & $Find ("EditorGlobalAddTagButton")
+        EdBtnGlobalAddDynamicTag   = & $Find ("EditorGlobalAddDynamicTagButton")
+
+
+
+        # --- FORMULAIRE EDITOR (Toolbar) ---
+        FormLoadCb                 = & $Find ("FormLoadComboBox")
+        FormBtnLoad                = & $Find ("FormLoadButton")
+        FormBtnNew                 = & $Find ("FormNewButton")
+        FormBtnSave                = & $Find ("FormSaveButton")
+        FormBtnDelTpl              = & $Find ("FormDeleteButton")
+        FormStatusText             = & $Find ("FormStatusText")
+
+        # --- FORMULAIRE EDITOR (List & Actions) ---
+        FormList                   = & $Find ("FormFieldsListBox")
+        FormBtnAddLbl              = & $Find ("FormAddLabelBtn")
+        FormBtnAddTxt              = & $Find ("FormAddTextBtn")
+        FormBtnAddCmb              = & $Find ("FormAddComboBtn")
+        FormBtnUp                  = & $Find ("FormMoveUpBtn")
+        FormBtnDown                = & $Find ("FormMoveDownBtn")
+        FormBtnDel                 = & $Find ("FormRemoveBtn")
+
+        # --- FORMULAIRE EDITOR (Properties) ---
+        FormPropPanel              = & $Find ("FormPropertiesPanel")
+        FormNoSelPanel             = & $Find ("FormNoSelectionPanel")
+        
+        PropName                   = & $Find ("PropNameBox")
+        PropContent                = & $Find ("PropContentBox")
+        PropDefault                = & $Find ("PropDefaultBox")
+        PropOptions                = & $Find ("PropOptionsBox")
+        PropWidth                  = & $Find ("PropWidthBox")
+        
+        PanelName                  = & $Find ("PanelPropName")
+        PanelContent               = & $Find ("PanelPropContent")
+        PanelDefault               = & $Find ("PanelPropDefault")
+        PanelOptions               = & $Find ("PanelPropOptions")
+        PanelWidth                 = & $Find ("PanelPropWidth")
+        
+        PropForceUpper             = & $Find ("PropForceUpperCheck")
+        PanelForceUpper            = & $Find ("PanelPropForceUpper")
+        
+        PropIsMetadataCheck        = & $Find ("PropIsMetadataCheck")
+        PanelIsMetadata            = & $Find ("PanelPropIsMetadata")
+
+        # --- FORMULAIRE EDITOR (Preview) ---
+        FormLivePreview            = & $Find ("FormLivePreviewPanel")
+        FormResultText             = & $Find ("FormResultPreviewText")
+
+        # --- FORMULAIRE EDITOR (V3 - LIAISON SCHEMA) ---
+        FormTargetSchemaDisplay    = & $Find ("FormTargetSchemaDisplay")
+        FormWorkspaceLockOverlay   = & $Find ("FormWorkspaceLockOverlay")
+        PanelPropMetaTarget        = & $Find ("PanelPropMetaTarget")
+        PropMetaTargetBox          = & $Find ("PropMetaTargetBox")
+        FormNewPopupOverlay        = & $Find ("FormNewPopupOverlay")
+        FormNewPopupSchemaCb       = & $Find ("FormNewPopupSchemaCb")
+        FormNewPopupCancelBtn      = & $Find ("FormNewPopupCancelBtn")
+        FormNewPopupConfirmBtn     = & $Find ("FormNewPopupConfirmBtn")
+    }
+
+    if (-not $Ctrl.CbSites -or -not $Ctrl.BtnDeploy) { return $null }
+
+    return $Ctrl
+}

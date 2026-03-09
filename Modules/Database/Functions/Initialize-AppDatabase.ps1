@@ -136,6 +136,16 @@ function Initialize-AppDatabase {
                     Options             TEXT -- JSON Options (Toggle Meta, etc.)
                 );
 "@
+            # --- Table des Schémas de Dossiers (Content Types dynamiques) ---
+            'sp_folder_schemas'   = @"
+                CREATE TABLE sp_folder_schemas (
+                    SchemaId        TEXT PRIMARY KEY,
+                    DisplayName     TEXT NOT NULL,
+                    Description     TEXT,
+                    ColumnsJson     TEXT NOT NULL,
+                    DateModified    TEXT
+                );
+"@
         }
         # ------------------------------------
 

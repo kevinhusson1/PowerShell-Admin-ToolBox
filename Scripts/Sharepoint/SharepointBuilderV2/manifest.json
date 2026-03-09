@@ -1,0 +1,15 @@
+{
+  "id": "SharePointBuilderV2-v1",
+  "scriptFile": "SharePointBuilderV2.ps1",
+  "lockFile": "SharePointBuilderV2.lock",
+  "name": "SharePoint Builder V2 - Graph API",
+  "description": "scripts.sharepoint_builder.description",
+  "version": "3.9.0",
+  "category": "SharePoint",
+  "author": "Service IT",
+  "icon": {
+    "type": "png",
+    "value": "folder-structure.png",
+    "backgroundColor": "#0078d4"
+  }
+}
