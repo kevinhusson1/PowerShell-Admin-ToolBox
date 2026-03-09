@@ -1,0 +1,21 @@
+{
+  "grantedToV2": {
+    "user": {
+      "displayName": "HUSSON Kevin",
+      "email": "KHUSSON@vosgelis.fr",
+      "id": "697580ae-830c-44bd-845f-dfdb07806afb",
+      "@odata.type": "#microsoft.graph.sharePointIdentity"
+    }
+  },
+  "grantedTo": {
+    "user": {
+      "displayName": "HUSSON Kevin",
+      "email": "KHUSSON@vosgelis.fr",
+      "id": "697580ae-830c-44bd-845f-dfdb07806afb"
+    }
+  },
+  "roles": [
+    "read"
+  ],
+  "id": "aTowIy5mfG1lbWJlcnNoaXB8a2h1c3NvbkB2b3NnZWxpcy5mcg"
+}

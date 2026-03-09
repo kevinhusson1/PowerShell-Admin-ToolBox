@@ -1,0 +1,106 @@
+[
+  {
+    "roles": [
+      "owner"
+    ],
+    "inheritedFrom": {},
+    "shareId": "VEVTVF9QTlAgT3duZXJz",
+    "grantedToV2": {
+      "sharePointGroup": {
+        "title": "TEST_PNP Owners",
+        "principalId": "3",
+        "id": "NWMzZGQyN2EtYjQ0OS00YWU1LTlhMTEtMWY0NjEyOTNiNDczXzM"
+      },
+      "siteGroup": {
+        "displayName": "TEST_PNP Owners",
+        "id": "3",
+        "loginName": "TEST_PNP Owners"
+      }
+    },
+    "grantedTo": {
+      "user": {
+        "displayName": "TEST_PNP Owners"
+      }
+    },
+    "id": "VEVTVF9QTlAgT3duZXJz"
+  },
+  {
+    "roles": [
+      "read"
+    ],
+    "inheritedFrom": {},
+    "shareId": "VEVTVF9QTlAgVmlzaXRvcnM",
+    "grantedToV2": {
+      "sharePointGroup": {
+        "title": "TEST_PNP Visitors",
+        "principalId": "4",
+        "id": "NWMzZGQyN2EtYjQ0OS00YWU1LTlhMTEtMWY0NjEyOTNiNDczXzQ"
+      },
+      "siteGroup": {
+        "displayName": "TEST_PNP Visitors",
+        "id": "4",
+        "loginName": "TEST_PNP Visitors"
+      }
+    },
+    "grantedTo": {
+      "user": {
+        "displayName": "TEST_PNP Visitors"
+      }
+    },
+    "id": "VEVTVF9QTlAgVmlzaXRvcnM"
+  },
+  {
+    "roles": [
+      "write"
+    ],
+    "inheritedFrom": {},
+    "shareId": "VEVTVF9QTlAgTWVtYmVycw",
+    "grantedToV2": {
+      "sharePointGroup": {
+        "title": "TEST_PNP Members",
+        "principalId": "5",
+        "id": "NWMzZGQyN2EtYjQ0OS00YWU1LTlhMTEtMWY0NjEyOTNiNDczXzU"
+      },
+      "siteGroup": {
+        "displayName": "TEST_PNP Members",
+        "id": "5",
+        "loginName": "TEST_PNP Members"
+      }
+    },
+    "grantedTo": {
+      "user": {
+        "displayName": "TEST_PNP Members"
+      }
+    },
+    "id": "VEVTVF9QTlAgTWVtYmVycw"
+  },
+  {
+    "roles": [
+      "owner"
+    ],
+    "inheritedFrom": {},
+    "shareId": "Yzowby5jfGZlZGVyYXRlZGRpcmVjdG9yeWNsYWltcHJvdmlkZXJ8MzA3YWUzMjEtN2Y3NC00N2M0LWEwNDQtNTM3Y2JkNzJhNTc4X28",
+    "grantedToV2": {
+      "siteUser": {
+        "displayName": "TEST_PNP Owners",
+        "email": "TEST_PNP@vosgelis365.onmicrosoft.com",
+        "id": "6",
+        "loginName": "c:0o.c|federateddirectoryclaimprovider|307ae321-7f74-47c4-a044-537cbd72a578_o"
+      },
+      "group": {
+        "displayName": "TEST_PNP Owners",
+        "email": "TEST_PNP@vosgelis365.onmicrosoft.com",
+        "id": "307ae321-7f74-47c4-a044-537cbd72a578",
+        "@odata.type": "#microsoft.graph.sharePointIdentity"
+      }
+    },
+    "grantedTo": {
+      "user": {
+        "displayName": "TEST_PNP Owners",
+        "email": "TEST_PNP@vosgelis365.onmicrosoft.com",
+        "id": "307ae321-7f74-47c4-a044-537cbd72a578"
+      }
+    },
+    "id": "Yzowby5jfGZlZGVyYXRlZGRpcmVjdG9yeWNsYWltcHJvdmlkZXJ8MzA3YWUzMjEtN2Y3NC00N2M0LWEwNDQtNTM3Y2JkNzJhNTc4X28"
+  }
+]

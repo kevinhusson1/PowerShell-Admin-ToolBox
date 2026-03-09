@@ -42,6 +42,7 @@
         'Find-AppGraphFolderByTag',
         'Get-AppGraphListDriveId',
         'Get-AppGraphSiteId',
+        'Get-AppSPDeploymentPlan',
         'New-AppGraphContentType',
         'New-AppGraphFolder',
         'New-AppGraphSiteColumn',
