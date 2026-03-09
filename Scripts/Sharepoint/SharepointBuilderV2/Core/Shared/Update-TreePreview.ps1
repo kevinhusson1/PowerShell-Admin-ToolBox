@@ -50,32 +50,8 @@ function Global:Update-TreePreview {
         Write-Verbose "[Update-TreePreview] Parsing JSON (Taille: $($JsonStructure.Length))"
         $structure = $JsonStructure | ConvertFrom-Json
         
-        # Gestion intelligente : soit c'est un tableau de dossiers à la racine, soit un objet Root avec Folders
-        $rootList = @()
-        if ($structure.Folders) {
-            $rootList = $structure.Folders
-        }
-        elseif ($structure.Root) {
-            $rootList = @($structure.Root)
-        }
-        else {
-            # Cas où le JSON est directement un tableau
-            $rootList = $structure
-        }
-
-        Write-Verbose "[Update-TreePreview] Nombre d'éléments racine trouvés: $($rootList.Count)"
-
-        # 3. Utilisation de la logique UNIFIÉE (via New-BuilderTreeItem)
-        # Plus besoin de fonction locale New-VisuItem, on appelle directement la globale.
-
-        foreach ($rootNode in $rootList) {
-            Write-Verbose "[Update-TreePreview] Ajout du noeud: $($rootNode.Name)"
-            # On passe les remplacements pour qu'ils soient appliqués
-            $tvItem = New-BuilderTreeItem -NodeData $rootNode -Replacements $replacements
-            if ($tvItem) {
-                $TreeView.Items.Add($tvItem) | Out-Null
-            }
-        }
+        # 3. Utilisation de la logique UNIFIÉE (via Invoke-AppSPReassembleTree)
+        Invoke-AppSPReassembleTree -Structure $structure -TreeViewItems $TreeView.Items -Replacements $replacements
 
     }
     catch {

@@ -242,63 +242,8 @@ function Global:Convert-JsonToEditorTree {
     try {
         $structure = $Json | ConvertFrom-Json
         
-        # Format Unique (Structure complète Folders/Publications/Links/InternalLinks/Files)
-        $folders = $structure.Folders
-        if ($null -eq $folders) { $folders = @() }
-
-        # Dictionnaire pour mapper ID -> TreeViewItem Visuel (Passe 1)
-        $nodeMap = @{}
-
-        # --- PASSE 1 : Construction du Squelette (Folders) ---
-        function Build-FolderTree {
-            param($NodeData, $ParentUICollection)
-            
-            $rootNode = New-BuilderTreeItem -NodeData $NodeData -Replacements $null
-            if ($rootNode) {
-                $ParentUICollection.Add($rootNode) | Out-Null
-                
-                $nodeId = $rootNode.Tag.Id
-                if ($nodeId) { $nodeMap[$nodeId] = $rootNode }
-
-                function Index-Children($parentItem) {
-                    foreach ($child in $parentItem.Items) {
-                        if ($child.Tag.Type -eq "Folder" -and $child.Tag.Id) {
-                            $nodeMap[$child.Tag.Id] = $child
-                            Index-Children -parentItem $child
-                        }
-                    }
-                }
-                Index-Children -parentItem $rootNode
-            }
-        }
-
-        foreach ($f in $folders) {
-            Build-FolderTree -NodeData $f -ParentUICollection $TreeView.Items
-        }
-
-        # --- PASSE 2 : Habillage (Publications, Links, InternalLinks, Files) ---
-        $flatCollections = @($structure.Publications, $structure.Links, $structure.InternalLinks, $structure.Files)
-        
-        foreach ($collection in $flatCollections) {
-            if ($null -ne $collection) {
-                foreach ($itemData in $collection) {
-                    $leafNode = New-BuilderTreeItem -NodeData $itemData -Replacements $null
-                    if ($leafNode) {
-                        $parentId = $itemData.ParentId
-                        if ([string]::IsNullOrWhiteSpace($parentId)) {
-                            # Racine
-                            $TreeView.Items.Add($leafNode) | Out-Null
-                        }
-                        elseif ($nodeMap.ContainsKey($parentId)) {
-                            # Ajout au parent correct
-                            $parentNode = $nodeMap[$parentId]
-                            $parentNode.Items.Add($leafNode) | Out-Null
-                            Update-EditorBadges -TreeItem $parentNode
-                        }
-                    }
-                }
-            }
-        }
+        # Utilisation de la logique UNIFIÉE (via Invoke-AppSPReassembleTree)
+        Invoke-AppSPReassembleTree -Structure $structure -TreeViewItems $TreeView.Items -Replacements $null
     }
     catch {
         Write-Warning "Erreur déserialisation JSON : $_"
