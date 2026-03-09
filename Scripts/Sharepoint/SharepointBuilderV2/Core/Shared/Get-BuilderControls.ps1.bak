@@ -147,25 +147,24 @@ function Get-BuilderControls {
         # --- EDITEUR (Props) ---
         # --- EDITEUR (Props Panels) ---
         # USE ROBUST FIND
-        EdPropPanel                   = & $Find "EdPropPanel"
+        EdPropPanel                   = & $Find "EdPanelFolder"
         EdPanelFile                   = & $Find "EdPanelFile"
-        EdPropPanelPerm               = & $Find "EdPropPanelPerm"
-        EdPropPanelTag                = & $Find "EdPropPanelTag"
-        EdPropPanelLink               = & $Find "EdPropPanelLink"
-        EdPropPanelInternalLink       = & $Find "EdPropPanelInternalLink"
-        EdPropPanelPub                = & $Find "EdPropPanelPub"
+        EdPropPanelPerm               = & $Find "EdPanelPerm"
+        EdPropPanelTag                = & $Find "EdPanelTag"
+        EdPropPanelLink               = & $Find "EdPanelLink"
+        EdPropPanelInternalLink       = & $Find "EdPanelInternalLink"
+        EdPropPanelPub                = & $Find "EdPanelPub"
         EdPanelGlobalTags             = & $Find "EdPanelGlobalTags"
         EdPropPanelDynamicTag         = & $Find "EdPropPanelDynamicTag"
 
         EdNoSelPanel                  = & $Find "EdPanelNoSel"
         
         # Folder Inputs
-        EdNameBox                     = & $Find ("EdNameBox")
+        EdNameBox                     = & $Find ("EditorFolderNameTextBox")
         EditorDisplayNameBox          = & $Find ("EditorDisplayNameBox")
         EditorDescriptionBox          = & $Find ("EditorDescriptionBox")
         EdFolderIdBox                 = & $Find ("EdFolderIdBox")
         EdFolderRelativePathBox       = & $Find ("EdFolderRelativePathBox")
-        EdFolderDeleteButton          = & $Find ("EdFolderDeleteButton")
         EdPermissionsListBox          = & $Find ("EditorPermissionsListBox")
         EdBtnAddPerm                  = & $Find ("EditorAddPermButton")
         
@@ -174,7 +173,7 @@ function Get-BuilderControls {
         EdPermLevelBox                = & $Find ("EdPermLevelBox")
         EdPermParentIdBox             = & $Find ("EdPermParentIdBox")
         EdPermDeleteButton            = & $Find ("EdPermDeleteButton")
- 
+
         # Tag Inputs
         EdTagColumnBox                = & $Find ("EdTagColumnBox")
         EdTagValueBox                 = & $Find ("EdTagValueBox")
@@ -185,7 +184,6 @@ function Get-BuilderControls {
         EdDynamicTagSourceFormBox     = & $Find ("EdDynamicTagSourceFormBox")
         EdDynamicTagSourceVarBox      = & $Find ("EdDynamicTagSourceVarBox")
         EdDynamicTagParentIdBox       = & $Find ("EdDynamicTagParentIdBox")
-        EdDynamicTagInfoButton        = & $Find ("EdDynamicTagInfoButton")
         EdDynamicTagDeleteButton      = & $Find ("EdDynamicTagDeleteButton")
 
         # Link Inputs

@@ -1,0 +1,9 @@
+[
+  {
+    "SchemaId": "af8608aa-421d-4421-90ad-62fb1ee23851",
+    "DisplayName": "Dossier Avancé",
+    "Description": "Dossier Sharepoint avec des colonnes supplémentaire pour l'indexation et la rechercher optimisé",
+    "ColumnsJson": "[{\"Indexed\":true,\"Type\":\"Choix Multiples\",\"Name\":\"Services\"},{\"Indexed\":false,\"Type\":\"Date et Heure\",\"Name\":\"DateDeploiement\"},{\"Indexed\":true,\"Type\":\"Choix Multiples\",\"Name\":\"Year\"},{\"Indexed\":true,\"Type\":\"Texte\",\"Name\":\"Rubriques\"},{\"Indexed\":false,\"Type\":\"Oui/Non\",\"Name\":\"TestBoolean\"}]",
+    "DateModified": "2026-03-09 16:31:26"
+  }
+]

@@ -72,7 +72,8 @@ function Global:Convert-EditorTreeToJson {
                         $uri = [System.Uri]$cleanSiteUrl
                         $decodedId = [uri]::UnescapeDataString($matches[1])
                         $cleanSiteUrl = "https://$($uri.Host)$decodedId"
-                    } catch {}
+                    }
+                    catch {}
                 }
                 elseif ($cleanSiteUrl -match "^(https?://[^/]+)/:[a-zA-Z]:/[a-zA-Z]/(.+)") {
                     # Cas /:f:/r/sites/...
@@ -92,7 +93,8 @@ function Global:Convert-EditorTreeToJson {
 
             if ($data.TargetSiteMode -eq "Auto" -or [string]::IsNullOrWhiteSpace($cleanSiteUrl)) {
                 $relPath = "$targetPathPrep$modelSuffix"
-            } else {
+            }
+            else {
                 $sitePrep = $cleanSiteUrl.TrimEnd('/')
                 $relPath = "$sitePrep$targetPathPrep$modelSuffix"
             }
@@ -179,13 +181,13 @@ function Global:Convert-EditorTreeToJson {
         if ($data.PSObject.Properties.Match('RelativePath').Count -gt 0) { $data.RelativePath = $relPath }
 
         $nodeHash = @{
-            Type        = "Folder"
-            Name        = $data.Name
-            Id          = $data.Id
+            Type         = "Folder"
+            Name         = $data.Name
+            Id           = $data.Id
             RelativePath = $relPath
-            Permissions = @()
-            Tags        = @()
-            Folders     = @()
+            Permissions  = @()
+            Tags         = @()
+            Folders      = @()
         }
 
         foreach ($childItem in $Item.Items) {
@@ -216,14 +218,13 @@ function Global:Convert-EditorTreeToJson {
     }
 
     $finalObj = [Ordered]@{ 
-        SchemaVersion  = "2.0"
         TargetSchemaId = $TargetSchemaId
         TargetFormId   = $TargetFormId
         Folders        = $rootList
-        Publications  = $script:GlobalPubs
-        Links         = $script:GlobalLinks
-        InternalLinks = $script:GlobalInternalLinks
-        Files         = $script:GlobalFiles
+        Publications   = $script:GlobalPubs
+        Links          = $script:GlobalLinks
+        InternalLinks  = $script:GlobalInternalLinks
+        Files          = $script:GlobalFiles
     }
     
     return $finalObj | ConvertTo-Json -Depth 10 -Compress
@@ -241,16 +242,14 @@ function Global:Convert-JsonToEditorTree {
     try {
         $structure = $Json | ConvertFrom-Json
         
-        # Support Rétro-compatibilité (Si pas de SchemaVersion, c'est l'ancien format pur Dossier)
-        $isV2 = [bool]($structure.SchemaVersion -eq "2.0")
-        
-        $folders = if ($structure.Folders) { $structure.Folders } else { @($structure) }
+        # Format Unique (Structure complète Folders/Publications/Links/InternalLinks/Files)
+        $folders = $structure.Folders
+        if ($null -eq $folders) { $folders = @() }
 
         # Dictionnaire pour mapper ID -> TreeViewItem Visuel (Passe 1)
         $nodeMap = @{}
 
         # --- PASSE 1 : Construction du Squelette (Folders) ---
-        # Fonction récursive pour indexer tous les dossiers visuels
         function Build-FolderTree {
             param($NodeData, $ParentUICollection)
             
@@ -258,14 +257,9 @@ function Global:Convert-JsonToEditorTree {
             if ($rootNode) {
                 $ParentUICollection.Add($rootNode) | Out-Null
                 
-                # Indexation (Uniquement pour les dossiers dans la passe 1)
                 $nodeId = $rootNode.Tag.Id
-                if ($nodeId) {
-                    $nodeMap[$nodeId] = $rootNode
-                }
+                if ($nodeId) { $nodeMap[$nodeId] = $rootNode }
 
-                # La récursivité de New-BuilderTreeItem construit déjà les enfants Folders/Perms/Tags
-                # Indexons aussi les dossiers enfants profonds créés par New-BuilderTreeItem
                 function Index-Children($parentItem) {
                     foreach ($child in $parentItem.Items) {
                         if ($child.Tag.Type -eq "Folder" -and $child.Tag.Id) {
@@ -283,24 +277,23 @@ function Global:Convert-JsonToEditorTree {
         }
 
         # --- PASSE 2 : Habillage (Publications, Links, InternalLinks, Files) ---
-        if ($isV2) {
-            $flatCollections = @($structure.Publications, $structure.Links, $structure.InternalLinks, $structure.Files)
-            
-            foreach ($collection in $flatCollections) {
-                if ($null -ne $collection) {
-                    foreach ($itemData in $collection) {
-                        $leafNode = New-BuilderTreeItem -NodeData $itemData -Replacements $null
-                        if ($leafNode) {
-                            $parentId = $itemData.ParentId
-                            if ([string]::IsNullOrWhiteSpace($parentId)) {
-                                # Racine
-                                $TreeView.Items.Add($leafNode) | Out-Null
-                            } elseif ($nodeMap.ContainsKey($parentId)) {
-                                # Ajout au parent correct
-                                $parentNode = $nodeMap[$parentId]
-                                $parentNode.Items.Add($leafNode) | Out-Null
-                                Update-EditorBadges -TreeItem $parentNode
-                            }
+        $flatCollections = @($structure.Publications, $structure.Links, $structure.InternalLinks, $structure.Files)
+        
+        foreach ($collection in $flatCollections) {
+            if ($null -ne $collection) {
+                foreach ($itemData in $collection) {
+                    $leafNode = New-BuilderTreeItem -NodeData $itemData -Replacements $null
+                    if ($leafNode) {
+                        $parentId = $itemData.ParentId
+                        if ([string]::IsNullOrWhiteSpace($parentId)) {
+                            # Racine
+                            $TreeView.Items.Add($leafNode) | Out-Null
+                        }
+                        elseif ($nodeMap.ContainsKey($parentId)) {
+                            # Ajout au parent correct
+                            $parentNode = $nodeMap[$parentId]
+                            $parentNode.Items.Add($leafNode) | Out-Null
+                            Update-EditorBadges -TreeItem $parentNode
                         }
                     }
                 }

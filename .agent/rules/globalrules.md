@@ -27,6 +27,10 @@ Ces règles doivent être impérativement suivies pour garantir la stabilité, l
     *   Utilisez toujours la syntaxe `##loc:cle_de_traduction##`.
     *   Ajoutez les clés correspondantes dans `Localization/fr-FR/` et `Localization/en-US/`.
 *   **Contrôles** : Accédez aux éléments UI via la hashtable globale `$Global:AppControls`.
+*   **WPF Binding** : Pour les contrôles liés (ComboBox, ItemsSource), privilégiez la création d'objets `[PSCustomObject]` propres plutôt que l'utilisation de `Add-Member` sur des objets existants pour garantir la détection des propriétés par le moteur de binding.
+*   **Rendu d'Icônes** : 
+    *   Pour les petites icônes (boutons 34x34 ou moins), utilisez `RenderOptions.BitmapScalingMode="HighQuality"` dans le XAML pour éviter le flou.
+    *   Soyez précis avec les `Margins` (ex: 4px au lieu de 5px) pour éviter la troncation sur les petits conteneurs.
 
 ## 4. Sécurité
 *   **Zéro Secret** : Aucun mot de passe, token, ou secret en clair dans le code ou les JSON.
@@ -42,6 +46,7 @@ Ces règles doivent être impérativement suivies pour garantir la stabilité, l
 *   Utilisez `try/catch` pour toutes les opérations risquées (IO, Réseau, BDD).
 *   Nommez les variables en **CamelCase** (`$maVariable`).
 *   Nommez les fonctions en **PascalCase** avec verbe approuvé (`Get-AppUser`, `Set-AppConf`).
+*   **Gestion des Portées (Closures)** : Utilisez systématiquement `.GetNewClosure()` lors de la définition de scripts blocks pour les événements (`Add_Click`, `Add_TextChanged`, etc.) afin de figer le contexte des variables (`$Ctrl`, `$selectedItem`).
 
 ## 7. Utilisation des skills
 *   Utiliser toujours les skills mis à disposition en particulier celui des powershell_rules

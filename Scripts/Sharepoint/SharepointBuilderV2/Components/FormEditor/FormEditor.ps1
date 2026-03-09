@@ -384,7 +384,8 @@ function Register-FormEditorLogic {
     $LoadFormList = {
         $rules = @(Get-AppNamingRules) # Appel Module Database
         $Ctrl.FormLoadCb.ItemsSource = $rules
-        $Ctrl.FormLoadCb.DisplayMemberPath = "RuleId"
+        $Ctrl.FormLoadCb.DisplayMemberPath = "DisplayName"
+        $Ctrl.FormLoadCb.SelectedValuePath = "RuleId"
     }.GetNewClosure()
     & $LoadFormList
 
@@ -427,6 +428,10 @@ function Register-FormEditorLogic {
             $Ctrl.FormList.Items.Clear()
             $Ctrl.FormLoadCb.Tag = $null
             $Ctrl.FormLoadCb.SelectedIndex = -1
+            
+            # v4.20 : Reset Identity
+            $Ctrl.FormDisplayNameBox.Text = ""
+            $Ctrl.FormDescriptionBox.Text = ""
         
             # Déverrouiller l'interface et enregistrer le schéma cible en mémoire
             $Ctrl.FormWorkspaceLockOverlay.Visibility = 'Collapsed'
@@ -461,53 +466,47 @@ function Register-FormEditorLogic {
         
             # Note : Le .Replace() est géré par le module Database, on envoie le JSON brut
         
-            $currentId = $Ctrl.FormLoadCb.Tag
-            if ($currentId) {
-                # Mode "Enregistrer Sous" ou "Écraser" si c'est déjà un modèle existant
-                $msg = "La règle '$currentId' est chargée.`n`nOUI : Écraser`nNON : Enregistrer copie`nANNULER : Retour"
-                $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
-                switch ($choice) {
-                    'Cancel' { return }
-                    'No' {
-                        $currentId = $null # Force nouvelle saisie
-                    }
-                }
+            # v4.20 : Gestion des IDs par GUID
+            $ruleId = $Ctrl.FormLoadCb.Tag
+            $displayName = $Ctrl.FormDisplayNameBox.Text
+            $description = $Ctrl.FormDescriptionBox.Text
+
+            if ([string]::IsNullOrWhiteSpace($displayName)) {
+                [System.Windows.MessageBox]::Show("Le nom du formulaire est requis.", "Erreur", "OK", "Warning")
+                return
             }
 
-            if (-not $currentId) {
-                Add-Type -AssemblyName Microsoft.VisualBasic
-                $name = [Microsoft.VisualBasic.Interaction]::InputBox("Nom de la règle (ID unique) :", "Sauvegarder", "Rule-Custom-01")
-                if ([string]::IsNullOrWhiteSpace($name)) { return }
-                $currentId = $name
+            if ([string]::IsNullOrWhiteSpace($description)) {
+                [System.Windows.MessageBox]::Show("La description du formulaire est requise.", "Erreur", "OK", "Warning")
+                return
             }
 
+            if ($layoutList.Count -eq 0) {
+                [System.Windows.MessageBox]::Show("La structure du formulaire ne peut pas être vide. Veuillez ajouter au moins un élément.", "Erreur", "OK", "Warning")
+                return
+            }
+
+            if (-not $ruleId) {
+                $ruleId = [guid]::NewGuid().ToString()
+            }
+            
             try {
-                # APPEL PROPRE MODULE DATABASE
-                Set-AppNamingRule -RuleId $currentId -DefinitionJson $json
+                # APPEL PROPRE MODULE DATABASE (v4.20 avec DisplayName)
+                Set-AppNamingRule -RuleId $ruleId -DisplayName $displayName -Description $description -DefinitionJson $json
                 
-                # REFRESH GLOBAL CONFIG (CRITICAL for Dynamic Tag Selector)
-                if (Get-Command "Get-AppNamingRules" -ErrorAction SilentlyContinue) {
-                    $rules = @(Get-AppNamingRules)
-                    if ($Global:AppConfig -and $Global:AppConfig.PSObject.Properties.Match("namingRules").Count -eq 0) {
-                        $Global:AppConfig | Add-Member -MemberType NoteProperty -Name "namingRules" -Value $rules -Force
-                    }
-                    elseif ($Global:AppConfig) {
-                        $Global:AppConfig.namingRules = $rules
-                    }
-                } 
-                elseif (Get-Command "Get-AppConfig" -ErrorAction SilentlyContinue) {
-                    # Fallback reload
-                    $Global:AppConfig = Get-AppConfig
-                }
-            
-                & $SetFormStatus -Msg "Règle '$currentId' sauvegardée avec succès." -Type "Success"
-            
+                # REFRESH GLOBAL CONFIG
                 & $LoadFormList
-                $newItem = $Ctrl.FormLoadCb.ItemsSource | Where-Object { $_.RuleId -eq $currentId } | Select-Object -First 1
-                if ($newItem) { 
-                    $Ctrl.FormLoadCb.SelectedItem = $newItem 
-                    $Ctrl.FormLoadCb.Tag = $currentId
+                
+                # Resélectionner
+                foreach ($item in $Ctrl.FormLoadCb.ItemsSource) {
+                    if ($item.RuleId -eq $ruleId) {
+                        $Ctrl.FormLoadCb.SelectedItem = $item
+                        $Ctrl.FormLoadCb.Tag = $ruleId
+                        break
+                    }
                 }
+                
+                & $SetFormStatus -Msg "Règle '$displayName' sauvegardée avec succès." -Type "Success"
 
             }
             catch { & $SetFormStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
@@ -520,6 +519,10 @@ function Register-FormEditorLogic {
         
             $Ctrl.FormList.Items.Clear()
             $Ctrl.FormLoadCb.Tag = $sel.RuleId
+            
+            # v4.20 : Peupler les champs Identity
+            $Ctrl.FormDisplayNameBox.Text = $sel.DisplayName
+            $Ctrl.FormDescriptionBox.Text = $sel.Description
 
             try {
                 $parsed = $sel.DefinitionJson | ConvertFrom-Json

@@ -5,6 +5,7 @@ function Set-AppNamingRule {
     param(
         [Parameter(Mandatory)] [string]$RuleId,
         [Parameter(Mandatory)] [string]$DefinitionJson,
+        [string]$DisplayName,
         [string]$Description = "Règle personnalisée"
     )
 
@@ -17,9 +18,11 @@ function Set-AppNamingRule {
         # Si vous avez ajouté Description en BDD, ajoutez-le à la requête.
         # Ici je reste sur le schéma validé : RuleId, DefinitionJson.
 
-        $query = "INSERT OR REPLACE INTO sp_naming_rules (RuleId, DefinitionJson) VALUES (@RuleId, @DefinitionJson);"
+        $query = "INSERT OR REPLACE INTO sp_naming_rules (RuleId, DisplayName, Description, DefinitionJson) VALUES (@RuleId, @DisplayName, @Description, @DefinitionJson);"
         $sqlParams = @{
             RuleId         = $RuleId
+            DisplayName    = $DisplayName
+            Description    = $Description
             DefinitionJson = $DefinitionJson
         }
         

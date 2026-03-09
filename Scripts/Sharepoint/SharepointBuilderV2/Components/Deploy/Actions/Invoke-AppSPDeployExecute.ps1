@@ -84,20 +84,20 @@ function Global:Invoke-AppSPDeployExecute {
     $locFile = Join-Path $Global:ProjectRoot "Scripts\Sharepoint\SharePointBuilder\Localization\$lang.json"
 
     $jobArgs = @{
-        ModPath       = Join-Path $Global:ProjectRoot "Modules"
-        Thumb         = $Global:AppConfig.azure.certThumbprint
-        ClientId      = $Global:AppConfig.azure.authentication.userAuth.appId
-        Tenant        = $Global:AppConfig.azure.tenantName
-        TargetUrl     = $Ctrl.CbSites.SelectedItem.Url
-        LibName       = $Ctrl.CbLibs.SelectedItem.Title
-        LibRelUrl     = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { $Ctrl.CbLibs.SelectedItem.RootFolder.ServerRelativeUrl }
-        TargetItemId  = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ItemId } else { "root" }
-        FolderName    = $folderNameParam 
-        StructureJson = ($Ctrl.CbTemplates.SelectedItem.StructureJson)
-        LocFilePath   = $locFile
-        FormValues    = $formValues
-        RootMetadata  = $rootMetadata
-        TrackingInfo  = $trackingInfo
+        ModPath          = Join-Path $Global:ProjectRoot "Modules"
+        Thumb            = $Global:AppConfig.azure.certThumbprint
+        ClientId         = $Global:AppConfig.azure.authentication.userAuth.appId
+        Tenant           = $Global:AppConfig.azure.tenantName
+        TargetUrl        = $Ctrl.CbSites.SelectedItem.Url
+        LibName          = $Ctrl.CbLibs.SelectedItem.Title
+        LibRelUrl        = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ServerRelativeUrl } else { $Ctrl.CbLibs.SelectedItem.RootFolder.ServerRelativeUrl }
+        TargetItemId     = if ($Global:SelectedTargetFolder) { $Global:SelectedTargetFolder.ItemId } else { "root" }
+        FolderName       = $folderNameParam 
+        StructureJson    = ($Ctrl.CbTemplates.SelectedItem.StructureJson)
+        LocFilePath      = $locFile
+        FormValues       = $formValues
+        RootMetadata     = $rootMetadata
+        TrackingInfo     = $trackingInfo
         FolderSchemaJson = $folderSchemaJson
         FolderSchemaName = $folderSchemaName
     }
@@ -110,7 +110,7 @@ function Global:Invoke-AppSPDeployExecute {
         if ($ArgsMap.LocFilePath -and (Test-Path $ArgsMap.LocFilePath)) { Add-AppLocalizationSource -FilePath $ArgsMap.LocFilePath }
 
         try {
-            New-AppGraphSPStructure `
+            New-AppSPStructure `
                 -TargetSiteUrl $ArgsMap.TargetUrl `
                 -TargetLibraryName $ArgsMap.LibName `
                 -RootFolderName $ArgsMap.FolderName `
@@ -217,7 +217,8 @@ function Global:Invoke-AppSPDeployExecute {
                     }
                 }
             }
-        } catch {
+        }
+        catch {
             $sender.Stop()
             Write-Warning "CRASH TIMER DEPLOIEMENT: $($_.Exception.Message)"
         }

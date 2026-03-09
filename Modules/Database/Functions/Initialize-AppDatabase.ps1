@@ -107,6 +107,8 @@ function Initialize-AppDatabase {
             'sp_naming_rules'     = @"
                 CREATE TABLE sp_naming_rules (
                     RuleId          TEXT PRIMARY KEY,
+                    DisplayName     TEXT,
+                    Description     TEXT,
                     DefinitionJson  TEXT NOT NULL  -- La structure du formulaire (Labels, Inputs)
                 );
 "@
@@ -199,6 +201,19 @@ function Initialize-AppDatabase {
             if ('Options' -notin $cols) {
                 Write-Verbose "Migration Schéma : Ajout de 'Options' à 'sp_deploy_configs'"
                 Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_deploy_configs ADD COLUMN Options TEXT;"
+            }
+        }
+
+        # Migration v1.X : Ajout de colonnes descriptives à sp_naming_rules
+        if ('sp_naming_rules' -in $existingTables) {
+            $cols = (Invoke-SqliteQuery -DataSource $dbPath -Query "PRAGMA table_info(sp_naming_rules)").name
+            if ('DisplayName' -notin $cols) {
+                Write-Verbose "Migration Schéma : Ajout de 'DisplayName' à 'sp_naming_rules'"
+                Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_naming_rules ADD COLUMN DisplayName TEXT;"
+            }
+            if ('Description' -notin $cols) {
+                Write-Verbose "Migration Schéma : Ajout de 'Description' à 'sp_naming_rules'"
+                Invoke-SqliteQuery -DataSource $dbPath -Query "ALTER TABLE sp_naming_rules ADD COLUMN Description TEXT;"
             }
         }
 

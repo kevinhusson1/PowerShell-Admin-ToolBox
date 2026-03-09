@@ -9,7 +9,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="10,5"/> <!-- Ajustement pour un meilleur centrage vertical avec MinHeight -->
+        <Setter Property="Padding" Value="10,3"/> <!-- Ajustement pour un meilleur centrage vertical avec MinHeight -->
         <Setter Property="MinHeight" Value="34"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>

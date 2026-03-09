@@ -44,14 +44,26 @@ function Global:Register-EditorSelectionHandler {
                 if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
                 if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
                 if ($Ctrl.EdPanelFile) { $Ctrl.EdPanelFile.Visibility = "Collapsed" }
-                if ($Ctrl.EdPanelGlobalTags) { $Ctrl.EdPanelGlobalTags.Visibility = "Collapsed" } # Deprecated/Removed
 
                 if ($null -eq $selectedItem) {
                     if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                    
+                    # Toolbar States if no selection
+                    if ($Ctrl.EdBtnChild) { $Ctrl.EdBtnChild.IsEnabled = $false }
+                    if ($Ctrl.EdBtnChildLink) { $Ctrl.EdBtnChildLink.IsEnabled = $false }
+                    if ($Ctrl.EdBtnChildInternalLink) { $Ctrl.EdBtnChildInternalLink.IsEnabled = $false }
+                    if ($Ctrl.EdBtnAddPub) { $Ctrl.EdBtnAddPub.IsEnabled = $false }
+                    if ($Ctrl.EdBtnAddFile) { $Ctrl.EdBtnAddFile.IsEnabled = $false }
+                    if ($Ctrl.EdBtnGlobalAddPerm) { $Ctrl.EdBtnGlobalAddPerm.IsEnabled = $false }
+                    if ($Ctrl.EdBtnGlobalAddTag) { $Ctrl.EdBtnGlobalAddTag.IsEnabled = $false }
+                    if ($Ctrl.EdBtnGlobalAddDynamicTag) { $Ctrl.EdBtnGlobalAddDynamicTag.IsEnabled = $false }
+                    if ($Ctrl.EdBtnDel) { $Ctrl.EdBtnDel.IsEnabled = $false }
+
                     $Script:IsPopulating = $false
                     return
                 }
@@ -135,17 +147,28 @@ function Global:Register-EditorSelectionHandler {
                                                 
                                                 # Filtrage Phase 3 : même Schéma
                                                 if ($currentSchemaId -and $j.TargetSchemaId -ne $currentSchemaId) { continue }
-
+                                                
                                                 if ($j.Layout) {
                                                     $hasMeta = @($j.Layout) | Where-Object { $_.IsMetadata -eq $true } | Select-Object -First 1
-                                                    if ($hasMeta) { $filteredRules.Add($r) }
+                                                    if ($hasMeta) { 
+                                                        # FIX: Create clean object for WPF Binding
+                                                        $displayName = if ($r.DisplayName) { $r.DisplayName } elseif ($j.FormName) { $j.FormName } else { $r.RuleId }
+                                                        $description = if ($r.Description) { $r.Description } else { $j.Description }
+                                                        
+                                                        $filteredRules.Add([PSCustomObject]@{
+                                                                RuleId         = $r.RuleId
+                                                                DisplayName    = $displayName
+                                                                Description    = $description
+                                                                DefinitionJson = $r.DefinitionJson
+                                                            })
+                                                    }
                                                 }
                                             }
                                         }
                                         catch {}
                                     }
                                 }
-                                $Ctrl.EdDynamicTagSourceFormBox.DisplayMemberPath = "RuleId"
+                                $Ctrl.EdDynamicTagSourceFormBox.DisplayMemberPath = "DisplayName"
                                 $Ctrl.EdDynamicTagSourceFormBox.ItemsSource = $filteredRules
                                 
                                 # 2. Select Current Form
@@ -292,42 +315,52 @@ function Global:Register-EditorSelectionHandler {
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
                 # G. FOLDER (Standard)
-                else {
+                elseif ($data.Type -eq "Folder") {
                     if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Visible" }
                     if ($data -and $Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = $data.Name }
                     if ($data -and $Ctrl.EdFolderIdBox) { $Ctrl.EdFolderIdBox.Text = $data.Id }
                     if ($data -and $Ctrl.EdFolderRelativePathBox) { $Ctrl.EdFolderRelativePathBox.Text = $data.RelativePath }
-                
-                    # Note: No longer populating ListBoxes for Permissions/Tags here.
-                    if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
+                }
+                else {
+                    # Safety Fallback
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
                 }
             
-                # --- BUTTON STATES ---
+                # --- BUTTON STATES (Restored & Refined V3) ---
                 $hasSelection = ($null -ne $selectedItem)
-                $isLink = ($hasSelection -and ($data.Type -eq "Link" -or $data.Type -eq "InternalLink"))
-                $isMeta = ($hasSelection -and ($data.Type -eq "Permission" -or $data.Type -eq "Tag" -or $selectedItem.Name -eq "MetaItem"))
-                $isPublication = ($hasSelection -and $data.Type -eq "Publication")
-            
-                $canHaveChildren = ($hasSelection -and -not $isLink -and -not $isMeta -and -not $isPublication)
-            
-                if ($Ctrl.EdBtnRoot) { $Ctrl.EdBtnRoot.IsEnabled = $true }
-                if ($Ctrl.EdBtnRootLink) { $Ctrl.EdBtnRootLink.IsEnabled = $true }
-            
-                if ($Ctrl.EdBtnChild) { $Ctrl.EdBtnChild.IsEnabled = $canHaveChildren }
-                if ($Ctrl.EdBtnChildLink) { $Ctrl.EdBtnChildLink.IsEnabled = $canHaveChildren }
-                if ($Ctrl.EdBtnChildInternalLink) { $Ctrl.EdBtnChildInternalLink.IsEnabled = $canHaveChildren }
-                if ($Ctrl.EdBtnAddPub) { $Ctrl.EdBtnAddPub.IsEnabled = $canHaveChildren }
+                $type = if ($hasSelection) { $data.Type } else { "None" }
+                
+                $isFolder = ($type -eq "Folder")
+                $isLink = ($type -eq "Link" -or $type -eq "InternalLink")
+                $isPub = ($type -eq "Publication")
+                $isFile = ($type -eq "File")
+                $isMeta = ($type -eq "Tag" -or $type -eq "Permission") # Static or Dynamic Tag, and Permission
 
-                # Delete always enabled if selection
+                # 1. ROOT BUTTONS (Creation of top-level items)
+                # Strategy: Disable Roots when an item is selected to avoid confusion with child creation
+                $rootEnabled = (-not $hasSelection)
+                if ($Ctrl.EdBtnRoot) { $Ctrl.EdBtnRoot.IsEnabled = $rootEnabled }
+                if ($Ctrl.EdBtnRootLink) { $Ctrl.EdBtnRootLink.IsEnabled = $rootEnabled }
+            
+                # 2. STRUCTURAL BUTTONS (Child creation)
+                # Only folders can contain child folders/links/pubs/files
+                $canAddChild = $isFolder
+                if ($Ctrl.EdBtnChild) { $Ctrl.EdBtnChild.IsEnabled = $canAddChild }
+                if ($Ctrl.EdBtnChildLink) { $Ctrl.EdBtnChildLink.IsEnabled = $canAddChild }
+                if ($Ctrl.EdBtnChildInternalLink) { $Ctrl.EdBtnChildInternalLink.IsEnabled = $canAddChild }
+                if ($Ctrl.EdBtnAddPub) { $Ctrl.EdBtnAddPub.IsEnabled = $canAddChild }
+                if ($Ctrl.EdBtnAddFile) { $Ctrl.EdBtnAddFile.IsEnabled = $canAddChild }
+
+                # 3. METADATA BUTTONS (Perms & Tags)
+                # Enabled if selecting a container (Child mode) OR selecting a meta item (Sibling mode)
+                $canAddMeta = ($isFolder -or $isPub -or $isLink -or $isFile -or $isMeta)
+                
+                if ($Ctrl.EdBtnGlobalAddPerm) { $Ctrl.EdBtnGlobalAddPerm.IsEnabled = ($isFolder -or $isPub -or $isFile -or $isMeta) }
+                if ($Ctrl.EdBtnGlobalAddTag) { $Ctrl.EdBtnGlobalAddTag.IsEnabled = $canAddMeta }
+                if ($Ctrl.EdBtnGlobalAddDynamicTag) { $Ctrl.EdBtnGlobalAddDynamicTag.IsEnabled = $canAddMeta }
+
+                # 4. TRASH (Contextual Deletion)
                 if ($Ctrl.EdBtnDel) { $Ctrl.EdBtnDel.IsEnabled = $hasSelection }
-            
-                # Global Perm (Only on Containers)
-                if ($Ctrl.EdBtnGlobalAddPerm) { $Ctrl.EdBtnGlobalAddPerm.IsEnabled = $canHaveChildren }
-            
-                # Global Tags (Containers + Publications + Links)
-                # Allowed on Folder, Link, InternalLink, Publication. Not on Meta.
-                $canHaveTags = ($hasSelection -and -not $isMeta)
-                if ($Ctrl.EdBtnGlobalAddTag) { $Ctrl.EdBtnGlobalAddTag.IsEnabled = $canHaveTags }
 
                 $Script:IsPopulating = $false
             }.GetNewClosure())
@@ -415,55 +448,7 @@ function Global:Register-EditorSelectionHandler {
                 }
             }.GetNewClosure())
     }
-    # 2b. DYNAMIC TAG HANDLERS
-    if ($Ctrl.EdTagDynamicCheck) {
-        $Ctrl.EdTagDynamicCheck.Add_Click({
-                if ($Script:IsPopulating) { return }
-                $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Tag") {
-                    $isDyn = [bool]$this.IsChecked
-                    $sel.Tag.IsDynamic = $isDyn
-                
-                    # Switch Visibility
-                    if ($isDyn) {
-                        if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Visible" }
-                        if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Collapsed" }
-                    
-                        # Force Load Rules if Empty
-                        if ($Ctrl.EdTagSourceFormBox.Items.Count -eq 0) {
-                            $rules = Get-AppNamingRules
-                            $Ctrl.EdTagSourceFormBox.ItemsSource = $rules
-                        }
-                    }
-                    else {
-                        if ($Ctrl.EdTagDynamicPanel) { $Ctrl.EdTagDynamicPanel.Visibility = "Collapsed" }
-                        if ($Ctrl.EdTagStaticPanel) { $Ctrl.EdTagStaticPanel.Visibility = "Visible" }
-                    }
-                }
-            }.GetNewClosure())
-    }
-    
-    if ($Ctrl.EdTagSourceFormBox) {
-        $Ctrl.EdTagSourceFormBox.Add_SelectionChanged({
-                if ($Script:IsPopulating) { return }
-                $sel = $Ctrl.EdTree.SelectedItem
-                $rule = $this.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Tag" -and $rule) {
-                    $sel.Tag.SourceForm = $rule.RuleId
-                
-                    # Load Variables
-                    try {
-                        $json = $rule.DefinitionJson | ConvertFrom-Json
-                        $vars = $json.Layout | Where-Object { $_.Type -ne "Label" } | Select-Object -ExpandProperty Name
-                        if ($Ctrl.EdTagSourceVarBox) {
-                            $Ctrl.EdTagSourceVarBox.ItemsSource = $vars
-                            $Ctrl.EdTagSourceVarBox.SelectedIndex = -1
-                        }
-                    }
-                    catch { }
-                }
-            }.GetNewClosure())
-    }
+    # 2b. DYNAMIC TAG HANDLERS (OLD - MOVED/CLEANED)
     
     if ($Ctrl.EdTagSourceVarBox) {
         $Ctrl.EdTagSourceVarBox.Add_SelectionChanged({
@@ -779,7 +764,16 @@ function Global:Register-EditorSelectionHandler {
                             if ($j.PSObject.Properties['Layout']) {
                                 $hasMeta = @($j.Layout) | Where-Object { $_.IsMetadata -eq $true } | Select-Object -First 1
                                 if ($hasMeta) { 
-                                    $filteredRules.Add($r)
+                                    # FIX: Create clean object for WPF Binding
+                                    $displayName = if (-not [string]::IsNullOrWhiteSpace($r.DisplayName)) { $r.DisplayName } elseif ($j.PSObject.Properties['FormName'] -and $j.FormName) { $j.FormName } else { $r.RuleId }
+                                    $description = if (-not [string]::IsNullOrWhiteSpace($r.Description)) { $r.Description } else { $j.Description }
+                                    
+                                    $filteredRules.Add([PSCustomObject]@{
+                                            RuleId         = $r.RuleId
+                                            DisplayName    = $displayName
+                                            Description    = $description
+                                            DefinitionJson = $r.DefinitionJson
+                                        })
                                 }
                             }
                         }
@@ -790,8 +784,24 @@ function Global:Register-EditorSelectionHandler {
                 }
                 Write-Warning "[DynamicTag] Filtered result: $($filteredRules.Count) rules retained."
 
-                $this.DisplayMemberPath = "RuleId"
-                $this.ItemsSource = $filteredRules
+                if ($this) {
+                    $this.DisplayMemberPath = "DisplayName"
+                    $this.ItemsSource = $filteredRules
+                }
+            }.GetNewClosure())
+    }
+
+    # INFO BUTTON (Show Description)
+    if ($Ctrl.EdDynamicTagInfoButton) {
+        $Ctrl.EdDynamicTagInfoButton.Add_Click({
+                $rule = $Ctrl.EdDynamicTagSourceFormBox.SelectedItem
+                if ($rule) {
+                    $msg = if ($rule.Description) { $rule.Description } else { "Aucune description disponible." }
+                    [System.Windows.MessageBox]::Show($msg, "Description du Formulaire ($($rule.DisplayName))", "OK", "Information")
+                }
+                else {
+                    [System.Windows.MessageBox]::Show("Veuillez sélectionner un formulaire d'abord.", "Info", "OK", "Information")
+                }
             }.GetNewClosure())
     }
 
@@ -836,6 +846,107 @@ function Global:Register-EditorSelectionHandler {
                     }
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                     if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
+            }.GetNewClosure())
+    }
+
+    # --- SUPPRESSION DOSSIER ---
+    if ($Ctrl.EdFolderDeleteButton) {
+        $Ctrl.EdFolderDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Folder") {
+                    if ([System.Windows.MessageBox]::Show("Supprimer ce dossier ?", "Confirmation", "YesNo", "Question") -ne 'Yes') { return }
+                    $p = $sel.Parent
+                    if ($p -is [System.Windows.Controls.TreeViewItem]) { $p.Items.Remove($sel) }
+                    elseif ($Ctrl.EdTree.Items.Contains($sel)) { $Ctrl.EdTree.Items.Remove($sel) }
+                    
+                    if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
+            }.GetNewClosure())
+    }
+
+    # --- SUPPRESSION PUBLICATION ---
+    if ($Ctrl.EdPubDeleteButton) {
+        $Ctrl.EdPubDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Publication") {
+                    $parent = $sel.Parent
+                    if ($parent -is [System.Windows.Controls.TreeViewItem]) { $parent.Items.Remove($sel) }
+                    
+                    if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
+            }.GetNewClosure())
+    }
+
+    # --- SUPPRESSION LIEN INTERNE ---
+    if ($Ctrl.EdInternalLinkDeleteButton) {
+        $Ctrl.EdInternalLinkDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "InternalLink") {
+                    $p = $sel.Parent
+                    if ($p -is [System.Windows.Controls.TreeViewItem]) { $p.Items.Remove($sel) }
+                    elseif ($Ctrl.EdTree.Items.Contains($sel)) { $Ctrl.EdTree.Items.Remove($sel) }
+                    
+                    if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
+            }.GetNewClosure())
+    }
+
+    # --- SUPPRESSION LIEN EXTERNE ---
+    if ($Ctrl.EdLinkDeleteButton) {
+        $Ctrl.EdLinkDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "Link") {
+                    $parent = $sel.Parent
+                    if ($parent -is [System.Windows.Controls.TreeViewItem]) { $parent.Items.Remove($sel) }
+                    else { $Ctrl.EdTree.Items.Remove($sel) }
+                    
+                    if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
+            }.GetNewClosure())
+    }
+
+    # --- SUPPRESSION FICHIER ---
+    if ($Ctrl.EdFileDeleteButton) {
+        $Ctrl.EdFileDeleteButton.Add_Click({
+                $sel = $Ctrl.EdTree.SelectedItem
+                if ($sel -and $sel.Tag.Type -eq "File") {
+                    $parent = $sel.Parent
+                    if ($parent -is [System.Windows.Controls.TreeViewItem]) { $parent.Items.Remove($sel) }
+                    
+                    if ($Ctrl.EdPanelFile) { $Ctrl.EdPanelFile.Visibility = "Collapsed" }
+                    if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                }
+            }.GetNewClosure())
+    }
+    
+    # --- FETCH FILE INFO ---
+    if ($Ctrl.EdFileFetchInfoButton) {
+        $Ctrl.EdFileFetchInfoButton.Add_Click({
+                $url = $Ctrl.EdFileUrlBox.Text
+                if (-not [string]::IsNullOrWhiteSpace($url)) {
+                    try {
+                        $uri = [System.Uri]$url
+                        $fileName = [System.IO.Path]::GetFileName($uri.LocalPath)
+                        if (-not [string]::IsNullOrWhiteSpace($fileName)) {
+                            $Ctrl.EdFileNameBox.Text = $fileName
+                            # Trigger update in tree
+                            $sel = $Ctrl.EdTree.SelectedItem
+                            if ($sel -and $sel.Tag -and $sel.Tag.Type -eq "File") {
+                                $sel.Tag.Name = $fileName
+                                if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) {
+                                    $sel.Header.Children[1].Text = $fileName
+                                }
+                            }
+                        }
+                    }
+                    catch {
+                        [System.Windows.MessageBox]::Show("URL invalide ou impossible d'extraire le nom.", "Erreur", "OK", "Error")
+                    }
                 }
             }.GetNewClosure())
     }

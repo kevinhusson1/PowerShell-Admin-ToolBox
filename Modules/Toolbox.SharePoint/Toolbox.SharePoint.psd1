@@ -38,6 +38,13 @@
         'Set-AppSPPermission',
         'Test-AppSPDrift',
         'Test-AppSPModel',
-        'New-AppGraphSPStructure'
+        'New-AppGraphSPStructure',
+        'Find-AppGraphFolderByTag',
+        'Get-AppGraphListDriveId',
+        'Get-AppGraphSiteId',
+        'New-AppGraphContentType',
+        'New-AppGraphFolder',
+        'New-AppGraphSiteColumn',
+        'Set-AppGraphListItemMetadata'
     )
 }

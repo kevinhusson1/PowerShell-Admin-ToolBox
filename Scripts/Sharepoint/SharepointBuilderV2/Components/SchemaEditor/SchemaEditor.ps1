@@ -106,26 +106,26 @@ function Register-SchemaEditorEvents {
             }
             $btnDelete.Tag = @{ Container = $ColumnsContainer; Row = $rowGrid }
             $btnDelete.add_Click({
-                if ($_) { $_.Handled = $true }
-                $res = [System.Windows.MessageBox]::Show(
-                    "Êtes-vous sûr de vouloir supprimer cette colonne du modèle SharePoint ?",
-                    "Confirmation de suppression",
-                    "YesNo",
-                    "Warning"
-                )
-                if ($res -eq "Yes") {
-                    $ctx = $this.Tag
-                    $ctx.Container.Items.Remove($ctx.Row)
-                }
-            })
-        [System.Windows.Controls.Grid]::SetColumn($btnDelete, 3)
+                    if ($_) { $_.Handled = $true }
+                    $res = [System.Windows.MessageBox]::Show(
+                        "Êtes-vous sûr de vouloir supprimer cette colonne du modèle SharePoint ?",
+                        "Confirmation de suppression",
+                        "YesNo",
+                        "Warning"
+                    )
+                    if ($res -eq "Yes") {
+                        $ctx = $this.Tag
+                        $ctx.Container.Items.Remove($ctx.Row)
+                    }
+                })
+            [System.Windows.Controls.Grid]::SetColumn($btnDelete, 3)
 
-        $rowGrid.Children.Add($txtName) | Out-Null
-        $rowGrid.Children.Add($cbType) | Out-Null
-        $rowGrid.Children.Add($chkIndexable) | Out-Null
-        $rowGrid.Children.Add($btnDelete) | Out-Null
+            $rowGrid.Children.Add($txtName) | Out-Null
+            $rowGrid.Children.Add($cbType) | Out-Null
+            $rowGrid.Children.Add($chkIndexable) | Out-Null
+            $rowGrid.Children.Add($btnDelete) | Out-Null
 
-        $ColumnsContainer.Items.Add($rowGrid) | Out-Null
+            $ColumnsContainer.Items.Add($rowGrid) | Out-Null
         }.GetNewClosure())
 
     # Nouveau modèle
@@ -140,7 +140,12 @@ function Register-SchemaEditorEvents {
     $BtnSave.add_Click({
             $name = $TxtSchemaName.Text
             if ([string]::IsNullOrWhiteSpace($name)) {
-                [System.Windows.MessageBox]::Show("Le nom du modèle est requis.", "Erreur", "OK", "Warning")
+                [System.Windows.MessageBox]::Show("Le nom du schéma est requis.", "Erreur", "OK", "Warning")
+                return
+            }
+
+            if ($ColumnsContainer.Items.Count -eq 0) {
+                [System.Windows.MessageBox]::Show("Le schéma doit contenir au moins une colonne.", "Erreur", "OK", "Warning")
                 return
             }
         
@@ -169,8 +174,16 @@ function Register-SchemaEditorEvents {
                 $json = "[]"
             }
         
-            # Générer l'ID à partir du nom (snake_case)
-            $schemaId = ($name -replace '[^a-zA-Z0-9]', '_').ToLower()
+            # v4.20 : Utilisation d'un GUID pour les nouveaux schémas
+            $schemaId = $null
+            if ($CbSchemas.SelectedItem) {
+                # On garde l'ID existant si on modifie
+                $schemaId = $CbSchemas.SelectedItem.Tag
+            }
+            else {
+                # Nouveau : GUID unique
+                $schemaId = [guid]::NewGuid().ToString()
+            }
         
             try {
                 Set-AppSPFolderSchema -SchemaId $schemaId -DisplayName $name -Description $TxtSchemaDesc.Text -ColumnsJson $json

@@ -7,6 +7,7 @@ function Set-AppSPTemplate {
         [Parameter(Mandatory)] [string]$DisplayName,
         [string]$Description,
         [string]$Category = "Custom",
+        [string]$NamingRuleId = $null,
         [Parameter(Mandatory)] [string]$StructureJson
     )
 
@@ -16,9 +17,9 @@ function Set-AppSPTemplate {
 
         $query = @"
             INSERT OR REPLACE INTO sp_templates 
-            (TemplateId, DisplayName, Description, Category, StructureJson, DateModified) 
+            (TemplateId, DisplayName, Description, Category, NamingRuleId, StructureJson, DateModified) 
             VALUES 
-            (@TemplateId, @DisplayName, @Description, @Category, @StructureJson, @DateModified);
+            (@TemplateId, @DisplayName, @Description, @Category, @NamingRuleId, @StructureJson, @DateModified);
 "@
         
         $sqlParams = @{
@@ -26,6 +27,7 @@ function Set-AppSPTemplate {
             DisplayName   = $DisplayName
             Description   = $Description
             Category      = $Category
+            NamingRuleId  = $NamingRuleId
             StructureJson = $StructureJson
             DateModified  = $date
         }

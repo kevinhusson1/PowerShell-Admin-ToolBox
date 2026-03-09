@@ -31,6 +31,8 @@ function Global:Register-EditorActionHandlers {
     $ResetUI = {
         if ($Ctrl.EdTree) { $Ctrl.EdTree.Items.Clear() }
         if ($Ctrl.EdNameBox) { $Ctrl.EdNameBox.Text = "" }
+        if ($Ctrl.EditorDisplayNameBox) { $Ctrl.EditorDisplayNameBox.Text = "" }
+        if ($Ctrl.EditorDescriptionBox) { $Ctrl.EditorDescriptionBox.Text = "" }
         # Reset inputs
         if ($Ctrl.EdPermIdentityBox) { $Ctrl.EdPermIdentityBox.Text = "" }
         if ($Ctrl.EdTagColumnBox) { $Ctrl.EdTagColumnBox.SelectedIndex = -1; $Ctrl.EdTagColumnBox.ItemsSource = $null }
@@ -529,14 +531,20 @@ function Global:Register-EditorActionHandlers {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if (-not $sel) { [System.Windows.MessageBox]::Show("Sélectionnez un élément dans l'arbre.", "Info", "OK", "Information"); return }
             
-                # Validation Type
-                if ($sel.Tag.Type -eq "Link" -or $sel.Tag.Type -eq "InternalLink") {
-                    [System.Windows.MessageBox]::Show("Les permissions ne sont pas gérées sur les raccourcis.", "Info", "OK", "Information")
+                $target = $sel
+                # Validation Meta (If selecting a meta item, add to its parent)
+                if ($sel.Tag.Type -eq "Permission" -or $sel.Tag.Type -eq "Tag" -or $sel.Name -eq "MetaItem") {
+                    $target = $sel.Parent
+                }
+
+                # Validation Type Final
+                if ($target -isnot [System.Windows.Controls.TreeViewItem]) {
+                    [System.Windows.MessageBox]::Show("Action impossible à ce niveau.", "Info", "OK", "Information")
                     return
                 }
-                # Validation Meta (Impossible d'ajouter une perm sur une perm/tag)
-                if ($sel.Tag.Type -eq "Permission" -or $sel.Tag.Type -eq "Tag" -or $sel.Name -eq "MetaItem") {
-                    [System.Windows.MessageBox]::Show("Impossible d'ajouter une permission à ce niveau.", "Info", "OK", "Information")
+                
+                if ($target.Tag.Type -eq "Link" -or $target.Tag.Type -eq "InternalLink") {
+                    [System.Windows.MessageBox]::Show("Les permissions ne sont pas gérées sur les raccourcis.", "Info", "OK", "Information")
                     return
                 }
 
@@ -544,12 +552,12 @@ function Global:Register-EditorActionHandlers {
                 $newNode = New-EditorPermNode -Email "user@domaine.com" -Level "Read"
             
                 # Ajout à l'arbre
-                $sel.Items.Add($newNode) | Out-Null
-                $sel.IsExpanded = $true
+                $target.Items.Add($newNode) | Out-Null
+                $target.IsExpanded = $true
                 $newNode.IsSelected = $true
             
                 # Update Badges Parent
-                Update-EditorBadges -TreeItem $sel
+                Update-EditorBadges -TreeItem $target
             }.GetNewClosure())
     }
 
@@ -558,9 +566,14 @@ function Global:Register-EditorActionHandlers {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if (-not $sel) { [System.Windows.MessageBox]::Show("Sélectionnez un élément dans l'arbre.", "Info", "OK", "Information"); return }
             
-                # Validation Meta
+                $target = $sel
+                # Validation Meta (If selecting a meta item, add to its parent)
                 if ($sel.Tag.Type -eq "Permission" -or $sel.Tag.Type -eq "Tag" -or $sel.Name -eq "MetaItem") {
-                    [System.Windows.MessageBox]::Show("Impossible d'ajouter un tag à ce niveau.", "Info", "OK", "Information")
+                    $target = $sel.Parent
+                }
+                
+                if ($target -isnot [System.Windows.Controls.TreeViewItem]) {
+                    [System.Windows.MessageBox]::Show("Action impossible à ce niveau.", "Info", "OK", "Information")
                     return
                 }
             
@@ -568,12 +581,12 @@ function Global:Register-EditorActionHandlers {
                 $newNode = New-EditorTagNode -Name "NomColonne" -Value "Valeur" -IsDynamic $false
             
                 # Ajout à l'arbre
-                $sel.Items.Add($newNode) | Out-Null
-                $sel.IsExpanded = $true
+                $target.Items.Add($newNode) | Out-Null
+                $target.IsExpanded = $true
                 $newNode.IsSelected = $true
             
                 # Update Badges Parent
-                Update-EditorBadges -TreeItem $sel
+                Update-EditorBadges -TreeItem $target
             }.GetNewClosure())
     }
 
@@ -582,25 +595,29 @@ function Global:Register-EditorActionHandlers {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if (-not $sel) { [System.Windows.MessageBox]::Show("Sélectionnez un élément dans l'arbre.", "Info", "OK", "Information"); return }
             
-                # Validation Meta
+                $target = $sel
+                # Validation Meta (If selecting a meta item, add to its parent)
                 if ($sel.Tag.Type -eq "Permission" -or $sel.Tag.Type -eq "Tag" -or $sel.Name -eq "MetaItem") {
-                    [System.Windows.MessageBox]::Show("Impossible d'ajouter un tag à ce niveau.", "Info", "OK", "Information")
+                    $target = $sel.Parent
+                }
+                
+                if ($target -isnot [System.Windows.Controls.TreeViewItem]) {
+                    [System.Windows.MessageBox]::Show("Action impossible à ce niveau.", "Info", "OK", "Information")
                     return
                 }
             
                 # Création NOEUD Tag (DYNAMIC)
                 $newNode = New-EditorTagNode -Name "NomColonne" -Value "DYNAMIC" -IsDynamic $true
-                # $newNode.Tag.IsDynamic = $true # Déjà fait par paramètre
                 $newNode.Tag.SourceForm = ""
                 $newNode.Tag.SourceVar = ""
             
                 # Ajout à l'arbre
-                $sel.Items.Add($newNode) | Out-Null
-                $sel.IsExpanded = $true
+                $target.Items.Add($newNode) | Out-Null
+                $target.IsExpanded = $true
                 $newNode.IsSelected = $true
             
                 # Update Badges Parent
-                Update-EditorBadges -TreeItem $sel
+                Update-EditorBadges -TreeItem $target
             }.GetNewClosure())
     }
 
@@ -615,10 +632,12 @@ function Global:Register-EditorActionHandlers {
                 if ($schema) {
                     $Ctrl.EdNewPopupConfirmBtn.IsEnabled = $true
                     $forms = @(@(Get-AppNamingRules) | Where-Object { 
-                        ($_.DefinitionJson -match '"TargetSchemaId": *"'+$schema.SchemaId+'"') -or ($_.DefinitionJson -match $schema.SchemaId)
-                    })
+                            ($_.DefinitionJson -match '"TargetSchemaId": *"' + $schema.SchemaId + '"') -or ($_.DefinitionJson -match $schema.SchemaId)
+                        })
                     $Ctrl.EdNewPopupFormCb.ItemsSource = $forms
-                } else {
+                    $Ctrl.EdNewPopupFormCb.DisplayMemberPath = "DisplayName"
+                }
+                else {
                     $Ctrl.EdNewPopupConfirmBtn.IsEnabled = $false
                     $Ctrl.EdNewPopupFormCb.ItemsSource = @()
                 }
@@ -642,9 +661,10 @@ function Global:Register-EditorActionHandlers {
                 $Ctrl.EdTargetSchemaDisplay.Tag = $schema.SchemaId
                 
                 if ($form) {
-                    $Ctrl.EdTargetFormDisplay.Text = $form.RuleId
+                    $Ctrl.EdTargetFormDisplay.Text = $form.DisplayName
                     $Ctrl.EdTargetFormDisplay.Tag = $form.RuleId
-                } else {
+                }
+                else {
                     $Ctrl.EdTargetFormDisplay.Text = "Aucun"
                     $Ctrl.EdTargetFormDisplay.Tag = $null
                 }
@@ -666,6 +686,7 @@ function Global:Register-EditorActionHandlers {
             
             $schemas = @(Get-AppSPFolderSchema)
             $Ctrl.EdNewPopupSchemaCb.ItemsSource = $schemas
+            $Ctrl.EdNewPopupSchemaCb.DisplayMemberPath = "DisplayName"
             $Ctrl.EdNewPopupSchemaCb.SelectedIndex = -1
             $Ctrl.EdNewPopupFormCb.ItemsSource = @()
             $Ctrl.EdNewPopupConfirmBtn.IsEnabled = $false
@@ -684,22 +705,25 @@ function Global:Register-EditorActionHandlers {
                 $parsed = $selectedTpl.StructureJson | ConvertFrom-Json
                 if ($parsed.TargetSchemaId) { $schemaId = $parsed.TargetSchemaId }
                 if ($parsed.TargetFormId) { $formId = $parsed.TargetFormId }
-            } catch {}
+            }
+            catch {}
             
             if ($schemaId) {
                 $schemaObj = @(Get-AppSPFolderSchema) | Where-Object { $_.SchemaId -eq $schemaId } | Select-Object -First 1
                 if ($schemaObj) { $Ctrl.EdTargetSchemaDisplay.Text = $schemaObj.DisplayName } else { $Ctrl.EdTargetSchemaDisplay.Text = "Introuvable ($schemaId)" }
                 $Ctrl.EdTargetSchemaDisplay.Tag = $schemaId
-            } else {
+            }
+            else {
                 $Ctrl.EdTargetSchemaDisplay.Text = "Non lié (Legacy)"
                 $Ctrl.EdTargetSchemaDisplay.Tag = $null
             }
             
             if ($formId) {
                 $formObj = @(Get-AppNamingRules) | Where-Object { $_.RuleId -eq $formId } | Select-Object -First 1
-                if ($formObj) { $Ctrl.EdTargetFormDisplay.Text = $formObj.RuleId } else { $Ctrl.EdTargetFormDisplay.Text = "Introuvable ($formId)" }
+                if ($formObj) { $Ctrl.EdTargetFormDisplay.Text = $formObj.DisplayName } else { $Ctrl.EdTargetFormDisplay.Text = "Introuvable ($formId)" }
                 $Ctrl.EdTargetFormDisplay.Tag = $formId
-            } else {
+            }
+            else {
                 $Ctrl.EdTargetFormDisplay.Text = "Aucun"
                 $Ctrl.EdTargetFormDisplay.Tag = $null
             }
@@ -712,6 +736,9 @@ function Global:Register-EditorActionHandlers {
                 Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree 
                 Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
             }
+
+            if ($Ctrl.EditorDisplayNameBox) { $Ctrl.EditorDisplayNameBox.Text = $selectedTpl.DisplayName }
+            if ($Ctrl.EditorDescriptionBox) { $Ctrl.EditorDescriptionBox.Text = $selectedTpl.Description }
                 
             if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
             if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
@@ -735,7 +762,18 @@ function Global:Register-EditorActionHandlers {
             $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree -TargetSchemaId $Ctrl.EdTargetSchemaDisplay.Tag -TargetFormId $Ctrl.EdTargetFormDisplay.Tag
         
             $currentId = $Ctrl.EdLoadCb.Tag
-            $currentName = if ($Ctrl.EdLoadCb.SelectedItem) { $Ctrl.EdLoadCb.SelectedItem.DisplayName } else { "" }
+            $currentName = $Ctrl.EditorDisplayNameBox.Text
+            $currentDesc = $Ctrl.EditorDescriptionBox.Text
+
+            if ([string]::IsNullOrWhiteSpace($currentName)) {
+                [System.Windows.MessageBox]::Show("Le nom du modèle est requis.", "Validation", "OK", "Warning")
+                return
+            }
+
+            if ([string]::IsNullOrWhiteSpace($currentDesc)) {
+                [System.Windows.MessageBox]::Show("La description du modèle est requise.", "Validation", "OK", "Warning")
+                return
+            }
 
             if ($currentId) {
                 $msg = "Le modèle '$currentName' est actuellement chargé.`n`nVoulez-vous écraser les modifications ?`n`nOUI : Écraser l'existant`nNON : Créer une copie (Enregistrer sous)`nANNULER : Ne rien faire"
@@ -744,25 +782,19 @@ function Global:Register-EditorActionHandlers {
                     'Cancel' { return }
                     'No' {
                         $currentId = $null
-                        Add-Type -AssemblyName Microsoft.VisualBasic
-                        $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom du nouveau modèle :", "Enregistrer une copie", "$currentName - Copie")
-                        if ([string]::IsNullOrWhiteSpace($newName)) { return }
-                        $currentName = $newName
+                        # On réutilise le nom actuel pour la copie si besoin
                     }
                 }
             }
 
             if (-not $currentId) {
-                if ([string]::IsNullOrWhiteSpace($currentName)) {
-                    Add-Type -AssemblyName Microsoft.VisualBasic
-                    $currentName = [Microsoft.VisualBasic.Interaction]::InputBox("Nom du nouveau modèle :", "Sauvegarder", "Mon Nouveau Modèle")
-                }
-                if ([string]::IsNullOrWhiteSpace($currentName)) { return }
+                # Nouveau modèle (GUID déjà généré ou à générer)
                 $currentId = [Guid]::NewGuid().ToString()
             }
 
             try {
-                Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description "Modèle personnalisé" -StructureJson $json
+                $targetFormId = $Ctrl.EdTargetFormDisplay.Tag
+                Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description $currentDesc -NamingRuleId $targetFormId -StructureJson $json
             
                 & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
 

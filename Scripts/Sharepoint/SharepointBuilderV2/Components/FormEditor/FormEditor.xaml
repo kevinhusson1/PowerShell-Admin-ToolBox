@@ -2,13 +2,15 @@
                     <Grid Background="{DynamicResource BackgroundLightBrush}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <!-- Toolbar -->
+                            <!-- 0: Toolbar -->
+                            <RowDefinition Height="Auto"/>
+                            <!-- 1: Identity Card (NEW) -->
                             <RowDefinition Height="*"/>
-                            <!-- Workspace -->
+                            <!-- 2: Workspace -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Preview -->
+                            <!-- 3: Preview -->
                             <RowDefinition Height="Auto"/>
-                            <!-- Footer -->
+                            <!-- 4: Footer -->
                         </Grid.RowDefinitions>
 
                         <!-- 1. BARRE D'OUTILS -->
@@ -43,8 +45,32 @@
                             </Grid>
                         </Border>
 
+                        <!-- 1. IDENTITÉ DU FORMULAIRE (NOUVEAU v4.20) -->
+                        <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="25,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Label Nom -->
+                                    <ColumnDefinition Width="1*"/>
+                                    <!-- TextBox Nom -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Espace -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <!-- Label Desc -->
+                                    <ColumnDefinition Width="2*"/>
+                                    <!-- TextBox Desc -->
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="Nom du formulaire :" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,10,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBox x:Name="FormDisplayNameBox" Grid.Column="1" Style="{DynamicResource StandardTextBoxStyle}" Height="38" VerticalContentAlignment="Center"/>
+
+                                <TextBlock Grid.Column="3" Text="Description :" VerticalAlignment="Center" FontWeight="SemiBold" Margin="25,0,10,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBox x:Name="FormDescriptionBox" Grid.Column="4" Style="{DynamicResource StandardTextBoxStyle}" Height="38" VerticalContentAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
                         <!-- 2. ZONE DE TRAVAIL -->
-                        <Grid Grid.Row="1" Margin="25">
+                        <Grid Grid.Row="2" Margin="25">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*"/>
                                 <!-- Liste Champs -->
@@ -200,19 +226,19 @@
                                     </Grid>
                                 </Grid>
                             </Border>
-
-                            <!-- Overlay de Verrouillage de l'espace de travail -->
-                            <Border x:Name="FormWorkspaceLockOverlay" Grid.ColumnSpan="3" Background="#EEFFFFFF" Visibility="Visible" CornerRadius="10">
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <TextBlock Text="🔒" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15" Opacity="0.8"/>
-                                    <TextBlock Text="Espace de travail verrouillé" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Veuillez charger une règle existante ou créer un nouveau formulaire (bouton en bas à droite) pour débloquer l'éditeur." TextWrapping="Wrap" TextAlignment="Center" MaxWidth="400" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                </StackPanel>
-                            </Border>
                         </Grid>
 
+                        <!-- Overlay de Verrouillage de l'espace de travail (DÉPLACÉ ICI pour tout couvrir) -->
+                        <Border x:Name="FormWorkspaceLockOverlay" Grid.Row="1" Grid.RowSpan="2" Background="#EEFFFFFF" Visibility="Visible" Panel.ZIndex="10">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="🔒" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,15" Opacity="0.8"/>
+                                <TextBlock Text="Espace de travail verrouillé" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                                <TextBlock Text="Veuillez charger une règle existante ou créer un nouveau formulaire (bouton en bas à droite) pour débloquer l'éditeur." TextWrapping="Wrap" TextAlignment="Center" MaxWidth="400" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+
                         <!-- 3. PREVIEW LIVE -->
-                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
+                        <Border Grid.Row="3" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -236,7 +262,7 @@
 
                         </Border>
                         <!-- Footer Formulaire -->
-                        <Border Grid.Row="3" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
+                        <Border Grid.Row="4" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -254,7 +280,7 @@
                         </Border>
 
                         <!-- Overlay: Popup Création Nouveau Formulaire (Schéma Cible) -->
-                        <Grid x:Name="FormNewPopupOverlay" Grid.RowSpan="4" Background="#AA000000" Visibility="Collapsed" Panel.ZIndex="100">
+                        <Grid x:Name="FormNewPopupOverlay" Grid.RowSpan="5" Background="#AA000000" Visibility="Collapsed" Panel.ZIndex="100">
                             <Border Background="{DynamicResource WhiteBrush}" CornerRadius="8" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="30" Width="450" MaxWidth="600" Effect="{DynamicResource CardShadow}">
                                 <StackPanel>
                                     <TextBlock Text="✨ Nouveau Formulaire de Destination" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>

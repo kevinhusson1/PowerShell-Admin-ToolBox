@@ -45,7 +45,7 @@ function Register-TemplateEvents {
         $rules = @(Get-AppNamingRules)
         if ($Ctrl.CbFolderTemplates) {
             $Ctrl.CbFolderTemplates.ItemsSource = $rules
-            $Ctrl.CbFolderTemplates.DisplayMemberPath = "RuleId"
+            $Ctrl.CbFolderTemplates.DisplayMemberPath = "DisplayName"
             
             # Sélection par défaut (la première règle)
             # if ($rules.Count -gt 0) { $Ctrl.CbFolderTemplates.SelectedIndex = 0 }
@@ -115,7 +115,7 @@ function Register-TemplateEvents {
                     $freshRules = @(Get-AppNamingRules)
                 
                     $this.ItemsSource = $freshRules
-                    $this.DisplayMemberPath = "RuleId"
+                    $this.DisplayMemberPath = "DisplayName"
 
                     if ($current) {
                         $match = $freshRules | Where-Object { $_.RuleId -eq $current.RuleId } | Select-Object -First 1
@@ -141,7 +141,7 @@ function Register-TemplateEvents {
                 # LOG USER
                 if ($GetLoc) {
                     $fmt = & $GetLoc "sp_builder.log_rule_selected"
-                    $msg = $fmt -f $rule.RuleId
+                    $msg = $fmt -f $rule.DisplayName
                     Write-AppLog -Message $msg -Level Info -RichTextBox $Ctrl.LogBox
                 }
 
@@ -192,9 +192,9 @@ function Register-TemplateEvents {
                         
                             # Branchement de l'événement de mise à jour
                             $c.Add_SelectionChanged({ 
-                                Write-Verbose "[FormCtrl] SelectionChanged - Triggering PreviewLogic"
-                                & $PreviewLogic 
-                            }.GetNewClosure())
+                                    Write-Verbose "[FormCtrl] SelectionChanged - Triggering PreviewLogic"
+                                    & $PreviewLogic 
+                                }.GetNewClosure())
                             $Ctrl.PanelForm.Children.Add($c)
                         }
                     }

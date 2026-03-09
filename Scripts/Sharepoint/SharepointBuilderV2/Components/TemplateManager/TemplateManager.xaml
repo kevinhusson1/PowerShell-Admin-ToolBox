@@ -1,486 +1,394 @@
-                <TabItem xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Header="##loc:sp_builder.tab_editor_template##">
-                    <Grid Background="{DynamicResource BackgroundLightBrush}">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <!-- Toolbar -->
-                            <RowDefinition Height="*"/>
-                            <!-- Workspace -->
-                            <RowDefinition Height="Auto"/>
-                            <!-- Footer -->
-                        </Grid.RowDefinitions>
-
-                        <!-- 1. BARRE D'OUTILS & CONTEXTE -->
-                        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,15">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <!-- Gestion Fichier -->
-                                    <ColumnDefinition Width="*"/>
-                                    <!-- Espace -->
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Gestion BDD -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                    <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="##loc:sp_builder.label_existing_template##" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                        <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32" ToolTip="Sélectionner un modèle existant"/>
-                                    </StackPanel>
-                                    <Button x:Name="EditorLoadButton" Content="##loc:sp_builder.btn_load##" Style="{DynamicResource SecondaryButtonStyle}" Height="38" VerticalAlignment="Bottom" ToolTip="Charger ce modèle dans l'éditeur"/>
-                                    <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="38" Width="40" Padding="0" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
-                                    
-                                    <!-- Liaison Schéma & Formulaire -->
-                                    <Border Margin="30,0,0,0" Padding="15,0" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderLightBrush}" VerticalAlignment="Center">
-                                        <StackPanel>
-                                            <TextBlock Text="Schéma Lié :" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            <TextBlock x:Name="EditorTargetSchemaDisplay" Text="Non lié (Legacy)" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Border Margin="15,0,0,0" Padding="15,0" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderLightBrush}" VerticalAlignment="Center">
-                                        <StackPanel>
-                                            <TextBlock Text="Formulaire cible :" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            <TextBlock x:Name="EditorTargetFormDisplay" Text="Aucun" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- 2. ZONE DE TRAVAIL -->
-                        <Grid Grid.Row="1" Margin="25">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="1*"/>
-                                <!-- Arbre -->
-                                <ColumnDefinition Width="25"/>
-                                <!-- Espace -->
-                                <ColumnDefinition Width="1.5*"/>
-                                <!-- Propriétés -->
-                            </Grid.ColumnDefinitions>
-
-                            <!-- COLONNE GAUCHE : STRUCTURE -->
-                            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <!-- Header Arbre -->
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
-                                        <Grid>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="📂" Margin="0,0,10,0"/>
-                                                <TextBlock Text="##loc:sp_builder.label_template_structure##" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- TreeView Éditable -->
-                                    <TreeView x:Name="EditorTreeView" Grid.Row="1" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Margin="5"/>
-
-                                    <!-- Toolbar Arbre -->
-                                    <!-- Toolbar Arbre -->
-                                    <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="10" CornerRadius="0,0,15,15">
-                                        <Border.Resources>
-                                            <Style x:Key="ToolbarIconButtonStyle" TargetType="Button">
-                                                <Setter Property="Padding" Value="5"/>
-                                                <Setter Property="Height" Value="36"/>
-                                                <Setter Property="Width" Value="36"/>
-                                                <Setter Property="Margin" Value="0,0,5,5"/>
-                                                <Setter Property="BorderThickness" Value="1"/>
-                                                <Setter Property="BorderBrush" Value="#DDDDDD"/>
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
-                                                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#AAAAAA"/>
-                                                                    <!-- Slight darken effect -->
-                                                                    <Setter TargetName="Bd" Property="Effect">
-                                                                        <Setter.Value>
-                                                                            <DropShadowEffect ShadowDepth="0" Color="Gray" BlurRadius="5" Opacity="0.3"/>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </Trigger>
-                                                                <Trigger Property="IsEnabled" Value="False">
-                                                                    <Setter Property="Opacity" Value="0.3"/>
-                                                                    <Setter TargetName="Bd" Property="Background" Value="#F0F0F0"/>
-                                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#E0E0E0"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </Border.Resources>
-                                        
-                                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
-                                            <!-- RACINE (Jaune Pastel) -->
-                                            <Button x:Name="EditorAddRootButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#FFF9C4" ToolTip="##loc:sp_builder.tooltip_add_root##">
-                                                <Image x:Name="IconAddRoot" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- RACINE LIEN (Vert Pastel) -->
-                                            <Button x:Name="EditorAddRootLinkButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#DCEDC8" Margin="0,0,15,5" ToolTip="##loc:sp_builder.tooltip_add_root_link##">
-                                                <Image x:Name="IconAddRootLink" Stretch="Uniform"/>
-                                            </Button>
-                                            
-                                            <!-- ENFANT DOSSIER (Jaune très clair) -->
-                                            <Button x:Name="EditorAddChildButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#FFFDE7" ToolTip="##loc:sp_builder.tooltip_add_child##">
-                                                <Image x:Name="IconAddChild" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- ENFANT LIEN (Vert très clair) -->
-                                            <Button x:Name="EditorAddChildLinkButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#F1F8E9" ToolTip="##loc:sp_builder.tooltip_add_child_link##">
-                                                <Image x:Name="IconAddChildLink" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- ENFANT LIEN INTERNE (Cyan Pastel) -->
-                                            <Button x:Name="EditorAddChildInternalLinkButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#E0F2F1" BorderBrush="#80CBC4" ToolTip="##loc:sp_builder.tooltip_add_internal_link##">
-                                                <Image x:Name="IconAddInternalLink" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- PUBLICATION (Bleu Pastel) -->
-                                            <Button x:Name="EditorAddPubButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#E3F2FD" BorderBrush="#90CAF9" Margin="0,0,15,5" ToolTip="##loc:sp_builder.tooltip_add_publication##">
-                                                <Image x:Name="IconAddPub" Stretch="Uniform"/>
-                                            </Button>
-                                            
-                                            <!-- NEW: PERMISSION (Violet Pastel) -->
-                                            <Button x:Name="EditorGlobalAddPermButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#E8EAF6" BorderBrush="#C5CAE9" ToolTip="##loc:sp_builder.tooltip_add_permission##">
-                                                <Image x:Name="IconAddPerm" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- NEW: MÉTAGONNÉE/TAG (Indigot/Bleu Roi Pastel) - Utilisation tag.png -->
-                                            <Button x:Name="EditorGlobalAddTagButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#E1F5FE" BorderBrush="#B3E5FC" Margin="0,0,5,5" ToolTip="##loc:sp_builder.tooltip_add_tag##">
-                                                <Image x:Name="IconAddTag" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- NEW: DYNAMIC TAG (Teal Pastel) - Utilisation mark.png -->
-                                            <Button x:Name="EditorGlobalAddDynamicTagButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#E0F2F1" BorderBrush="#80CBC4" Margin="0,0,15,5" ToolTip="Ajouter un tag dynamique (issu d'un formulaire)">
-                                                <Image x:Name="IconAddDynamicTag" Stretch="Uniform"/>
-                                            </Button>
-
-                                            <!-- NEW: FILE COPY (Indigo/Blue Grey Pastel) -->
-                                            <Button x:Name="EditorAddFileButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#E8EAF6" BorderBrush="#9FA8DA" Margin="0,0,15,5" ToolTip="Copier un fichier depuis une URL">
-                                                <Image x:Name="IconAddFile" Stretch="Uniform"/>
-                                            </Button>
-                                            
-                                            <!-- SUPPRIMER (Rouge Pastel) -->
-                                            <Button x:Name="EditorDeleteButton" Style="{DynamicResource ToolbarIconButtonStyle}" Background="#FFEBEE" BorderBrush="#FFCDD2" ToolTip="##loc:sp_builder.tooltip_delete_item##">
-                                                <Image x:Name="IconDelete" Stretch="Uniform"/>
-                                            </Button>
-                                        </WrapPanel>
-                                    </Border>
-                                </Grid>
-                            </Border>
-
-                            <!-- COLONNE DROITE : INSPECTEUR -->
-                            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-
-                                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
-                                        <Grid>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="🛠️" Margin="0,0,10,0"/>
-                                                <TextBlock Text="##loc:sp_builder.label_folder_properties##" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Formulaire Propriétés -->
-                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
-                                        <StackPanel>
-
-                                            <!-- A. MODE DOSSIER -->
-                                            <StackPanel x:Name="EdPanelFolder">
-
-                                                <!-- 1. Identification -->
-                                                <TextBlock Text="##loc:sp_builder.label_folder_name##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EditorFolderNameTextBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du dossier dans SharePoint"/>
-
-                                                <!-- Metadata Techniques -->
-                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdFolderIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-                                                
-                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdFolderRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <!-- Permissions moved to TreeView (Child Nodes) -->
-
-                                            </StackPanel>
-
-                                            <!-- B. MODE PERMISSION -->
-                                            <StackPanel x:Name="EdPanelPerm" Visibility="Collapsed">
-                                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="👤" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="##loc:sp_builder.title_edit_permission##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="##loc:sp_builder.label_user_group_email##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPermIdentityBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Email de l'utilisateur ou nom du groupe SP"/>
-
-                                                <TextBlock Text="##loc:sp_builder.label_access_level##" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" ToolTip="Niveau d'autorisation (Read, Contribute, Full Control)"/>
-
-                                                <TextBlock Text="ID Parent (Attaché à) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPermParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <Button x:Name="EdPermDeleteButton" Content="##loc:sp_builder.btn_delete_permission##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- C. MODE TAG (STATIC) -->
-                                            <StackPanel x:Name="EdPanelTag" Visibility="Collapsed">
-                                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🏷️" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="##loc:sp_builder.title_edit_tag##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="##loc:sp_builder.label_column_name##" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdTagColumnBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" ToolTip="Nom de la colonne SharePoint ciblée" DisplayMemberPath="DisplayName"/>
-
-                                                <!-- Source Static -->
-                                                <StackPanel x:Name="EdTagStaticPanel">
-                                                    <TextBlock Text="##loc:sp_builder.label_value_term##" Style="{DynamicResource H4Style}"/>
-                                                    <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Valeur par défaut ou Terme de taxonomie"/>
-                                                </StackPanel>
-
-                                                <TextBlock Text="ID Parent (Attaché à) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdTagParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <Button x:Name="EdTagDeleteButton" Content="##loc:sp_builder.btn_delete_tag##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- C-bis. MODE DYNAMIC TAG (NEW) -->
-                                            <StackPanel x:Name="EdPropPanelDynamicTag" Visibility="Collapsed" Margin="0,0,0,20">
-                                                <Border Background="#FFF3E0" CornerRadius="4" Padding="10" Margin="0,0,0,15">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="⚡" Foreground="#E65100" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Propriétés du Tag Dynamique" Foreground="#E65100" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="Formulaire Source (ID ou Nom)" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdDynamicTagSourceFormBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" DisplayMemberPath="Name"/>
-
-                                                <TextBlock Text="ID Parent (Attaché à) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdDynamicTagParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <TextBlock Text="Variable Source (ID Champ)" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdDynamicTagSourceVarBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20"/>
-
-                                                <Button x:Name="EdDynamicTagDeleteButton" Content="Supprimer ce tag" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- D. MODE LINK -->
-                                            <StackPanel x:Name="EdPanelLink" Visibility="Collapsed">
-                                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🔗" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="##loc:sp_builder.title_edit_link##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
-
-                                                <!-- Metadata Techniques -->
-                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdLinkIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-                                                
-                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdLinkRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <TextBlock Text="##loc:sp_builder.label_target_url##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Adresse URL de destination"/>
-
-                                                <Button x:Name="EdLinkDeleteButton" Content="##loc:sp_builder.btn_delete_link##" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
-                                            </StackPanel>
-                                            
-                                            <!-- D-bis. MODE INTERNAL LINK (NEW) -->
-                                            <StackPanel x:Name="EdPanelInternalLink" Visibility="Collapsed">
-                                                <Border Background="#E0F2F1" CornerRadius="4" Padding="10" Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🔗" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Lien Interne" FontWeight="SemiBold" Foreground="#00695C"/>
-                                                        <TextBlock Text="↪️" Margin="5,0,0,0" FontSize="10" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdInternalLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Texte affiché pour le lien"/>
-
-                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdInternalLinkObjIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-                                                
-                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdInternalLinkRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <TextBlock Text="ID Cible (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdInternalLinkIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888"/>
-                                                
-                                                <TextBlock Text="Pour changer la cible, supprimez ce lien et recréez-le." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
-
-                                                <Button x:Name="EdInternalLinkDeleteButton" Content="Supprimer ce lien" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- G. MODE FILE COPY (NEW) -->
-                                            <StackPanel x:Name="EdPanelFile" Visibility="Collapsed">
-                                                <Border Background="#E8EAF6" CornerRadius="4" Padding="10" Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="📄" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="Copier un Fichier" FontWeight="SemiBold" Foreground="#3F51B5"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="URL du Fichier Source :" Style="{DynamicResource H4Style}"/>
-                                                <Grid Margin="0,5,0,20">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBox x:Name="EdFileUrlBox" Grid.Column="0" Text="{Binding SourceUrl, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,10,0" ToolTip="URL directe vers le fichier à copier"/>
-                                                    <Button x:Name="EdFileFetchInfoButton" Grid.Column="1" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Padding="0" ToolTip="Récupérer le nom du fichier depuis l'URL">
-                                                        <TextBlock Text="⬇" FontWeight="Bold"/>
-                                                    </Button>
-                                                </Grid>
-
-                                                <TextBlock Text="Nom du Fichier Cible :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdFileNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" ToolTip="Nom du fichier tel qu'il apparaîtra dans SharePoint"/>
-
-                                                <!-- Metadata Techniques -->
-                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdFileIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-                                                
-                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdFileRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <Button x:Name="EdFileDeleteButton" Content="Supprimer ce fichier" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,20,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- E. MODE PUBLICATION (NEW) -->
-                                            <StackPanel x:Name="EdPanelPub" Visibility="Collapsed">
-                                                <Border Background="#FFF3E0" CornerRadius="4" Padding="10" Margin="0,0,0,20">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🚀" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="##loc:sp_builder.title_edit_pub##" FontWeight="SemiBold" Foreground="#E65100"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Text="##loc:sp_builder.label_pub_name##" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
-
-                                                <!-- Metadata Techniques -->
-                                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPubIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-                                                
-                                                <TextBlock Text="Chemin Relatif (Calculé lors de la sauvegarde) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPubRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" Foreground="#888888" FontFamily="Consolas"/>
-
-                                                <TextBlock Text="##loc:sp_builder.label_pub_target_site##" Style="{DynamicResource H4Style}"/>
-                                                <ComboBox x:Name="EdPubSiteModeBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,5">
-                                                    <ComboBoxItem Content="##loc:sp_builder.opt_site_current##"/>
-                                                    <ComboBoxItem Content="##loc:sp_builder.opt_site_other##"/>
-                                                </ComboBox>
-                                                <TextBox x:Name="EdPubSiteUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,0,0,10" Visibility="Collapsed" Text="https://..."/>
-
-                                                <TextBlock Text="Chemin Cible (Bibliothèque/Dossier) :" Style="{DynamicResource H4Style}"/>
-                                                <TextBox x:Name="EdPubPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,5" ToolTip="Ex: /Documents Partages/Public"/>
-
-                                                <CheckBox x:Name="EdPubUseFormNameChk" Content="Ajouter le nom du dossier du formulaire sélectionné ?" Margin="0,0,0,5" IsChecked="True"/>
-                                                <CheckBox x:Name="EdPubUseFormMetaChk" Content="Appliquer les métadonnées du formulaire ?" Margin="0,0,0,15" IsChecked="False" ToolTip="Applique les métadonnées définies dans le formulaire sur ce dossier distant"/>
-
-
-
-                                                <Button x:Name="EdPubDeleteButton" Content="Supprimer la publication" Style="{DynamicResource StandardButtonStyle}" Foreground="{DynamicResource DangerBrush}" BorderBrush="{DynamicResource DangerBrush}" Background="Transparent" Margin="0,10,0,0"/>
-                                            </StackPanel>
-
-                                            <!-- F. GLOBAL TAGS (REMOVED - Use TreeView Nodes) -->
-                                            <StackPanel x:Name="EdPanelGlobalTags" Visibility="Collapsed"/>
-
-                                        </StackPanel>
-                                    </ScrollViewer>
-
-                                <!-- Overlay "Aucune sélection" -->
-                                    <Grid Grid.Row="1" x:Name="EdPanelNoSel" Background="{DynamicResource WhiteBrush}" Visibility="Visible">
-                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
-                                            <TextBlock Text="👆" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                            <TextBlock Text="##loc:sp_builder.msg_select_folder_tree##" FontSize="14"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-                            </Border>
-
-                            <!-- NEW: OVERLAY DE VERROUILLAGE (PHASE 3) -->
-                            <Border x:Name="EditorWorkspaceLockOverlay" Grid.ColumnSpan="3" Background="#EEFFFFFF" Panel.ZIndex="100">
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <TextBlock Text="🔒 Éditeur d'Architecture Verrouillé" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Veuillez d'abord charger un Modèle d'Architecture existant ou en créer un nouveau depuis la barre du bas." FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="400" TextAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- NEW: POPUP NOUVEAU TEMPLATE (PHASE 3) -->
-                            <Border x:Name="EditorNewPopupOverlay" Grid.ColumnSpan="3" Background="#AA000000" Panel.ZIndex="200" Visibility="Collapsed">
-                                <Border Background="White" CornerRadius="8" Padding="30" VerticalAlignment="Center" HorizontalAlignment="Center" Width="500" Effect="{DynamicResource DropShadowEffect}">
-                                    <StackPanel>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                                            <TextBlock Text="✨" Foreground="#29B6F6" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Nouvelle Architecture" Style="{DynamicResource DialogTitleStyle}" Margin="0"/>
-                                        </StackPanel>
-
-                                        <TextBlock Text="Une architecture complexe doit OBLIGATOIREMENT être rattachée à un Schéma de Dossier Avancé existant pour exploiter les tags ciblés." Style="{DynamicResource DialogSubtitleStyle}"/>
-                                        
-                                        <TextBlock Text="1. Sélectionnez le Schéma cible (Obligatoire) :" Style="{DynamicResource DialogLabelStyle}"/>
-                                        <ComboBox x:Name="EditorNewPopupSchemaCb" Style="{DynamicResource StandardComboBoxStyle}" Height="35" Margin="0,0,0,20" DisplayMemberPath="DisplayName"/>
-
-                                        <TextBlock Text="2. Sélectionnez la Règle / Formulaire de Destination (Optionnel) :" Style="{DynamicResource DialogLabelStyle}"/>
-                                        <ComboBox x:Name="EditorNewPopupFormCb" Style="{DynamicResource StandardComboBoxStyle}" Height="35" Margin="0,0,0,30" DisplayMemberPath="RuleId" ToolTip="Seules les règles rattachées au schéma choisi s'affichent."/>
-
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="10"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Button x:Name="EditorNewPopupCancelBtn" Grid.Column="0" Content="##loc:sp_builder.btn_cancel##" Style="{DynamicResource SecondaryButtonStyle}" Height="40" Background="White"/>
-                                            <Button x:Name="EditorNewPopupConfirmBtn" Grid.Column="2" Content="Créer l'Architecture" Style="{DynamicResource PrimaryButtonStyle}" Height="40" IsEnabled="False"/>
-                                        </Grid>
+<TabItem xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Header="##loc:sp_builder.tab_editor_template##">
+    <Grid Background="{DynamicResource BackgroundLightBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- 0: Toolbar -->
+            <RowDefinition Height="Auto"/> <!-- 1: Identity -->
+            <RowDefinition Height="*"/>    <!-- 2: Workspace -->
+            <RowDefinition Height="Auto"/> <!-- 3: Footer -->
+        </Grid.RowDefinitions>
+
+        <!-- 0. BARRE D'OUTILS & CONTEXTE -->
+        <Border Grid.Row="0" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="20,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock Text="##loc:sp_builder.label_existing_template##" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <ComboBox x:Name="EditorLoadComboBox" Width="200" Style="{DynamicResource StandardComboBoxStyle}" Height="32" ToolTip="Sélectionner un modèle existant"/>
+                    </StackPanel>
+                    <Button x:Name="EditorLoadButton" Content="##loc:sp_builder.btn_load##" Style="{DynamicResource SecondaryButtonStyle}" Height="38" VerticalAlignment="Bottom" ToolTip="Charger ce modèle dans l'éditeur"/>
+                    <Button x:Name="EditorDeleteTemplateButton" Content="🗑️" Style="{DynamicResource SecondaryButtonStyle}" Height="38" Width="40" Padding="0" VerticalAlignment="Bottom" Margin="5,0,0,0" Foreground="{DynamicResource DangerBrush}" ToolTip="Supprimer le modèle sélectionné"/>
+                    
+                    <Border Margin="30,0,0,0" Padding="15,0" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderLightBrush}" VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="Schéma Lié :" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock x:Name="EditorTargetSchemaDisplay" Text="Non lié (Legacy)" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Margin="15,0,0,0" Padding="15,0" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderLightBrush}" VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="Formulaire cible :" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock x:Name="EditorTargetFormDisplay" Text="Aucun" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 1. IDENTITÉ DU MODÈLE (NOUVEAU) -->
+        <Border Grid.Row="1" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="25,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1.5*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Nom du modèle :" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,10,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBox x:Name="EditorDisplayNameBox" Grid.Column="1" Style="{DynamicResource StandardTextBoxStyle}" Height="38" VerticalContentAlignment="Center" ToolTip="Nom convivial du modèle d'architecture"/>
+
+                <TextBlock Grid.Column="3" Text="Description :" VerticalAlignment="Center" FontWeight="SemiBold" Margin="25,0,10,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBox x:Name="EditorDescriptionBox" Grid.Column="4" Style="{DynamicResource StandardTextBoxStyle}" Height="38" VerticalContentAlignment="Center" ToolTip="Description courte de l'usage de ce modèle"/>
+            </Grid>
+        </Border>
+
+        <!-- 2. ZONE DE TRAVAIL -->
+        <Grid Grid.Row="2" Margin="25">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="25"/>
+                <ColumnDefinition Width="1.5*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- COLONNE GAUCHE : STRUCTURE -->
+            <Border Grid.Column="0" Style="{DynamicResource CardBorderStyle}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="{DynamicResource BackgroundLightBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" CornerRadius="10,10,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📂" Margin="0,0,10,0"/>
+                            <TextBlock Text="##loc:sp_builder.label_template_structure##" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TreeView x:Name="EditorTreeView" Grid.Row="1" Style="{DynamicResource ModernTreeViewStyle}" BorderThickness="0" Margin="5"/>
+
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="15,10" CornerRadius="0,0,15,15" Background="{DynamicResource WhiteBrush}">
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <!-- Groupe : Architecture -->
+                            <Button x:Name="EditorAddRootButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,4,4" Background="#80FFF9C4" BorderBrush="#FFD6BA30" ToolTip="##loc:sp_builder.tooltip_add_root##">
+                                <Image x:Name="IconAddRoot" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button x:Name="EditorAddRootLinkButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,12,4" Background="#80DCEDC8" BorderBrush="#FF8BC34A" ToolTip="##loc:sp_builder.tooltip_add_root_link##">
+                                <Image x:Name="IconAddRootLink" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            
+                            <Button x:Name="EditorAddChildButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,4,4" Background="#80FFFDE7" BorderBrush="#FFFBC02D" ToolTip="##loc:sp_builder.tooltip_add_child##">
+                                <Image x:Name="IconAddChild" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button x:Name="EditorAddChildLinkButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,4,4" Background="#80F1F8E9" BorderBrush="#FFDCEDC8" ToolTip="##loc:sp_builder.tooltip_add_child_link##">
+                                <Image x:Name="IconAddChildLink" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button x:Name="EditorAddChildInternalLinkButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,4,4" Background="#80E0F2F1" BorderBrush="#FF80CBC4" ToolTip="##loc:sp_builder.tooltip_add_internal_link##">
+                                <Image x:Name="IconAddInternalLink" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button x:Name="EditorAddPubButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,12,4" Background="#80E3F2FD" BorderBrush="#FF90CAF9" ToolTip="##loc:sp_builder.tooltip_add_publication##">
+                                <Image x:Name="IconAddPub" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+
+                            <!-- Groupe : Métadonnées -->
+                            <Button x:Name="EditorGlobalAddPermButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,4,4" Background="#80E8EAF6" BorderBrush="#FFC5CAE9" ToolTip="##loc:sp_builder.tooltip_add_permission##">
+                                <Image x:Name="IconAddPerm" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button x:Name="EditorGlobalAddTagButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,4,4" Background="#80E1F5FE" BorderBrush="#FFB3E5FC" ToolTip="##loc:sp_builder.tooltip_add_tag##">
+                                <Image x:Name="IconAddTag" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            <Button x:Name="EditorGlobalAddDynamicTagButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,12,4" Background="#80E0F2F1" BorderBrush="#FFB2DFDB" ToolTip="Ajouter un tag dynamique">
+                                <Image x:Name="IconAddDynamicTag" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+
+                            <!-- Groupe : Fichiers -->
+                            <Button x:Name="EditorAddFileButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="0,0,12,4" Background="#80F5F5F5" BorderBrush="#FFB0BEC5" ToolTip="Copier un fichier">
+                                <Image x:Name="IconAddFile" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                            
+                            <!-- Action : Suppression -->
+                            <Button x:Name="EditorDeleteButton" Style="{DynamicResource IconButtonStyle}" Width="34" Height="34" Margin="8,0,0,4" Background="#80FFEBEE" BorderBrush="#FFEF9A9A" ToolTip="##loc:sp_builder.tooltip_delete_item##">
+                                <Image x:Name="IconDelete" Stretch="Uniform" Margin="5" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Button>
+                        </WrapPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- COLONNE DROITE : INSPECTEUR -->
+            <Border Grid.Column="2" Style="{DynamicResource CardBorderStyle}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="15,10" Background="{DynamicResource Gray50Brush}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🛠️" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="##loc:sp_builder.label_selected_item_properties##" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+                        <StackPanel>
+                            <!-- Dossier -->
+                            <StackPanel x:Name="EdPropPanel">
+                                <TextBlock Text="##loc:sp_builder.label_folder_name##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15"/>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_folder_id##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdFolderIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15" IsReadOnly="True" Background="{DynamicResource Gray100Brush}" FontFamily="Consolas"/>
+
+                                <TextBlock Text="##loc:sp_builder.label_relative_path##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdFolderRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15" IsReadOnly="True" Background="{DynamicResource Gray100Brush}" FontFamily="Consolas"/>
+
+                                <Button x:Name="EdFolderDeleteButton" Style="{DynamicResource RedButtonStyle}" Content="##loc:sp_builder.btn_delete_folder##" Height="34" Margin="0,10,0,0"/>
+                            </StackPanel>
+
+                            <!-- Permission -->
+                            <StackPanel x:Name="EdPropPanelPerm" Visibility="Collapsed">
+                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="👤" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_permission##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
                                     </StackPanel>
                                 </Border>
-                            </Border>
-                        </Grid>
-                        <!-- Footer Editeur -->
-                        <Border Grid.Row="2" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="##loc:sp_builder.label_user_email##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPermIdentityBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                <TextBlock Text="##loc:sp_builder.label_access_level##" Style="{DynamicResource H4Style}"/>
+                                <ComboBox x:Name="EdPermLevelBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20"/>
+                                <Button x:Name="EdPermDeleteButton" Content="##loc:sp_builder.btn_delete_permission##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
+                            </StackPanel>
 
-                                <!-- Status Text -->
-                                <TextBlock Grid.Column="0" x:Name="EditorStatusText" Text="##loc:sp_builder.msg_ready##" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                            <!-- Tag Statique -->
+                            <StackPanel x:Name="EdPropPanelTag" Visibility="Collapsed">
+                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🏷️" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_tag##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="ID Parent (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdTagParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0"/>
+                                <TextBlock Text="##loc:sp_builder.label_column_name##" Style="{DynamicResource H4Style}"/>
+                                <ComboBox x:Name="EdTagColumnBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20" DisplayMemberPath="DisplayName"/>
+                                <TextBlock Text="##loc:sp_builder.label_value_term##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdTagValueBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                <Button x:Name="EdTagDeleteButton" Content="##loc:sp_builder.btn_delete_tag##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
+                            </StackPanel>
 
-                                <!-- Actions Globales -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Tag Dynamique (NEW) -->
+                            <StackPanel x:Name="EdPropPanelDynamicTag" Visibility="Collapsed">
+                                <Border Background="#E0F2F1" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚡" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="#00796B"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_dynamic_tag##" FontWeight="Bold" Foreground="#00796B"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="ID Parent (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdDynamicTagParentIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20" IsReadOnly="True" Background="#F0F0F0"/>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_source_form##" Style="{DynamicResource H4Style}"/>
+                                <Grid Margin="0,5,0,20">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox x:Name="EdDynamicTagSourceFormBox" Grid.Column="0" Style="{DynamicResource StandardComboBoxStyle}" DisplayMemberPath="DisplayName"/>
+                                    <Button x:Name="EdDynamicTagInfoButton" Grid.Column="1" Content="ℹ️" Style="{DynamicResource SecondaryButtonStyle}" Width="32" Height="32" Margin="8,0,0,0" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" ToolTip="Afficher la description du formulaire"/>
+                                </Grid>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_source_var##" Style="{DynamicResource H4Style}"/>
+                                <ComboBox x:Name="EdDynamicTagSourceVarBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,20"/>
+                                
+                                <Button x:Name="EdDynamicTagDeleteButton" Content="##loc:sp_builder.btn_delete_dynamic_tag##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
+                            </StackPanel>
 
+                            <!-- Link -->
+                            <StackPanel x:Name="EdPropPanelLink" Visibility="Collapsed">
+                                <Border Background="{DynamicResource InfoBackgroundBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🔗" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_link##" FontWeight="SemiBold" Foreground="{DynamicResource InfoBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="##loc:sp_builder.label_display_name##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                <TextBlock Text="##loc:sp_builder.label_target_url##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdLinkUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                <Button x:Name="EdLinkDeleteButton" Content="##loc:sp_builder.btn_delete_link##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
+                            </StackPanel>
 
-                                    <Button x:Name="EditorNewButton" Content="##loc:sp_builder.btn_new##" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0" ToolTip="Créer un nouveau modèle vierge"/>
-                                    <Button x:Name="EditorSaveButton" Content="##loc:sp_builder.btn_save##" Style="{DynamicResource PrimaryButtonStyle}" Height="36" IsEnabled="False" ToolTip="Enregistrer les modifications dans la base de données"/>
+                            <!-- Lien Interne (NEW) -->
+                            <StackPanel x:Name="EdPropPanelInternalLink" Visibility="Collapsed">
+                                <Border Background="#E0F2F1" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎯" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_internal_link##" FontWeight="SemiBold" Foreground="#00796B"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="##loc:sp_builder.label_link_name##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdInternalLinkNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_target_node_id##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdInternalLinkIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0"/>
+                                
+                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdInternalLinkObjIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
+
+                                <TextBlock Text="Chemin Relatif :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdInternalLinkRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
+
+                                <Button x:Name="EdInternalLinkDeleteButton" Content="##loc:sp_builder.btn_delete_internal_link##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
+                            </StackPanel>
+
+                            <!-- Publication -->
+                            <StackPanel x:Name="EdPropPanelPub" Visibility="Collapsed">
+                                <Border Background="#FFF3E0" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🚀" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_pub##" FontWeight="SemiBold" Foreground="#E65100"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="##loc:sp_builder.label_pub_name##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15"/>
+
+                                <TextBlock Text="ID Publication (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPubIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
+
+                                <TextBlock Text="Chemin Relatif :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPubRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_pub_site_mode##" Style="{DynamicResource H4Style}"/>
+                                <ComboBox x:Name="EdPubSiteModeBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,5">
+                                    <ComboBoxItem Content="##loc:sp_builder.opt_site_current##"/>
+                                    <ComboBoxItem Content="##loc:sp_builder.opt_site_other##"/>
+                                </ComboBox>
+                                <TextBox x:Name="EdPubSiteUrlBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15" Visibility="Collapsed"/>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_pub_target_path##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPubPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15"/>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,10">
+                                    <CheckBox x:Name="EdPubUseFormNameChk" Style="{DynamicResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="##loc:sp_builder.label_pub_use_form_name##" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11"/>
                                 </StackPanel>
-                            </Grid>
-                        </Border>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                                    <CheckBox x:Name="EdPubUseFormMetaChk" Style="{DynamicResource ToggleSwitchStyle}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="##loc:sp_builder.label_pub_use_form_meta##" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11"/>
+                                </StackPanel>
+                                
+                                <Button x:Name="EdPubDeleteButton" Content="##loc:sp_builder.btn_delete_pub##" Style="{DynamicResource RedButtonStyle}" Margin="0,10,0,0" Height="34"/>
+                            </StackPanel>
+
+                            <!-- Copie de Fichier (NEW) -->
+                            <StackPanel x:Name="EdPanelFile" Visibility="Collapsed">
+                                <Border Background="#E8EAF6" CornerRadius="4" Padding="10" Margin="0,0,0,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📄" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="#3F51B5"/>
+                                        <TextBlock Text="##loc:sp_builder.title_edit_file##" FontWeight="Bold" Foreground="#3F51B5"/>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="##loc:sp_builder.label_file_dest_name##" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdFileNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,20"/>
+                                
+                                <TextBlock Text="##loc:sp_builder.label_file_source_url##" Style="{DynamicResource H4Style}"/>
+                                <Grid Margin="0,5,0,20">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="EdFileUrlBox" Grid.Column="0" Style="{DynamicResource StandardTextBoxStyle}"/>
+                                    <Button x:Name="EdFileFetchInfoButton" Grid.Column="1" Content="🔄" Style="{DynamicResource SecondaryButtonStyle}" Width="38" Height="36" Margin="10,0,0,0" ToolTip="Récupérer le nom du fichier depuis l'URL"/>
+                                </Grid>
+                                
+                                <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdFileIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0"/>
+                                
+                                <Button x:Name="EdFileDeleteButton" Content="##loc:sp_builder.btn_delete_file##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Grid Grid.Row="1" x:Name="EdPanelNoSel" Background="{DynamicResource WhiteBrush}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
+                            <TextBlock Text="👆" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <TextBlock Text="##loc:sp_builder.msg_select_folder_tree##" FontSize="14"/>
+                        </StackPanel>
                     </Grid>
-                </TabItem>
+                </Grid>
+            </Border>
+        </Grid>
 
+        <!-- 3. FOOTER -->
+        <Border Grid.Row="3" Background="{DynamicResource WhiteBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,1,0,0" Padding="25,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" x:Name="EditorStatusText" Text="##loc:sp_builder.msg_ready##" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="EditorNewButton" Content="##loc:sp_builder.btn_new##" Style="{DynamicResource SecondaryButtonStyle}" Height="36" Margin="0,0,10,0"/>
+                    <Button x:Name="EditorSaveButton" Content="##loc:sp_builder.btn_save##" Style="{DynamicResource PrimaryButtonStyle}" Height="36" IsEnabled="False"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
+        <!-- OVERLAYS -->
+        <Border x:Name="EditorWorkspaceLockOverlay" Grid.Row="1" Grid.RowSpan="2" Background="#EEFFFFFF" Panel.ZIndex="100">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="🔒 Éditeur d'Architecture Verrouillé" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBlock Text="Veuillez d'abord charger un Modèle ou en créer un nouveau." Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="EditorNewPopupOverlay" Grid.RowSpan="4" Background="#AA000000" Panel.ZIndex="200" Visibility="Collapsed">
+            <Border Background="White" CornerRadius="8" Padding="30" VerticalAlignment="Center" HorizontalAlignment="Center" Width="500">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="✨" Foreground="#29B6F6" FontSize="20" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nouvelle Architecture" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Une architecture complexe doit OBLIGATOIREMENT être rattachée à un Schéma de Dossier Avancé existant." 
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,20"/>
+                    
+                    <TextBlock Text="1. Sélectionnez le Schéma cible (Obligatoire) :" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <ComboBox x:Name="EditorNewPopupSchemaCb" Style="{DynamicResource StandardComboBoxStyle}" Height="35" Margin="0,0,0,20" DisplayMemberPath="DisplayName"/>
+                    
+                    <TextBlock Text="2. Sélectionnez la Règle / Formulaire (Optionnel) :" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <ComboBox x:Name="EditorNewPopupFormCb" Style="{DynamicResource StandardComboBoxStyle}" Height="35" Margin="0,0,0,30" DisplayMemberPath="RuleId"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="EditorNewPopupCancelBtn" Grid.Column="0" Content="Annuler" Style="{DynamicResource SecondaryButtonStyle}" Height="40"/>
+                        <Button x:Name="EditorNewPopupConfirmBtn" Grid.Column="2" Content="Créer" Style="{DynamicResource PrimaryButtonStyle}" Height="40" IsEnabled="False"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</TabItem>

@@ -1,0 +1,8 @@
+[
+  {
+    "RuleId": "c37161d1-da73-4288-8626-1646c783f510",
+    "DefinitionJson": "{\"Layout\":[{\"Type\":\"TextBox\",\"Name\":\"Services\",\"Content\":\"\",\"DefaultValue\":\"\",\"Width\":\"140\",\"Options\":null,\"IsUppercase\":true,\"IsMetadata\":true,\"TargetColumnInternalName\":\"Services\"},{\"Type\":\"Label\",\"Name\":\"\",\"Content\":\"-\",\"DefaultValue\":\"\",\"Width\":\"100\",\"Options\":null,\"IsUppercase\":false,\"IsMetadata\":false,\"TargetColumnInternalName\":\"\"},{\"Type\":\"ComboBox\",\"Name\":\"Année\",\"Content\":\"\",\"DefaultValue\":\"\",\"Width\":\"100\",\"Options\":[\"2025\",\"2026\",\"2027\",\"2028\",\"2029\"],\"IsUppercase\":false,\"IsMetadata\":true,\"TargetColumnInternalName\":\"Year\"},{\"Type\":\"Label\",\"Name\":\"\",\"Content\":\"-\",\"DefaultValue\":\"\",\"Width\":\"100\",\"Options\":null,\"IsUppercase\":false,\"IsMetadata\":false,\"TargetColumnInternalName\":\"\"},{\"Type\":\"TextBox\",\"Name\":\"Rubriques\",\"Content\":\"\",\"DefaultValue\":\"\",\"Width\":\"100\",\"Options\":null,\"IsUppercase\":false,\"IsMetadata\":true,\"TargetColumnInternalName\":\"Rubriques\"}],\"Description\":\"Règle personnalisée\",\"TargetSchemaId\":\"af8608aa-421d-4421-90ad-62fb1ee23851\"}",
+    "DisplayName": "testForm",
+    "Description": "Règle custom "
+  }
+]
