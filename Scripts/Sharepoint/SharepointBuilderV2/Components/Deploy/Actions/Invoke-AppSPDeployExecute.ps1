@@ -60,7 +60,7 @@ function Global:Invoke-AppSPDeployExecute {
     $trackRuleJson = if ($Ctrl.CbFolderTemplates.SelectedItem) { $Ctrl.CbFolderTemplates.SelectedItem.DefinitionJson } else { "" }
     $trackConfig = if ($Ctrl.CbDeployConfigs.SelectedItem) { $Ctrl.CbDeployConfigs.SelectedItem.ConfigName } else { "" }
     
-    $trackUser = "System (App)"
+    $trackUser = "admin"
     if ($Global:AppAzureActiveUser -and $Global:AppAzureActiveUser.DisplayName) { $trackUser = $Global:AppAzureActiveUser.DisplayName }
     elseif ($env:USERNAME) { $trackUser = $env:USERNAME }
     

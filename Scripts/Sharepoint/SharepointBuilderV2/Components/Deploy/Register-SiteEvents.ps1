@@ -390,6 +390,10 @@ function Register-SiteEvents {
                             Write-Verbose "[CbSites] URL: $($site.Url) | Type: $($site.GetType().Name)"
                         }
 
+                        # Désactivation maintenance le temps du check
+                        if ($Ctrl.BtnMaintenanceHistory) { $Ctrl.BtnMaintenanceHistory.IsEnabled = $false }
+                        if ($Ctrl.BtnMaintenanceStates) { $Ctrl.BtnMaintenanceStates.IsEnabled = $false }
+
                         if ($Ctrl.CbLibs) {
                             $Ctrl.CbLibs.ItemsSource = @("Chargement...")
                             # On laisse IsEnabled = true pour v3.0 comme convenu
@@ -437,10 +441,20 @@ function Register-SiteEvents {
                                 Write-Output "JOB_LOG: $($lists.value.Count) listes brutes reçues de Graph."
                             
                                 $result = New-Object System.Collections.Generic.List[object]
+                                $maintHistory = $null
+                                $maintStates = $null
+
                                 foreach ($l in $lists.value) {
+                                    # Détection Maintenance (v5.0)
+                                    if ($l.displayName -eq "SharePointBuilder_Tracking") { $maintHistory = $l.webUrl }
+                                    if ($l.displayName -eq "SharePointBuilder_States") { $maintStates = $l.webUrl }
+
+                                    # Filtrage Bibliothèques standards
                                     if ($l.list -and $l.list.template -ne 'documentLibrary') { continue }
                                     if ($l.hidden -or $l.displayName -eq "Form Templates" -or $l.displayName -eq "Site Assets" -or $l.displayName -eq "Style Library") { continue }
-                                
+                                    # On exclut les bibliothèques techniques Builder de l'Etape 1 (Optionnel mais propre)
+                                    if ($l.displayName -match "SharePointBuilder_") { continue }
+
                                     $relUrl = ""
                                     if ($l.webUrl) { $relUrl = [System.Uri]::new($l.webUrl).AbsolutePath }
                                 
@@ -455,7 +469,13 @@ function Register-SiteEvents {
                                 }
                                 $final = $result | Sort-Object Title
                                 Write-Output "JOB_LOG: Fin. $($final.Count) bibliothèques conservées après filtrage."
-                                return $final
+                                return [PSCustomObject]@{
+                                    Libs = $final
+                                    Maintenance = @{
+                                        HistoryUrl = $maintHistory
+                                        StatesUrl  = $maintStates
+                                    }
+                                }
                             }
                             catch { 
                                 Write-Output "JOB_ERROR: $($_.Exception.Message)"
@@ -512,7 +532,8 @@ function Register-SiteEvents {
                                             
                                                     if ($c.LibLoadingBar) { $c.LibLoadingBar.Visibility = $vCollapsed }
                                             
-                                                    $libArray = @($libsData)
+                                                    $jobResult = $libsData | Select-Object -First 1
+                                                    $libArray = @($jobResult.Libs)
                                             
                                                     if ($c.CbLibs) {
                                                         if ($libArray.Count -gt 0) {
@@ -525,13 +546,25 @@ function Register-SiteEvents {
                                                                 Write-Verbose "[timerLibs-V3.5] Auto-sélection de l'unique bibliothèque."
                                                             }
                                                     
-                                                            if ($c.LogBox) { Write-AppLog -Message "$($libArray.Count) bibliothèques prêtes (v4.2)." -Level Success -RichTextBox $c.LogBox }
+                                                            if ($c.LogBox) { Write-AppLog -Message "$($libArray.Count) bibliothèques prêtes (v4.3)." -Level Success -RichTextBox $c.LogBox }
                                                         }
                                                         else {
                                                             $c.CbLibs.ItemsSource = @("Aucune")
-                                                            if ($c.LogBox) { Write-AppLog -Message "Liste vide reçue (v4.2)." -Level Warning -RichTextBox $c.LogBox }
+                                                            if ($c.LogBox) { Write-AppLog -Message "Liste vide reçue (v4.3)." -Level Warning -RichTextBox $c.LogBox }
                                                         }
                                                         $c.CbLibs.UpdateLayout()
+                                                    }
+
+                                                    # Activation Maintenance (v5.0)
+                                                    if ($jobResult.Maintenance) {
+                                                        if ($c.BtnMaintenanceHistory) {
+                                                            $c.BtnMaintenanceHistory.IsEnabled = [bool]$jobResult.Maintenance.HistoryUrl
+                                                            $c.BtnMaintenanceHistory.Tag = $jobResult.Maintenance.HistoryUrl
+                                                        }
+                                                        if ($c.BtnMaintenanceStates) {
+                                                            $c.BtnMaintenanceStates.IsEnabled = [bool]$jobResult.Maintenance.StatesUrl
+                                                            $c.BtnMaintenanceStates.Tag = $jobResult.Maintenance.StatesUrl
+                                                        }
                                                     }
                                                 }
                                                 catch { Write-Warning "Erreur UI (timerLibs): $_" }

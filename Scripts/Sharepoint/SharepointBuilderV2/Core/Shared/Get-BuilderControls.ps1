@@ -88,10 +88,12 @@ function Get-BuilderControls {
         # --- ACTIONS ---
         BtnDeploy                     = & $Find ("DeployButton")
         
-        # --- POST DÉPLOIEMENT ---
+        # --- POST DÉPLOIEMENT & MAINTENANCE ---
         PanelActions                  = & $Find ("PostDeployActionsPanel")
         BtnCopyUrl                    = & $Find ("CopyUrlButton")
         BtnOpenUrl                    = & $Find ("OpenUrlButton")
+        BtnMaintenanceHistory         = & $Find ("MaintenanceHistoryButton")
+        BtnMaintenanceStates          = & $Find ("MaintenanceStatesButton")
 
         # --- OUTPUTS ---
         LogBox                        = & $Find ("LogRichTextBox")

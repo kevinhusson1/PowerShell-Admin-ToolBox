@@ -310,6 +310,12 @@
 
                                 <!-- Action Buttons Right -->
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Boutons de Maintenance (v5.0) -->
+                                    <Button x:Name="MaintenanceHistoryButton" Content="📜 Historique" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False" ToolTip="Voir l'historique complet des déploiements sur ce site"/>
+                                    <Button x:Name="MaintenanceStatesButton" Content="💾 États (In-Situ)" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False" ToolTip="Accéder aux fichiers d'état des dossiers déployés"/>
+                                    
+                                    <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1,0,0,0" Height="24" Margin="10,0,15,0" VerticalAlignment="Center"/>
+
                                     <Button x:Name="ResetUIButton" Content="##loc:sp_builder.btn_reset##" Style="{DynamicResource RedButtonStyle}" Height="32" Margin="0,0,15,0"/>
                                     <Button x:Name="CopyUrlButton" Content="##loc:sp_builder.btn_copy_url##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,5,0" IsEnabled="False"/>
                                     <Button x:Name="OpenUrlButton" Content="##loc:sp_builder.btn_open##" Style="{DynamicResource SecondaryButtonStyle}" Height="32" Margin="0,0,15,0" IsEnabled="False"/>

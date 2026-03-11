@@ -125,8 +125,15 @@ function Register-DeployEvents {
         }.GetNewClosure())
 
     $Ctrl.BtnOpenUrl.Add_Click({
-            $copyBtn = $Window.FindName("CopyUrlButton")
-            if ($copyBtn -and $copyBtn.Tag) { Start-Process $copyBtn.Tag }
+            if ($Ctrl.BtnCopyUrl -and $Ctrl.BtnCopyUrl.Tag) { Start-Process $Ctrl.BtnCopyUrl.Tag }
+        }.GetNewClosure())
+
+    $Ctrl.BtnMaintenanceHistory.Add_Click({
+            if ($this.Tag) { Start-Process $this.Tag }
+        }.GetNewClosure())
+
+    $Ctrl.BtnMaintenanceStates.Add_Click({
+            if ($this.Tag) { Start-Process $this.Tag }
         }.GetNewClosure())
 
     # ==========================================================================
@@ -139,6 +146,10 @@ function Register-DeployEvents {
                 $Ctrl.CbLibs.SelectedIndex = -1
                 $Ctrl.CbLibs.ItemsSource = @()
                 $Ctrl.CbLibs.IsEnabled = $false
+                
+                # Vider les boutons de maintenance (v5.0)
+                if ($Ctrl.BtnMaintenanceHistory) { $Ctrl.BtnMaintenanceHistory.IsEnabled = $false; $Ctrl.BtnMaintenanceHistory.Tag = $null }
+                if ($Ctrl.BtnMaintenanceStates) { $Ctrl.BtnMaintenanceStates.IsEnabled = $false; $Ctrl.BtnMaintenanceStates.Tag = $null }
 
                 # 2. Libérer le modèle
                 $Ctrl.CbTemplates.SelectedIndex = -1

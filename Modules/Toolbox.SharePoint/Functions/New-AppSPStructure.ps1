@@ -435,11 +435,62 @@ function New-AppSPStructure {
             }
         }
 
-        # 6. TRACKING (Enregistrement Historique)
-        if ($TrackingInfo -and (Get-Command "New-AppSPTrackingList" -ErrorAction SilentlyContinue)) {
-            # Note: New-AppSPTrackingList est encore PnP. À migrer plus tard ou utiliser tel quel si connexion dispo.
-            Log "Enregistrement dans l'historique (Tracking)..." "DEBUG"
-            # @todo: Migration Tracking vers Graph
+        # 6. TRACKING (Enregistrement Historique via Graph)
+        if ($TrackingInfo -and $siteId) {
+            Log "Enregistrement dans l'historique (Tracking Graph)..." "INFO"
+            try {
+                $trackLibName = "SharePointBuilder_Tracking"
+                $trackListId = $null
+                # A. Récupération ou Création de la liste
+                $listsRes = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists?`$select=id,displayName"
+                $foundTrack = $listsRes.value | Where-Object { $_.displayName -eq $trackLibName }
+                
+                if ($foundTrack) {
+                    $trackListId = $foundTrack.id
+                } else {
+                    Log "  > Création de la liste de tracking '$trackLibName'..." "DEBUG"
+                    $trackDef = @{
+                        displayName = $trackLibName
+                        columns = @(
+                            @{ name = "TargetUrl"; text = @{} },
+                            @{ name = "TemplateId"; text = @{} },
+                            @{ name = "TemplateVersion"; text = @{} },
+                            @{ name = "ConfigName"; text = @{} },
+                            @{ name = "NamingRuleId"; text = @{} },
+                            @{ name = "DeployedBy"; text = @{} },
+                            @{ name = "TemplateJson"; text = @{ allowMultipleLines = $true } },
+                            @{ name = "FormValuesJson"; text = @{ allowMultipleLines = $true } },
+                            @{ name = "FormDefinitionJson"; text = @{ allowMultipleLines = $true } },
+                            @{ name = "FolderSchemaJson"; text = @{ allowMultipleLines = $true } },
+                            @{ name = "DeployedDate"; dateTime = @{} }
+                        )
+                        list = @{ template = "genericList"; hidden = $true }
+                    } | ConvertTo-Json -Depth 5 -Compress
+                    $tRes = Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists" -Body ([System.Text.Encoding]::UTF8.GetBytes($trackDef)) -ContentType "application/json" -ErrorAction Stop
+                    $trackListId = $tRes.id
+                }
+
+                # B. Insertion de l'entrée d'historique
+                if ($trackListId) {
+                    $itemFields = @{
+                        Title                = if ($TrackingInfo.TemplateId) { $TrackingInfo.TemplateId } else { "UNKNOWN" }
+                        TargetUrl            = if ($result.FinalUrl) { $result.FinalUrl } else { "$TargetSiteUrl/$TargetLibraryName/$RootFolderName" }
+                        TemplateId           = $TrackingInfo.TemplateId
+                        TemplateVersion      = $TrackingInfo.TemplateVersion
+                        ConfigName           = $TrackingInfo.ConfigName
+                        NamingRuleId         = $TrackingInfo.NamingRuleId
+                        DeployedBy           = $TrackingInfo.DeployedBy
+                        TemplateJson         = $StructureJson
+                        FormValuesJson       = if ($FormValues) { $FormValues | ConvertTo-Json -Depth 5 -Compress } else { "" }
+                        FormDefinitionJson   = $TrackingInfo.FormDefinitionJson
+                        FolderSchemaJson     = $FolderSchemaJson
+                        DeployedDate         = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    }
+                    $itemBody = @{ fields = $itemFields } | ConvertTo-Json -Depth 5 -Compress
+                    Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$trackListId/items" -Body ([System.Text.Encoding]::UTF8.GetBytes($itemBody)) -ContentType "application/json" -ErrorAction Stop | Out-Null
+                    Log "  > Historique enregistré." "DEBUG"
+                }
+            } catch { Log "  > Erreur Tracking : $_" "WARNING" }
         }
 
         # Export mapping local JSON ID -> Microsoft Graph ListItem ID (pour State In-Situ)
@@ -450,8 +501,33 @@ function New-AppSPStructure {
             if (-not [string]::IsNullOrWhiteSpace($rootId)) {
                 Log "Génération et sauvegarde du state.json In-Situ..." "INFO"
                 try {
-                    Save-AppSPDeploymentState -SiteId $siteId -DriveId $driveId -RootFolderItemId $rootId -DeployedNodes $DeployedFoldersMap -TemplateId $TrackingInfo.TemplateId -FormValues $FormValues | Out-Null
-                    Log "  > State In-Situ uploadé." "DEBUG"
+                    $stateLibName = "SharePointBuilder_States"
+                    $stateDriveId = $null
+                    try {
+                        $stateDriveRes = Get-AppGraphListDriveId -SiteId $siteId -ListDisplayName $stateLibName
+                        $stateDriveId = $stateDriveRes.DriveId
+                    } catch {
+                        Log "  > Bibliothèque d'état inexistante. Création en cours ($stateLibName)..." "DEBUG"
+                        $newListBody = @{
+                            displayName = $stateLibName
+                            list = @{
+                                template = "documentLibrary"
+                                hidden = $true
+                            }
+                        } | ConvertTo-Json -Depth 5 -Compress
+                        $newListBytes = [System.Text.Encoding]::UTF8.GetBytes($newListBody)
+                        $newListRes = Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists" -Body $newListBytes -ContentType "application/json" -ErrorAction Stop
+                        
+                        $stateDriveRes = Get-AppGraphListDriveId -SiteId $siteId -ListDisplayName $stateLibName
+                        $stateDriveId = $stateDriveRes.DriveId
+                    }
+
+                    if ($stateDriveId) {
+                        Save-AppSPDeploymentState -SiteId $siteId -StateDriveId $stateDriveId -TargetDriveId $driveId -RootFolderItemId $rootId -DeployedNodes $DeployedFoldersMap -TemplateId $TrackingInfo.TemplateId -FormValues $FormValues | Out-Null
+                        Log "  > State In-Situ uploadé." "DEBUG"
+                    } else {
+                        Log "  > Impossible d'obtenir le DriveId pour la sauvegarde d'état." "WARNING"
+                    }
                 }
                 catch {
                     Log "  > Impossible d'écrire le State In-Situ : $_" "WARNING"

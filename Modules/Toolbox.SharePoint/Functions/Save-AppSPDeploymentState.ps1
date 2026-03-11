@@ -14,7 +14,9 @@ function Save-AppSPDeploymentState {
         [Parameter(Mandatory = $true)]
         [string]$SiteId,
         [Parameter(Mandatory = $true)]
-        [string]$DriveId,
+        [string]$StateDriveId,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetDriveId,
         [Parameter(Mandatory = $true)]
         [string]$RootFolderItemId,
         [Parameter(Mandatory = $true)]
@@ -39,9 +41,9 @@ function Save-AppSPDeploymentState {
             $stateJson = $stateObj | ConvertTo-Json -Depth 5 -Compress
             $stateBytes = [System.Text.Encoding]::UTF8.GetBytes($stateJson)
 
-            # Upload (écrasement si existant) via PUT /items/{parent_id}:/{filename}:/content
-            $fileName = ".sbuilder_state.json"
-            $uriUpload = "https://graph.microsoft.com/v1.0/sites/$SiteId/drives/$DriveId/items/$RootFolderItemId`:/$fileName`:/content"
+            # Upload (écrasement si existant) via PUT /root:/{filename}:/content
+            $fileName = "${TargetDriveId}_${RootFolderItemId}_state.json"
+            $uriUpload = "https://graph.microsoft.com/v1.0/sites/$SiteId/drives/$StateDriveId/root:/$fileName`:/content"
 
             $res = Invoke-MgGraphRequest -Method PUT -Uri $uriUpload -Body $stateBytes -ContentType "application/json" -ErrorAction Stop
             
