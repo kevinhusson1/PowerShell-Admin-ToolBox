@@ -253,9 +253,12 @@
                                 
                                 <TextBlock Text="ID Objet (Read-Only) :" Style="{DynamicResource H4Style}"/>
                                 <TextBox x:Name="EdInternalLinkObjIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
-
+                                
                                 <TextBlock Text="Chemin Relatif :" Style="{DynamicResource H4Style}"/>
                                 <TextBox x:Name="EdInternalLinkRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
+
+                                <TextBlock Text="Cible (Chemin) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdInternalLinkTargetPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas" Foreground="{DynamicResource InfoBrush}"/>
 
                                 <Button x:Name="EdInternalLinkDeleteButton" Content="##loc:sp_builder.btn_delete_internal_link##" Style="{DynamicResource RedButtonStyle}" Margin="0,20,0,0" Height="34"/>
                             </StackPanel>
@@ -272,10 +275,11 @@
                                 <TextBox x:Name="EdPubNameBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,15"/>
 
                                 <TextBlock Text="ID Publication (Read-Only) :" Style="{DynamicResource H4Style}"/>
-                                <TextBox x:Name="EdPubIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
-
-                                <TextBlock Text="Chemin Relatif :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPubIdBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>                                <TextBlock Text="Chemin Relatif :" Style="{DynamicResource H4Style}"/>
                                 <TextBox x:Name="EdPubRelativePathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas"/>
+
+                                <TextBlock Text="Cible (Chemin) :" Style="{DynamicResource H4Style}"/>
+                                <TextBox x:Name="EdPubTargetPathBox" Style="{DynamicResource StandardTextBoxStyle}" Margin="0,5,0,10" IsReadOnly="True" Background="#F0F0F0" FontFamily="Consolas" Foreground="{DynamicResource InfoBrush}"/>
                                 
                                 <TextBlock Text="##loc:sp_builder.label_pub_site_mode##" Style="{DynamicResource H4Style}"/>
                                 <ComboBox x:Name="EdPubSiteModeBox" Style="{DynamicResource StandardComboBoxStyle}" Margin="0,5,0,5">
@@ -392,3 +396,5 @@
         </Border>
     </Grid>
 </TabItem>
+
+

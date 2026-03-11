@@ -70,6 +70,12 @@ function Global:Register-EditorSelectionHandler {
 
                 # 2. DETERMINE TYPE
                 $data = $selectedItem.Tag
+                
+                # Mise à jour du chemin relatif calculé (Option A)
+                $calcPath = Get-EditorItemPath -TreeItem $selectedItem
+                if ($calcPath -and $selectedItem.Tag.PSObject.Properties.Match("RelativePath").Count -gt 0) {
+                    $selectedItem.Tag.RelativePath = $calcPath
+                }
             
                 # --- TYPE SPECIFIC UI DISPLAY ---
             
@@ -267,6 +273,10 @@ function Global:Register-EditorSelectionHandler {
                         if ($Ctrl.EdInternalLinkIdBox) { $Ctrl.EdInternalLinkIdBox.Text = $data.TargetNodeId }
                         if ($Ctrl.EdInternalLinkObjIdBox) { $Ctrl.EdInternalLinkObjIdBox.Text = $data.Id }
                         if ($Ctrl.EdInternalLinkRelativePathBox) { $Ctrl.EdInternalLinkRelativePathBox.Text = $data.RelativePath }
+                        
+                        # Affichage du chemin cible (v6.0)
+                        $tPath = Update-EditorInternalLinkDisplay -LinkItem $selectedItem -Ctrl $Ctrl
+                        if ($Ctrl.EdInternalLinkTargetPathBox) { $Ctrl.EdInternalLinkTargetPathBox.Text = $tPath }
                     }
                     if ($Ctrl.EdPropPanelDynamicTag) { $Ctrl.EdPropPanelDynamicTag.Visibility = "Collapsed" }
                 }
@@ -279,6 +289,9 @@ function Global:Register-EditorSelectionHandler {
                         if ($Ctrl.EdPubNameBox) { $Ctrl.EdPubNameBox.Text = $data.Name }
                         if ($Ctrl.EdPubIdBox) { $Ctrl.EdPubIdBox.Text = $data.Id }
                         if ($Ctrl.EdPubRelativePathBox) { $Ctrl.EdPubRelativePathBox.Text = $data.RelativePath }
+                        
+                        $pPath = Update-EditorPublicationDisplay -PubItem $selectedItem -Ctrl $Ctrl
+                        if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
                         
                         if ($Ctrl.EdPubSiteModeBox) { $Ctrl.EdPubSiteModeBox.SelectedIndex = if ($data.TargetSiteMode -eq "Auto") { 0 } else { 1 } }
                     
@@ -492,6 +505,12 @@ function Global:Register-EditorSelectionHandler {
                 if ($sel -and $sel.Tag -and $sel.Tag.Type -ne "Link" -and $sel.Tag.Type -ne "InternalLink" -and $sel.Tag.Type -ne "Publication" -and $sel.Tag.Type -ne "Permission" -and $sel.Tag.Type -ne "Tag" ) {
                     $newName = $Ctrl.EdNameBox.Text
                     $sel.Tag.Name = $newName
+                    
+                    # Mise à jour du chemin relatif visuel
+                    $cPath = Get-EditorItemPath -TreeItem $sel
+                    $sel.Tag.RelativePath = $cPath
+                    if ($Ctrl.EdFolderRelativePathBox) { $Ctrl.EdFolderRelativePathBox.Text = $cPath }
+
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
                         # FIX: Icon is [0], Text is [1]. Do not search for TextBlock type as Icon is now TextBlock too.
                         $txtBlock = $sel.Header.Children[1]
@@ -511,6 +530,12 @@ function Global:Register-EditorSelectionHandler {
                 if ($sel -and $sel.Tag -and $sel.Tag.Type -eq "Link") {
                     $newName = $Ctrl.EdLinkNameBox.Text
                     $sel.Tag.Name = $newName
+
+                    # Mise à jour du chemin relatif visuel
+                    $cPath = Get-EditorItemPath -TreeItem $sel
+                    $sel.Tag.RelativePath = $cPath
+                    if ($Ctrl.EdLinkRelativePathBox) { $Ctrl.EdLinkRelativePathBox.Text = $cPath }
+
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
                         $txtBlock = $sel.Header.Children[1]
                         if ($txtBlock -is [System.Windows.Controls.TextBlock]) {
@@ -553,14 +578,13 @@ function Global:Register-EditorSelectionHandler {
                 if ($sel -and $sel.Tag.Type -eq "Publication") {
                     $sel.Tag.Name = $this.Text
                     
-                    # Update Visual
-                    $tName = $this.Text
-                    if ($sel.Tag.UseFormMetadata) { $tName += " [META]" }
-                    
-                    if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
-                        $txtBlock = $sel.Header.Children[1]
-                        if ($txtBlock) { $txtBlock.Text = $tName }
-                    }
+                    # Mise à jour du chemin relatif visuel
+                    $cPath = Get-EditorItemPath -TreeItem $sel
+                    $sel.Tag.RelativePath = $cPath
+                    if ($Ctrl.EdPubRelativePathBox) { $Ctrl.EdPubRelativePathBox.Text = $cPath }
+
+                    $pPath = Update-EditorPublicationDisplay -PubItem $sel -Ctrl $Ctrl
+                    if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
                 }
             }.GetNewClosure())
     }
@@ -574,6 +598,9 @@ function Global:Register-EditorSelectionHandler {
                     if ($Ctrl.EdPubSiteUrlBox) {
                         $Ctrl.EdPubSiteUrlBox.Visibility = if ($mode -eq "Url") { "Visible" } else { "Collapsed" }
                     }
+                    
+                    $pPath = Update-EditorPublicationDisplay -PubItem $sel -Ctrl $Ctrl
+                    if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
                 }
             }.GetNewClosure())
     }
@@ -581,14 +608,22 @@ function Global:Register-EditorSelectionHandler {
         $Ctrl.EdPubSiteUrlBox.Add_TextChanged({
                 if ($Script:IsPopulating) { return }
                 $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Publication") { $sel.Tag.TargetSiteUrl = $this.Text }
+                if ($sel -and $sel.Tag.Type -eq "Publication") { 
+                    $sel.Tag.TargetSiteUrl = $this.Text 
+                    $pPath = Update-EditorPublicationDisplay -PubItem $sel -Ctrl $Ctrl
+                    if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
+                }
             }.GetNewClosure())
     }
     if ($Ctrl.EdPubPathBox) {
         $Ctrl.EdPubPathBox.Add_TextChanged({
                 if ($Script:IsPopulating) { return }
                 $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel -and $sel.Tag.Type -eq "Publication") { $sel.Tag.TargetFolderPath = $this.Text }
+                if ($sel -and $sel.Tag.Type -eq "Publication") { 
+                    $sel.Tag.TargetFolderPath = $this.Text 
+                    $pPath = Update-EditorPublicationDisplay -PubItem $sel -Ctrl $Ctrl
+                    if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
+                }
             }.GetNewClosure())
     }
     if ($Ctrl.EdPubUseFormNameChk) {
@@ -605,6 +640,9 @@ function Global:Register-EditorSelectionHandler {
                         if (-not $isChecked) {
                             $Ctrl.EdPubUseFormMetaChk.IsChecked = $false
                             $sel.Tag.UseFormMetadata = $false
+                            
+                            $pPath = Update-EditorPublicationDisplay -PubItem $sel -Ctrl $Ctrl
+                            if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
                             
                             # Update Visual (Remove [META] badge)
                             if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
@@ -624,21 +662,30 @@ function Global:Register-EditorSelectionHandler {
                 if ($sel -and $sel.Tag.Type -eq "Publication") { 
                     $sel.Tag.UseFormMetadata = [bool]$this.IsChecked 
                     
+                    $pPath = Update-EditorPublicationDisplay -PubItem $sel -Ctrl $Ctrl
+                    if ($Ctrl.EdPubTargetPathBox) { $Ctrl.EdPubTargetPathBox.Text = $pPath }
+
+                    # Mise à jour du chemin relatif visuel (vu que UseFormMetadata influe sur le chemin)
+                    $cPath = Get-EditorItemPath -TreeItem $sel
+                    $sel.Tag.RelativePath = $cPath
+                    if ($Ctrl.EdPubRelativePathBox) { $Ctrl.EdPubRelativePathBox.Text = $cPath }
+
                     # Update Visual
                     $tName = $sel.Tag.Name
-                    $color = [System.Windows.Media.Brushes]::Black
-                    
                     if ($sel.Tag.UseFormMetadata) { 
                         $tName += " [META]" 
-                        $color = [System.Windows.Media.Brushes]::Teal
+                        if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                            $sel.Header.Children[1].Foreground = [System.Windows.Media.Brushes]::Teal
+                        }
+                    }
+                    else {
+                        if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
+                            $sel.Header.Children[1].Foreground = [System.Windows.Media.Brushes]::Black
+                        }
                     }
                     
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
-                        $txtBlock = $sel.Header.Children[1]
-                        if ($txtBlock) { 
-                            $txtBlock.Text = $tName 
-                            $txtBlock.Foreground = $color
-                        }
+                        $sel.Header.Children[1].Text = $tName 
                     }
                 }
             }.GetNewClosure())
@@ -669,6 +716,12 @@ function Global:Register-EditorSelectionHandler {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Tag.Type -eq "InternalLink") {
                     $sel.Tag.Name = $this.Text
+
+                    # Mise à jour du chemin relatif visuel
+                    $cPath = Get-EditorItemPath -TreeItem $sel
+                    $sel.Tag.RelativePath = $cPath
+                    if ($Ctrl.EdInternalLinkRelativePathBox) { $Ctrl.EdInternalLinkRelativePathBox.Text = $cPath }
+
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 3) { 
                         # FIX: Target Index 2 (Name) - Index 0=Icon, 1=Arrow, 2=Name
                         $sel.Header.Children[2].Text = $this.Text 
@@ -695,6 +748,12 @@ function Global:Register-EditorSelectionHandler {
                 $sel = $Ctrl.EdTree.SelectedItem
                 if ($sel -and $sel.Tag.Type -eq "File") {
                     $sel.Tag.Name = $this.Text
+                    
+                    # Mise à jour du chemin relatif visuel
+                    $cPath = Get-EditorItemPath -TreeItem $sel
+                    $sel.Tag.RelativePath = $cPath
+                    if ($Ctrl.EdFileRelativePathBox) { $Ctrl.EdFileRelativePathBox.Text = $cPath }
+
                     if ($sel.Header -is [System.Windows.Controls.StackPanel] -and $sel.Header.Children.Count -ge 2) { 
                         # Index 1 is TextBlock (Name)
                         $sel.Header.Children[1].Text = $this.Text 

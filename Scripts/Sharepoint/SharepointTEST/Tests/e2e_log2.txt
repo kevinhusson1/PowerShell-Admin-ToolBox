@@ -1,0 +1,6 @@
+[31;1mSplit-Path: [31;1mCannot bind argument to parameter 'Path' because it is null.[0m
+[31;1mJoin-Path: [31;1mCannot bind argument to parameter 'Path' because it is null.[0m
+--- EXECUTION DU TEST 10 : DEPLOIEMENT END-TO-END ---
+Etape 0 : Préparation des données JSON mockées...
+
+[ECHEC DU TEST] : Cannot bind argument to parameter 'Path' because it is null.

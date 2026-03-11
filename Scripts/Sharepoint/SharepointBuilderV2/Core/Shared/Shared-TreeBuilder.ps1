@@ -153,8 +153,9 @@ function Global:New-BuilderTreeItem {
     }
 
     # 4. Récursion (Folders/Children)
-    if ($NodeData.Folders) {
-        foreach ($subNode in $NodeData.Folders) {
+    $subNodes = if ($NodeData.Children) { $NodeData.Children } else { $NodeData.Folders }
+    if ($subNodes) {
+        foreach ($subNode in $subNodes) {
             $subItem = New-BuilderTreeItem -NodeData $subNode -Replacements $Replacements
             if ($subItem) {
                 $item.Items.Add($subItem) | Out-Null

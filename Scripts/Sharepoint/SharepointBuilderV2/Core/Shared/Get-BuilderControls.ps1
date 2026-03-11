@@ -200,6 +200,7 @@ function Get-BuilderControls {
         EdInternalLinkIdBox           = & $Find ("EdInternalLinkIdBox")
         EdInternalLinkObjIdBox        = & $Find ("EdInternalLinkObjIdBox")
         EdInternalLinkRelativePathBox = & $Find ("EdInternalLinkRelativePathBox")
+        EdInternalLinkTargetPathBox   = & $Find ("EdInternalLinkTargetPathBox")
         EdInternalLinkDeleteButton    = & $Find ("EdInternalLinkDeleteButton")
 
         # --- CONTROLES FILE ---
@@ -214,6 +215,7 @@ function Get-BuilderControls {
         EdPubNameBox                  = & $Find ("EdPubNameBox")
         EdPubIdBox                    = & $Find ("EdPubIdBox")
         EdPubRelativePathBox          = & $Find ("EdPubRelativePathBox")
+        EdPubTargetPathBox            = & $Find ("EdPubTargetPathBox")
         EdPubSiteModeBox              = & $Find ("EdPubSiteModeBox")
         EdPubSiteUrlBox               = & $Find ("EdPubSiteUrlBox")
         EdPubPathBox                  = & $Find ("EdPubPathBox")

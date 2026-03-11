@@ -1,0 +1,41 @@
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:192:21
+Line |
+ 192 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Échec de la mise à
+     | jour des métadonnées
+     | (Champs:
+     | {"Rubriques":"Administration","Services":["RH","Direction Generale"]}) : Response status code does not indicate success: BadRequest (Bad Request).
+
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:192:21
+Line |
+ 192 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Détails API : PATCH
+     | https://graph.microsoft.com/beta/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/2933/fields HTTP/2.0 400 Bad Request Cache-Control: no-store, no-cache Vary: Accept-Encoding Strict-Transport-Security: max-age=31536000 request-id: 5008101e-9a88-4217-9950-1450dfdf3f14 client-request-id: e58ddcb9-e3c7-4805-bbb4-1b8a2a908ac0 x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"France Central","Slice":"E","Ring":"5","ScaleUnit":"003","RoleInstance":"PA1PEPF000A53B5"}} splogid: c6e2fea1-4003-0001-051a-c778025ed1eb Date: Wed, 11 Mar 2026 08:24:42 GMT Content-Type: application/json  {"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-11T08:24:42","request-id":"5008101e-9a88-4217-9950-1450dfdf3f14","client-request-id":"e58ddcb9-e3c7-4805-bbb4-1b8a2a908ac0"}}}
+
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:192:21
+Line |
+ 192 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Échec de la mise à
+     | jour des métadonnées
+     | (Champs:
+     | {"Services":["DSIN","DP"]}) : Response status code does not indicate success: BadRequest (Bad Request).
+
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:192:21
+Line |
+ 192 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Détails API : PATCH
+     | https://graph.microsoft.com/beta/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/2936/fields HTTP/2.0 400 Bad Request Cache-Control: no-store, no-cache Vary: Accept-Encoding Strict-Transport-Security: max-age=31536000 request-id: d38c2bcb-0900-4a36-bb89-fcd330b183ce client-request-id: a7bb5534-4058-4bee-9fbe-79f1fd987326 x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"France Central","Slice":"E","Ring":"5","ScaleUnit":"003","RoleInstance":"PA1PEPF000A53B5"}} splogid: c6e2fea1-7092-f000-c9a6-6039509e5cce Date: Wed, 11 Mar 2026 08:24:44 GMT Content-Type: application/json  {"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-11T08:24:45","request-id":"d38c2bcb-0900-4a36-bb89-fcd330b183ce","client-request-id":"a7bb5534-4058-4bee-9fbe-79f1fd987326"}}}
+

@@ -8,7 +8,7 @@ function New-AppGraphSiteColumn {
         [Parameter(Mandatory = $true)]
         [string]$DisplayName,
         [Parameter(Mandatory = $true)]
-        [ValidateSet("Text", "Choice", "Number", "DateTime")]
+        [ValidateSet("Text", "Choice", "Number", "DateTime", "Boolean")]
         [string]$Type,
         [Parameter(Mandatory = $false)]
         [string[]]$Choices,
@@ -48,6 +48,9 @@ function New-AppGraphSiteColumn {
             elseif ($Type -eq "DateTime") {
                 $body["dateTime"] = @{}
             }
+            elseif ($Type -eq "Boolean") {
+                $body["boolean"] = @{}
+            }
             else {
                 $body["text"] = @{}
             }
@@ -69,6 +72,9 @@ function New-AppGraphSiteColumn {
                 }
                 elseif ($Type -eq "DateTime") {
                     $patchBody["dateTime"] = @{}
+                }
+                elseif ($Type -eq "Boolean") {
+                    $patchBody["boolean"] = @{}
                 }
 
                 $updatedCol = Invoke-MgGraphRequest -Method PATCH -Uri $patchUrl -Body $patchBody -ContentType "application/json" -ErrorAction Stop

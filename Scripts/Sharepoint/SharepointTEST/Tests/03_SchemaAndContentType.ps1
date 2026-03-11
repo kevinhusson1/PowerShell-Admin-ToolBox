@@ -39,7 +39,14 @@ try {
     Write-Host "Etape 1 : Création des SiteColumns..." -ForegroundColor DarkGray
     foreach ($c in $columnsJson) {
         $isMulti = ($c.Type -eq "Choix Multiples")
-        $gType = switch ($c.Type) { "Nombre" { "Number" } "Choix" { "Choice" } "Choix Multiples" { "Choice" } Default { "Text" } }
+        $gType = switch ($c.Type) { 
+            "Nombre" { "Number" } 
+            "Choix" { "Choice" } 
+            "Choix Multiples" { "Choice" } 
+            "Date et Heure" { "DateTime" } 
+            "Oui/Non" { "Boolean" }
+            Default { "Text" } 
+        }
         
         $choices = @()
         if ($gType -eq "Choice") { $choices = @("Valeur Test A", "Valeur Test B") }
@@ -88,10 +95,21 @@ try {
     Invoke-MgGraphRequest -Method DELETE -Uri $delCtUri
     Write-Host "  > ContentType supprimé du site." -ForegroundColor Green
 
-    Write-Host "Etape 6 : Rollback - Suppression des SiteColumns..." -ForegroundColor DarkGray
+    Write-Host "Etape 6 : Rollback - Suppression des ListColumns et SiteColumns..." -ForegroundColor DarkGray
     foreach ($colId in $createdColumnIds) {
-        Invoke-MgGraphRequest -Method DELETE -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/columns/$colId"
-        Write-Host "  > Colonne $colId supprimée." -ForegroundColor DarkGray
+        # 1. Suppression de la colonne sur la liste si elle a été répliquée lors de l'attachement du CT
+        try {
+            Invoke-MgGraphRequest -Method DELETE -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$listId/columns/$colId"
+            Write-Host "  > ListColumn $colId supprimée de la bibliothèque." -ForegroundColor DarkGray
+        }
+        catch {}
+
+        # 2. Suppression de la colonne de site
+        try {
+            Invoke-MgGraphRequest -Method DELETE -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/columns/$colId"
+            Write-Host "  > SiteColumn $colId supprimée du site." -ForegroundColor DarkGray
+        }
+        catch {}
     }
     Write-Host "  > Toutes les colonnes temporaires supprimées." -ForegroundColor Green
 

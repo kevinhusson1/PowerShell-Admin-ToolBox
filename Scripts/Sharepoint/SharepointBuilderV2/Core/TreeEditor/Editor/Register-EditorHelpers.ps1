@@ -183,3 +183,116 @@ function Global:New-EditorTagRow {
 }
 
 
+# --- CALCUL DU CHEMIN RELATIF (DYNAMIQUE) ---
+function Global:Get-EditorItemPath {
+    param($TreeItem)
+    if (-not $TreeItem -or $TreeItem -isnot [System.Windows.Controls.TreeViewItem]) { return "" }
+    
+    $name = if ($TreeItem.Tag.Name) { $TreeItem.Tag.Name } else { "" }
+    $parent = $TreeItem.Parent
+    
+    if ($parent -is [System.Windows.Controls.TreeViewItem]) {
+        $parentPath = Get-EditorItemPath -TreeItem $parent
+        
+        # Cas spécifique Publication avec métadonnées : on injecte {formDestination}
+        if ($TreeItem.Tag.Type -eq "Publication" -and $TreeItem.Tag.UseFormMetadata) {
+            $p = if ($parentPath -eq "/") { "/{formDestination}/$name" } else { "$parentPath/{formDestination}/$name" }
+        }
+        else {
+            $p = if ($parentPath -eq "/") { "/$name" } else { "$parentPath/$name" }
+        }
+    }
+    else {
+        # Racine du TreeView
+        if ($TreeItem.Tag.Type -eq "Publication" -and $TreeItem.Tag.UseFormMetadata) {
+            $p = "/{formDestination}/$name"
+        }
+        else {
+            $p = "/$name"
+        }
+    }
+
+    # Suffixe .url pour les types de fichiers/liens
+    if ($TreeItem.Tag.Type -match "Link|Publication" -and $p -notmatch "\.url$") {
+        $p += ".url"
+    }
+    return $p
+}
+
+# --- RECHERCHE DE NOEUD PAR ID ---
+function Global:Find-EditorNodeById {
+    param(
+        $Collection,
+        [string]$Id
+    )
+    if ($null -eq $Collection) { return $null }
+    foreach ($item in $Collection) {
+        if ($item.Tag -and $item.Tag.Id -eq $Id) { return $item }
+        $found = Find-EditorNodeById -Collection $item.Items -Id $Id
+        if ($found) { return $found }
+    }
+    return $null
+}
+
+# --- MISE À JOUR VISUELLE DU LIEN INTERNE ---
+function Global:Update-EditorInternalLinkDisplay {
+    param(
+        $LinkItem,
+        [hashtable]$Ctrl = $null
+    )
+    if (-not $LinkItem -or $LinkItem.Tag.Type -ne "InternalLink") { return }
+
+    # Utiliser le $Ctrl fourni ou fallback sur le global
+    $effectiveCtrl = if ($Ctrl) { $Ctrl } else { $Global:AppControls }
+    if (-not $effectiveCtrl -or -not $effectiveCtrl.EdTree) { return }
+
+    $targetId = $LinkItem.Tag.TargetNodeId
+    $targetNode = Find-EditorNodeById -Collection $effectiveCtrl.EdTree.Items -Id $targetId
+    
+    $targetPath = if ($targetNode) { Get-EditorItemPath -TreeItem $targetNode } else { "(Cible inconnue)" }
+    $displayText = "$($LinkItem.Tag.Name) -> $targetPath"
+
+    # Mise à jour du header (StackPanel: Icon(0), Badge(1), Text(2))
+    if ($LinkItem.Header -is [System.Windows.Controls.StackPanel] -and $LinkItem.Header.Children.Count -ge 3) {
+        $LinkItem.Header.Children[2].Text = $displayText
+    }
+    
+    return $targetPath
+}
+
+# --- MISE À JOUR VISUELLE DE LA PUBLICATION ---
+function Global:Update-EditorPublicationDisplay {
+    param(
+        $PubItem,
+        [hashtable]$Ctrl = $null
+    )
+    if (-not $PubItem -or $PubItem.Tag.Type -ne "Publication") { return }
+
+    $data = $PubItem.Tag
+    $sitePrefix = if ($data.TargetSiteMode -eq "Url" -and $data.TargetSiteUrl) { "[$($data.TargetSiteUrl)]" } else { "[Site Courant]" }
+    
+    $targetPath = if ($data.TargetFolderPath) { "/" + $data.TargetFolderPath.Trim("/") } else { "" }
+    
+    if ($data.UseFormMetadata) {
+        $targetPath += "/{formDestination}"
+    }
+    
+    if ($data.UseFormName) {
+        $targetPath += "/$($data.Name)"
+    }
+    
+    if ($targetPath -eq "") { $targetPath = "/" }
+    
+    $fullPath = "$sitePrefix $targetPath"
+    $tName = $data.Name
+    if ($data.UseFormMetadata) { $tName += " [META]" }
+    $displayText = "$tName -> $fullPath"
+
+    # Mise à jour du header (StackPanel: Icon(0), Text(1))
+    if ($PubItem.Header -is [System.Windows.Controls.StackPanel] -and $PubItem.Header.Children.Count -ge 2) {
+        $txtBlock = $PubItem.Header.Children[1]
+        if ($txtBlock) { $txtBlock.Text = $displayText }
+    }
+    
+    return $fullPath
+}

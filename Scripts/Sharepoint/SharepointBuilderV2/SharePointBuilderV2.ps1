@@ -106,13 +106,13 @@ try {
                     # Remplacement localisation
                     if ($rawTabXaml -match "##loc:(.+?)##") {
                         $rawTabXaml = [System.Text.RegularExpressions.Regex]::Replace($rawTabXaml, "##loc:(.+?)##", {
-                            param($m) 
-                            $k = $m.Groups[1].Value
-                            if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
-                                return (Get-AppLocalizedString -Key $k)
-                            }
-                            return $k
-                        })
+                                param($m) 
+                                $k = $m.Groups[1].Value
+                                if (Get-Command "Get-AppLocalizedString" -ErrorAction SilentlyContinue) {
+                                    return (Get-AppLocalizedString -Key $k)
+                                }
+                                return $k
+                            })
                     }
                     [xml]$tabXml = $rawTabXaml
                     $tabReader = New-Object System.Xml.XmlNodeReader $tabXml
@@ -120,7 +120,8 @@ try {
                     if ($tabItem -is [System.Windows.Controls.TabItem]) {
                         $tabControl.Items.Add($tabItem) | Out-Null
                     }
-                } catch {
+                }
+                catch {
                     Write-Warning "[Builder] Erreur chargement onglet $($tabFile.Name) : $($_.Exception.Message)"
                 }
             }
@@ -225,29 +226,31 @@ try {
 
 }
 catch {
-    [System.Windows.MessageBox]::Show("Erreur UI : $($_.Exception.Message)", "Fatal", "OK", "Error")
+    $err = "Erreur UI : $($_.Exception.Message)`n$($_.ScriptStackTrace)"
+    [System.Windows.MessageBox]::Show($err, "Fatal", "OK", "Error")
     Unlock-AppScriptLock -OwnerPID $PID
     exit 1
 }
 
 # --- PROTECTION GLOBALE ANTI-CRASH ---
 $window.Dispatcher.add_UnhandledException({
-    param($sender, $e)
-    # Empêche la propagation du crash vers ShowDialog
-    $e.Handled = $true
+        param($sender, $e)
+        # Empêche la propagation du crash vers ShowDialog
+        $e.Handled = $true
     
-    $crashMsg = "CRASH UI INTERCEPTÉ: $($e.Exception.Message) `n$($e.Exception.StackTrace)"
-    Write-Warning $crashMsg
+        $crashMsg = "CRASH UI INTERCEPTÉ: $($e.Exception.Message) `n$($e.Exception.StackTrace)"
+        Write-Warning $crashMsg
     
-    # Tentative d'affichage dans la console interne si disponible
-    $logBox = $window.FindName("LogRichTextBox")
-    if ($logBox) {
-        # On invoque le Write-AppLog délicatement, ou on ajoute du texte
-        try {
-            Write-AppLog -Message $crashMsg -Level Error -RichTextBox $logBox
-        } catch {}
-    }
-})
+        # Tentative d'affichage dans la console interne si disponible
+        $logBox = $window.FindName("LogRichTextBox")
+        if ($logBox) {
+            # On invoque le Write-AppLog délicatement, ou on ajoute du texte
+            try {
+                Write-AppLog -Message $crashMsg -Level Error -RichTextBox $logBox
+            }
+            catch {}
+        }
+    })
 
 # 5. SHOW
 Send-Progress 100 "Prêt."

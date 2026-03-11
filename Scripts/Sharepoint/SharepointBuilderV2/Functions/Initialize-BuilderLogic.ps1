@@ -33,6 +33,9 @@ function Initialize-BuilderLogic {
     # 2. Récupération centralisée des contrôles
     $Ctrl = Get-BuilderControls -Window $Window
     if (-not $Ctrl) { return }
+    
+    # Synchronisation avec la hashtable globale (Règle Projet #3)
+    $Global:AppControls = $Ctrl
 
     # 🆕: Chargement des Icônes depuis le dossier Templates
     $navIconsPath = Join-Path $Context.ScriptRoot "Templates\Resources\Icons\BUTTONS" # Chemin relatif si possible ou via ProjectRoot global

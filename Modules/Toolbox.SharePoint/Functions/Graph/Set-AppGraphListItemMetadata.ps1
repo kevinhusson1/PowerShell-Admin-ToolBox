@@ -16,19 +16,14 @@ function Set-AppGraphListItemMetadata {
         Write-Verbose "[Set-AppGraphListItemMetadata] Mise à jour des métadonnées pour l'élément ListItem $ListItemId..."
         
         try {
-            # 1. Mise à jour du ContentType (Graph Beta)
+            # 1. Mise à jour du ContentType (Graph V1.0 Standard)
             if ($ContentTypeId) {
-                Write-Verbose "[Set-AppGraphListItemMetadata] Application du Content Type '$ContentTypeId' (Beta)..."
-                $itemUrl = "https://graph.microsoft.com/beta/sites/$SiteId/lists/$ListId/items/$ListItemId"
+                Write-Verbose "[Set-AppGraphListItemMetadata] Application du Content Type '$ContentTypeId' (V1.0)..."
+                $itemUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/lists/$ListId/items/$ListItemId"
                 $itemBody = @{
-                    contentTypeId = $ContentTypeId # Beta utilise souvent plus simplement contentTypeId
-                }
-                # On tente aussi le format standard si l'autre échoue
-                try { Invoke-MgGraphRequest -Method PATCH -Uri $itemUrl -Body $itemBody -ContentType "application/json" -ErrorAction Stop | Out-Null }
-                catch { 
-                    $itemBody = @{ contentType = @{ id = $ContentTypeId } }
-                    Invoke-MgGraphRequest -Method PATCH -Uri $itemUrl -Body $itemBody -ContentType "application/json" -ErrorAction Stop | Out-Null
-                }
+                    contentType = @{ id = $ContentTypeId }
+                } | ConvertTo-Json -Compress
+                Invoke-MgGraphRequest -Method PATCH -Uri $itemUrl -Body $itemBody -ContentType "application/json" -ErrorAction Stop | Out-Null
             }
             
             # 2. Mise à jour des champs personnalisés (Graph Beta)

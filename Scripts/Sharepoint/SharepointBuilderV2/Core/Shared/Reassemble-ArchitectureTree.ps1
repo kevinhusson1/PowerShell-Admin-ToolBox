@@ -29,41 +29,34 @@ function Global:Invoke-AppSPReassembleTree {
     if (-not $Structure) { return }
     $TreeViewItems.Clear()
 
-    # Dictionnaire pour mapper ID -> TreeViewItem Visuel (Passe 1)
+    # Dictionnaire pour mapper ID -> TreeViewItem Visuel (Nécessaire pour le format FLAT legacy)
     $nodeMap = @{}
 
-    # --- PASSE 1 : Construction du Squelette (Folders) ---
-    function Add-AppSPFolderToTree {
-        param($NodeData, $ParentUICollection)
-        
-        $rootNode = New-BuilderTreeItem -NodeData $NodeData -Replacements $Replacements
+    # --- ÉTAPE 1 : NOEUDS RACINES (UNIFIÉ OU FOLDERS) ---
+    $roots = if ($Structure.Children) { $Structure.Children } else { $Structure.Folders }
+    
+    foreach ($rData in $roots) {
+        $rootNode = New-BuilderTreeItem -NodeData $rData -Replacements $Replacements
         if ($rootNode) {
-            $ParentUICollection.Add($rootNode) | Out-Null
+            $TreeViewItems.Add($rootNode) | Out-Null
             
-            $nodeId = $rootNode.Tag.Id
-            if ($nodeId) { $nodeMap[$nodeId] = $rootNode }
-
-            function Get-AppSPChildrenRecursive {
-                param($parentItem)
-                foreach ($child in $parentItem.Items) {
-                    if ($child.Tag.Type -eq "Folder" -and $child.Tag.Id) {
-                        $nodeMap[$child.Tag.Id] = $child
-                        Get-AppSPChildrenRecursive -parentItem $child
+            # Pour le format FLAT, on indexe récursivement les dossiers créés
+            if ($null -ne $Structure.Links -or $null -ne $Structure.Files -or $null -ne $Structure.Publications) {
+                function Get-AppSPChildrenRecursive {
+                    param($parentItem)
+                    if ($parentItem.Tag.Id) { $nodeMap[$parentItem.Tag.Id] = $parentItem }
+                    foreach ($child in $parentItem.Items) {
+                        if ($child.Tag.Type -eq "Folder") { Get-AppSPChildrenRecursive -parentItem $child }
                     }
                 }
+                Get-AppSPChildrenRecursive -parentItem $rootNode
             }
-            Get-AppSPChildrenRecursive -parentItem $rootNode
         }
     }
 
-    $folders = if ($Structure.Folders) { $Structure.Folders } else { @() }
-    foreach ($f in $folders) {
-        Add-AppSPFolderToTree -NodeData $f -ParentUICollection $TreeViewItems
-    }
-
-    # --- PASSE 2 : Habillage (Publications, Links, InternalLinks, Files) ---
+    # --- ÉTAPE 2 : HABILLAGE (COMPATIBILITÉ FLAT LEGACY) ---
+    # Si des collections plates existent, on les rattache à leurs parents via ParentId
     $flatCollections = @($Structure.Publications, $Structure.Links, $Structure.InternalLinks, $Structure.Files)
-    
     foreach ($collection in $flatCollections) {
         if ($null -ne $collection) {
             foreach ($itemData in $collection) {
@@ -71,17 +64,12 @@ function Global:Invoke-AppSPReassembleTree {
                 if ($leafNode) {
                     $parentId = $itemData.ParentId
                     if ([string]::IsNullOrWhiteSpace($parentId)) {
-                        # Racine
                         $TreeViewItems.Add($leafNode) | Out-Null
                     }
                     elseif ($nodeMap.ContainsKey($parentId)) {
-                        # Ajout au parent correct
-                        $parentNode = $nodeMap[$parentId]
-                        $parentNode.Items.Add($leafNode) | Out-Null
-                        
-                        # Mise à jour des badges du parent (Important pour le visuel)
+                        $nodeMap[$parentId].Items.Add($leafNode) | Out-Null
                         if (Get-Command Update-EditorBadges -ErrorAction SilentlyContinue) {
-                            Update-EditorBadges -TreeItem $parentNode
+                            Update-EditorBadges -TreeItem $nodeMap[$parentId]
                         }
                     }
                 }

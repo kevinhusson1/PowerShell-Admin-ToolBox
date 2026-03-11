@@ -120,7 +120,6 @@ function Global:Register-EditorActionHandlers {
                 Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
             }.GetNewClosure())
     }
-
     # NEW: Internal Link (Lien Interne)
     if ($Ctrl.EdBtnChildInternalLink) {
         $Ctrl.EdBtnChildInternalLink.Add_Click({
@@ -130,12 +129,11 @@ function Global:Register-EditorActionHandlers {
                     if (Test-Path $f) { . $f }
                 }
 
-                $p = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
-                if ($null -eq $p) { [System.Windows.MessageBox]::Show("Sélectionnez un dossier.", "Info", "OK", "Information"); return }
-                # Validation Nesting
-                if ($p.Tag.Type -eq "Link") { [System.Windows.MessageBox]::Show("Impossible d'ajouter un lien dans un lien.", "Info", "OK", "Warning"); return }
-                if ($p.Tag.Type -eq "InternalLink") { [System.Windows.MessageBox]::Show("Impossible d'ajouter un lien dans un lien.", "Info", "OK", "Warning"); return }
-                if ($p.Tag.Type -eq "Publication") { [System.Windows.MessageBox]::Show("Impossible d'ajouter quoi que ce soit dans un nœud de publication.", "Info", "OK", "Warning"); return }
+                $sourceNode = if ($Ctrl.EdTree) { $Ctrl.EdTree.SelectedItem }
+                if ($null -eq $sourceNode) { [System.Windows.MessageBox]::Show("Sélectionnez le dossier source (celui pour lequel vous voulez créer un raccourci).", "Info", "OK", "Information"); return }
+                
+                $sourceData = $sourceNode.Tag
+                if ($sourceData.Type -ne "Folder") { [System.Windows.MessageBox]::Show("Le raccourci doit pointer vers un dossier.", "Info", "OK", "Warning"); return }
 
                 # 1. PRÉPARATION DIALOGUE (RECURSIVE CLONE FOR TREEVIEW)
                 function Clone-ForDialog {
@@ -155,7 +153,7 @@ function Global:Register-EditorActionHandlers {
                     $stack.Children.Add($icon) | Out-Null
                     $stack.Children.Add($txt) | Out-Null
                     $newItem.Header = $stack
-                    $newItem.Tag = $SourceItem.Tag
+                    $newItem.Tag = $SourceItem.Tag # On partage le Tag pour l'ID
                     $newItem.IsExpanded = $true
 
                     foreach ($child in $SourceItem.Items) {
@@ -174,14 +172,14 @@ function Global:Register-EditorActionHandlers {
                 }
                 
                 if ($dialogRootItems.Count -eq 0) {
-                    [System.Windows.MessageBox]::Show("Aucun dossier cible disponible.", "Info", "OK", "Warning"); return
+                    [System.Windows.MessageBox]::Show("Aucun dossier de destination disponible.", "Info", "OK", "Warning"); return
                 }
 
                 # 2. DIALOGUE XAML
                 $xaml = @"
 <Window xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'
         xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
-        Title='Sélectionner une cible' Height='500' Width='400' WindowStartupLocation='CenterOwner' ResizeMode='NoResize'>
+        Title='Sélectionner la destination du raccourci' Height='500' Width='400' WindowStartupLocation='CenterOwner' ResizeMode='NoResize'>
     <Window.Resources>
         <Style x:Key='DialogButtonStyle' TargetType='Button'>
             <Setter Property='Background' Value='#EEEEEE'/>
@@ -245,9 +243,9 @@ function Global:Register-EditorActionHandlers {
         <StackPanel Margin='0,0,0,15'>
             <StackPanel Orientation='Horizontal' Margin='0,0,0,5'>
                 <TextBlock Text='🔗' FontSize='16' Margin='0,0,10,0' VerticalAlignment='Center'/>
-                <TextBlock Text='Lien Interne' FontWeight='Bold' FontSize='16' Foreground='#00695C' VerticalAlignment='Center'/>
+                <TextBlock Text='Créer un raccourci interne' FontWeight='Bold' FontSize='16' Foreground='#00695C' VerticalAlignment='Center'/>
             </StackPanel>
-            <TextBlock Text='Veuillez sélectionner le dossier vers lequel ce lien doit pointer.' Foreground='#666666' TextWrapping='Wrap'/>
+            <TextBlock Text='Destination : Sélectionnez le dossier où sera créé le raccourci vers "$($sourceData.Name)".' Foreground='#666666' TextWrapping='Wrap'/>
         </StackPanel>
         
         <Border Grid.Row='1' BorderBrush='#DDDDDD' BorderThickness='1' CornerRadius='4' Background='White'>
@@ -298,7 +296,7 @@ function Global:Register-EditorActionHandlers {
         
         <StackPanel Grid.Row='2' Orientation='Horizontal' HorizontalAlignment='Right' Margin='0,15,0,0'>
             <Button x:Name='BtnCancel' Content='Annuler' Width='100' Height='36' Margin='0,0,10,0' Style='{StaticResource DialogButtonStyle}' IsCancel='True'/>
-            <Button x:Name='BtnSelect' Content='Valider la cible' Width='130' Height='36' Style='{StaticResource PrimaryDialogButtonStyle}' IsDefault='True'/>
+            <Button x:Name='BtnSelect' Content='Placer ici' Width='130' Height='36' Style='{StaticResource PrimaryDialogButtonStyle}' IsDefault='True'/>
         </StackPanel>
     </Grid>
 </Window>
@@ -321,7 +319,6 @@ function Global:Register-EditorActionHandlers {
                 try {
                     if ($Window.Resources.Contains("ModernTreeViewItemStyle")) {
                         $dlg.Resources.Add("ModernTreeViewItemStyle", $Window.Resources["ModernTreeViewItemStyle"])
-                        # REMOVED: Do NOT overwrite the style
                     }
                 }
                 catch { }
@@ -335,38 +332,42 @@ function Global:Register-EditorActionHandlers {
                 
                 $btnOk.Add_Click({
                         if ($tree.SelectedItem) { $dlg.DialogResult = $true; $dlg.Close() }
-                        else { [System.Windows.MessageBox]::Show("Veuillez sélectionner un dossier dans la liste.", "Attention", "OK", "Warning") }
+                        else { [System.Windows.MessageBox]::Show("Veuillez sélectionner un dossier de destination.", "Attention", "OK", "Warning") }
                     }.GetNewClosure())
                 
                 $btnCancel.Add_Click({ $dlg.DialogResult = $false; $dlg.Close() }.GetNewClosure())
 
                 if ($dlg.ShowDialog() -eq $true) {
                     try {
-                        $sel = $tree.SelectedItem
-                        if (-not $sel) { [System.Windows.MessageBox]::Show("Erreur interne : Pas de sélection récupérée.", "Bug", "OK", "Error"); return }
+                        $destClone = $tree.SelectedItem
+                        if (-not $destClone) { return }
 
-                        # 3. CRÉATION DU NOEUD
-                        $targetData = $sel.Tag
-                        $tName = "Vers $($targetData.Name)"
-                        $tId = $targetData.Id
-                        
-                        $n = New-EditorInternalLinkNode -Name $tName -TargetNodeId $tId
-                        
-                        if (-not $n) { [System.Windows.MessageBox]::Show("Erreur : La fonction New-EditorInternalLinkNode a retourné `$null.", "Bug", "OK", "Error"); return }
+                        # 3. RETROUVER LE DOSSIER RÉEL (VIA ID)
+                        $destNodeReal = Find-EditorNodeById -Collection $Ctrl.EdTree.Items -Id $destClone.Tag.Id
+                        if (-not $destNodeReal) { [System.Windows.MessageBox]::Show("Dossier de destination introuvable.", "Erreur", "OK", "Error"); return }
 
-                        $p.Items.Add($n) | Out-Null
-                        $p.IsExpanded = $true
+                        # 4. CRÉATION DU RACCOURCI
+                        # Le nom est celui de la source + .url
+                        $linkName = "$($sourceData.Name).url"
+                        $n = New-EditorInternalLinkNode -Name $linkName -TargetNodeId $sourceData.Id
+                        
+                        if (-not $n) { return }
+
+                        $destNodeReal.Items.Add($n) | Out-Null
+                        $destNodeReal.IsExpanded = $true
                         $n.IsSelected = $true
                         $n.BringIntoView()
                         $n.Focus()
                         
-                        # Important : Refresh UI du parent (StackPanel) pour afficher le lien correctement
-                        $p.UpdateLayout()
+                        # Rafraîchir l'en-tête pour afficher la cible (v6.0)
+                        Update-EditorInternalLinkDisplay -LinkItem $n -Ctrl $Ctrl
                         
-                        Sort-EditorTreeRecursive -ItemCollection $p.Items -Level 1
+                        $destNodeReal.UpdateLayout()
+                        
+                        Sort-EditorTreeRecursive -ItemCollection $destNodeReal.Items -Level 1
                     }
                     catch {
-                        [System.Windows.MessageBox]::Show("Erreur CRITIQUE création noeud : $_", "Error", "OK", "Error")
+                        [System.Windows.MessageBox]::Show("Erreur CRITIQUE création lien : $_", "Error", "OK", "Error")
                     }
                 }
 
@@ -677,142 +678,148 @@ function Global:Register-EditorActionHandlers {
             }.GetNewClosure())
     }
 
-    $Ctrl.EdBtnNew.Add_Click({
-            if ($Ctrl.EdTree.Items.Count -gt 0) {
-                if ([System.Windows.MessageBox]::Show("Créer un nouveau modèle effacera le travail non sauvegardé. Continuer ?", "Confirmation", "YesNo", "Warning") -ne 'Yes') { return }
-            }
-            
-            $Ctrl.EdNewPopupOverlay.Visibility = "Visible"
-            
-            $schemas = @(Get-AppSPFolderSchema)
-            $Ctrl.EdNewPopupSchemaCb.ItemsSource = $schemas
-            $Ctrl.EdNewPopupSchemaCb.DisplayMemberPath = "DisplayName"
-            $Ctrl.EdNewPopupSchemaCb.SelectedIndex = -1
-            $Ctrl.EdNewPopupFormCb.ItemsSource = @()
-            $Ctrl.EdNewPopupConfirmBtn.IsEnabled = $false
-        }.GetNewClosure())
+    if ($Ctrl.EdBtnNew) {
+        $Ctrl.EdBtnNew.Add_Click({
+                if ($Ctrl.EdTree.Items.Count -gt 0) {
+                    if ([System.Windows.MessageBox]::Show("Créer un nouveau modèle effacera le travail non sauvegardé. Continuer ?", "Confirmation", "YesNo", "Warning") -ne 'Yes') { return }
+                }
+                
+                $Ctrl.EdNewPopupOverlay.Visibility = "Visible"
+                
+                $schemas = @(Get-AppSPFolderSchema)
+                $Ctrl.EdNewPopupSchemaCb.ItemsSource = $schemas
+                $Ctrl.EdNewPopupSchemaCb.DisplayMemberPath = "DisplayName"
+                $Ctrl.EdNewPopupSchemaCb.SelectedIndex = -1
+                $Ctrl.EdNewPopupFormCb.ItemsSource = @()
+                $Ctrl.EdNewPopupConfirmBtn.IsEnabled = $false
+            }.GetNewClosure())
+    }
 
-    $Ctrl.EdBtnLoad.Add_Click({
-            $selectedTpl = $Ctrl.EdLoadCb.SelectedItem
-            if (-not $selectedTpl) { & $SetStatus -Msg "Aucun modèle sélectionné." -Type "Warning"; return }
-            
-            if ($Ctrl.EdTree.Items.Count -gt 0) { if ([System.Windows.MessageBox]::Show("Charger va écraser le modèle actuel. Continuer ?", "Attention", "YesNo", "Warning") -ne 'Yes') { return } }
-            
-            # --- V3 : Récupération des cibles depuis le JSON ---
-            $schemaId = $null
-            $formId = $null
-            try {
-                $parsed = $selectedTpl.StructureJson | ConvertFrom-Json
-                if ($parsed.TargetSchemaId) { $schemaId = $parsed.TargetSchemaId }
-                if ($parsed.TargetFormId) { $formId = $parsed.TargetFormId }
-            }
-            catch {}
-            
-            if ($schemaId) {
-                $schemaObj = @(Get-AppSPFolderSchema) | Where-Object { $_.SchemaId -eq $schemaId } | Select-Object -First 1
-                if ($schemaObj) { $Ctrl.EdTargetSchemaDisplay.Text = $schemaObj.DisplayName } else { $Ctrl.EdTargetSchemaDisplay.Text = "Introuvable ($schemaId)" }
-                $Ctrl.EdTargetSchemaDisplay.Tag = $schemaId
-            }
-            else {
-                $Ctrl.EdTargetSchemaDisplay.Text = "Non lié (Legacy)"
-                $Ctrl.EdTargetSchemaDisplay.Tag = $null
-            }
-            
-            if ($formId) {
-                $formObj = @(Get-AppNamingRules) | Where-Object { $_.RuleId -eq $formId } | Select-Object -First 1
-                if ($formObj) { $Ctrl.EdTargetFormDisplay.Text = $formObj.DisplayName } else { $Ctrl.EdTargetFormDisplay.Text = "Introuvable ($formId)" }
-                $Ctrl.EdTargetFormDisplay.Tag = $formId
-            }
-            else {
-                $Ctrl.EdTargetFormDisplay.Text = "Aucun"
-                $Ctrl.EdTargetFormDisplay.Tag = $null
-            }
-            
-            # Déverrouiller l'UI
-            $Ctrl.EdWorkspaceLockOverlay.Visibility = "Collapsed"
-            $Ctrl.EdBtnSave.IsEnabled = $true
+    if ($Ctrl.EdBtnLoad) {
+        $Ctrl.EdBtnLoad.Add_Click({
+                $selectedTpl = $Ctrl.EdLoadCb.SelectedItem
+                if (-not $selectedTpl) { & $SetStatus -Msg "Aucun modèle sélectionné." -Type "Warning"; return }
+                
+                if ($Ctrl.EdTree.Items.Count -gt 0) { if ([System.Windows.MessageBox]::Show("Charger va écraser le modèle actuel. Continuer ?", "Attention", "YesNo", "Warning") -ne 'Yes') { return } }
+                
+                # --- V3 : Récupération des cibles depuis le JSON ---
+                $schemaId = $null
+                $formId = $null
+                try {
+                    $parsed = $selectedTpl.StructureJson | ConvertFrom-Json
+                    if ($parsed.TargetSchemaId) { $schemaId = $parsed.TargetSchemaId }
+                    if ($parsed.TargetFormId) { $formId = $parsed.TargetFormId }
+                }
+                catch {}
+                
+                if ($schemaId) {
+                    $schemaObj = @(Get-AppSPFolderSchema) | Where-Object { $_.SchemaId -eq $schemaId } | Select-Object -First 1
+                    if ($schemaObj) { $Ctrl.EdTargetSchemaDisplay.Text = $schemaObj.DisplayName } else { $Ctrl.EdTargetSchemaDisplay.Text = "Introuvable ($schemaId)" }
+                    $Ctrl.EdTargetSchemaDisplay.Tag = $schemaId
+                }
+                else {
+                    $Ctrl.EdTargetSchemaDisplay.Text = "Non lié (Legacy)"
+                    $Ctrl.EdTargetSchemaDisplay.Tag = $null
+                }
+                
+                if ($formId) {
+                    $formObj = @(Get-AppNamingRules) | Where-Object { $_.RuleId -eq $formId } | Select-Object -First 1
+                    if ($formObj) { $Ctrl.EdTargetFormDisplay.Text = $formObj.DisplayName } else { $Ctrl.EdTargetFormDisplay.Text = "Introuvable ($formId)" }
+                    $Ctrl.EdTargetFormDisplay.Tag = $formId
+                }
+                else {
+                    $Ctrl.EdTargetFormDisplay.Text = "Aucun"
+                    $Ctrl.EdTargetFormDisplay.Tag = $null
+                }
+                
+                # Déverrouiller l'UI
+                $Ctrl.EdWorkspaceLockOverlay.Visibility = "Collapsed"
+                $Ctrl.EdBtnSave.IsEnabled = $true
+    
+                if ($Ctrl.EdTree) { 
+                    Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree 
+                    Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
+                }
+    
+                if ($Ctrl.EditorDisplayNameBox) { $Ctrl.EditorDisplayNameBox.Text = $selectedTpl.DisplayName }
+                if ($Ctrl.EditorDescriptionBox) { $Ctrl.EditorDescriptionBox.Text = $selectedTpl.Description }
+                    
+                if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
+                if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
+                if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
+                if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
+                if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
+                if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
+                if ($Ctrl.EdPanelFile) { $Ctrl.EdPanelFile.Visibility = "Collapsed" }
+                if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
+                    
+                $Ctrl.EdLoadCb.Tag = $selectedTpl.TemplateId
+                
+                & $SetStatus -Msg "Modèle '$($selectedTpl.DisplayName)' chargé." -Type "Success"
+            }.GetNewClosure())
+    }
 
-            if ($Ctrl.EdTree) { 
-                Convert-JsonToEditorTree -Json $selectedTpl.StructureJson -TreeView $Ctrl.EdTree 
+    if ($Ctrl.EdBtnSave) {
+        $Ctrl.EdBtnSave.Add_Click({
+                if ($Ctrl.EdTree.Items.Count -eq 0) { [System.Windows.MessageBox]::Show("L'arbre est vide.", "Erreur", "OK", "Warning"); return }
+    
                 Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
-            }
-
-            if ($Ctrl.EditorDisplayNameBox) { $Ctrl.EditorDisplayNameBox.Text = $selectedTpl.DisplayName }
-            if ($Ctrl.EditorDescriptionBox) { $Ctrl.EditorDescriptionBox.Text = $selectedTpl.Description }
-                
-            if ($Ctrl.EdPropPanel) { $Ctrl.EdPropPanel.Visibility = "Collapsed" }
-            if ($Ctrl.EdPropPanelPerm) { $Ctrl.EdPropPanelPerm.Visibility = "Collapsed" }
-            if ($Ctrl.EdPropPanelTag) { $Ctrl.EdPropPanelTag.Visibility = "Collapsed" }
-            if ($Ctrl.EdPropPanelLink) { $Ctrl.EdPropPanelLink.Visibility = "Collapsed" }
-            if ($Ctrl.EdPropPanelInternalLink) { $Ctrl.EdPropPanelInternalLink.Visibility = "Collapsed" }
-            if ($Ctrl.EdPropPanelPub) { $Ctrl.EdPropPanelPub.Visibility = "Collapsed" }
-            if ($Ctrl.EdPanelFile) { $Ctrl.EdPanelFile.Visibility = "Collapsed" }
-            if ($Ctrl.EdNoSelPanel) { $Ctrl.EdNoSelPanel.Visibility = "Visible" }
-                
-            $Ctrl.EdLoadCb.Tag = $selectedTpl.TemplateId
+    
+                $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree -TargetSchemaId $Ctrl.EdTargetSchemaDisplay.Tag -TargetFormId $Ctrl.EdTargetFormDisplay.Tag
             
-            & $SetStatus -Msg "Modèle '$($selectedTpl.DisplayName)' chargé." -Type "Success"
-        }.GetNewClosure())
-
-    $Ctrl.EdBtnSave.Add_Click({
-            if ($Ctrl.EdTree.Items.Count -eq 0) { [System.Windows.MessageBox]::Show("L'arbre est vide.", "Erreur", "OK", "Warning"); return }
-
-            Sort-EditorTreeRecursive -ItemCollection $Ctrl.EdTree.Items
-
-            $json = Convert-EditorTreeToJson -TreeView $Ctrl.EdTree -TargetSchemaId $Ctrl.EdTargetSchemaDisplay.Tag -TargetFormId $Ctrl.EdTargetFormDisplay.Tag
-        
-            $currentId = $Ctrl.EdLoadCb.Tag
-            $currentName = $Ctrl.EditorDisplayNameBox.Text
-            $currentDesc = $Ctrl.EditorDescriptionBox.Text
-
-            if ([string]::IsNullOrWhiteSpace($currentName)) {
-                [System.Windows.MessageBox]::Show("Le nom du modèle est requis.", "Validation", "OK", "Warning")
-                return
-            }
-
-            if ([string]::IsNullOrWhiteSpace($currentDesc)) {
-                [System.Windows.MessageBox]::Show("La description du modèle est requise.", "Validation", "OK", "Warning")
-                return
-            }
-
-            if ($currentId) {
-                $msg = "Le modèle '$currentName' est actuellement chargé.`n`nVoulez-vous écraser les modifications ?`n`nOUI : Écraser l'existant`nNON : Créer une copie (Enregistrer sous)`nANNULER : Ne rien faire"
-                $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
-                switch ($choice) {
-                    'Cancel' { return }
-                    'No' {
-                        $currentId = $null
-                        # On réutilise le nom actuel pour la copie si besoin
+                $currentId = $Ctrl.EdLoadCb.Tag
+                $currentName = $Ctrl.EditorDisplayNameBox.Text
+                $currentDesc = $Ctrl.EditorDescriptionBox.Text
+    
+                if ([string]::IsNullOrWhiteSpace($currentName)) {
+                    [System.Windows.MessageBox]::Show("Le nom du modèle est requis.", "Validation", "OK", "Warning")
+                    return
+                }
+    
+                if ([string]::IsNullOrWhiteSpace($currentDesc)) {
+                    [System.Windows.MessageBox]::Show("La description du modèle est requise.", "Validation", "OK", "Warning")
+                    return
+                }
+    
+                if ($currentId) {
+                    $msg = "Le modèle '$currentName' est actuellement chargé.`n`nVoulez-vous écraser les modifications ?`n`nOUI : Écraser l'existant`nNON : Créer une copie (Enregistrer sous)`nANNULER : Ne rien faire"
+                    $choice = [System.Windows.MessageBox]::Show($msg, "Sauvegarde", [System.Windows.MessageBoxButton]::YesNoCancel, [System.Windows.MessageBoxImage]::Question)
+                    switch ($choice) {
+                        'Cancel' { return }
+                        'No' {
+                            $currentId = $null
+                            # On réutilise le nom actuel pour la copie si besoin
+                        }
                     }
                 }
-            }
-
-            if (-not $currentId) {
-                # Nouveau modèle (GUID déjà généré ou à générer)
-                $currentId = [Guid]::NewGuid().ToString()
-            }
-
-            try {
-                $targetFormId = $Ctrl.EdTargetFormDisplay.Tag
-                Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description $currentDesc -NamingRuleId $targetFormId -StructureJson $json
-            
-                & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
-
-                # Force UI Refresh of current item to show the newly calculated RelativePath
-                $sel = $Ctrl.EdTree.SelectedItem
-                if ($sel) {
-                    $sel.IsSelected = $false
-                    $sel.IsSelected = $true
+    
+                if (-not $currentId) {
+                    # Nouveau modèle (GUID déjà généré ou à générer)
+                    $currentId = [Guid]::NewGuid().ToString()
                 }
-            
-                & $LoadTemplateList
-                $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1
-                if ($newItem) { $Ctrl.EdLoadCb.SelectedItem = $newItem; $Ctrl.EdLoadCb.Tag = $currentId }
-
-            }
-            catch { & $SetStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
-
-        }.GetNewClosure())
+    
+                try {
+                    $targetFormId = $Ctrl.EdTargetFormDisplay.Tag
+                    Set-AppSPTemplate -TemplateId $currentId -DisplayName $currentName -Description $currentDesc -NamingRuleId $targetFormId -StructureJson $json
+                
+                    & $SetStatus -Msg "Modèle '$currentName' sauvegardé avec succès." -Type "Success"
+    
+                    # Force UI Refresh of current item to show the newly calculated RelativePath
+                    $sel = $Ctrl.EdTree.SelectedItem
+                    if ($sel) {
+                        $sel.IsSelected = $false
+                        $sel.IsSelected = $true
+                    }
+                
+                    & $LoadTemplateList
+                    $newItem = $Ctrl.EdLoadCb.ItemsSource | Where-Object { $_.TemplateId -eq $currentId } | Select-Object -First 1
+                    if ($newItem) { $Ctrl.EdLoadCb.SelectedItem = $newItem; $Ctrl.EdLoadCb.Tag = $currentId }
+    
+                }
+                catch { & $SetStatus -Msg "Erreur lors de la sauvegarde : $($_.Exception.Message)" -Type "Error" }
+    
+            }.GetNewClosure())
+    }
 
     if ($Ctrl.EdBtnDeleteTpl) {
         $Ctrl.EdBtnDeleteTpl.Add_Click({

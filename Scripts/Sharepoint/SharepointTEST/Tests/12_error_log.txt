@@ -1,0 +1,36 @@
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+--- TEST 12 : METADONNEES ET APPEND ---
+Etape 1 : Récupération de l'ID ListItem du dossier Validation_Visuelle_20260311_112715...
+  > ListItem ID récupéré : 2956
+
+Etape 2 : Application initiale des métadonnées...
+  > Envoi du PATCH 1 : {"Year":["2026"],"Services":["Direction Generale"],"Year@odata.type":"Collection(Edm.String)","TestBoolean":true,"DateDeploiement":"2026-03-11T12:47:04Z","Rubriques":"Test de rubrique (accentué) éàç&()^$ @ !","Services@odata.type":"Collection(Edm.String)"}
+  > Succès de l'application initiale.
+
+Etape 3 : Tentative d'Append (Mise à jour sans écrasement) sur Services et Year...
+  > 3a. Lecture des champs existants (GET)...
+  > 3b. Préparation du PATCH 2 avec la nouvelle liste...
+  > Envoi du PATCH 2 : {"Services":"Direction GeneraleRH","Year@odata.type":"Collection(Edm.String)","Services@odata.type":"Collection(Edm.String)","Year":"20262027"}
+
+[ECHEC] : Response status code does not indicate success: BadRequest (Bad Request).
+Détails: PATCH https://graph.microsoft.com/beta/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/2956/fields
+HTTP/2.0 400 Bad Request
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: 842c0b08-6aa1-443a-91c5-660367456ce3
+client-request-id: 83565e8e-f9d7-4d69-9450-78c60232e484
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"000","RoleInstance":"AM1PEPF0009819E"}}
+splogid: 5beefea1-a03e-f000-e2f3-385f1610a4f2
+Date: Wed, 11 Mar 2026 11:47:07 GMT
+Content-Type: application/json
+
+{"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-11T11:47:08","request-id":"842c0b08-6aa1-443a-91c5-660367456ce3","client-request-id":"83565e8e-f9d7-4d69-9450-78c60232e484"}}}

@@ -44,11 +44,12 @@ function Get-AppSPDeploymentPlan {
     }
 
     # --- ÉTAPE 2 : PARCOURS DE LA STRUCTURE ---
-    function Process-Node {
+    # --- ÉTAPE 2 : PARCOURS DE LA STRUCTURE ---
+    function Invoke-ProcessNode {
         param($Node, $ParentPath, $ParentId)
         
         if ($Node -is [array]) {
-            foreach ($n in $Node) { Process-Node -Node $n -ParentPath $ParentPath -ParentId $ParentId }
+            foreach ($n in $Node) { Invoke-ProcessNode -Node $n -ParentPath $ParentPath -ParentId $ParentId }
             return
         }
 
@@ -68,25 +69,31 @@ function Get-AppSPDeploymentPlan {
             Name        = $nodeName
             ParentId    = $ParentId
             Path        = $currentPath
+            TargetPath  = $null
             Tags        = Resolve-Tags -TagsConfig $Node.Tags
             Permissions = $Node.Permissions
             RawNode     = $Node # Pour les propriétés spécifiques (Url, SourceUrl, etc.)
         }
         $plan.Add($op)
 
-        # Récursion pour les dossiers
-        if ($Node.Folders) {
-            Process-Node -Node $Node.Folders -ParentPath $currentPath -ParentId $nodeId
+        # Récursion pour les enfants (Nouveau Format Unifié)
+        if ($Node.Children) {
+            Invoke-ProcessNode -Node $Node.Children -ParentPath $currentPath -ParentId $nodeId
+        }
+        # Compatibilité Ancien Format (Migration)
+        elseif ($Node.Folders) {
+            Invoke-ProcessNode -Node $Node.Folders -ParentPath $currentPath -ParentId $nodeId
         }
     }
 
     # Lancement du parcours
-    if ($structure.Folders) {
-        Process-Node -Node $structure.Folders -ParentPath "/" -ParentId "root"
+    $roots = if ($structure.Children) { $structure.Children } else { $structure.Folders }
+    if ($null -ne $roots) {
+        Invoke-ProcessNode -Node $roots -ParentPath "/" -ParentId "root"
     }
     else {
-        # Cas Flat JSON ou objet unique racine
-        Process-Node -Node $structure -ParentPath "/" -ParentId "root"
+        # Cas objet unique racine (Legacy/Direct)
+        Invoke-ProcessNode -Node $structure -ParentPath "/" -ParentId "root"
     }
 
     # --- ÉTAPE 3 : POST-PROCESSING (Liens Internes, Publications) ---
