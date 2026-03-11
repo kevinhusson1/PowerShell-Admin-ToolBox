@@ -104,7 +104,7 @@ function Test-AppSPModel {
             }
         }
         else {
-            $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = (Loc "validation_err_empty_name" $null); Level = "Static" })
+            $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = ((Loc "validation_err_empty_name" $null) + " (Type: $($node.Type), Path: $path)"); Level = "Static" })
         }
 
         # 2. Validation Types Spécifiques
@@ -148,7 +148,7 @@ function Test-AppSPModel {
         # D. FICHIER (File)
         if ($node.Type -eq "File") {
             if ([string]::IsNullOrWhiteSpace($node.Name)) {
-                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = (Loc "validation_err_empty_name" $null); Level = "Static" })
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = ((Loc "validation_err_empty_name" $null) + " (Type: File, Path: $path)"); Level = "Static" })
             }
             
             if ([string]::IsNullOrWhiteSpace($node.SourceUrl)) {
@@ -231,9 +231,10 @@ function Test-AppSPModel {
             }
         }
 
-        # Récursion
-        if ($node.Folders) {
-            foreach ($sub in $node.Folders) {
+        # Récursion (Nouveau format 'Children' unifié ou 'Folders' Legacy)
+        $children = if ($node.Children) { $node.Children } else { $node.Folders }
+        if ($children) {
+            foreach ($sub in $children) {
                 Validate-Node -node $sub -path "$path/$($sub.Name)"
             }
         }
@@ -241,14 +242,25 @@ function Test-AppSPModel {
     }
 
     # Lancement Recursion
-    if ($StructureData.Folders) {
-        foreach ($rootFolder in $StructureData.Folders) {
-            Validate-Node -node $rootFolder -path "/$($rootFolder.Name)"
+    $roots = if ($StructureData.PSObject.Properties.Match('Children')) { $StructureData.Children } else { $StructureData.Folders }
+    
+    # Si roots est null, on vérifie si la structure elle-même est un tableau
+    if ($null -eq $roots -and $StructureData -is [array]) {
+        $roots = $StructureData
+    }
+
+    if ($null -ne $roots) {
+        foreach ($rootNode in $roots) {
+            Validate-Node -node $rootNode -path "/$($rootNode.Name)"
         }
     }
-    else {
-        # Cas structure simple ou objet folder unique
+    elseif ($StructureData.Name) {
+        # Dernier recours : si la structure est un objet simple avec un nom
         Validate-Node -node $StructureData -path "/$($StructureData.Name)"
+    }
+    else {
+        # Si on ne trouve vraiment rien à valider
+        # On ne renvoie pas d'erreur de 'nom vide' au niveau racine de l'objet wrapper
     }
 
     return $results

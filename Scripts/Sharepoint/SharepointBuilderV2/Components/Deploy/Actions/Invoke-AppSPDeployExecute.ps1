@@ -43,7 +43,10 @@ function Global:Invoke-AppSPDeployExecute {
                 
                 if ($key) {
                     $formValues[$key] = $val
-                    if ($isMeta) { $rootMetadata[$key] = $val }
+                    if ($isMeta) { 
+                        $metaKey = if ($c.Tag.TargetColumn) { $c.Tag.TargetColumn } else { $key }
+                        $rootMetadata[$metaKey] = $val 
+                    }
                 }
             }
         }
@@ -125,6 +128,8 @@ function Global:Invoke-AppSPDeployExecute {
                 -TrackingInfo $ArgsMap.TrackingInfo `
                 -FolderSchemaJson $ArgsMap.FolderSchemaJson `
                 -FolderSchemaName $ArgsMap.FolderSchemaName
+
+            # Le final HashTable $result est retourné par New-AppSPStructure dans le pipeline.
         }
         catch { throw $_ }
     } -ArgumentList $jobArgs
@@ -167,6 +172,20 @@ function Global:Invoke-AppSPDeployExecute {
             foreach ($item in $newItems) {
                 if ($item.PSObject.Properties['LogType'] -and $item.LogType -eq 'AppLog') {
                     if ($fLog) { Write-AppLog -Message $item.Message -Level $item.Level -RichTextBox $fLog }
+                    
+                    # Mise à jour de la barre de progression selon la phase en cours (V2 API Graph)
+                    $msgStr = $item.Message
+                    if ($fProg -and $fStat -and $msgStr -match "^Phase ") {
+                        if ($fProg.IsIndeterminate) { $fProg.IsIndeterminate = $false }
+                        if ($msgStr -match "Phase 1") { $fProg.Value = 20; $fStat.Text = "Création des dossiers..." }
+                        elseif ($msgStr -match "Phase 2") { $fProg.Value = 40; $fStat.Text = "Application des permissions..." }
+                        elseif ($msgStr -match "Phase 3") { $fProg.Value = 60; $fStat.Text = "Application des métadonnées..." }
+                        elseif ($msgStr -match "Phase 4") { $fProg.Value = 80; $fStat.Text = "Création des liens..." }
+                        elseif ($msgStr -match "Phase 5") { $fProg.Value = 95; $fStat.Text = "Création des fichiers..." }
+                    }
+                    elseif ($fProg -and $fStat -and $msgStr -match "Génér.*state\.json") {
+                        $fProg.Value = 99; $fStat.Text = "Sauvegarde de la session (In-Situ)..."
+                    }
                 }
                 elseif ($item -is [string]) {
                     $parts = $item -split '\|', 2

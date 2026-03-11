@@ -45,7 +45,7 @@ try {
     $modPath = Join-Path $testRoot "..\..\..\..\Modules\Toolbox.SharePoint\Toolbox.SharePoint.psd1"
     Import-Module $modPath -Force
 
-    $res = New-AppSPStructure -TargetSiteUrl $siteUrl `
+    $rawRes = New-AppSPStructure -TargetSiteUrl $siteUrl `
         -TargetLibraryName $libName `
         -RootFolderName $rootFolderName `
         -StructureJson $deployTemplate.StructureJson `
@@ -55,6 +55,9 @@ try {
         -FormValues $formValues `
         -FolderSchemaJson $deploySchema.ColumnsJson `
         -FolderSchemaName $deploySchema.DisplayName
+
+    # $rawRes contient les logs (PassThru) ET le hashtable final. On prend le Hashtable.
+    $res = if ($rawRes -is [array]) { $rawRes[-1] } else { $rawRes }
 
     if (-not $res.Success) {
         Write-Host "Le déploiement a renvoyé une erreur :" -ForegroundColor Red
@@ -67,8 +70,30 @@ try {
     Write-Host "  > Logs du deploiment :" -ForegroundColor DarkGray
     $res.Logs | ForEach-Object { Write-Host "    - $_" -ForegroundColor DarkGray }
 
-
     Write-Host "`n>> OPERATION REUSSIE. DEBUT DU ROLLBACK." -ForegroundColor Cyan
+    
+    # Test In-Situ state Generation
+    $siteId = Get-AppGraphSiteId -SiteUrl $siteUrl
+    $listAndDrive = Get-AppGraphListDriveId -SiteId $siteId -ListDisplayName $libName
+    $driveId = $listAndDrive.DriveId
+    $listId = $listAndDrive.ListId
+    
+    Write-Host "  [DEBUG] DeployedNodes null ? $($null -eq $res.DeployedNodes)" -ForegroundColor Yellow
+    if ($res.DeployedNodes) {
+        Write-Host "  [DEBUG] Keys trouvées dans DeployedNodes : $($res.DeployedNodes.Keys -join ', ')" -ForegroundColor Yellow
+        $rootSPId = $res.DeployedNodes["root"]
+        Write-Host "  [DEBUG] Contenu de DeployedNodes['root'] : '$rootSPId'" -ForegroundColor Yellow
+
+        if ($rootSPId -and -not [string]::IsNullOrWhiteSpace($rootSPId.ToString())) {
+            Write-Host "Etape 1.5 : Test création State In-Situ sur l'Item racine $rootSPId..." -ForegroundColor White
+            $svRes = Save-AppSPDeploymentState -SiteId $siteId -DriveId $driveId -RootFolderItemId $rootSPId -DeployedNodes $res.DeployedNodes -TemplateId $deployTemplate.TemplateId -FormValues $formValues
+            if ($svRes) { Write-Host "  > Fichier .state.json généré et uploadé avec succès sur SharePoint." -ForegroundColor Green }
+            else { Write-Host "  > [ECHEC] Génération .state.json !" -ForegroundColor Red }
+        }
+        else {
+            Write-Host "  > [SKIPPED] Impossible de valider State In-Situ car rootSPId est vide !!" -ForegroundColor Red
+        }
+    }
     
     # Résolution manuelle des IDs pour le rollback
     $siteId = Get-AppGraphSiteId -SiteUrl $siteUrl

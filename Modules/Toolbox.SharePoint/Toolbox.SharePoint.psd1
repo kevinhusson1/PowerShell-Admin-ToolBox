@@ -46,6 +46,7 @@
         'New-AppGraphContentType',
         'New-AppGraphFolder',
         'New-AppGraphSiteColumn',
-        'Set-AppGraphListItemMetadata'
+        'Set-AppGraphListItemMetadata',
+        'Save-AppSPDeploymentState'
     )
 }

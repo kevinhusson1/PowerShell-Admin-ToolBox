@@ -101,7 +101,7 @@ function Register-TemplateEvents {
             }
 
             # Mise à jour arbre visuel
-            if ($null -ne $PreviewLogic) { & $PreviewLogic }
+            if ($null -ne $PreviewLogic -and $PreviewLogic -is [scriptblock]) { $PreviewLogic.Invoke($this, $null) }
         }.GetNewClosure())
 
     # 3. ÉVÉNEMENT : SÉLECTION RÈGLE DE NOMMAGE
@@ -156,7 +156,7 @@ function Register-TemplateEvents {
                         }
 
                         if ($elem.Type -eq "Label") {
-                            $tagObj = @{ Type = "Static"; IsMeta = $elem.IsMetadata; Key = $elem.Name }
+                            $tagObj = @{ Type = "Static"; IsMeta = $elem.IsMetadata; Key = $elem.Name; TargetColumn = $elem.TargetColumnInternalName }
                             $l = New-Object System.Windows.Controls.TextBlock -Property @{ Text = $elem.Content; Tag = $tagObj; VerticalAlignment = "Center"; Margin = "0,0,5,0"; FontWeight = "Bold" }
                             $Ctrl.PanelForm.Children.Add($l)
                         }
@@ -167,7 +167,7 @@ function Register-TemplateEvents {
                                 Width  = $elem.Width
                                 Style  = $Window.FindResource("StandardTextBoxStyle")
                                 Margin = "0,0,5,0"
-                                Tag    = @{ IsMeta = $elem.IsMetadata; Key = $elem.Name }
+                                Tag    = @{ IsMeta = $elem.IsMetadata; Key = $elem.Name; TargetColumn = $elem.TargetColumnInternalName }
                             }
                             if ($elem.IsUppercase) { $t.CharacterCasing = [System.Windows.Controls.CharacterCasing]::Upper }
                             $t.Add_TextChanged($PreviewLogic) 
@@ -181,7 +181,7 @@ function Register-TemplateEvents {
                                 Style       = $Window.FindResource("StandardComboBoxStyle")
                                 Margin      = "0,0,10,0"
                                 IsEnabled   = $true # Assurer qu'il est activé par défaut
-                                Tag         = @{ IsMeta = $elem.IsMetadata; Key = $elem.Name }
+                                Tag         = @{ IsMeta = $elem.IsMetadata; Key = $elem.Name; TargetColumn = $elem.TargetColumnInternalName }
                             }
                         
                             if ($defaultValue -and $elem.Options -contains $defaultValue) { $c.SelectedItem = $defaultValue }
@@ -190,15 +190,18 @@ function Register-TemplateEvents {
                                 if ($elem.Options.Count -gt 0) { $c.SelectedIndex = 0 }
                             }
                         
-                            # Branchement de l'événement de mise à jour
+                            # Branchement de l'événement de mise à jour avec léger décalage (Dispatcher) pour éviter le décalage de valeur
                             $c.Add_SelectionChanged({ 
-                                    Write-Verbose "[FormCtrl] SelectionChanged - Triggering PreviewLogic"
-                                    & $PreviewLogic 
+                                    if ($null -ne $PreviewLogic) {
+                                        $this.Dispatcher.InvokeAsync({
+                                            $PreviewLogic.Invoke()
+                                        }, [System.Windows.Threading.DispatcherPriority]::Background) | Out-Null
+                                    }
                                 }.GetNewClosure())
                             $Ctrl.PanelForm.Children.Add($c)
                         }
                     }
-                    & $PreviewLogic
+                    if ($null -ne $PreviewLogic -and $PreviewLogic -is [scriptblock]) { $PreviewLogic.Invoke() }
                 }
                 catch { Write-AppLog -Message "Erreur formulaire : $_" -Level Error -RichTextBox $Ctrl.LogBox }
 
@@ -209,7 +212,9 @@ function Register-TemplateEvents {
     # C'est ici qu'on déclenche la re-validation pour activer le bouton si on décoche
     $Ctrl.ChkCreateFolder.Add_Click({
             # Déclenchement immédiat de la validation
-            if ($null -ne $PreviewLogic) { & $PreviewLogic }
+            if ($null -ne $PreviewLogic -and $PreviewLogic -is [scriptblock]) { 
+                $PreviewLogic.Invoke() 
+            }
         
             # Astuce : Si on active la création et que le formulaire est vide, on le recharge
             if ($this.IsChecked -and $Ctrl.PanelForm.Children.Count -eq 0 -and $Ctrl.CbFolderTemplates.SelectedItem) {

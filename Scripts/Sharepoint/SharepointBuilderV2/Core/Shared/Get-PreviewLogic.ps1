@@ -61,8 +61,9 @@ function Get-PreviewLogic {
                     if ($c.Tag -is [hashtable] -and $c.Tag.IsMeta) { $metaParts += "$($c.Tag.Key)=$($c.Text)" }
                 }
                 elseif ($c -is [System.Windows.Controls.ComboBox]) { 
-                    $finalName += $c.SelectedItem 
-                    if ($c.Tag -and $c.Tag.IsMeta) { $metaParts += "$($c.Tag.Key)=$($c.SelectedItem)" }
+                    $val = if ($c.SelectedItem) { $c.SelectedItem.ToString() } else { "" }
+                    $finalName += $val 
+                    if ($c.Tag -and $c.Tag.IsMeta) { $metaParts += "$($c.Tag.Key)=$val" }
                 }
             }
         }
