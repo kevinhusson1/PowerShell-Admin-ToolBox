@@ -53,7 +53,7 @@ function Get-AppSPDeploymentPlan {
             return
         }
 
-        $nodeId = $Node.Id
+        $nodeId = if ($Node.Id) { $Node.Id } else { [Guid]::NewGuid().ToString() }
         $nodeName = $Node.Name
         $type = if ($Node.Type) { $Node.Type } else { "Folder" }
         $currentPath = if ($ParentPath -eq "/") { "/$nodeName" } else { "$ParentPath/$nodeName" }

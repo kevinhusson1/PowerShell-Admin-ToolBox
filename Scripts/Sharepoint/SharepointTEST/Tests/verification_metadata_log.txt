@@ -1,0 +1,13 @@
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+--- TEST 12 : METADONNEES ET APPEND ---
+Etape 1 : Récupération de l'ID ListItem du dossier Validation_Visuelle_20260311_112715...
+
+[ECHEC] : Dossier Validation_Visuelle_20260311_112715 introuvable à la racine de la bibliothèque.

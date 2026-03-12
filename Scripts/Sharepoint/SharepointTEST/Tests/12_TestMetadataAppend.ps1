@@ -78,16 +78,22 @@ try {
     Write-Host "  > 3a. Lecture des champs existants (GET)..." -ForegroundColor Cyan
     $currentFields = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/beta/sites/$siteId/lists/$listId/items/$listItemId/fields?`$select=Services,Year"
     
-    # Extraction sécurisée et cast strict en array (Graph retourne parfois une string simple s'il n'y a qu'1 choix, ou un PSObject unrolled)
-    [string[]]$currentServices = if ($currentFields.Services) { $currentFields.Services } else { @() }
-    [string[]]$currentYears = if ($currentFields.Year) { $currentFields.Year } else { @() }
-
     # Ajout de nos nouvelles valeurs
     $valServiceToAdd = "RH"
     $valYearToAdd = "2027"
 
-    if ($currentServices -notcontains $valServiceToAdd) { $currentServices += $valServiceToAdd }
-    if ($currentYears -notcontains $valYearToAdd) { $currentYears += $valYearToAdd }
+    # Utilisation de listes pour manipulation propre
+    $serviceList = [System.Collections.Generic.List[string]]::new()
+    if ($currentFields.Services) { foreach($s in $currentFields.Services) { $serviceList.Add($s.ToString()) } }
+    
+    $yearList = [System.Collections.Generic.List[string]]::new()
+    if ($currentFields.Year) { foreach($y in $currentFields.Year) { $yearList.Add($y.ToString()) } }
+
+    if (-not $serviceList.Contains($valServiceToAdd)) { $serviceList.Add($valServiceToAdd) }
+    if (-not $yearList.Contains($valYearToAdd)) { $yearList.Add($valYearToAdd) }
+
+    $currentServices = $serviceList.ToArray()
+    $currentYears = $yearList.ToArray()
 
     Write-Host "  > 3b. Valeurs fusionnées : Services [$($currentServices -join ', ')] | Year [$($currentYears -join ', ')]" -ForegroundColor Cyan
     Write-Host "  > 3c. Préparation du PATCH 2 avec la nouvelle liste..." -ForegroundColor Cyan

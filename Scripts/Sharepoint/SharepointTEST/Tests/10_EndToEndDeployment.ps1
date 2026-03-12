@@ -85,8 +85,9 @@ try {
         Write-Host "  [DEBUG] Contenu de DeployedNodes['root'] : '$rootSPId'" -ForegroundColor Yellow
 
         if ($rootSPId -and -not [string]::IsNullOrWhiteSpace($rootSPId.ToString())) {
+            Write-Host "  [DEBUG] siteId=$siteId, driveId=$driveId, rootSPId=$rootSPId" -ForegroundColor Yellow
             Write-Host "Etape 1.5 : Test création State In-Situ sur l'Item racine $rootSPId..." -ForegroundColor White
-            $svRes = Save-AppSPDeploymentState -SiteId $siteId -DriveId $driveId -RootFolderItemId $rootSPId -DeployedNodes $res.DeployedNodes -TemplateId $deployTemplate.TemplateId -FormValues $formValues
+            $svRes = Save-AppSPDeploymentState -SiteId $siteId -StateDriveId $driveId -TargetDriveId $driveId -RootFolderItemId $rootSPId -DeployedNodes $res.DeployedNodes -TemplateId $deployTemplate.TemplateId -FormValues $formValues
             if ($svRes) { Write-Host "  > Fichier .state.json généré et uploadé avec succès sur SharePoint." -ForegroundColor Green }
             else { Write-Host "  > [ECHEC] Génération .state.json !" -ForegroundColor Red }
         }

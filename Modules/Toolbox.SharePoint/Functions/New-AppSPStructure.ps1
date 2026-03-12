@@ -111,10 +111,6 @@ function New-AppSPStructure {
         $DeployedFoldersMap = @{} # Mapping ID interne -> Graph ItemId
         $startParentId = if ($TargetFolderItemId) { $TargetFolderItemId } else { "root" }
 
-        # 3. GÉNÉRATION DU PLAN
-        Log "Analyse de la structure et génération du plan..." "DEBUG"
-        $plan = Get-AppSPDeploymentPlan -StructureJson $StructureJson -FormValues $FormValues -RootMetadata $RootMetadata
-
         # 3.bis RÉSOLUTION DES TYPES DE COLONNES ET MAPPING (via Schéma)
         $MultiChoiceColumns = @()
         $SchemaMapping = @{} # Mapping "Nom Affichage" ou "Nom" -> "Nom Interne"
@@ -165,17 +161,16 @@ function New-AppSPStructure {
                 
                 $finalKeyLow = $finalKey.ToLower()
 
-                if ($MultiChoiceColumns -and ($MultiChoiceColumns -contains $finalKeyLow)) {
+                # Détection robuste du format Collection(Edm.String) pour Graph Beta
+                $isExplicitMulti = ($MultiChoiceColumns -and ($MultiChoiceColumns -contains $finalKeyLow))
+                $isImplicitMulti = ($val -is [array] -and $val.Count -gt 0)
+
+                if ($isExplicitMulti -or $isImplicitMulti) {
                     # C'est un choix multiple : Graph Beta exige un tableau + l'annotation @odata.type
                     $final["$finalKey@odata.type"] = "Collection(Edm.String)"
                     if ($val -is [string]) { $final[$finalKey] = @($val) }
                     elseif ($val -is [array]) { $final[$finalKey] = $val }
                     else { $final[$finalKey] = @($val.ToString()) }
-                }
-                elseif ($val -is [array]) {
-                    # Fallback si c'est un tableau mais pas listé dans le schéma
-                    $final["$finalKey@odata.type"] = "Collection(Edm.String)"
-                    $final[$finalKey] = $val
                 }
                 else {
                     $final[$finalKey] = $val
@@ -195,15 +190,28 @@ function New-AppSPStructure {
             # Application CT & Meta
             if ($RootMetadata -or $FolderContentTypeId -ne "0x0120") {
                 try {
-                    $liReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$driveId/items/$($rootRes.id)/listItem?`$select=id" -ErrorAction Stop
+                    # Logique de Retry pour pallier l'Eventual Consistency de Graph
+                    $liReq = $null
+                    for ($i = 1; $i -le 3; $i++) {
+                        try {
+                            $liReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$driveId/items/$($rootRes.id)/listItem?`$select=id" -ErrorAction Stop
+                            if ($liReq) { break }
+                        }
+                        catch { 
+                            Log "  Attente indexation listItem racine (tentative $i/3)..." "DEBUG"
+                            Start-Sleep -Seconds 2 
+                        }
+                    }
                     
-                    $fields = @{}
-                    if ($RootMetadata) { $fields = & $FormatFields -InputFields $RootMetadata }
-                    
-                    $ctArg = if ($FolderContentTypeId -ne "0x0120") { $FolderContentTypeId } else { $null }
-                    
-                    if ($fields.Count -gt 0 -or $ctArg) {
-                        Set-AppGraphListItemMetadata -SiteId $siteId -ListId $listId -ListItemId $liReq.id -Fields $fields -ContentTypeId $ctArg | Out-Null
+                    if ($liReq) {
+                        $fields = @{}
+                        if ($RootMetadata) { $fields = & $FormatFields -InputFields $RootMetadata }
+                        
+                        $ctArg = if ($FolderContentTypeId -ne "0x0120") { $FolderContentTypeId } else { $null }
+                        
+                        if ($fields.Count -gt 0 -or $ctArg) {
+                            Set-AppGraphListItemMetadata -SiteId $siteId -ListId $listId -ListItemId $liReq.id -Fields $fields -ContentTypeId $ctArg | Out-Null
+                        }
                     }
                 }
                 catch { Log "Erreur application Metadata racine : $_" "WARNING" }
@@ -273,10 +281,25 @@ function New-AppSPStructure {
 
             if ($finalFields.Count -gt 0 -or $ctArg) {
                 try {
-                    $liReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$driveId/items/$folderItemId/listItem?`$select=id" -ErrorAction Stop
-                    Log "  Application Tags/CT sur $($op.Name) (ListItem ID: $($liReq.id)) | CT: $ctArg" "DEBUG"
-                    Set-AppGraphListItemMetadata -SiteId $siteId -ListId $listId -ListItemId $liReq.id -Fields $finalFields -ContentTypeId $ctArg | Out-Null
-                    Log "  Metadata appliqués." "SUCCESS"
+                    # Logique de Retry pour pallier l'Eventual Consistency de Graph
+                    $liReq = $null
+                    for ($i = 1; $i -le 3; $i++) {
+                        try {
+                            $liReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$driveId/items/$folderItemId/listItem?`$select=id" -ErrorAction Stop
+                            if ($liReq) { break }
+                        }
+                        catch { 
+                            Log "  Attente indexation listItem pour $($op.Name) (tentative $i/3)..." "DEBUG"
+                            Start-Sleep -Seconds 2 
+                        }
+                    }
+
+                    if ($liReq) {
+                        Log "  Application Tags/CT sur $($op.Name) (ListItem ID: $($liReq.id)) | CT: $ctArg" "DEBUG"
+                        Set-AppGraphListItemMetadata -SiteId $siteId -ListId $listId -ListItemId $liReq.id -Fields $finalFields -ContentTypeId $ctArg | Out-Null
+                        Log "  Metadata appliqués." "SUCCESS"
+                    }
+                    else { throw "Impossible de récupérer le ListItem ID après 3 tentatives." }
                 }
                 catch { 
                     Log "Erreur application Metadata sur $($op.Name) : $_" "WARNING" 
