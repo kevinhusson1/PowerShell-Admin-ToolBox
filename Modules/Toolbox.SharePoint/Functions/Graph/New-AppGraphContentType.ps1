@@ -3,7 +3,7 @@
     Crée ou récupère un Type de Contenu (Content Type) sur un site SharePoint et y attache des colonnes.
 
 .DESCRIPTION
-    Utilise l'endpoint Beta de Microsoft Graph pour gérer les Content Types de site.
+    Utilise l'endpoint v1.0 de Microsoft Graph pour gérer les Content Types de site.
     Si le Content Type n'existe pas, il est créé à partir d'un ID de base.
     Si une liste d'IDs de colonnes est fournie, la fonction les attache au Content Type (ODATA bind).
 
@@ -46,7 +46,7 @@ function New-AppGraphContentType {
     )
     process {
         Write-Verbose "[New-AppGraphContentType] Vérification du Content Type '$Name'..."
-        $ctsUrl = "https://graph.microsoft.com/beta/sites/$SiteId/contentTypes"
+        $ctsUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/contentTypes"
         
         try {
             $allCts = Invoke-MgGraphRequest -Method GET -Uri $ctsUrl -ErrorAction Stop
@@ -54,7 +54,7 @@ function New-AppGraphContentType {
             
             $status = "Existing"
             if (-not $ct) {
-                Write-Verbose "[New-AppGraphContentType] Création du Content Type '$Name' (Beta)..."
+                Write-Verbose "[New-AppGraphContentType] Création du Content Type '$Name' (v1.0)..."
                 $bodyCT = @{ 
                     name        = $Name
                     description = $Description
@@ -65,13 +65,13 @@ function New-AppGraphContentType {
                 $status = "Created"
             }
             else {
-                Write-Verbose "[New-AppGraphContentType] Le Content Type '$Name' existe déjà (Beta)."
+                Write-Verbose "[New-AppGraphContentType] Le Content Type '$Name' existe déjà (v1.0)."
             }
             
             # Attachement des colonnes
             if ($ColumnIdsToBind -and $ColumnIdsToBind.Count -gt 0) {
-                Write-Verbose "[New-AppGraphContentType] Vérification et attachement des colonnes au CT (Beta)..."
-                $ctColsUrl = "https://graph.microsoft.com/beta/sites/$SiteId/contentTypes/$($ct.id)/columns"
+                Write-Verbose "[New-AppGraphContentType] Vérification et attachement des colonnes au CT (v1.0)..."
+                $ctColsUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/contentTypes/$($ct.id)/columns"
                 $ctColsRes = Invoke-MgGraphRequest -Method GET -Uri $ctColsUrl -ErrorAction Stop
                 
                 # Récupère la liste des IDs déjà attachés

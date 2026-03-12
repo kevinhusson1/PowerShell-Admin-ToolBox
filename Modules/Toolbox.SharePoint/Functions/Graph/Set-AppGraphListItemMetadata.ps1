@@ -3,9 +3,9 @@
     Met à jour le Type de Contenu et les métadonnées (champs) d'un élément de liste SharePoint.
 
 .DESCRIPTION
-    Effectue deux opérations via Graph :
-    1. Mise à jour du ContentType (via endpoint v1.0).
-    2. Mise à jour des colonnes personnalisées (via endpoint Beta).
+    Effectue deux opérations via Graph (v1.0) :
+    1. Mise à jour du ContentType.
+    2. Mise à jour des colonnes personnalisées (via endpoint /fields).
     Les noms des champs dans la hashtable 'Fields' doivent correspondre aux noms internes SharePoint.
 
 .PARAMETER SiteId
@@ -54,10 +54,10 @@ function Set-AppGraphListItemMetadata {
                 Invoke-MgGraphRequest -Method PATCH -Uri $itemUrl -Body $itemBody -ContentType "application/json" -ErrorAction Stop | Out-Null
             }
             
-            # 2. Mise à jour des champs personnalisés (Graph Beta)
+            # 2. Mise à jour des champs personnalisés (Graph v1.0)
             if ($Fields -and $Fields.keys.Count -gt 0) {
-                Write-Verbose "[Set-AppGraphListItemMetadata] Application de $($Fields.keys.Count) champ(s) (Beta)..."
-                $fieldsUrl = "https://graph.microsoft.com/beta/sites/$SiteId/lists/$ListId/items/$ListItemId/fields"
+                Write-Verbose "[Set-AppGraphListItemMetadata] Application de $($Fields.keys.Count) champ(s) (v1.0)..."
+                $fieldsUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/lists/$ListId/items/$ListItemId/fields"
                 Invoke-MgGraphRequest -Method PATCH -Uri $fieldsUrl -Body $Fields -ContentType "application/json" -ErrorAction Stop | Out-Null
             }
             

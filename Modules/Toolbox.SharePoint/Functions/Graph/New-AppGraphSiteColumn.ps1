@@ -3,7 +3,7 @@
     Crée ou met à jour une colonne de site SharePoint via Graph API.
 
 .DESCRIPTION
-    Utilise l'endpoint Beta de Microsoft Graph pour gérer les colonnes de site.
+    Utilise l'endpoint v1.0 de Microsoft Graph pour gérer les colonnes de site.
     Prend en charge les types de colonnes : Text, Choice, Number, DateTime et Boolean.
     Gère la création de nouvelles colonnes ou la mise à jour (PATCH) des colonnes existantes trouvées par leur nom.
 
@@ -46,17 +46,13 @@ function New-AppGraphSiteColumn {
         [switch]$AllowMultiple
     )
     process {
-        Write-Verbose "[New-AppGraphSiteColumn] Vérification de la colonne '$Name' (v1.0 base)..."
-        # Utilisation de v1.0 pour le GET sans filtre pour éviter les bugs de parsing d'URL
+        Write-Verbose "[New-AppGraphSiteColumn] Vérification de la colonne '$Name' (v1.0)..."
         $colsUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/columns"
         
         try {
             # On récupère tout et on filtre en PS pour être sûr à 100% de l'URL
             $allCols = Invoke-MgGraphRequest -Method GET -Uri $colsUrl -ErrorAction Stop
             $existingCol = $allCols.value | Where-Object { $_.name -eq $Name }
-            
-            # Endpoint Beta pour les opérations d'écriture (POST/PATCH)
-            $betaUrl = "https://graph.microsoft.com/beta/sites/$SiteId/columns"
             
             $body = @{ 
                 name        = $Name
@@ -86,8 +82,8 @@ function New-AppGraphSiteColumn {
             }
 
             if ($existingCol) {
-                Write-Verbose "[New-AppGraphSiteColumn] Mise à jour de la colonne existante '$Name' (Beta)..."
-                $patchUrl = "$betaUrl/$($existingCol.id)"
+                Write-Verbose "[New-AppGraphSiteColumn] Mise à jour de la colonne existante '$Name' (v1.0)..."
+                $patchUrl = "$colsUrl/$($existingCol.id)"
                 
                 # Payload pour PATCH : on évite de renvoyer le 'name'
                 $patchBody = @{ 
@@ -106,13 +102,16 @@ function New-AppGraphSiteColumn {
                 elseif ($Type -eq "Boolean") {
                     $patchBody["boolean"] = @{}
                 }
+                else {
+                    $patchBody["text"] = @{}
+                }
 
                 $updatedCol = Invoke-MgGraphRequest -Method PATCH -Uri $patchUrl -Body $patchBody -ContentType "application/json" -ErrorAction Stop
                 return [PSCustomObject]@{ Status = "Updated"; Column = $updatedCol }
             }
             
-            Write-Verbose "[New-AppGraphSiteColumn] Création de la colonne '$Name' de type '$Type' (Beta)..."
-            $newCol = Invoke-MgGraphRequest -Method POST -Uri $betaUrl -Body $body -ContentType "application/json" -ErrorAction Stop
+            Write-Verbose "[New-AppGraphSiteColumn] Création de la colonne '$Name' de type '$Type' (v1.0)..."
+            $newCol = Invoke-MgGraphRequest -Method POST -Uri $colsUrl -Body $body -ContentType "application/json" -ErrorAction Stop
             return [PSCustomObject]@{ Status = "Created"; Column = $newCol }
             
         }
