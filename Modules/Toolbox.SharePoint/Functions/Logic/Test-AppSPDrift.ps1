@@ -1,3 +1,41 @@
+<#
+.SYNOPSIS
+    Analyse la dérive (Drift) entre l'état réel d'un dossier SharePoint et sa définition théorique.
+
+.DESCRIPTION
+    Compare les métadonnées actuelles du dossier racine et la structure des sous-dossiers/liens par rapport au modèle JSON stocké dans l'historique du projet.
+    Identifie les colonnes dont les valeurs ont été modifiées manuellement (Meta Drift) et les dossiers/liens supprimés (Structure Drift).
+
+.PARAMETER Connection
+    L'objet de connexion PnP actif (PnPConnection).
+
+.PARAMETER FolderItem
+    L'objet ListItem SharePoint du dossier racine à analyser.
+
+.PARAMETER FormValuesJson
+    Les valeurs de formulaire (métadonnées) au moment du déploiement (JSON).
+
+.PARAMETER TemplateJson
+    La structure théorique du dossier (JSON).
+
+.PARAMETER DeploymentId
+    L'identifiant unique du déploiement.
+
+.PARAMETER ClientId
+    L'ID client (pour la connexion aux sites distants lors du check des publications).
+
+.PARAMETER Thumbprint
+    L'empreinte du certificat.
+
+.PARAMETER TenantName
+    Le nom du tenant.
+
+.PARAMETER ProjectModelName
+    Le nom calculé du projet pour la validation des publications.
+
+.EXAMPLE
+    Test-AppSPDrift -Connection $conn -FolderItem $item -FormValuesJson $json -DeploymentId "..."
+#>
 function Test-AppSPDrift {
     param(
         [Parameter(Mandatory)] [PnP.PowerShell.Commands.Base.PnPConnection]$Connection,

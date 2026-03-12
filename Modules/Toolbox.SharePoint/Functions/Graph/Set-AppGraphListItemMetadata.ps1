@@ -1,3 +1,31 @@
+<#
+.SYNOPSIS
+    Met à jour le Type de Contenu et les métadonnées (champs) d'un élément de liste SharePoint.
+
+.DESCRIPTION
+    Effectue deux opérations via Graph :
+    1. Mise à jour du ContentType (via endpoint v1.0).
+    2. Mise à jour des colonnes personnalisées (via endpoint Beta).
+    Les noms des champs dans la hashtable 'Fields' doivent correspondre aux noms internes SharePoint.
+
+.PARAMETER SiteId
+    L'identifiant unique (ID) du site SharePoint.
+
+.PARAMETER ListId
+    L'identifiant unique (GUID) de la liste SharePoint.
+
+.PARAMETER ListItemId
+    L'identifiant unique (ID) de l'élément à modifier.
+
+.PARAMETER ContentTypeId
+    (Optionnel) L'identifiant du Content Type à appliquer au dossier/fichier.
+
+.PARAMETER Fields
+    (Optionnel) Table de hachage (hashtable) contenant les couples NomDuChamp = Valeur.
+
+.EXAMPLE
+    Set-AppGraphListItemMetadata -SiteId "..." -ListId "..." -ListItemId "..." -Fields @{ "Status" = "Terminé" }
+#>
 function Set-AppGraphListItemMetadata {
     [CmdletBinding()]
     param(

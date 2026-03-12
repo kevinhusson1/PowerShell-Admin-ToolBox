@@ -1,3 +1,23 @@
+<#
+.SYNOPSIS
+    Recherche des éléments (dossiers/fichiers) dans une liste SharePoint en filtrant par métadonnées (Tags).
+
+.DESCRIPTION
+    Interroge Microsoft Graph pour récupérer les éléments d'une liste avec leurs champs étendus ($expand=fields).
+    Effectue ensuite un filtrage côté client basé sur la hashtable de filtres passée en paramètre.
+
+.PARAMETER SiteId
+    L'identifiant unique (ID) du site SharePoint.
+
+.PARAMETER ListId
+    L'identifiant unique (GUID) de la liste SharePoint.
+
+.PARAMETER TagFilters
+    Une table de hachage (hashtable) contenant les couples NomDuChamp = ValeurAttendue.
+
+.EXAMPLE
+    Find-AppGraphFolderByTag -SiteId "..." -ListId "..." -TagFilters @{ "ProjectCode" = "PROJ001"; "NodeType" = "Root" }
+#>
 function Find-AppGraphFolderByTag {
     [CmdletBinding()]
     param(

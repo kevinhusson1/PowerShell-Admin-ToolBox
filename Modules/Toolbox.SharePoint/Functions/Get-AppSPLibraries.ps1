@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+    Récupère la liste des bibliothèques de documents d'un site SharePoint.
+
+.DESCRIPTION
+    Récupère toutes les listes du site et filtre celles correspondant au modèle de bibliothèque de documents (BaseTemplate 101).
+    Retourne une liste d'objets simplifiés avec le titre, l'ID et l'objet RootFolder.
+
+.PARAMETER SiteUrl
+    (Optionnel) L'URL du site à interroger (si aucune connexion n'est fournie).
+
+.PARAMETER Connection
+    (Optionnel) Objet de connexion PnP actif.
+
+.EXAMPLE
+    Get-AppSPLibraries -SiteUrl "https://contoso.sharepoint.com/sites/Marketing"
+#>
 function Get-AppSPLibraries {
     [CmdletBinding()]
     param(

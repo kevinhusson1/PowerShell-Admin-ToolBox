@@ -1,3 +1,33 @@
+<#
+.SYNOPSIS
+    Crée ou met à jour une colonne de site SharePoint via Graph API.
+
+.DESCRIPTION
+    Utilise l'endpoint Beta de Microsoft Graph pour gérer les colonnes de site.
+    Prend en charge les types de colonnes : Text, Choice, Number, DateTime et Boolean.
+    Gère la création de nouvelles colonnes ou la mise à jour (PATCH) des colonnes existantes trouvées par leur nom.
+
+.PARAMETER SiteId
+    L'identifiant unique (ID) du site SharePoint.
+
+.PARAMETER Name
+    Le nom interne (technique) de la colonne.
+
+.PARAMETER DisplayName
+    Le nom d'affichage de la colonne.
+
+.PARAMETER Type
+    Le type de donnée de la colonne (Text, Choice, Number, DateTime, Boolean).
+
+.PARAMETER Choices
+    (Optionnel) Tableau de chaînes pour les choix (si Type est 'Choice').
+
+.PARAMETER AllowMultiple
+    (Optionnel) Indique si la colonne (Choice) autorise les sélections multiples.
+
+.EXAMPLE
+    New-AppGraphSiteColumn -SiteId "..." -Name "ProjectStatus" -DisplayName "Statut Projet" -Type "Choice" -Choices @("Actif", "Clos")
+#>
 function New-AppGraphSiteColumn {
     [CmdletBinding()]
     param(

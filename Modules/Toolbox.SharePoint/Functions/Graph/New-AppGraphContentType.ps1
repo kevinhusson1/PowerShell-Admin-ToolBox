@@ -1,3 +1,33 @@
+<#
+.SYNOPSIS
+    Crée ou récupère un Type de Contenu (Content Type) sur un site SharePoint et y attache des colonnes.
+
+.DESCRIPTION
+    Utilise l'endpoint Beta de Microsoft Graph pour gérer les Content Types de site.
+    Si le Content Type n'existe pas, il est créé à partir d'un ID de base.
+    Si une liste d'IDs de colonnes est fournie, la fonction les attache au Content Type (ODATA bind).
+
+.PARAMETER SiteId
+    L'identifiant unique (ID) du site SharePoint.
+
+.PARAMETER Name
+    Le nom du Content Type à créer/vérifier.
+
+.PARAMETER Description
+    La description du Content Type.
+
+.PARAMETER Group
+    Le nom du groupe de colonnes/content types dans lequel le classer.
+
+.PARAMETER BaseId
+    L'identifiant du Content Type parent (ex: 0x0120 pour un dossier).
+
+.PARAMETER ColumnIdsToBind
+    (Optionnel) Tableau d'IDs de colonnes de site à attacher à ce Content Type.
+
+.EXAMPLE
+    New-AppGraphContentType -SiteId "..." -Name "Dossier Avancé" -Group "IT" -BaseId "0x0120"
+#>
 function New-AppGraphContentType {
     [CmdletBinding()]
     param(

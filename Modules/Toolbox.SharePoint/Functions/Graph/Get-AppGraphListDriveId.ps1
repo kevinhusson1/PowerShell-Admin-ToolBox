@@ -1,3 +1,22 @@
+<#
+.SYNOPSIS
+    Récupère les identifiants ListId et DriveId (Bibliothèque de documents) à partir du nom d'une liste.
+
+.DESCRIPTION
+    Effectue deux appels Graph :
+    1. Recherche la liste par son nom ou son titre pour obtenir son ID.
+    2. Récupère le DriveId associé à cette liste (pour les opérations de manipulation de fichiers/dossiers).
+    Inclut un mécanisme de repli (fallback) si l'accès direct au drive échoue.
+
+.PARAMETER SiteId
+    L'identifiant unique (ID) du site SharePoint.
+
+.PARAMETER ListDisplayName
+    Le nom affiché (DisplayName) ou le nom interne de la bibliothèque.
+
+.EXAMPLE
+    Get-AppGraphListDriveId -SiteId "..." -ListDisplayName "Documents"
+#>
 function Get-AppGraphListDriveId {
     [CmdletBinding()]
     param(

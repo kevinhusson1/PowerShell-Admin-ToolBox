@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+    Se connecte à Microsoft Graph en utilisant une authentification interactive (Déléguée).
+
+.DESCRIPTION
+    Utilise le module Microsoft.Graph.Authentication pour ouvrir une fenêtre d'authentification interactive ou réutiliser un jeton existant.
+    Vérifie également la validité du jeton et la présence des portées (scopes) nécessaires.
+
+.PARAMETER Scopes
+    Tableau de chaînes de caractères représentant les permissions Graph demandées. Par défaut : User.Read, User.Read.All, GroupMember.Read.All.
+
+.PARAMETER AppId
+    L'identifiant unique (GUID) de l'application (ID Client) enregistrée dans Azure AD.
+
+.PARAMETER TenantId
+    L'identifiant unique (GUID) du tenant Azure AD.
+
+.PARAMETER HintUser
+    (Optionnel) L'adresse e-mail de l'utilisateur pour pré-remplir l'authentification (SSO).
+
+.EXAMPLE
+    Connect-AppAzureWithUser -AppId "xxx" -TenantId "yyy" -HintUser "admin@tenant.com"
+#>
 function Connect-AppAzureWithUser {
     [CmdletBinding()]
     param(

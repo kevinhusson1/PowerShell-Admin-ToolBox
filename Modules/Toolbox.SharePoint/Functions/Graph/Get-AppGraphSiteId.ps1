@@ -1,3 +1,17 @@
+<#
+.SYNOPSIS
+    Convertit l'URL complète d'un site SharePoint en identifiant unique SharePoint Graph SiteId.
+
+.DESCRIPTION
+    Utilise l'endpoint Graph 'sites/{hostname}:{path}' pour résoudre l'URL du site.
+    Le SiteId retourné est nécessaire pour la plupart des appels Graph ciblant un site spécifique.
+
+.PARAMETER SiteUrl
+    L'URL complète du site SharePoint (ex: https://tenant.sharepoint.com/sites/nomdusite).
+
+.EXAMPLE
+    Get-AppGraphSiteId -SiteUrl "https://contoso.sharepoint.com/sites/HR"
+#>
 function Get-AppGraphSiteId {
     [CmdletBinding()]
     param(

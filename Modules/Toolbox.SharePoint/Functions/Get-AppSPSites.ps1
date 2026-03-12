@@ -1,3 +1,30 @@
+<#
+.SYNOPSIS
+    Récupère la liste des collections de sites (Site Collections) du tenant.
+
+.DESCRIPTION
+    Se connecte au centre d'administration SharePoint (-admin.sharepoint.com) pour lister tous les sites.
+    Requiert des privilèges d'administrateur SharePoint ou Global Admin.
+    Retourne une liste d'objets simplifiés avec le Titre, l'URL et le Template.
+
+.PARAMETER Connection
+    (Ignoré) Paramètre conservé pour compatibilité, la fonction gère sa propre connexion Admin.
+
+.PARAMETER ClientId
+    L'identifiant de l'application Azure AD.
+
+.PARAMETER Thumbprint
+    L'empreinte du certificat pour l'authentification.
+
+.PARAMETER TenantName
+    Le nom du tenant (ex: contoso).
+
+.PARAMETER Filter
+    (Optionnel) Filtre textuel sur le titre ou l'URL.
+
+.EXAMPLE
+    Get-AppSPSites -TenantName "contoso" -ClientId "..." -Thumbprint "..." -Filter "Marketing"
+#>
 function Get-AppSPSites {
     [CmdletBinding()]
     param(

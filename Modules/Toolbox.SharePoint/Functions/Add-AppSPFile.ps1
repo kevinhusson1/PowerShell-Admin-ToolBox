@@ -1,3 +1,27 @@
+<#
+.SYNOPSIS
+    Téléverse (Upload) un fichier local vers un dossier SharePoint.
+
+.DESCRIPTION
+    Utilise PnP PowerShell pour envoyer un fichier vers un site SharePoint. 
+    Résout d'abord le chemin cible via Resolve-PnPFolder pour garantir la validité de l'URL relative au serveur.
+    Prend en charge le renommage à la volée via NewFileName.
+
+.PARAMETER LocalPath
+    Chemin complet vers le fichier local à téléverser.
+
+.PARAMETER Folder
+    URL relative au site du dossier de destination (ex: "/Shared Documents").
+
+.PARAMETER NewFileName
+    (Optionnel) Nouveau nom à donner au fichier sur SharePoint.
+
+.PARAMETER Connection
+    (Optionnel) Objet de connexion PnP actif.
+
+.EXAMPLE
+    Add-AppSPFile -LocalPath "C:\temp\doc.pdf" -Folder "Shared Documents/Project" -Connection $conn
+#>
 function Add-AppSPFile {
     [CmdletBinding()]
     param(

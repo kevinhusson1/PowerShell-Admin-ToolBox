@@ -1,3 +1,23 @@
+<#
+.SYNOPSIS
+    Établit une connexion à Microsoft Graph en utilisant un certificat (App-Only).
+
+.DESCRIPTION
+    Utilise le module Microsoft.Graph.Authentication pour se connecter via l'identité d'une application Azure AD (Service Principal) et un certificat local.
+    La connexion est établie au niveau du processus actuel.
+
+.PARAMETER TenantId
+    L'identifiant unique (GUID) du tenant Azure AD.
+
+.PARAMETER ClientId
+    L'identifiant unique (GUID) de l'application (ID Client) enregistrée dans Azure AD.
+
+.PARAMETER Thumbprint
+    L'empreinte (Thumbprint) du certificat installé dans le magasin de certificats (Currentuser/My) utilisé pour l'authentification.
+
+.EXAMPLE
+    Connect-AppAzureCert -TenantId "xxx" -ClientId "yyy" -Thumbprint "zzz"
+#>
 function Connect-AppAzureCert {
     [CmdletBinding()]
     param(

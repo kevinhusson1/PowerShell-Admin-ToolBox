@@ -1,3 +1,17 @@
+<#
+.SYNOPSIS
+    Vérifie l'existence et l'état de validité d'un certificat local par son empreinte (Thumbprint).
+
+.DESCRIPTION
+    Recherche un certificat dans les magasins 'CurrentUser\My' et 'LocalMachine\My'.
+    Retourne des informations sur sa localisation, sa date d'expiration et si celui-ci est expiré.
+
+.PARAMETER Thumbprint
+    L'empreinte du certificat à rechercher (insensible à la casse et aux espaces).
+
+.EXAMPLE
+    Get-AppCertificateStatus -Thumbprint "D25A39ACC63BC2F3F1B6389568E9B5AA3726969D"
+#>
 function Get-AppCertificateStatus {
     [CmdletBinding()]
     param(

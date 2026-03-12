@@ -24,14 +24,14 @@ function Test-AppSPModel {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)] [object]$StructureData,
-        [Parameter(Mandatory = $false)] [object]$Connection,
-        [Parameter(Mandatory = $false)] [string]$TargetLibraryName
+        [Parameter(Mandatory = $false)] [string]$TargetLibraryName,
+        [Parameter(Mandatory = $false)] [string]$SiteId,
+        [Parameter(Mandatory = $false)] [string]$DriveId
     )
 
     $results = [System.Collections.Generic.List[psobject]]::new()
 
     # Liste caractères interdits SharePoint (Folders)
-    # ~ " # % & * : < > ? / \ { | }
     $forbiddenChars = '[~"#%&*:<>?/\\{|}]'
     
     # Helper Localisation Safe
@@ -45,27 +45,27 @@ function Test-AppSPModel {
         return $key 
     }
 
-    # ... (Connexion Logic preserved) ...
-    # --- LEVEL 2 : Validation Connectée ---
-    if ($Connection) {
-        # ... (Library check preserved) ...
-        if (-not [string]::IsNullOrWhiteSpace($TargetLibraryName)) {
-            try { $lib = Get-PnPList -Identity $TargetLibraryName -Connection $Connection -ErrorAction Stop }
-            catch {
-                $results.Add([PSCustomObject]@{ Id = "ROOT"; NodeName = "Racine"; Path = "/"; Status = "Error"; Message = (Loc "validation_err_lib_not_found" $TargetLibraryName); Level = "Connected" })
+    # --- LEVEL 2 : Validation Connectée (Graph) ---
+    $knownFields = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    
+    if ($SiteId -and $DriveId) {
+        # B. Validation des colonnes (Tags) via Graph
+        try {
+            # On récupère la liste liée au drive pour avoir les colonnes
+            $listReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$SiteId/drives/$DriveId/list?`$select=id" -ErrorAction Stop
+            $listId = $listReq.id
+            
+            $fieldsReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$SiteId/lists/$listId/columns?`$select=name,displayName" -ErrorAction Stop
+            if ($fieldsReq.value) {
+                foreach ($f in $fieldsReq.value) {
+                    $knownFields.Add($f.name) | Out-Null
+                    $knownFields.Add($f.displayName) | Out-Null
+                }
             }
         }
-    }
-
-    # ... (Metadata Cache Logic preserved) ...
-    # --- LEVEL 3 : Validation Métadonnées (Cache) ---
-    $knownFields = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    if ($Connection -and -not [string]::IsNullOrWhiteSpace($TargetLibraryName)) {
-        try {
-            $fields = Get-PnPField -List $TargetLibraryName -Connection $Connection -ErrorAction Stop
-            if ($fields) { foreach ($f in $fields) { $knownFields.Add($f.InternalName) | Out-Null; $knownFields.Add($f.Title) | Out-Null; $knownFields.Add($f.StaticName) | Out-Null } }
+        catch {
+            Write-Verbose "[Test-AppSPModel] Impossible de récupérer les colonnes pour validation : $($_.Exception.Message)"
         }
-        catch {}
     }
 
     function Test-Url($u) {
@@ -74,13 +74,12 @@ function Test-AppSPModel {
     }
 
     function Test-UrlReachability($u) {
-        if ([string]::IsNullOrWhiteSpace($u)) { return $true } # Déjà géré par Empty Check
+        if ([string]::IsNullOrWhiteSpace($u)) { return $true }
         try {
             $req = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
             return @{ K = $true; C = $req.StatusCode }
         }
         catch {
-            # Retry GET si HEAD échoue (certains serveurs bloquent HEAD)
             try {
                 $req = Invoke-WebRequest -Uri $u -Method Get -UseBasicParsing -TimeoutSec 5 -Range 0-10 -ErrorAction Stop
                 return @{ K = $true; C = $req.StatusCode }
@@ -94,7 +93,7 @@ function Test-AppSPModel {
     function Validate-Node {
         param($node, $path)
 
-        # 1. Validation Nom Dossier / Publication / Lien
+        # 1. Validation Nom
         if (-not [string]::IsNullOrWhiteSpace($node.Name)) {
             if ($node.Name -match $forbiddenChars) {
                 $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_forbidden_chars" $null); Level = "Static" })
@@ -108,29 +107,23 @@ function Test-AppSPModel {
         }
 
         # 2. Validation Types Spécifiques
-        
-        # A. PUBLICATION
-        if ($node.Type -eq "Publication") {
-            if ($node.TargetSiteMode -eq "Url") {
-                if (-not (Test-Url $node.TargetSiteUrl)) {
-                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_invalid_url" $null); Level = "Static" })
-                }
-                elseif ($Connection) {
-                    $st = Test-UrlReachability $node.TargetSiteUrl
-                    if (-not $st.K) {
-                        $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
-                    }
+        if ($node.Type -eq "Publication" -and $node.TargetSiteMode -eq "Url") {
+            if (-not (Test-Url $node.TargetSiteUrl)) {
+                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_invalid_url" $null); Level = "Static" })
+            }
+            elseif ($SiteId) {
+                $st = Test-UrlReachability $node.TargetSiteUrl
+                if (-not $st.K) {
+                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
                 }
             }
         }
         
-        # B. LIEN (Link)
         if ($node.Type -eq "Link") {
             if (-not (Test-Url $node.Url)) {
                 $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = "URL invalide pour le lien"; Level = "Static" })
             }
-            elseif ($Connection) {
-                # Warning pour les liens (ça peut être interne/intranet non accessible depuis ici)
+            elseif ($SiteId) {
                 $st = Test-UrlReachability $node.Url
                 if (-not $st.K) {
                     $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Warning"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
@@ -138,27 +131,14 @@ function Test-AppSPModel {
             }
         }
         
-        # C. LIEN INTERNE (InternalLink)
-        if ($node.Type -eq "InternalLink") {
-            if ([string]::IsNullOrWhiteSpace($node.TargetNodeId)) {
-                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = "Cible du lien interne manquante"; Level = "Static" })
-            }
-        }
-        
-        # D. FICHIER (File)
         if ($node.Type -eq "File") {
-            if ([string]::IsNullOrWhiteSpace($node.Name)) {
-                $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = "???"; Path = $path; Status = "Error"; Message = ((Loc "validation_err_empty_name" $null) + " (Type: File, Path: $path)"); Level = "Static" })
-            }
-            
             if ([string]::IsNullOrWhiteSpace($node.SourceUrl)) {
                 $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_file_no_sourceurl" $null); Level = "Static" })
             }
             elseif (-not (Test-Url $node.SourceUrl)) {
                 $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_invalid_source_url" $null); Level = "Static" })
             }
-            elseif ($Connection) {
-                # Validation stricte car nécessaire pour le déploiement
+            elseif ($SiteId) {
                 $st = Test-UrlReachability $node.SourceUrl
                 if (-not $st.K) {
                     $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_url_unreachable" $st.E); Level = "Connected" })
@@ -166,88 +146,51 @@ function Test-AppSPModel {
             }
         }
         
-        # 3. Validation Permissions
+        # 3. Validation Permissions (Graph)
         if ($node.Permissions) {
             foreach ($perm in $node.Permissions) {
                 if ([string]::IsNullOrWhiteSpace($perm.Email)) {
-                    $results.Add([PSCustomObject]@{
-                            Id       = $node.Id
-                            NodeName = $node.Name
-                            Path     = $path
-                            Status   = "Error"
-                            Message  = (Loc "validation_err_perm_no_email" $null)
-                            Level    = "Static"
-                        })
+                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_perm_no_email" $null); Level = "Static" })
                 }
-                elseif ($Connection) {
-                    # Validation User Permission (Connected)
-                    # On utilise New-PnPUser pour valider que le login est résolvable
+                elseif ($SiteId) {
                     try {
-                        $u = New-PnPUser -LoginName $perm.Email -Connection $Connection -ErrorAction Stop
+                        $uReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/users/$($perm.Email)?`$select=id" -ErrorAction Stop
                     }
                     catch {
-                        $results.Add([PSCustomObject]@{
-                                Id       = $node.Id
-                                NodeName = $node.Name
-                                Path     = $path
-                                Status   = "Error"
-                                Message  = (Loc "validation_err_perm_user_not_found" $perm.Email)
-                                Level    = "Connected"
-                            })
+                        $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_perm_user_not_found" $perm.Email); Level = "Connected" })
                     }
                 }
             }
         }
         
-        # 4. Validation Métadonnées (LEVEL 3)
+        # 4. Validation Métadonnées
         if ($node.Tags) {
             foreach ($tag in $node.Tags) {
-                # Check Static
                 if ([string]::IsNullOrWhiteSpace($tag.Name)) {
-                    $results.Add([PSCustomObject]@{
-                            Id       = $node.Id
-                            NodeName = $node.Name
-                            Path     = $path
-                            Status   = "Error"
-                            Message  = (Loc "validation_err_tag_no_name" $null)
-                            Level    = "Static"
-                        })
+                    $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_tag_no_name" $null); Level = "Static" })
                     continue
                 }
 
-                # Check Connected
-                if ($Connection -and $knownFields.Count -gt 0) {
+                if ($SiteId -and $knownFields.Count -gt 0) {
                     if (-not $knownFields.Contains($tag.Name)) {
-                        $results.Add([PSCustomObject]@{
-                                Id       = $node.Id
-                                NodeName = $node.Name
-                                Path     = $path
-                                Status   = "Error"
-                                Message  = (Loc "validation_err_col_not_found" $tag.Name)
-                                Level    = "Metadata"
-                            })
+                        $results.Add([PSCustomObject]@{ Id = $node.Id; NodeName = $node.Name; Path = $path; Status = "Error"; Message = (Loc "validation_err_col_not_found" $tag.Name); Level = "Metadata" })
                     }
                 }
             }
         }
 
-        # Récursion (Nouveau format 'Children' unifié ou 'Folders' Legacy)
+        # Récursion
         $children = if ($node.Children) { $node.Children } else { $node.Folders }
         if ($children) {
             foreach ($sub in $children) {
                 Validate-Node -node $sub -path "$path/$($sub.Name)"
             }
         }
-        
     }
 
-    # Lancement Recursion
+    # Lancement
     $roots = if ($StructureData.PSObject.Properties.Match('Children')) { $StructureData.Children } else { $StructureData.Folders }
-    
-    # Si roots est null, on vérifie si la structure elle-même est un tableau
-    if ($null -eq $roots -and $StructureData -is [array]) {
-        $roots = $StructureData
-    }
+    if ($null -eq $roots -and $StructureData -is [array]) { $roots = $StructureData }
 
     if ($null -ne $roots) {
         foreach ($rootNode in $roots) {
@@ -255,12 +198,7 @@ function Test-AppSPModel {
         }
     }
     elseif ($StructureData.Name) {
-        # Dernier recours : si la structure est un objet simple avec un nom
         Validate-Node -node $StructureData -path "/$($StructureData.Name)"
-    }
-    else {
-        # Si on ne trouve vraiment rien à valider
-        # On ne renvoie pas d'erreur de 'nom vide' au niveau racine de l'objet wrapper
     }
 
     return $results

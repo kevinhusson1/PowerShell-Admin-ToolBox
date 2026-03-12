@@ -12,7 +12,7 @@
     Copyright         = "(c) 2025. Tous droits réservés."
 
     # Description
-    Description       = 'Module central pour toutes les interactions avec SharePoint Online (via PnP).'
+    Description       = 'Module central pour toutes les interactions avec SharePoint Online (via Graph API).'
 
     # Script principal
     RootModule        = 'Toolbox.SharePoint.psm1'
@@ -20,22 +20,13 @@
     # Fonctions à exporter
     FunctionsToExport = @(
         'Add-AppSPFile',
-        'Connect-AppSharePoint',
         'Get-AppProjectStatus',
         'Get-AppSPFile',
         'Get-AppSPLibraries',
         'Get-AppSPSites',
-        'Import-AppSPFile',
         'New-AppSPFolder',
-        'New-AppSPLink',
         'New-AppSPStructure',
-        'New-AppSPTrackingList',
-        'Rename-AppSPFolder',
-        'Rename-AppSPPublications',
         'Repair-AppProject',
-        'Repair-AppSPLinks',
-        'Set-AppSPMetadata',
-        'Set-AppSPPermission',
         'Test-AppSPDrift',
         'Test-AppSPModel',
         'New-AppGraphSPStructure',

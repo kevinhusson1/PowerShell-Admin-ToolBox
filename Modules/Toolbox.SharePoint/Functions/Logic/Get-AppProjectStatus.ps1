@@ -1,3 +1,29 @@
+<#
+.SYNOPSIS
+    Récupère l'état complet d'un projet de déploiement SharePoint (Tracking, Drift, Historique).
+
+.DESCRIPTION
+    Recherche l'ID de déploiement dans le Property Bag du dossier cible, récupère l'historique dans la liste cachée 'App_DeploymentHistory' et lance une analyse de dérive (Drift).
+    Cette fonction nécessite une connexion PnP.
+
+.PARAMETER SiteUrl
+    L'URL absolue du site SharePoint.
+
+.PARAMETER FolderUrl
+    L'URL relative au serveur du dossier racine du projet.
+
+.PARAMETER ClientId
+    L'ID de l'application Azure AD (App-Only).
+
+.PARAMETER Thumbprint
+    L'empreinte du certificat pour la connexion PnP.
+
+.PARAMETER TenantName
+    Le nom du tenant (ex: contoso).
+
+.EXAMPLE
+    Get-AppProjectStatus -SiteUrl "..." -FolderUrl "/sites/HR/Docs/ProjectX" -ClientId "..." -Thumbprint "..." -TenantName "contoso"
+#>
 function Get-AppProjectStatus {
     param(
         [Parameter(Mandatory)] [string]$SiteUrl,

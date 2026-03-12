@@ -1,3 +1,24 @@
+<#
+.SYNOPSIS
+    Récupère une session Graph existante depuis le cache utilisateur (Processus enfant).
+
+.DESCRIPTION
+    Utilise le cache MSAL local (CurrentUser) pour tenter une connexion silencieuse. 
+    Ceci est utile pour les scripts lancés en tant que processus enfants (Jobs) afin qu'ils héritent de l'authentification du processus parent sans nouvelle fenêtre interactive.
+    Vérifie également que l'identité récupérée correspond à l'UPN attendu.
+
+.PARAMETER AuthUPN
+    L'adresse e-mail (User Principal Name) de l'utilisateur dont on veut récupérer la session.
+
+.PARAMETER TenantId
+    L'identifiant unique (GUID) du tenant Azure AD.
+
+.PARAMETER ClientId
+    L'identifiant unique (GUID) de l'application (ID Client).
+
+.EXAMPLE
+    Connect-AppChildSession -AuthUPN $user -TenantId $tid -ClientId $cid
+#>
 function Connect-AppChildSession {
     [CmdletBinding()]
     param(

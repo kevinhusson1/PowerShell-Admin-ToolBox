@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+    Télécharge un fichier depuis SharePoint vers le système de fichiers local.
+
+.DESCRIPTION
+    Récupère un fichier SharePoint via son URL relative au serveur et l'enregistre dans un dossier local spécifié.
+    Utilise PnP PowerShell (Get-PnPFile -AsFile).
+
+.PARAMETER ServerRelativeUrl
+    L'URL relative au serveur du fichier (ex: /sites/MySite/Shared Documents/doc.pdf).
+
+.PARAMETER LocalFolder
+    Le chemin complet du répertoire local de destination.
+
+.PARAMETER LocalFileName
+    (Optionnel) Le nom sous lequel le fichier sera enregistré localement.
+
+.PARAMETER Connection
+    (Optionnel) Objet de connexion PnP actif.
+
+.EXAMPLE
+    Get-AppSPFile -ServerRelativeUrl "/sites/HR/Docs/Policy.pdf" -LocalFolder "C:\Downloads"
+#>
 function Get-AppSPFile {
     [CmdletBinding()]
     param(

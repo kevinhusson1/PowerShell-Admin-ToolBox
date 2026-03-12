@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+    Crée un dossier dans une bibliothèque SharePoint en utilisant Graph API.
+
+.DESCRIPTION
+    Utilise l'endpoint 'drives/{driveId}/items/{parentId}/children' pour créer un nouveau dossier.
+    Gère les conflits en remplaçant l'élément existant si nécessaire.
+
+.PARAMETER SiteId
+    L'identifiant unique (ID) du site SharePoint.
+
+.PARAMETER DriveId
+    L'identifiant unique (ID) du Drive (Bibliothèque).
+
+.PARAMETER FolderName
+    Le nom du dossier à créer.
+
+.PARAMETER ParentFolderId
+    (Optionnel) L'identifiant de l'élément parent. Par défaut : "root".
+
+.EXAMPLE
+    New-AppGraphFolder -SiteId "..." -DriveId "..." -FolderName "NouveauDossier"
+#>
 function New-AppGraphFolder {
     [CmdletBinding()]
     param(

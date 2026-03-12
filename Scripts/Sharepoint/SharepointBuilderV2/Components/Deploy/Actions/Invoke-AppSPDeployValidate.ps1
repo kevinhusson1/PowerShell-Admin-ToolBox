@@ -49,11 +49,9 @@ function Global:Invoke-AppSPDeployValidate {
         try {
             $structure = $selTemplate.StructureJson | ConvertFrom-Json
         
-            # S'assurer que le module SharePoint est dispo
-            if (-not (Get-Command "Test-AppSPModel" -ErrorAction SilentlyContinue)) {
-                if ($Global:ProjectRoot) {
-                    Import-Module (Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint") -Force
-                }
+            # S'assurer que le module SharePoint est dispo et à jour (Force reload pour éviter les conflits de signature)
+            if ($Global:ProjectRoot) {
+                Import-Module (Join-Path $Global:ProjectRoot "Modules\Toolbox.SharePoint") -Force -ErrorAction SilentlyContinue
             }
 
             # --- PRÉPARATION VALIDATION ---
@@ -62,6 +60,11 @@ function Global:Invoke-AppSPDeployValidate {
             Write-AppLog -Message (Get-AppLocalizedString -Key "sp_builder.log_validation_conn_active") -Level Info -RichTextBox $Ctrl.LogBox
             if ($Ctrl.CbLibs.SelectedItem -and $Ctrl.CbLibs.SelectedItem -isnot [string]) {
                 $params.TargetLibraryName = $Ctrl.CbLibs.SelectedItem.Title
+                $params.DriveId = $Ctrl.CbLibs.SelectedItem.Id
+            }
+            
+            if ($Ctrl.CbSites.SelectedItem -and $Ctrl.CbSites.SelectedItem -isnot [string]) {
+                $params.SiteId = $Ctrl.CbSites.SelectedItem.Id
             }
 
             # Refresh UI

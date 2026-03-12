@@ -1,3 +1,21 @@
+<#
+.SYNOPSIS
+    Résout ou crée un dossier SharePoint via PnP PowerShell.
+
+.DESCRIPTION
+    Utilise Resolve-PnPFolder pour s'assurer qu'un chemin relatif au site existe. 
+    Si le dossier n'existe pas, il est créé automatiquement par la commande PnP.
+    Retourne l'objet Folder SharePoint.
+
+.PARAMETER SiteRelativePath
+    Le chemin relatif au site (ex: "Shared Documents/Folder/SubFolder").
+
+.PARAMETER Connection
+    (Optionnel) Objet de connexion PnP actif.
+
+.EXAMPLE
+    New-AppSPFolder -SiteRelativePath "Shared Documents/NouveauProjet" -Connection $conn
+#>
 function New-AppSPFolder {
     [CmdletBinding()]
     param(
