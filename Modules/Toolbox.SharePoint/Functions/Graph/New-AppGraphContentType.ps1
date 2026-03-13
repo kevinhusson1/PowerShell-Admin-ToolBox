@@ -42,15 +42,23 @@ function New-AppGraphContentType {
         [Parameter(Mandatory = $true)]
         [string]$BaseId,
         [Parameter(Mandatory = $false)]
-        [string[]]$ColumnIdsToBind
+        [string[]]$ColumnIdsToBind,
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject]$ContentTypeCache
     )
     process {
         Write-Verbose "[New-AppGraphContentType] Vérification du Content Type '$Name'..."
         $ctsUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/contentTypes"
         
         try {
-            $allCts = Invoke-MgGraphRequest -Method GET -Uri $ctsUrl -ErrorAction Stop
-            $ct = $allCts.value | Where-Object { $_.name -eq $Name }
+            $ct = $null
+            if ($ContentTypeCache -and $ContentTypeCache.value) {
+                $ct = $ContentTypeCache.value | Where-Object { $_.name -eq $Name }
+            }
+            else {
+                $allCts = Invoke-MgGraphRequest -Method GET -Uri $ctsUrl -ErrorAction Stop
+                $ct = $allCts.value | Where-Object { $_.name -eq $Name }
+            }
             
             $status = "Existing"
             if (-not $ct) {

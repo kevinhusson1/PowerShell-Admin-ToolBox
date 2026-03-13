@@ -72,6 +72,10 @@ function Global:Invoke-AppSPDeployExecute {
         FormDefinitionJson = $trackRuleJson
         DeployedBy         = $trackUser
         FormValues         = $formValues
+        # Nouvelles options de contrôle (v5.1) - Noms corrigés selon XAML
+        CreateRootFolder   = [bool]$Ctrl.CreateFolderCheckBox.IsChecked
+        ApplyMetadata      = [bool]$Ctrl.DeployApplyMetaChk.IsChecked
+        OverwritePermissions = [bool]$Ctrl.OverwritePermissionsCheckBox.IsChecked
     }
 
     # --- 3. SCHEMA ---
@@ -167,6 +171,8 @@ function Global:Invoke-AppSPDeployExecute {
             $fBtn = Local-FindNode $win "DeployButton"
             $fCopy = Local-FindNode $win "CopyUrlButton"
             $fOpen = Local-FindNode $win "OpenUrlButton"
+            $fMaintHist = Local-FindNode $win "MaintenanceHistoryButton"
+            $fMaintStat = Local-FindNode $win "MaintenanceStatesButton"
 
             $newItems = Receive-Job -Job $job
             foreach ($item in $newItems) {
@@ -229,6 +235,18 @@ function Global:Invoke-AppSPDeployExecute {
                         
                         if ($fCopy) { $fCopy.IsEnabled = $true; $fCopy.Tag = $finalUrl }
                         if ($fOpen) { $fOpen.IsEnabled = $true }
+
+                        # Activation Maintenance Dynamique (v5.0)
+                        if ($finalRes.Maintenance) {
+                            if ($fMaintHist) {
+                                $fMaintHist.IsEnabled = [bool]$finalRes.Maintenance.HistoryUrl
+                                $fMaintHist.Tag = $finalRes.Maintenance.HistoryUrl
+                            }
+                            if ($fMaintStat) {
+                                $fMaintStat.IsEnabled = [bool]$finalRes.Maintenance.StatesUrl
+                                $fMaintStat.Tag = $finalRes.Maintenance.StatesUrl
+                            }
+                        }
                     } 
                     else {
                         if ($fStat) { $fStat.Text = "Terminé avec erreurs." }

@@ -26,7 +26,7 @@ function New-AppSPStructure {
         [Parameter(Mandatory = $false)] [string]$FolderSchemaName
     )
 
-    $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new(); FinalUrl = "" }
+    $result = @{ Success = $true; Logs = [System.Collections.Generic.List[string]]::new(); Errors = [System.Collections.Generic.List[string]]::new(); FinalUrl = ""; Maintenance = @{ HistoryUrl = $null; StatesUrl = $null } }
 
     function Log { param($m, $l = "Info") Write-AppLog -Message $m -Level $l -Collection $result.Logs -PassThru }
     function Err { param($m) $result.Success = $false; Write-AppLog -Message $m -Level Error -Collection $result.Errors; Write-AppLog -Message $m -Level Error -Collection $result.Logs -PassThru }
@@ -53,81 +53,138 @@ function New-AppSPStructure {
 
         # 4. GESTION DU SCHEMA (CONTENT TYPE) SI APPLICABLE
         $FolderContentTypeId = "0x0120"
+        $MultiChoiceColumns = @()
+        $SchemaMapping = @{}
+        
         if ($FolderSchemaJson -and $FolderSchemaName) {
+            Log "Vérification du schéma sur le site (Optimisation Cache)..." "DEBUG"
+            $siteColsCache = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$SiteId/columns?`$select=id,name,displayName,columnGroup,indexed" -ErrorAction SilentlyContinue
+            $siteCtsCache = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$SiteId/contentTypes" -ErrorAction SilentlyContinue
+
             Log "Vérification/Création du modèle de dossier : $FolderSchemaName" "INFO"
-            # Logic de création de colonnes et attachement CT (Repris de New-AppGraphSPStructure)
             try {
-                # FolderSchemaJson est déjà l'ARRAY des colonnes JSON string
                 $schemaDef = $FolderSchemaJson | ConvertFrom-Json
                 $colIds = @()
                 foreach ($c in $schemaDef) {
+                    $kLow = $c.Name.ToLower()
+                    Log "  Colonne : $($c.Name) ($($c.Type))" "DEBUG"
                     $isMulti = ($c.Type -eq "Choix Multiples")
+                    if ($isMulti) { $MultiChoiceColumns += $kLow }
+
                     $gType = "Text"
                     if ($c.Type -eq "Nombre") { $gType = "Number" }
                     elseif ($c.Type -like "Choix*") { $gType = "Choice" }
                     elseif ($c.Type -eq "Date et Heure") { $gType = "DateTime" }
                     elseif ($c.Type -eq "Oui/Non") { $gType = "Boolean" }
                     
-                    # Récupération des choix uniques pour pré-remplir la colonne
                     $choices = @()
                     if ($gType -eq "Choice") {
-                        # Extraction de toutes les valeurs de tous les tags correspondants dans l'arbre entier
-                        $allVals = $plan | ForEach-Object { 
-                            if ($_.Tags) { 
-                                $_.Tags | Where-Object { $_.Name -eq $c.Name } | Select-Object -ExpandProperty Value 
-                            } 
-                        }
+                        $allVals = $plan | ForEach-Object { if ($_.Tags) { $_.Tags | Where-Object { $_.Name -eq $c.Name } | Select-Object -ExpandProperty Value } }
                         $choices = $allVals | Select-Object -Unique | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
                         if (-not $choices -or $choices.Count -eq 0) { $choices = @("Valeur 1") }
                     }
 
-                    $resCol = New-AppGraphSiteColumn -SiteId $siteId -Name $c.Name -DisplayName $c.Name -Type $gType -Choices $choices -AllowMultiple:$isMulti
-                    if ($resCol) { $colIds += $resCol.Column.id }
+                    $colIndexed = $c.Indexed
+                    if ($isMulti -and $colIndexed) {
+                        Log "    (!) L'indexation est désactivée pour la colonne multi-choix '$($c.Name)' (Restriction SharePoint)." "WARNING"
+                        $colIndexed = $false
+                    }
+
+                    $resCol = New-AppGraphSiteColumn -SiteId $siteId -Name $c.Name -DisplayName $c.Name -Type $gType -Choices $choices -AllowMultiple:$isMulti -Indexed:$colIndexed -ColumnCache $siteColsCache
+                    if ($resCol) { 
+                        $colIds += $resCol.Column.id
+                        $realInternalName = $resCol.Column.name
+                        $SchemaMapping[$kLow] = $realInternalName
+                    }
                 }
 
                 $ctSafeName = "SBuilder_" + ($FolderSchemaName -replace '[\\/:*?"<>|#%]', '_')
-                $resCT = New-AppGraphContentType -SiteId $siteId -Name $ctSafeName -Description "Modèle $FolderSchemaName" -Group "SBuilder" -BaseId "0x0120" -ColumnIdsToBind $colIds
+                $resCT = New-AppGraphContentType -SiteId $siteId -Name $ctSafeName -Description "Modèle $FolderSchemaName" -Group "SBuilder" -BaseId "0x0120" -ColumnIdsToBind $colIds -ContentTypeCache $siteCtsCache
+                
                 if ($resCT) {
-                    # Attachement à la liste
                     $addCtUri = "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$listId/contentTypes/addCopy"
-                    $bodyCtAdd = @{ contentType = $resCT.ContentType.id }
+                    $bodyCtAdd = @{ contentType = $resCT.ContentType.id } | ConvertTo-Json -Compress
+                    $ctAttached = $false
                     try {
-                        $resAdd = Invoke-MgGraphRequest -Method POST -Uri $addCtUri -Body $bodyCtAdd -ContentType "application/json" -ErrorAction Stop
-                        $FolderContentTypeId = $resAdd.id
-                        Log "Modèle '$FolderSchemaName' attaché (#$FolderContentTypeId)." "SUCCESS"
-                    }
-                    catch {
-                        # Déjà existant ?
+                        for ($i = 1; $i -le 2; $i++) {
+                            try {
+                                Invoke-MgGraphRequest -Method POST -Uri $addCtUri -Body $bodyCtAdd -ContentType "application/json" -ErrorAction Stop | Out-Null
+                                $ctAttached = $true
+                                Log "Modèle '$FolderSchemaName' attaché à la liste." "SUCCESS"
+                                break
+                            } catch {
+                                if ($_.Exception.Message -match "already exists" -or $_.Exception.Message -match "409") {
+                                    $ctAttached = $true; break
+                                }
+                                Log "  Attachement modèle impossible (tentative $i/2)..." "DEBUG"
+                                if ($i -lt 2) { Start-Sleep -Seconds 5 }
+                            }
+                        }
+                    } catch { Log "Erreur copie Content Type : $($_.Exception.Message)" "WARNING" }
+
+                    if ($ctAttached) {
                         $exCts = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$listId/contentTypes"
                         $lCt = $exCts.value | Where-Object { $_.name -eq $ctSafeName }
-                        if ($lCt) { $FolderContentTypeId = $lCt.id; Log "Modèle existant récupéré." "DEBUG" }
+                        if ($lCt) { $FolderContentTypeId = $lCt.id }
+                    }
+
+                    # Vérification / Fallback
+                    $columnsReady = $false
+                    $listCols = $null
+                    if ($ctAttached) {
+                        Log "  Vérification de la présence des colonnes (via CT)..." "DEBUG"
+                        for ($w = 1; $w -le 4; $w++) {
+                            $listCols = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$listId/columns" -ErrorAction SilentlyContinue
+                            if ($listCols -and $listCols.value) {
+                                $foundCount = ($schemaDef | Where-Object { $cn = $_.Name; $listCols.value | Where-Object { $_.displayName -eq $cn } }).Count
+                                if ($foundCount -eq $schemaDef.Count) { $columnsReady = $true; break }
+                            }
+                            Start-Sleep -Seconds 5
+                        }
+                    }
+
+                    if (-not $columnsReady) {
+                        Log "  Utilisation du mode FALLBACK (Binding individuel ultra-robuste)..." "WARNING"
+                        $listColsUrl = "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$listId/columns"
+                        $currentListCols = Invoke-MgGraphRequest -Method GET -Uri $listColsUrl -ErrorAction SilentlyContinue
+                        
+                        foreach ($cId in $colIds) {
+                            $alreadyPresent = $false
+                            if ($currentListCols -and $currentListCols.value) {
+                                $alreadyPresent = $currentListCols.value | Where-Object { $_.id -eq $cId -or $_.sourceColumn.id -eq $cId }
+                            }
+                            if ($alreadyPresent) { continue }
+
+                            try {
+                                $bindPayload = @{ id = $cId } | ConvertTo-Json
+                                Invoke-MgGraphRequest -Method POST -Uri $listColsUrl -Body $bindPayload -ContentType "application/json" -ErrorAction Stop | Out-Null
+                                Start-Sleep -Milliseconds 500
+                            } catch {
+                                if ($_.Exception.Message -notmatch "already exists|409|404") {
+                                    Log "    ⚠️ Échec binding colonne $cId : $($_.Exception.Message)" "WARNING"
+                                }
+                            }
+                        }
+                        $listCols = Invoke-MgGraphRequest -Method GET -Uri $listColsUrl -ErrorAction SilentlyContinue
+                        $columnsReady = $true 
+                    }
+
+                    if ($columnsReady -and $listCols -and $listCols.value) {
+                        foreach ($col in $listCols.value) {
+                            $kLow = $col.displayName.ToLower()
+                            if ($SchemaMapping.ContainsKey($kLow)) { 
+                                $SchemaMapping[$kLow] = $col.name 
+                                Log "    Mapping final : $($col.displayName) -> $($col.name)" "DEBUG"
+                            }
+                        }
                     }
                 }
-            }
-            catch { Log "Avertissement sur le Schéma : $($_.Exception.Message)" "WARNING" }
+            } catch { Log "Erreur critique sur le Schéma : $($_.Exception.Message)" "ERROR" }
         }
 
         # 5. EXECUTION DU PLAN
-        $DeployedFoldersMap = @{} # Mapping ID interne -> Graph ItemId
+        $DeployedFoldersMap = @{} 
         $startParentId = if ($TargetFolderItemId) { $TargetFolderItemId } else { "root" }
-
-        # 3.bis RÉSOLUTION DES TYPES DE COLONNES ET MAPPING (via Schéma)
-        $MultiChoiceColumns = @()
-        $SchemaMapping = @{} # Mapping "Nom Affichage" ou "Nom" -> "Nom Interne"
-        if ($FolderSchemaJson) {
-            try {
-                $schemaDef = $FolderSchemaJson | ConvertFrom-Json
-                foreach ($c in $schemaDef) {
-                    $kLow = $c.Name.ToLower()
-                    if ($c.Type -match "Choix Multiples") { $MultiChoiceColumns += $kLow }
-                    
-                    # On stocke le mapping pour pouvoir retrouver "Year" si on nous donne "Année"
-                    $internal = $c.Name
-                    $SchemaMapping[$internal.ToLower()] = $internal
-                    if ($c.DisplayName) { $SchemaMapping[$c.DisplayName.ToLower()] = $internal }
-                }
-            } catch { Log "Erreur analyse types colonnes du schéma." "WARNING" }
-        }
 
         # 3.ter RÉSOLUTION DU MAPPING FORMULAIRE -> METADONNÉE (Via Définition du Formulaire)
         $FormFieldMapping = @{}
@@ -145,7 +202,7 @@ function New-AppSPStructure {
             } catch { Log "Erreur analyse mapping formulaire." "WARNING" }
         }
 
-        # Helper pour formater les champs pour Graph Beta
+        # Helper pour formater les champs pour Graph
         $FormatFields = {
             param([hashtable]$InputFields)
             if ($null -eq $InputFields) { return @{} }
@@ -161,13 +218,15 @@ function New-AppSPStructure {
                 
                 $finalKeyLow = $finalKey.ToLower()
 
-                # Détection robuste du format Collection(Edm.String) pour Graph Beta
+                # Détection robuste du format Collection(Edm.String)
                 $isExplicitMulti = ($MultiChoiceColumns -and ($MultiChoiceColumns -contains $finalKeyLow))
                 $isImplicitMulti = ($val -is [array] -and $val.Count -gt 0)
 
                 if ($isExplicitMulti -or $isImplicitMulti) {
-                    # C'est un choix multiple : Graph Beta exige un tableau + l'annotation @odata.type
-                    $final["$finalKey@odata.type"] = "Collection(Edm.String)"
+                    # Réactivation de l'annotation @odata.type pour Graph v1.0
+                    $collectionType = "Collection(Edm.String)"
+                    $final["$finalKey`@odata.type"] = $collectionType
+                    
                     if ($val -is [string]) { $final[$finalKey] = @($val) }
                     elseif ($val -is [array]) { $final[$finalKey] = $val }
                     else { $final[$finalKey] = @($val.ToString()) }
@@ -179,43 +238,50 @@ function New-AppSPStructure {
             return $final
         }.GetNewClosure()
                     
-        # -- Création Racine --
+        # -- Gestion de la Racine (Création ou Utilisation de l'existant) --
+        $baseFolderId = $startParentId
         if (-not [string]::IsNullOrWhiteSpace($RootFolderName)) {
             Log "Traitement Racine : $RootFolderName" "INFO"
             $rootRes = New-AppGraphFolder -SiteId $siteId -DriveId $driveId -FolderName $RootFolderName -ParentFolderId $startParentId
-            $startParentId = $rootRes.id
-            $DeployedFoldersMap["root"] = $startParentId
+            $baseFolderId = $rootRes.id
             $result.FinalUrl = $rootRes.webUrl
+        }
+        else {
+            # Si pas de nom de dossier racine, la "racine" du déploiement est le dossier cible
+            Log "Déploiement direct dans le dossier cible (ID: $baseFolderId)" "DEBUG"
+        }
+        
+        $DeployedFoldersMap["root"] = $baseFolderId
+        $startParentId = $baseFolderId # Pour que les enfants se créent au bon endroit
 
-            # Application CT & Meta
-            if ($RootMetadata -or $FolderContentTypeId -ne "0x0120") {
-                try {
-                    # Logique de Retry pour pallier l'Eventual Consistency de Graph
-                    $liReq = $null
-                    for ($i = 1; $i -le 3; $i++) {
-                        try {
-                            $liReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$driveId/items/$($rootRes.id)/listItem?`$select=id" -ErrorAction Stop
-                            if ($liReq) { break }
-                        }
-                        catch { 
-                            Log "  Attente indexation listItem racine (tentative $i/3)..." "DEBUG"
-                            Start-Sleep -Seconds 2 
-                        }
+        # Application CT & Meta sur la racine (Dossier créé ou dossier cible)
+        if ($RootMetadata -or $FolderContentTypeId -ne "0x0120") {
+            try {
+                # Logique de Retry pour pallier l'Eventual Consistency de Graph
+                $liReq = $null
+                for ($i = 1; $i -le 3; $i++) {
+                    try {
+                        $liReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$driveId/items/$baseFolderId/listItem?`$select=id" -ErrorAction Stop
+                        if ($liReq) { break }
                     }
-                    
-                    if ($liReq) {
-                        $fields = @{}
-                        if ($RootMetadata) { $fields = & $FormatFields -InputFields $RootMetadata }
-                        
-                        $ctArg = if ($FolderContentTypeId -ne "0x0120") { $FolderContentTypeId } else { $null }
-                        
-                        if ($fields.Count -gt 0 -or $ctArg) {
-                            Set-AppGraphListItemMetadata -SiteId $siteId -ListId $listId -ListItemId $liReq.id -Fields $fields -ContentTypeId $ctArg | Out-Null
-                        }
+                    catch { 
+                        Log "  Attente indexation listItem racine (tentative $i/3)..." "DEBUG"
+                        Start-Sleep -Seconds 2 
                     }
                 }
-                catch { Log "Erreur application Metadata racine : $_" "WARNING" }
+                
+                if ($liReq) {
+                    $fields = @{}
+                    if ($RootMetadata) { $fields = & $FormatFields -InputFields $RootMetadata }
+                    
+                    $ctArg = if ($FolderContentTypeId -ne "0x0120") { $FolderContentTypeId } else { $null }
+                    
+                    if ($fields.Count -gt 0 -or $ctArg) {
+                        Set-AppGraphListItemMetadata -SiteId $siteId -ListId $listId -ListItemId $liReq.id -Fields $fields -ContentTypeId $ctArg | Out-Null
+                    }
+                }
             }
+            catch { Log "Erreur application Metadata racine : $_" "WARNING" }
         }
 
         # --- ÉTAPE 1 : CRÉATION DES DOSSIERS ---
@@ -245,7 +311,6 @@ function New-AppSPStructure {
                     Log "  Permission '$role' appliquée pour $($p.Email)" "SUCCESS"
                 }
                 catch { 
-                    # Vérifier si c'est une erreur 'Forbidden' mais que l'utilisateur a peut être déjà les droits par héritage
                     if ($_.Exception.Message -match "Forbidden") {
                         Log "  Permission pour $($p.Email) ignorée (potentiellement déjà présent par héritage)." "WARNING"
                     } else {
@@ -281,7 +346,6 @@ function New-AppSPStructure {
 
             if ($finalFields.Count -gt 0 -or $ctArg) {
                 try {
-                    # Logique de Retry pour pallier l'Eventual Consistency de Graph
                     $liReq = $null
                     for ($i = 1; $i -le 3; $i++) {
                         try {
@@ -374,8 +438,6 @@ function New-AppSPStructure {
             }
             elseif ($op.Type -eq "Publication") {
                 Log "Création Publication : $($op.Name)" "INFO"
-                
-                # 1. Obtenir l'URL de la cible publiée (le dossier source à pointer)
                 $sourceUrl = ""
                 if ($op.ParentId -and $DeployedFoldersMap.ContainsKey($op.ParentId)) {
                     $sourceItemId = $DeployedFoldersMap[$op.ParentId]
@@ -387,18 +449,11 @@ function New-AppSPStructure {
                 }
 
                 if ($sourceUrl) {
-                    # 2. Résolution de la Bibliothèque cible (ex: /Partage/Path -> PubLib="Partage", PubPath="Path")
-                    # Par défaut on utilise la config du noeud (TargetFolderPath)
                     $targetRaw = if ($op.RawNode.TargetFolderPath) { $op.RawNode.TargetFolderPath } else { "/Shared Documents" }
                     $pParts = $targetRaw -split "/" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-                    
                     $pubLibName = if ($pParts.Count -gt 0) { $pParts[0] } else { "Shared Documents" }
-                    
-                    # 2. Résolution Chemin Cible (Relatif à la Bibliothèque)
-                    # On retire le nom de la bibliothèque du chemin pour obtenir le sous-chemin relatif
                     $pubRelSubPath = $op.RawNode.TargetFolderPath -replace "^.*?$([regex]::Escape($pubLibName))", "" -replace "^/", ""
                     
-                    # NOUVEAU : Si UseFormName est vrai, on crée un dossier au nom de la racine dans la cible
                     if ($op.RawNode.UseFormName -and $RootFolderName) {
                         $pubRelSubPath = if ([string]::IsNullOrWhiteSpace($pubRelSubPath)) { $RootFolderName } else { "$pubRelSubPath/$RootFolderName" }
                     }
@@ -406,16 +461,11 @@ function New-AppSPStructure {
                     try {
                         $pubDriveRes = Get-AppGraphListDriveId -SiteId $siteId -ListDisplayName $pubLibName
                         $pDriveId = $pubDriveRes.DriveId
-                        
-                        Log "Publication vers : $pubLibName ($pubRelSubPath) [Drive: $pDriveId]" "DEBUG"
-                        
-                        # 3. Assurer la création des dossiers parents sur la cible
                         $folders = $pubRelSubPath -split "/" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
                         $currentParent = "root"
                         foreach ($fName in $folders) {
                             $isNewProjectFolder = ($fName -eq $RootFolderName)
                             try {
-                                # Approche 'Check or Create' pour éviter ConflictBehavior='replace' sur les dossiers racines ou protégés
                                 $fRes = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$pDriveId/items/$currentParent/children?`$filter=name eq '$fName'" -ErrorAction Stop
                                 if ($fRes.value.Count -gt 0) {
                                     $currentParent = $fRes.value[0].id
@@ -424,31 +474,24 @@ function New-AppSPStructure {
                                     $currentParent = $fCreated.id
                                 }
                             } catch { 
-                                Log "Erreur dossier publication '$fName' : $_" "WARNING" 
-                                # Fallback on tente la création brute si le GET échoue
                                 $fCreated = New-AppGraphFolder -SiteId $siteId -DriveId $pDriveId -FolderName $fName -ParentFolderId $currentParent
                                 $currentParent = $fCreated.id
                             }
 
-                            # NOUVEAU : Application des métadonnées sur le dossier projet si demandé (UseFormMetadata)
                             if ($isNewProjectFolder -and $op.RawNode.UseFormMetadata -and $RootMetadata) {
                                 try {
                                     $pLiReq = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$pDriveId/items/$currentParent/listItem?`$select=id" -ErrorAction Stop
                                     $pFields = & $FormatFields -InputFields $RootMetadata
                                     if ($pFields.Count -gt 0) {
-                                        # On utilise le listId de la bibliothèque de destination
                                         Set-AppGraphListItemMetadata -SiteId $siteId -ListId $pubDriveRes.ListId -ListItemId $pLiReq.id -Fields $pFields | Out-Null
-                                        Log "  Métadonnées appliquées au dossier de publication." "DEBUG"
                                     }
                                 } catch { Log "  Erreur application Meta publication ($fName) : $_" "WARNING" }
                             }
                         }
 
-                        # 4. Création du fichier .url
                         $linkContent = "[InternetShortcut]`nURL=$sourceUrl"
                         $bytes = [System.Text.Encoding]::UTF8.GetBytes($linkContent)
                         $fileName = if ($op.Name -like "*.url") { $op.Name } else { "$($op.Name).url" }
-                        
                         $uriPub = "https://graph.microsoft.com/v1.0/sites/$siteId/drives/$pDriveId/items/$currentParent`:/$fileName`:/content"
                         Invoke-MgGraphRequest -Method PUT -Uri $uriPub -Body $bytes -ContentType "text/plain" -ErrorAction Stop | Out-Null
                         Log "  Publication réussie dans $pubLibName/$pubRelSubPath" "SUCCESS"
@@ -458,20 +501,19 @@ function New-AppSPStructure {
             }
         }
 
-        # 6. TRACKING (Enregistrement Historique via Graph)
+        # 6. TRACKING
         if ($TrackingInfo -and $siteId) {
             Log "Enregistrement dans l'historique (Tracking Graph)..." "INFO"
             try {
                 $trackLibName = "SharePointBuilder_Tracking"
                 $trackListId = $null
-                # A. Récupération ou Création de la liste
-                $listsRes = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists?`$select=id,displayName"
+                $listsRes = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists?`$select=id,displayName,webUrl"
                 $foundTrack = $listsRes.value | Where-Object { $_.displayName -eq $trackLibName }
                 
                 if ($foundTrack) {
                     $trackListId = $foundTrack.id
+                    $result.Maintenance.HistoryUrl = $foundTrack.webUrl
                 } else {
-                    Log "  > Création de la liste de tracking '$trackLibName'..." "DEBUG"
                     $trackDef = @{
                         displayName = $trackLibName
                         columns = @(
@@ -485,16 +527,25 @@ function New-AppSPStructure {
                             @{ name = "FormValuesJson"; text = @{ allowMultipleLines = $true } },
                             @{ name = "FormDefinitionJson"; text = @{ allowMultipleLines = $true } },
                             @{ name = "FolderSchemaJson"; text = @{ allowMultipleLines = $true } },
-                            @{ name = "DeployedDate"; dateTime = @{} }
+                            @{ name = "DeployedDate"; dateTime = @{} },
+                            # Nouvelles colonnes de contrôle (v5.1)
+                            @{ name = "CreateRootFolder"; boolean = @{} },
+                            @{ name = "ApplyMetadata"; boolean = @{} },
+                            @{ name = "OverwritePermissions"; boolean = @{} },
+                            @{ name = "StateFileId"; text = @{} }
                         )
                         list = @{ template = "genericList"; hidden = $true }
                     } | ConvertTo-Json -Depth 5 -Compress
                     $tRes = Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists" -Body ([System.Text.Encoding]::UTF8.GetBytes($trackDef)) -ContentType "application/json" -ErrorAction Stop
                     $trackListId = $tRes.id
+                    $result.Maintenance.HistoryUrl = $tRes.webUrl
                 }
 
-                # B. Insertion de l'entrée d'historique
                 if ($trackListId) {
+                    # Récupération de l'utilisateur authentifié (v5.2)
+                    $me = Invoke-MgGraphRequest -Method GET -Uri "https://graph.microsoft.com/v1.0/me" -ErrorAction SilentlyContinue
+                    $authUser = if ($me -and $me.displayName) { $me.displayName } else { "SharepointApp" }
+
                     $itemFields = @{
                         Title                = if ($TrackingInfo.TemplateId) { $TrackingInfo.TemplateId } else { "UNKNOWN" }
                         TargetUrl            = if ($result.FinalUrl) { $result.FinalUrl } else { "$TargetSiteUrl/$TargetLibraryName/$RootFolderName" }
@@ -502,16 +553,21 @@ function New-AppSPStructure {
                         TemplateVersion      = $TrackingInfo.TemplateVersion
                         ConfigName           = $TrackingInfo.ConfigName
                         NamingRuleId         = $TrackingInfo.NamingRuleId
-                        DeployedBy           = $TrackingInfo.DeployedBy
+                        DeployedBy           = $authUser
                         TemplateJson         = $StructureJson
                         FormValuesJson       = if ($FormValues) { $FormValues | ConvertTo-Json -Depth 5 -Compress } else { "" }
                         FormDefinitionJson   = $TrackingInfo.FormDefinitionJson
                         FolderSchemaJson     = $FolderSchemaJson
                         DeployedDate         = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                        # Valeurs des colonnes de contrôle (Forçage booléen strict)
+                        CreateRootFolder     = if ($TrackingInfo.CreateRootFolder) { $true } else { $false }
+                        ApplyMetadata        = if ($TrackingInfo.ApplyMetadata) { $true } else { $false }
+                        OverwritePermissions = if ($TrackingInfo.OverwritePermissions) { $true } else { $false }
                     }
                     $itemBody = @{ fields = $itemFields } | ConvertTo-Json -Depth 5 -Compress
-                    Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$trackListId/items" -Body ([System.Text.Encoding]::UTF8.GetBytes($itemBody)) -ContentType "application/json" -ErrorAction Stop | Out-Null
-                    Log "  > Historique enregistré." "DEBUG"
+                    $trackItemRes = Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$trackListId/items" -Body ([System.Text.Encoding]::UTF8.GetBytes($itemBody)) -ContentType "application/json" -ErrorAction Stop
+                    $trackItemId = $trackItemRes.id
+                    Log "  > Historique enregistré (ID: $trackItemId)." "DEBUG"
                 }
             } catch { Log "  > Erreur Tracking : $_" "WARNING" }
         }
@@ -526,35 +582,34 @@ function New-AppSPStructure {
                 try {
                     $stateLibName = "SharePointBuilder_States"
                     $stateDriveId = $null
+                    
+                    # Réutilisation de l'énumération des listes pour l'URL d'état
+                    $foundState = $listsRes.value | Where-Object { $_.displayName -eq $stateLibName }
+
                     try {
                         $stateDriveRes = Get-AppGraphListDriveId -SiteId $siteId -ListDisplayName $stateLibName
                         $stateDriveId = $stateDriveRes.DriveId
+                        if ($foundState) { $result.Maintenance.StatesUrl = $foundState.webUrl }
                     } catch {
-                        Log "  > Bibliothèque d'état inexistante. Création en cours ($stateLibName)..." "DEBUG"
-                        $newListBody = @{
-                            displayName = $stateLibName
-                            list = @{
-                                template = "documentLibrary"
-                                hidden = $true
-                            }
-                        } | ConvertTo-Json -Depth 5 -Compress
-                        $newListBytes = [System.Text.Encoding]::UTF8.GetBytes($newListBody)
-                        $newListRes = Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists" -Body $newListBytes -ContentType "application/json" -ErrorAction Stop
-                        
+                        $newListBody = @{ displayName = $stateLibName; list = @{ template = "documentLibrary"; hidden = $true } } | ConvertTo-Json -Depth 5 -Compress
+                        $sRes = Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists" -Body ([System.Text.Encoding]::UTF8.GetBytes($newListBody)) -ContentType "application/json" -ErrorAction Stop
                         $stateDriveRes = Get-AppGraphListDriveId -SiteId $siteId -ListDisplayName $stateLibName
                         $stateDriveId = $stateDriveRes.DriveId
+                        $result.Maintenance.StatesUrl = $sRes.webUrl
                     }
 
                     if ($stateDriveId) {
-                        Save-AppSPDeploymentState -SiteId $siteId -StateDriveId $stateDriveId -TargetDriveId $driveId -RootFolderItemId $rootId -DeployedNodes $DeployedFoldersMap -TemplateId $TrackingInfo.TemplateId -FormValues $FormValues | Out-Null
+                        $stateRes = Save-AppSPDeploymentState -SiteId $siteId -StateDriveId $stateDriveId -TargetDriveId $driveId -RootFolderItemId $rootId -DeployedNodes $DeployedFoldersMap -TemplateId $TrackingInfo.TemplateId -FormValues $FormValues -CreateRootFolder $TrackingInfo.CreateRootFolder -ApplyMetadata $TrackingInfo.ApplyMetadata -OverwritePermissions $TrackingInfo.OverwritePermissions
+                        if ($stateRes -and $stateRes.id -and $trackItemId) {
+                            # Mise à jour rétroactive du tracking avec le StateFileId (v5.1)
+                            Log "  > Liaison StateFileId ($($stateRes.id)) au tracking..." "DEBUG"
+                            $updateTrackBody = @{ fields = @{ StateFileId = $stateRes.id } } | ConvertTo-Json -Compress
+                            Invoke-MgGraphRequest -Method PATCH -Uri "https://graph.microsoft.com/v1.0/sites/$siteId/lists/$trackListId/items/$trackItemId" -Body ([System.Text.Encoding]::UTF8.GetBytes($updateTrackBody)) -ContentType "application/json" -ErrorAction SilentlyContinue | Out-Null
+                        }
                         Log "  > State In-Situ uploadé." "DEBUG"
-                    } else {
-                        Log "  > Impossible d'obtenir le DriveId pour la sauvegarde d'état." "WARNING"
                     }
                 }
-                catch {
-                    Log "  > Impossible d'écrire le State In-Situ : $_" "WARNING"
-                }
+                catch { Log "  > Impossible d'écrire le State In-Situ : $_" "WARNING" }
             }
         }
 

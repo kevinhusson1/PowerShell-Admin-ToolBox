@@ -1,0 +1,124 @@
+**********************
+PowerShell transcript start
+Start time: 20260312215948
+Username: OPAC88\khusson
+RunAs User: OPAC88\khusson
+Configuration Name: 
+Machine: NO-LEN-TB16-03 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -File Scripts\Sharepoint\SharepointTEST\Tests\final-validation-indexing.ps1
+Process ID: 29352
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is C:\CLOUD\Github\PowerShell-Admin-ToolBox\Scripts\Sharepoint\SharepointTEST\Tests\final-validation-indexing.log
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+--- VALIDATION FINALE : STRUCTURE + INDEXATION ---
+[1] Lancement de New-AppSPStructure...
+PS>TerminatingError(Invoke-MgGraphRequest): "POST https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/contentTypes/addCopy
+HTTP/2.0 500 Internal Server Error
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: 3f0046a0-6e15-4f83-9600-40ada876fbab
+client-request-id: 46c72e76-5eb9-4903-8a18-5afb739d4a06
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"001","RoleInstance":"AM4PEPF0001511E"}}
+splogid: 6360ffa1-e084-0001-051a-c6a8e7228d33
+Date: Thu, 12 Mar 2026 20:59:59 GMT
+Content-Type: application/json
+
+{"error":{"code":"generalException","message":"General exception while processing","innerError":{"date":"2026-03-12T21:00:00","request-id":"3f0046a0-6e15-4f83-9600-40ada876fbab","client-request-id":"46c72e76-5eb9-4903-8a18-5afb739d4a06"}}}"
+PS>TerminatingError(Invoke-MgGraphRequest): "POST https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/contentTypes/addCopy
+HTTP/2.0 500 Internal Server Error
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: cad3e394-5e7a-4b32-a474-587412f0708a
+client-request-id: 84da6dd0-8b39-4b26-97dc-0d6bc4478e6a
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"001","RoleInstance":"AM4PEPF0001511E"}}
+splogid: 6460ffa1-c051-0001-051a-cfb2a65153c6
+Date: Thu, 12 Mar 2026 21:00:02 GMT
+Content-Type: application/json
+
+{"error":{"code":"generalException","message":"General exception while processing","innerError":{"date":"2026-03-12T21:00:03","request-id":"cad3e394-5e7a-4b32-a474-587412f0708a","client-request-id":"84da6dd0-8b39-4b26-97dc-0d6bc4478e6a"}}}"
+PS>TerminatingError(Invoke-MgGraphRequest): "PATCH https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/3440/fields
+HTTP/2.0 400 Bad Request
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: e8c845a0-5ade-48a2-bf76-230f38d86ad4
+client-request-id: c78acacc-908d-4306-b6d8-1241047c70d4
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"001","RoleInstance":"AM4PEPF0001511E"}}
+splogid: 6460ffa1-a0de-0001-051a-cba0aa9308d5
+Date: Thu, 12 Mar 2026 21:00:04 GMT
+Content-Type: application/json
+
+{"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-12T21:00:05","request-id":"e8c845a0-5ade-48a2-bf76-230f38d86ad4","client-request-id":"c78acacc-908d-4306-b6d8-1241047c70d4"}}}"
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:333:25
+Line |
+ 333 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Échec de la mise à jour des métadonnées (Champs: {"Rubriques_V7":"Success V7","Year_V7":["2025"],"Services_V7":["OPTIMIZED"]}) : Response status code does not indicate success: BadRequest (Bad Request).
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:333:25
+Line |
+ 333 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Échec de la mise
+     | à jour des
+     | métadonnées
+     | (Champs:
+     | {"Rubriques_V7":"Success V7","Year_V7":["2025"],"Services_V7":["OPTIMIZED"]}) : Response status code does not indicate success: BadRequest (Bad Request).
+
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:333:25
+Line |
+ 333 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Détails API : PATCH https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/3440/fields HTTP/2.0 400 Bad Request Cache-Control: no-store, no-cache Vary: Accept-Encoding Strict-Transport-Security: max-age=31536000 request-id: e8c845a0-5ade-48a2-bf76-230f38d86ad4 client-request-id: c78acacc-908d-4306-b6d8-1241047c70d4 x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"001","RoleInstance":"AM4PEPF0001511E"}} splogid: 6460ffa1-a0de-0001-051a-cba0aa9308d5 Date: Thu, 12 Mar 2026 21:00:04 GMT Content-Type: application/json  {"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-12T21:00:05","request-id":"e8c845a0-5ade-48a2-bf76-230f38d86ad4","client-request-id":"c78acacc-908d-4306-b6d8-1241047c70d4"}}}
+Set-AppGraphListItemMetadata: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Modules\Toolbox.SharePoint\Functions\New-AppSPStructure.ps1:333:25
+Line |
+ 333 |  …             Set-AppGraphListItemMetadata -SiteId $siteId -ListId $lis …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Détails API :
+     | PATCH
+     | https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/3440/fields HTTP/2.0 400 Bad Request Cache-Control: no-store, no-cache Vary: Accept-Encoding Strict-Transport-Security: max-age=31536000 request-id: e8c845a0-5ade-48a2-bf76-230f38d86ad4 client-request-id: c78acacc-908d-4306-b6d8-1241047c70d4 x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"001","RoleInstance":"AM4PEPF0001511E"}} splogid: 6460ffa1-a0de-0001-051a-cba0aa9308d5 Date: Thu, 12 Mar 2026 21:00:04 GMT Content-Type: application/json  {"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-12T21:00:05","request-id":"e8c845a0-5ade-48a2-bf76-230f38d86ad4","client-request-id":"c78acacc-908d-4306-b6d8-1241047c70d4"}}}
+
+PS>TerminatingError(Invoke-MgGraphRequest): "PATCH https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/3440/fields
+HTTP/2.0 400 Bad Request
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: e8c845a0-5ade-48a2-bf76-230f38d86ad4
+client-request-id: c78acacc-908d-4306-b6d8-1241047c70d4
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"001","RoleInstance":"AM4PEPF0001511E"}}
+splogid: 6460ffa1-a0de-0001-051a-cba0aa9308d5
+Date: Thu, 12 Mar 2026 21:00:04 GMT
+Content-Type: application/json
+
+{"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-12T21:00:05","request-id":"e8c845a0-5ade-48a2-bf76-230f38d86ad4","client-request-id":"c78acacc-908d-4306-b6d8-1241047c70d4"}}}"
+✅ New-AppSPStructure a réussi !
+
+[2] Vérification de l'indexation sur Graph...
+   Column: Services_V7 (internal: Services_V7) | Indexed: True
+   Column: DateDeploiement_V7 (internal: DateDeploiement_V7) | Indexed: False
+   Column: Year_V7 (internal: Year_V7) | Indexed: True
+   Column: Rubriques_V7 (internal: Rubriques_V7) | Indexed: True
+   Column: TestBoolean_V7 (internal: TestBoolean_V7) | Indexed: False
+
+--- FIN DE VALIDATION ---
+**********************
+PowerShell transcript end
+End time: 20260312220006
+**********************

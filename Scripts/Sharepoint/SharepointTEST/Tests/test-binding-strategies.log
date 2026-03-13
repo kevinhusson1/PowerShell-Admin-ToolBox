@@ -1,0 +1,60 @@
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+
+--- TEST BINDING STRATEGIES (Robuste) ---
+Created Site Col: StratTest_20SS (f00ca0ee-7f2f-4370-9115-c7889970442e)
+
+>>> Tentative : ID Direct
+? SUCCESS!
+True
+
+--- Simulation Conflit (Bind à nouveau) ---
+
+>>> Tentative : ID Direct (Second time)
+? FAILED: Response status code does not indicate success: NotFound (Not Found).
+Détails: POST https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/columns
+HTTP/2.0 404 Not Found
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: 947c3fa0-7452-42c2-ac23-77e7c673ad4c
+client-request-id: 758023d5-d7cb-4a03-bbec-bbdbb150ef82
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"003","RoleInstance":"AM1PEPF000105C1"}}
+splogid: 9c91ffa1-5045-0001-051a-c8225c241c77
+Date: Fri, 13 Mar 2026 11:20:12 GMT
+Content-Type: application/json
+
+{"error":{"code":"itemNotFound","message":"Item not found","innerError":{"date":"2026-03-13T11:20:12","request-id":"947c3fa0-7452-42c2-ac23-77e7c673ad4c","client-request-id":"758023d5-d7cb-4a03-bbec-bbdbb150ef82"}}}
+False
+
+>>> Tentative : sourceColumn
+? FAILED: Response status code does not indicate success: BadRequest (Bad Request).
+Détails: POST https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/columns
+HTTP/2.0 400 Bad Request
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: 106152cd-165f-4d61-a526-3cce7e2e4f38
+client-request-id: 1e6450a7-b8bb-4be1-b0ef-da9424de13f4
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"003","RoleInstance":"AM1PEPF000105C1"}}
+splogid: 9c91ffa1-b06e-0001-051a-c96818a5b0ae
+Date: Fri, 13 Mar 2026 11:20:13 GMT
+Content-Type: application/json
+
+{"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-13T11:20:13","request-id":"106152cd-165f-4d61-a526-3cce7e2e4f38","client-request-id":"1e6450a7-b8bb-4be1-b0ef-da9424de13f4"}}}
+False
+
+--- Vérification finale des colonnes de la liste ---
+
+[32;1mname          [0m[32;1m displayN[0m
+[32;1m              [0m[32;1m ame[0m
+[32;1m----          [0m [32;1m--------[0m
+StratTest_20SS StratTe.
+

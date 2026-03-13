@@ -1,0 +1,43 @@
+Import-Module: The specified module 'Modules\Toolbox.SharePoint\Toolbox.SharePoint.psd1' was not loaded because no valid module file was found in any module directory.
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+--- EXECUTION DU TEST 03 : SCHEMA & CONTENT TYPE ---
+Etape 0 : Préparation (Résolution des IDs)...
+Etape 1 : Création des SiteColumns...
+New-AppGraphSiteColumn: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Scripts\Sharepoint\SharepointTEST\Tests\03_SchemaAndContentType.ps1:57:19
+Line |
+  57 |  .   $resCol = New-AppGraphSiteColumn -SiteId $siteId -Name $safeColName .
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Échec de
+     | l'opération sur
+     | la colonne de
+     | site
+     | 'TestCol_Services' : Response status code does not indicate success: BadRequest (Bad Request).
+New-AppGraphSiteColumn: C:\CLOUD\Github\PowerShell-Admin-ToolBox\Scripts\Sharepoint\SharepointTEST\Tests\03_SchemaAndContentType.ps1:57:19
+Line |
+  57 |  .   $resCol = New-AppGraphSiteColumn -SiteId $siteId -Name $safeColName .
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Détails API :
+     | GET
+     | https://graph.microsoft.com/$select=id,name,displayName,columnGroup,indexed,choice HTTP/2.0 400 Bad Request Vary: Accept-Encoding Strict-Transport-Security: max-age=31536000 request-id: e61e05d6-0406-4e4a-a61b-9518535e811b client-request-id: 29230541-2cfb-4227-9798-4b2f1cc6b4e2 x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"008","RoleInstance":"AM2PEPF0001BE6B"}} Date: Fri, 13 Mar 2026 08:52:49 GMT Content-Type: application/json  {"error":{"code":"BadRequest","message":"Invalid version.","innerError":{"date":"2026-03-13T08:52:49","request-id":"e61e05d6-0406-4e4a-a61b-9518535e811b","client-request-id":"29230541-2cfb-4227-9798-4b2f1cc6b4e2"}}}
+
+[ECHEC DU TEST] : Response status code does not indicate success: BadRequest (Bad Request).
+Détails: GET https://graph.microsoft.com/$select=id,name,displayName,columnGroup,indexed,choice
+HTTP/2.0 400 Bad Request
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: e61e05d6-0406-4e4a-a61b-9518535e811b
+client-request-id: 29230541-2cfb-4227-9798-4b2f1cc6b4e2
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"008","RoleInstance":"AM2PEPF0001BE6B"}}
+Date: Fri, 13 Mar 2026 08:52:49 GMT
+Content-Type: application/json
+
+{"error":{"code":"BadRequest","message":"Invalid version.","innerError":{"date":"2026-03-13T08:52:49","request-id":"e61e05d6-0406-4e4a-a61b-9518535e811b","client-request-id":"29230541-2cfb-4227-9798-4b2f1cc6b4e2"}}}
+--- TENTATIVE DE SAUVETAGE / NETTOYAGE MANUEL A FAIRE ---

@@ -38,6 +38,8 @@
         'New-AppGraphFolder',
         'New-AppGraphSiteColumn',
         'Set-AppGraphListItemMetadata',
-        'Save-AppSPDeploymentState'
+        'Save-AppSPDeploymentState',
+        'Resolve-AppSharePointUrl',
+        'Get-AppDeploymentHistory'
     )
 }

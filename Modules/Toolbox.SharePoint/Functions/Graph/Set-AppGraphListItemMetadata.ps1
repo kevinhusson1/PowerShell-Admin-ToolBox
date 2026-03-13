@@ -58,7 +58,8 @@ function Set-AppGraphListItemMetadata {
             if ($Fields -and $Fields.keys.Count -gt 0) {
                 Write-Verbose "[Set-AppGraphListItemMetadata] Application de $($Fields.keys.Count) champ(s) (v1.0)..."
                 $fieldsUrl = "https://graph.microsoft.com/v1.0/sites/$SiteId/lists/$ListId/items/$ListItemId/fields"
-                Invoke-MgGraphRequest -Method PATCH -Uri $fieldsUrl -Body $Fields -ContentType "application/json" -ErrorAction Stop | Out-Null
+                $jsonFields = $Fields | ConvertTo-Json -Depth 5 -Compress
+                Invoke-MgGraphRequest -Method PATCH -Uri $fieldsUrl -Body $jsonFields -ContentType "application/json" -ErrorAction Stop | Out-Null
             }
             
             return $true

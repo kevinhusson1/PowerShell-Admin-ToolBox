@@ -24,18 +24,27 @@ function Save-AppSPDeploymentState {
         [Parameter(Mandatory = $true)]
         [string]$TemplateId,
         [Parameter(Mandatory = $true)]
-        [hashtable]$FormValues
+        [hashtable]$FormValues,
+        # Options de contrôle (v5.1)
+        [bool]$CreateRootFolder = $true,
+        [bool]$ApplyMetadata = $true,
+        [bool]$OverwritePermissions = $false
     )
     process {
         Write-Verbose "[Save-AppSPDeploymentState] Sauvegarde de l'état In-Situ..."
 
         try {
-            # Construction de l'objet State
             $stateObj = @{
                 Timestamp  = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 TemplateId = $TemplateId
                 FormValues = $FormValues
                 Nodes      = $DeployedNodes
+                # Extension Controle (v5.1)
+                Options    = @{
+                    CreateRootFolder     = $CreateRootFolder
+                    ApplyMetadata        = $ApplyMetadata
+                    OverwritePermissions = $OverwritePermissions
+                }
             }
 
             $stateJson = $stateObj | ConvertTo-Json -Depth 5 -Compress
@@ -48,12 +57,12 @@ function Save-AppSPDeploymentState {
             $res = Invoke-MgGraphRequest -Method PUT -Uri $uriUpload -Body $stateBytes -ContentType "application/json" -ErrorAction Stop
             
             Write-Verbose "[Save-AppSPDeploymentState] État sauvegardé avec succès (FileID: $($res.id))"
-            return $true
+            return $res
         }
         catch {
             Write-Error "Impossible de sauvegarder l'état du déploiement : $($_.Exception.Message)"
             if ($_.ErrorDetails) { Write-Error "Détails API : $($_.ErrorDetails.Message)" }
-            return $false
+            return $null
         }
     }
 }

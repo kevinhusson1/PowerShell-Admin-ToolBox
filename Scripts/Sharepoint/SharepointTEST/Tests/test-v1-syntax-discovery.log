@@ -1,0 +1,45 @@
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+
+>>> Test : allowMultipleValues à la racine
+? Succès !
+
+[32;1mname        [0m[32;1m Multi[0m[32;1m Choi[0m
+[32;1m            [0m[32;1m      [0m[32;1m ceMu[0m
+[32;1m            [0m[32;1m      [0m[32;1m lti[0m
+[32;1m----        [0m [32;1m-----[0m [32;1m----[0m
+V1_Root_0950       
+
+
+>>> Test : allowMultipleValues dans choice
+? Échec : Response status code does not indicate success: BadRequest (Bad Request).
+Détails: POST https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/columns
+HTTP/2.0 400 Bad Request
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: 1d624ce3-3423-416a-940d-a213ef2863cc
+client-request-id: 06bb22ce-eba2-45ce-8be7-b88eb9ed012a
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"007","RoleInstance":"AM4PEPF00089134"}}
+splogid: 0689ffa1-306c-f000-c9a6-69d7cdda1faa
+Date: Fri, 13 Mar 2026 08:50:09 GMT
+Content-Type: application/json
+
+{"error":{"code":"invalidRequest","message":"Invalid request","innerError":{"date":"2026-03-13T08:50:10","request-id":"1d624ce3-3423-416a-940d-a213ef2863cc","client-request-id":"06bb22ce-eba2-45ce-8be7-b88eb9ed012a"}}}
+
+>>> Test : Minimaliste Root
+? Succès !
+
+[32;1mname       [0m[32;1m Multi[0m[32;1m Choic[0m
+[32;1m           [0m[32;1m      [0m[32;1m eMult[0m
+[32;1m           [0m[32;1m      [0m[32;1m i[0m
+[32;1m----       [0m [32;1m-----[0m [32;1m-----[0m
+V1_Min_0950       
+

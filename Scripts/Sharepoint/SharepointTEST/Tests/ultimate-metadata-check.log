@@ -1,0 +1,24 @@
+============================================================
+ INITIALISATION ENVIRONNEMENT DE TEST SHAREPOINT BUILDER V2
+============================================================
+[1/3] Chargement des modules...
+[2/3] Initialisation de la base de données...
+[3/3] Authentification Graph (App-Only)...
+  > Authentification réussie.
+Environnement prêt.
+
+PATCHing with Multi + odata.type on v1.0 column...
+? FAILED: Response status code does not indicate success: BadRequest (Bad Request).
+PATCH https://graph.microsoft.com/v1.0/sites/vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d/lists/e181c05b-f359-4677-aa46-6436455248c5/items/1/fields
+HTTP/2.0 400 Bad Request
+Cache-Control: no-store, no-cache
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+request-id: 4de40f1b-df7f-44c7-973a-ab10927f2a08
+client-request-id: 96a7d8ec-0d34-4f46-a0fa-abd035593889
+x-ms-ags-diagnostic: {"ServerInfo":{"DataCenter":"West Europe","Slice":"E","Ring":"5","ScaleUnit":"005","RoleInstance":"AM4PEPF00015142"}}
+splogid: 4e8effa1-4048-f000-e2f3-33f20730b38e
+Date: Fri, 13 Mar 2026 10:22:27 GMT
+Content-Type: application/json
+
+{"error":{"code":"invalidRequest","message":"Field 'MetaTest_22SS' is not recognized","innerError":{"date":"2026-03-13T10:22:27","request-id":"4de40f1b-df7f-44c7-973a-ab10927f2a08","client-request-id":"96a7d8ec-0d34-4f46-a0fa-abd035593889"}}}

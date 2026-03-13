@@ -1,0 +1,45 @@
+--- DIAGNOSTIC SHAREPOINT TEST (V7) ---
+Site: vosgelis365.sharepoint.com,5c3dd27a-b449-4ae5-9a11-1f461293b473,bed6812b-e058-421a-8878-b5e28fef2a9d
+--- LISTES DISPONIBLES ---
+ - Name: ContentTypeOperationLogs | Display: ContentTypeOperationLogs | ID: 1dc891bb-a812-4b02-bf7e-24dc1f70a8b0
+ - Name: SharePointBuilder_Tracking | Display: SharePointBuilder_Tracking | ID: 2f48b482-23e4-413c-a496-2b1ef5d9a225
+ - Name: wte | Display: Web Template Extensions | ID: 0cf0e9f6-3747-475e-859c-32c88c13791c
+ - Name: SharePointBuilder_States | Display: SharePointBuilder_States | ID: e220363f-219b-425c-8a1d-397054ffe829
+ - Name: Shared Documents | Display: Documents | ID: e181c05b-f359-4677-aa46-6436455248c5
+ - Name: ContentTypeSyncLog | Display: Content type publishing error log | ID: 56d4a771-cd8b-43ac-a982-d44e276307ce
+ - Name: DO_NOT_DELETE_SPLIST_SITECOLLECTION_AGGREGATED_CONTENTTYPES | Display: DO_NOT_DELETE_SPLIST_SITECOLLECTION_AGGREGATED_CONTENTTYPES | ID: dac16ab2-c447-4ef2-b929-e66d5580847c
+ListId résolu: e181c05b-f359-4677-aa46-6436455248c5
+Internal: Modified | Display: Modified | Type: DateTime | Multi: N/A | Indexed: True
+Internal: FileLeafRef | Display: Name | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _ColorTag | Display: Color Tag | Type: Text | Multi: N/A | Indexed: False
+Internal: ComplianceAssetId | Display: Compliance Asset Id | Type: Text | Multi: N/A | Indexed: False
+Internal: Title | Display: Title | Type: Text | Multi: N/A | Indexed: False
+Internal: _ExtendedDescription | Display: Description | Type: Text | Multi: N/A | Indexed: False
+Internal: ID | Display: ID | Type: Unknown | Multi: N/A | Indexed: False
+Internal: ContentType | Display: Content Type | Type: Unknown | Multi: N/A | Indexed: False
+Internal: Created | Display: Created | Type: DateTime | Multi: N/A | Indexed: False
+Internal: Author | Display: Created By | Type: Unknown | Multi: N/A | Indexed: False
+Internal: Editor | Display: Modified By | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _CopySource | Display: Copy Source | Type: Text | Multi: N/A | Indexed: False
+Internal: CheckoutUser | Display: Checked Out To | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _CheckinComment | Display: Check In Comment | Type: Unknown | Multi: N/A | Indexed: False
+Internal: LinkFilenameNoMenu | Display: Name | Type: Unknown | Multi: N/A | Indexed: False
+Internal: LinkFilename | Display: Name | Type: Unknown | Multi: N/A | Indexed: False
+Internal: DocIcon | Display: Type | Type: Unknown | Multi: N/A | Indexed: False
+Internal: FileSizeDisplay | Display: File Size | Type: Unknown | Multi: N/A | Indexed: False
+Internal: ItemChildCount | Display: Item Child Count | Type: Unknown | Multi: N/A | Indexed: False
+Internal: FolderChildCount | Display: Folder Child Count | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _ComplianceFlags | Display: Label setting | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _ComplianceTag | Display: Retention label | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _ComplianceTagWrittenTime | Display: Retention label Applied | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _ComplianceTagUserId | Display: Label applied by | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _IsRecord | Display: Item is a Record | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _CommentCount | Display: Comment count | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _LikeCount | Display: Like count | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _DisplayName | Display: Sensitivity | Type: Unknown | Multi: N/A | Indexed: False
+Internal: AppAuthor | Display: App Created By | Type: Unknown | Multi: N/A | Indexed: False
+Internal: AppEditor | Display: App Modified By | Type: Unknown | Multi: N/A | Indexed: False
+Internal: Edit | Display: Edit | Type: Unknown | Multi: N/A | Indexed: False
+Internal: _UIVersionString | Display: Version | Type: Text | Multi: N/A | Indexed: False
+Internal: ParentVersionString | Display: Source Version (Converted Document) | Type: Unknown | Multi: N/A | Indexed: False
+Internal: ParentLeafName | Display: Source Name (Converted Document) | Type: Unknown | Multi: N/A | Indexed: False
